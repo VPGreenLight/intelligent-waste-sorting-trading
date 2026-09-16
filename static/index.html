@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoVision AI - Hệ Thống Phân Loại Rác Thông Minh Offline (YOLOv8)</title>
+  <meta name="description" content="Hệ thống AI nhận diện và phân loại rác thải tự động chạy hoàn toàn offline trên máy tính cá nhân bằng mô hình YOLOv8 Nano.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <!-- Ambient background glow elements -->
+  <div class="glow-orb orb-1"></div>
+  <div class="glow-orb orb-2"></div>
+
+  <!-- Header Section -->
+  <header class="navbar">
+    <div class="nav-brand">
+      <div class="brand-icon">🌱</div>
+      <div class="brand-text">
+        <h1>EcoVision AI</h1>
+        <span class="brand-sub">Phân Loại Rác Thông Minh • YOLOv8 Offline</span>
+      </div>
+    </div>
+
+    <!-- Gamification Eco Points & Badge -->
+    <div class="eco-tracker-widget" id="ecoTrackerWidget">
+      <div class="eco-badge">
+        <span class="eco-badge-icon" id="ecoBadgeIcon">🌱</span>
+        <div class="eco-badge-info">
+          <span class="eco-rank" id="ecoRank">Mầm Non Xanh</span>
+          <span class="eco-points-label"><strong id="ecoPoints">100</strong> Điểm Xanh</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <nav class="nav-tabs" role="tablist">
+      <button class="nav-tab active" id="tabVisionBtn" role="tab" aria-selected="true" data-tab="vision">
+        <span class="tab-icon">📷</span> Quét Rác AI
+      </button>
+      <button class="nav-tab" id="tabStatsBtn" role="tab" aria-selected="false" data-tab="stats">
+        <span class="tab-icon">📊</span> Thống Kê
+      </button>
+      <button class="nav-tab" id="tabAdminBtn" role="tab" aria-selected="false" data-tab="admin">
+        <span class="tab-icon">⚙️</span> Quản Trị Quy Tắc
+      </button>
+    </nav>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-container">
+
+    <!-- TAB 1: VISION SCANNER (Main Demo) -->
+    <section class="tab-content active" id="tabVision" role="tabpanel">
+      <div class="scanner-grid">
+        
+        <!-- Left Panel: Input Sources -->
+        <div class="input-panel glass-card">
+          <div class="panel-header">
+            <h2>Khu Vực Đầu Vào Hình Ảnh</h2>
+            <div class="source-switcher">
+              <button class="btn-pill active" id="btnModeUpload">Tải ảnh lên</button>
+              <button class="btn-pill" id="btnModeWebcam">Webcam Trực tiếp</button>
+            </div>
+          </div>
+
+          <!-- Mode 1: File Upload / Drag & Drop -->
+          <div class="upload-zone" id="dropZone">
+            <input type="file" id="fileInput" accept="image/*" class="file-input-hidden">
+            <div class="upload-prompt" id="uploadPrompt">
+              <div class="upload-icon">📤</div>
+              <h3>Kéo & thả ảnh rác vào đây</h3>
+              <p>Hỗ trợ JPG, PNG, WEBP từ bộ dữ liệu TrashNet hoặc ảnh thực tế</p>
+              <button class="btn-primary" id="btnChooseFile" type="button">Chọn file từ máy</button>
+            </div>
+            <div class="preview-container hidden" id="previewContainer">
+              <img id="previewImage" alt="Ảnh rác đang quét" src="">
+              <button class="btn-clear-image" id="btnClearImage" title="Xóa ảnh">✕</button>
+            </div>
+          </div>
+
+          <!-- Mode 2: Webcam Stream -->
+          <div class="webcam-zone hidden" id="webcamZone">
+            <div class="webcam-viewport">
+              <video id="webcamVideo" autoplay playsinline muted></video>
+              <canvas id="webcamCanvas" class="hidden"></canvas>
+              <div class="webcam-overlay" id="webcamOverlay">
+                <div class="scan-reticle"></div>
+                <span class="scan-hint">Căn chỉnh vật thể rác vào giữa khung</span>
+              </div>
+            </div>
+            <div class="webcam-actions">
+              <button class="btn-primary btn-lg" id="btnCaptureWebcam">
+                <span class="btn-icon">⚡</span> Chụp & Nhận Diện Ngay
+              </button>
+              <button class="btn-secondary" id="btnStopWebcam">Tắt Camera</button>
+            </div>
+          </div>
+
+          <!-- Quick Presets Carousel (TrashNet Samples) -->
+          <div class="sample-presets-section">
+            <div class="presets-header">
+              <h4>Ảnh Mẫu Thử Nghiệm Nhanh (TrashNet Presets)</h4>
+              <span class="presets-desc">Bấm vào để kiểm tra ngay lập tức</span>
+            </div>
+            <div class="sample-carousel" id="sampleCarousel">
+              <!-- Rendered dynamically by app.js -->
+              <div class="sample-loading">Đang nạp ảnh mẫu từ dataset...</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Panel: AI Results & Waste Guidance -->
+        <div class="result-panel glass-card">
+          <div class="panel-header">
+            <h2>Kết Quả Nhận Diện & Chỉ Dẫn Xử Lý</h2>
+            <div class="engine-badge">
+              <span class="status-dot online"></span> YOLOv8n Offline
+            </div>
+          </div>
+
+          <!-- Initial Empty State -->
+          <div class="empty-state" id="resultEmptyState">
+            <div class="empty-icon">🎯</div>
+            <h3>Sẵn sàng nhận diện</h3>
+            <p>Hãy tải ảnh lên, bật webcam hoặc chọn một ảnh mẫu bên cạnh để AI suy luận với tốc độ 2.5ms.</p>
+          </div>
+
+          <!-- Loading Spinner -->
+          <div class="inference-loading hidden" id="resultLoading">
+            <div class="pulse-spinner"></div>
+            <p>AI đang phân tích đặc trưng hình ảnh...</p>
+          </div>
+
+          <!-- AI Prediction Details (Shown after inference) -->
+          <div class="prediction-view hidden" id="resultContent">
+            
+            <!-- Out-of-Distribution Alert Banner (Usecase 2) -->
+            <div class="ood-banner hidden" id="oodBanner">
+              <div class="ood-icon">⚠️</div>
+              <div class="ood-text">
+                <strong>Cảnh báo Ngoại lai (Out-of-Distribution):</strong>
+                <p>Độ tự tin của AI dưới ngưỡng an toàn (<span id="oodThresholdVal">60</span>%). Vật thể này không rõ ràng hoặc không nằm trong tập dữ liệu 6 loại rác chuẩn. Vui lòng chụp lại với góc đủ sáng hơn!</p>
+              </div>
+            </div>
+
+            <!-- Header Result Card -->
+            <div class="classification-hero" id="classificationHero">
+              <div class="hero-left">
+                <span class="category-icon" id="resCategoryIcon">🥤</span>
+                <div class="hero-titles">
+                  <span class="category-tag" id="resCategoryType">Rác Tái Chế</span>
+                  <h3 class="category-name" id="resCategoryVn">Rác Tái Chế - Nhựa</h3>
+                  <span class="category-en" id="resCategoryEn">Label: PLASTIC</span>
+                </div>
+              </div>
+              <div class="hero-right">
+                <div class="confidence-circle" id="resConfidencePill">
+                  <span class="conf-val" id="resConfidenceVal">94.8%</span>
+                  <span class="conf-label">Độ tin cậy</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Speed & Confidence Bar -->
+            <div class="metric-bar-group">
+              <div class="metric-bar-header">
+                <span>Xác suất phân loại hàng đầu</span>
+                <span class="inference-chip">⚡ Suy luận: <strong id="resInferenceTime">2.5ms</strong></span>
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill" id="resProgressFill" style="width: 85%;"></div>
+              </div>
+            </div>
+
+            <!-- Designated Trash Bin Card -->
+            <div class="bin-instruction-card" id="binCard">
+              <div class="bin-card-header">
+                <span class="bin-icon">🗑️</span>
+                <div>
+                  <span class="bin-subtitle">Màu thùng rác thu gom chỉ định:</span>
+                  <h4 class="bin-title" id="resBinColor">Thùng Màu Vàng / Trắng</h4>
+                </div>
+              </div>
+
+              <!-- Action Checklist (Usecase 3) -->
+              <div class="action-checklist">
+                <h5>Quy trình phân loại chuẩn:</h5>
+                <ul id="resInstructionsList">
+                  <!-- Injected via JS -->
+                </ul>
+              </div>
+            </div>
+
+            <!-- Eco Fact Card (Gamification Usecase 7) -->
+            <div class="eco-fact-box" id="ecoFactBox">
+              <span class="fact-bulb">💡</span>
+              <p id="resEcoFact">Tái chế 1 chai nhựa giúp tiết kiệm năng lượng đủ thắp sáng 1 bóng đèn trong 6 giờ!</p>
+            </div>
+
+            <!-- Probability Breakdown List -->
+            <div class="probabilities-section">
+              <button class="btn-toggle-probs" id="btnToggleProbs">
+                <span>Xem chi tiết xác suất 6 lớp rác</span>
+                <span class="toggle-arrow">▼</span>
+              </button>
+              <div class="probs-list-container hidden" id="probsListContainer">
+                <div class="probs-grid" id="probsGrid">
+                  <!-- Rendered via JS -->
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons (Feedback Usecase 4 & Bookmark Usecase 5) -->
+            <div class="result-action-bar">
+              <button class="btn-secondary" id="btnOpenFeedback">
+                <span class="btn-icon">🚩</span> Báo Cáo AI Đoán Sai
+              </button>
+              <button class="btn-secondary" id="btnBookmarkItem">
+                <span class="btn-icon">⭐</span> Lưu Vào Yêu Thích
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- TAB 2: ANALYTICS & STATS (Usecases 6 & 10) -->
+    <section class="tab-content" id="tabStats" role="tabpanel">
+      <div class="analytics-container glass-card">
+        <div class="analytics-header">
+          <h2>Bảng Điều Khiển Thống Kê Sống Xanh (Eco-Dashboard)</h2>
+          <p>Dữ liệu phân loại và lịch sử phiên làm việc hiện tại trên máy local</p>
+        </div>
+
+        <div class="kpi-cards-grid">
+          <div class="kpi-card">
+            <span class="kpi-icon">📊</span>
+            <div class="kpi-data">
+              <span class="kpi-number" id="statTotalScans">0</span>
+              <span class="kpi-label">Tổng lượt quét rác</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-icon">🌿</span>
+            <div class="kpi-data">
+              <span class="kpi-number" id="statEcoPoints">100</span>
+              <span class="kpi-label">Điểm Xanh tích lũy</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-icon">♻️</span>
+            <div class="kpi-data">
+              <span class="kpi-number" id="statRecycleRate">100%</span>
+              <span class="kpi-label">Tỷ lệ rác tái chế</span>
+            </div>
+          </div>
+          <div class="kpi-card">
+            <span class="kpi-icon">🛡️</span>
+            <div class="kpi-data">
+              <span class="kpi-number" id="statOodCount">0</span>
+              <span class="kpi-label">Lần chặn ngoại lai (&lt;60%)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="charts-two-col">
+          <div class="chart-box">
+            <h3>Phân Bổ Các Loại Rác Đã Phân Loại</h3>
+            <div class="bars-container" id="categoryBars">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <div class="recent-scans-box">
+            <h3>Nhật Ký Quét Gần Nhất</h3>
+            <div class="recent-timeline" id="recentTimeline">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: ADMIN RULE & FEEDBACK MANAGER (Usecases 9 & 11) -->
+    <section class="tab-content" id="tabAdmin" role="tabpanel">
+      <div class="admin-container glass-card">
+        <div class="admin-header">
+          <div>
+            <h2>Quản Trị Hệ Thống & Cơ Sở Quy Tắc (Rule Engine)</h2>
+            <p>Tùy chỉnh nội dung hướng dẫn phân loại và kiểm chứng phản hồi từ người dùng</p>
+          </div>
+          <div class="admin-threshold-setting">
+            <label for="inputThreshold">Ngưỡng Chặn Ngoại Lai (OOD Threshold):</label>
+            <div class="slider-wrapper">
+              <input type="range" id="inputThreshold" min="40" max="90" value="60" step="5">
+              <span class="slider-val" id="valThreshold">60%</span>
+            </div>
+            <button class="btn-primary btn-sm" id="btnSaveThreshold">Lưu Ngưỡng</button>
+          </div>
+        </div>
+
+        <!-- Rules Editor -->
+        <div class="rules-management-section">
+          <h3>Quy Tắc Xử Lý 6 Nhóm Rác</h3>
+          <div class="rules-grid" id="adminRulesGrid">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+
+        <!-- Feedback Verification List (Usecase 11) -->
+        <div class="feedback-review-section">
+          <h3>Danh Sách Phản Hồi Báo Lỗi AI (Kiểm Chứng Dữ Liệu)</h3>
+          <div class="feedback-table-wrapper">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>Thời gian</th>
+                  <th>AI Dự đoán</th>
+                  <th>Độ tin cậy</th>
+                  <th>Nhãn người dùng chọn</th>
+                  <th>Ghi chú</th>
+                  <th>Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody id="feedbackTableBody">
+                <tr><td colspan="7" class="text-center">Chưa có phản hồi báo lỗi nào</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: REPORT AI FEEDBACK (Usecase 4) -->
+  <div class="modal-backdrop hidden" id="feedbackModal">
+    <div class="modal-card glass-card">
+      <div class="modal-header">
+        <h3>Báo Cáo Kết Quả Nhận Diện Chưa Đúng</h3>
+        <button class="btn-close-modal" id="btnCloseFeedbackModal">✕</button>
+      </div>
+      <form id="feedbackForm">
+        <div class="form-group">
+          <label>Mô hình AI vừa dự đoán là:</label>
+          <input type="text" id="fbPredicted" readonly class="form-input readonly">
+        </div>
+        <div class="form-group">
+          <label for="fbCorrectLabel">Theo bạn, loại rác chính xác là gì? *</label>
+          <select id="fbCorrectLabel" class="form-input" required>
+            <option value="cardboard">Bìa carton (Cardboard)</option>
+            <option value="glass">Thủy tinh (Glass)</option>
+            <option value="metal">Kim loại / Vỏ lon (Metal)</option>
+            <option value="paper">Giấy (Paper)</option>
+            <option value="plastic">Đồ nhựa (Plastic)</option>
+            <option value="trash">Rác sinh hoạt khác (Trash)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="fbNote">Ghi chú bổ sung (tùy chọn):</label>
+          <textarea id="fbNote" class="form-input" rows="3" placeholder="Ví dụ: Chai nhựa màu đục, góc chụp bị tối..."></textarea>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn-secondary" id="btnCancelFeedback">Hủy bỏ</button>
+          <button type="submit" class="btn-primary" id="btnSubmitFeedback">Gửi Báo Cáo Phản Hồi</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

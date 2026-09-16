@@ -1,0 +1,29 @@
+# Virtual Environment
+venv/
+.venv/
+env/
+ENV/
+
+# Python Cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Training Outputs & Checkpoints
+runs/
+*.pt
+!models/best.pt
+yolov8n-cls.pt
+
+# Raw Heavy Training Datasets (Only keep sample val for demo)
+data/dataset-resized/
+data/trashnet_split/train/
+data/*.zip
+*.cache
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

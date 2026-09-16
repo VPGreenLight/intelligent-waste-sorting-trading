@@ -1,0 +1,113 @@
+{
+  "rules": {
+    "plastic": {
+      "id": "plastic",
+      "name_en": "Plastic",
+      "name_vn": "Rác Tái Chế - Nhựa",
+      "category_type": "Tái chế (Recyclable)",
+      "bin_color_name": "Thùng Màu Vàng / Trắng",
+      "bin_color_hex": "#F59E0B",
+      "bin_badge_bg": "rgba(245, 158, 11, 0.15)",
+      "bin_badge_border": "rgba(245, 158, 11, 0.4)",
+      "icon": "🥤",
+      "instructions": [
+        "Tráng sạch đồ uống thừa hoặc dầu mỡ bám dính",
+        "Tháo rời nắp nhựa và nhãn mác ni-lông nếu có thể",
+        "Bóp dẹp thân chai để tiết kiệm thể tích thùng chứa"
+      ],
+      "eco_fact": "Tái chế 1 chai nhựa có thể tiết kiệm đủ năng lượng để thắp sáng một bóng đèn LED trong 6 giờ!",
+      "examples": ["Chai nước khoáng PET", "Hộp sữa chua sạch", "Can dầu ăn đã rửa sạch"]
+    },
+    "paper": {
+      "id": "paper",
+      "name_en": "Paper",
+      "name_vn": "Rác Tái Chế - Giấy",
+      "category_type": "Tái chế (Recyclable)",
+      "bin_color_name": "Thùng Màu Xanh Dương",
+      "bin_color_hex": "#3B82F6",
+      "bin_badge_bg": "rgba(59, 130, 246, 0.15)",
+      "bin_badge_border": "rgba(59, 130, 246, 0.4)",
+      "icon": "📄",
+      "instructions": [
+        "Giữ giấy luôn khô ráo, không bị dính nước hoặc bùn đất",
+        "Không lẫn giấy có màng nhựa chống thấm hoặc giấy thấm dầu",
+        "Gấp phẳng hoặc buộc thành từng tập trước khi bỏ vào thùng"
+      ],
+      "eco_fact": "Tái chế 1 tấn giấy có thể cứu sống 17 cây xanh và tiết kiệm hơn 26.000 lít nước sạch!",
+      "examples": ["Sách báo cũ", "Giấy in A4 không dùng", "Tờ rơi quảng cáo", "Túi giấy"]
+    },
+    "cardboard": {
+      "id": "cardboard",
+      "name_en": "Cardboard",
+      "name_vn": "Rác Tái Chế - Bìa Carton",
+      "category_type": "Tái chế (Recyclable)",
+      "bin_color_name": "Thùng Màu Xanh Dương / Nâu",
+      "bin_color_hex": "#8B5CF6",
+      "bin_badge_bg": "rgba(139, 92, 246, 0.15)",
+      "bin_badge_border": "rgba(139, 92, 246, 0.4)",
+      "icon": "📦",
+      "instructions": [
+        "Bóc bỏ toàn bộ băng keo dính hoặc ghim kim loại đóng thùng",
+        "Làm phẳng hoặc cắt nhỏ các hộp carton lớn",
+        "Đảm bảo thùng carton không bị dính dầu mỡ thức ăn (ví dụ: hộp pizza bẩn)"
+      ],
+      "eco_fact": "Carton có thể tái chế tới 5-7 lần trước khi sợi cellulose trở nên quá ngắn!",
+      "examples": ["Hộp bưu kiện Shopee/Lazada", "Hộp đựng giày", "Thùng mì tôm"]
+    },
+    "metal": {
+      "id": "metal",
+      "name_en": "Metal",
+      "name_vn": "Rác Tái Chế - Kim Loại",
+      "category_type": "Tái chế (Recyclable)",
+      "bin_color_name": "Thùng Màu Trắng / Xám",
+      "bin_color_hex": "#10B981",
+      "bin_badge_bg": "rgba(16, 185, 129, 0.15)",
+      "bin_badge_border": "rgba(16, 185, 129, 0.4)",
+      "icon": "🥫",
+      "instructions": [
+        "Đổ hết chất lỏng còn sót lại bên trong lon",
+        "Tráng sơ bằng nước để tránh thu hút côn trùng",
+        "Đạp bẹp lon nhôm để giảm diện tích thu gom"
+      ],
+      "eco_fact": "Nhôm có thể tái chế vô hạn lần mà không hề suy giảm chất lượng!",
+      "examples": ["Lon nước ngọt Coca/Pepsi", "Hộp cá hộp/sữa đặc", "Nắp chai bia"]
+    },
+    "glass": {
+      "id": "glass",
+      "name_en": "Glass",
+      "name_vn": "Rác Tái Chế - Thủy Tinh",
+      "category_type": "Tái chế (Recyclable)",
+      "bin_color_name": "Thùng Màu Xanh Lá / Trắng",
+      "bin_color_hex": "#06B6D4",
+      "bin_badge_bg": "rgba(6, 182, 212, 0.15)",
+      "bin_badge_border": "rgba(6, 182, 212, 0.4)",
+      "icon": "🍾",
+      "instructions": [
+        "Cẩn thận tránh làm nứt hoặc vỡ mảnh vụn gây nguy hiểm",
+        "Rửa sạch cặn bên trong chai/lọ",
+        "Tách riêng nắp đậy (thường bằng kim loại hoặc cao su)"
+      ],
+      "eco_fact": "Một chai thủy tinh vứt ra bãi rác tự nhiên có thể mất tới 1.000.000 năm để phân hủy!",
+      "examples": ["Chai nước ngọt thủy tinh", "Lọ mứt/gia vị", "Chai nước hoa rỗng"]
+    },
+    "trash": {
+      "id": "trash",
+      "name_en": "Trash",
+      "name_vn": "Rác Thải Sinh Hoạt / Khác",
+      "category_type": "Rác không tái chế (Residual)",
+      "bin_color_name": "Thùng Màu Đen / Xám Đậm",
+      "bin_color_hex": "#EF4444",
+      "bin_badge_bg": "rgba(239, 68, 68, 0.15)",
+      "bin_badge_border": "rgba(239, 68, 68, 0.4)",
+      "icon": "🗑️",
+      "instructions": [
+        "Bọc kín túi rác để tránh rò rỉ nước và mùi hôi",
+        "Bỏ vào đúng thùng rác sinh hoạt chung để vận chuyển đi xử lý/chôn lấp",
+        "Nếu là pin hoặc đồ điện tử cũ, hãy tách riêng vào thùng rác nguy hại"
+      ],
+      "eco_fact": "Phân loại đúng giúp giảm thiểu tới 70% lượng rác phải chôn lấp tại các bãi rác!",
+      "examples": ["Giấy ăn đã qua sử dụng", "Bút bi hết mực", "Đồ nhựa dùng 1 lần dính dầu bẩn"]
+    }
+  },
+  "confidence_threshold": 0.60
+}
