@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="Ecolink.Application/Ecolink.Application.csproj" />
+  <Project Path="Ecolink.Domain/Ecolink.Domain.csproj" />
+  <Project Path="Ecolink.Infrastructure/Ecolink.Infrastructure.csproj" />
+  <Project Path="Ecolink.WebApi/Ecolink.WebApi.csproj" />
+</Solution>

@@ -1,0 +1,104 @@
+{
+  "total_scans": 38,
+  "categories": {
+    "cardboard": 8,
+    "metal": 1,
+    "glass": 5,
+    "plastic": 2,
+    "paper": 8,
+    "trash": 1
+  },
+  "ood_count": 13,
+  "recent": [
+    {
+      "category": "trash",
+      "confidence": 88.0,
+      "is_ood": false,
+      "timestamp": "13:07:26"
+    },
+    {
+      "category": "glass",
+      "confidence": 82.6,
+      "is_ood": false,
+      "timestamp": "13:07:23"
+    },
+    {
+      "category": "glass",
+      "confidence": 91.8,
+      "is_ood": false,
+      "timestamp": "13:07:21"
+    },
+    {
+      "category": "glass",
+      "confidence": 96.1,
+      "is_ood": false,
+      "timestamp": "13:07:21"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 100.0,
+      "is_ood": false,
+      "timestamp": "13:07:19"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 83.1,
+      "is_ood": false,
+      "timestamp": "13:04:00"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 83.1,
+      "is_ood": false,
+      "timestamp": "13:02:50"
+    },
+    {
+      "category": "glass",
+      "confidence": 90.9,
+      "is_ood": false,
+      "timestamp": "13:01:55"
+    },
+    {
+      "category": "paper",
+      "confidence": 100.0,
+      "is_ood": false,
+      "timestamp": "13:01:28"
+    },
+    {
+      "category": "plastic",
+      "confidence": 87.9,
+      "is_ood": false,
+      "timestamp": "13:01:22"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 83.1,
+      "is_ood": false,
+      "timestamp": "13:01:18"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 83.1,
+      "is_ood": false,
+      "timestamp": "13:00:33"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 83.1,
+      "is_ood": false,
+      "timestamp": "13:00:29"
+    },
+    {
+      "category": "paper",
+      "confidence": 99.8,
+      "is_ood": false,
+      "timestamp": "12:58:10"
+    },
+    {
+      "category": "paper",
+      "confidence": 99.9,
+      "is_ood": false,
+      "timestamp": "12:58:09"
+    }
+  ]
+}

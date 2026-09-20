@@ -1,0 +1,72 @@
+services:
+  # CSDL PostgreSQL tích hợp PostGIS xử lý tọa độ không gian địa lý (GIS)
+  ecolink-db:
+    image: postgis/postgis:16-3.4-alpine
+    container_name: ecolink-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ecolink_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ecolink-network
+
+  # Bộ nhớ đệm Redis lưu trữ quy tắc phân loại tĩnh và bảng xếp hạng Leaderboard
+  ecolink-redis:
+    image: redis:7-alpine
+    container_name: ecolink-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ecolink-network
+
+  # Dịch vụ Dedicated AI Vision (Python FastAPI + YOLOv8)
+  ecolink-ai-service:
+    build:
+      context: ./src/Ecolink.AiService
+      dockerfile: Dockerfile
+    container_name: ecolink-ai-service
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    networks:
+      - ecolink-network
+
+  # Core Business Service (ASP.NET Core 8/9/10 Web API)
+  ecolink-backend-api:
+    build:
+      context: ./src/Ecolink.Backend
+      dockerfile: Ecolink.WebApi/Dockerfile
+    container_name: ecolink-backend-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:5000
+      - AiService__BaseUrl=http://ecolink-ai-service:8000
+      - ConnectionStrings__DefaultConnection=Host=ecolink-db;Port=5432;Database=ecolink_db;Username=postgres;Password=postgrespassword
+      - ConnectionStrings__Redis=ecolink-redis:6379
+    depends_on:
+      - ecolink-db
+      - ecolink-redis
+      - ecolink-ai-service
+    networks:
+      - ecolink-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  ecolink-network:
+    driver: bridge

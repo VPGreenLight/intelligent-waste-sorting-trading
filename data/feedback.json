@@ -1,0 +1,18 @@
+[
+  {
+    "id": 2,
+    "predicted_label": "cardboard",
+    "corrected_label": "plastic",
+    "confidence": 83.1,
+    "note": "Chai nhựa đục, có nắp trắng",
+    "timestamp": "2026-09-16 13:01:09"
+  },
+  {
+    "id": 1,
+    "predicted_label": "metal",
+    "corrected_label": "glass",
+    "confidence": 69.33,
+    "note": "Chai có nắp kim loại",
+    "timestamp": "2026-09-16 12:51:21"
+  }
+]

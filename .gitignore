@@ -27,3 +27,7 @@ data/*.zip
 .idea/
 .DS_Store
 Thumbs.db
+
+# .NET Build Output
+[Bb]in/
+[Oo]bj/
