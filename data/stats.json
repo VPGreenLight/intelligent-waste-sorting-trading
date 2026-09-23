@@ -1,15 +1,33 @@
 {
-  "total_scans": 38,
+  "total_scans": 41,
   "categories": {
-    "cardboard": 8,
+    "cardboard": 10,
     "metal": 1,
     "glass": 5,
     "plastic": 2,
-    "paper": 8,
+    "paper": 9,
     "trash": 1
   },
   "ood_count": 13,
   "recent": [
+    {
+      "category": "paper",
+      "confidence": 87.2,
+      "is_ood": false,
+      "timestamp": "16:46:41"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 100.0,
+      "is_ood": false,
+      "timestamp": "16:41:00"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 83.1,
+      "is_ood": false,
+      "timestamp": "16:39:56"
+    },
     {
       "category": "trash",
       "confidence": 88.0,
@@ -81,24 +99,6 @@
       "confidence": 83.1,
       "is_ood": false,
       "timestamp": "13:00:33"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 83.1,
-      "is_ood": false,
-      "timestamp": "13:00:29"
-    },
-    {
-      "category": "paper",
-      "confidence": 99.8,
-      "is_ood": false,
-      "timestamp": "12:58:10"
-    },
-    {
-      "category": "paper",
-      "confidence": 99.9,
-      "is_ood": false,
-      "timestamp": "12:58:09"
     }
   ]
 }

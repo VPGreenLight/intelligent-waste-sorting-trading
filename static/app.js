@@ -8,6 +8,7 @@ let currentPrediction = null;
 let webcamStream = null;
 let userEcoPoints = parseInt(localStorage.getItem('eco_points') || '100');
 let userBookmarks = JSON.parse(localStorage.getItem('eco_bookmarks') || '[]');
+let currentImagePayload = null;
 
 // Sound Effect via Web Audio API (Clean & Offline, no external audio files needed)
 function playChime(success = true) {
@@ -199,6 +200,7 @@ function setupUploadMode() {
     previewContainer.classList.add('hidden');
     uploadPrompt.classList.remove('hidden');
     fileInput.value = '';
+    currentImagePayload = null;
     resetResultView();
   });
 }
@@ -208,6 +210,8 @@ function handleFileSelected(file) {
     showToast('Vui lòng chọn một file hình ảnh hợp lệ!', '⚠️');
     return;
   }
+
+  currentImagePayload = { type: 'file', data: file };
 
   const reader = new FileReader();
   reader.onload = (e) => {
@@ -249,6 +253,7 @@ function setupWebcam() {
 
     canvas.toBlob((blob) => {
       if (blob) {
+        currentImagePayload = { type: 'blob', data: blob, name: 'webcam_capture.jpg' };
         const formData = new FormData();
         formData.append('file', blob, 'webcam_capture.jpg');
         sendClassificationRequest(formData);
@@ -325,6 +330,9 @@ async function loadSampleCarousel() {
         // Make sure upload mode is visible
         document.getElementById('btnModeUpload').click();
 
+        // Track current sample
+        currentImagePayload = { type: 'sample', data: sample.path };
+
         // Send to classification API via sample_path
         const formData = new FormData();
         formData.append('sample_path', sample.path);
@@ -352,6 +360,11 @@ async function sendClassificationRequest(formData) {
   content.classList.add('hidden');
 
   try {
+    const selectedModel = document.getElementById('selectModel')?.value || 'yolov8n';
+    if (!formData.has('model')) {
+      formData.append('model', selectedModel);
+    }
+
     const res = await fetch('/api/classify', {
       method: 'POST',
       body: formData
@@ -397,6 +410,12 @@ function renderPredictionResult(pred) {
     oodBanner.classList.remove('hidden');
   } else {
     oodBanner.classList.add('hidden');
+  }
+
+  // Model Badge
+  const modelTag = document.getElementById('resModelUsedTag');
+  if (modelTag) {
+    modelTag.textContent = pred.model_name || pred.model_used || 'YOLOv8n';
   }
 
   // Hero Card
@@ -543,6 +562,27 @@ function setupResultInteractions() {
     localStorage.setItem('eco_bookmarks', JSON.stringify(userBookmarks));
     showToast(`Đã lưu "${item.name_vn}" vào danh mục rác yêu thích!`, '⭐');
   });
+
+  // Dynamic Model Switcher Listener
+  const selectModelEl = document.getElementById('selectModel');
+  if (selectModelEl) {
+    selectModelEl.addEventListener('change', () => {
+      const modelName = selectModelEl.options[selectModelEl.selectedIndex]?.text || selectModelEl.value;
+      showToast(`Chuyển sang mô hình: ${modelName}`, '🤖');
+      if (currentImagePayload) {
+        const formData = new FormData();
+        if (currentImagePayload.type === 'file') {
+          formData.append('file', currentImagePayload.data);
+        } else if (currentImagePayload.type === 'blob') {
+          formData.append('file', currentImagePayload.data, currentImagePayload.name || 'webcam_capture.jpg');
+        } else if (currentImagePayload.type === 'sample') {
+          formData.append('sample_path', currentImagePayload.data);
+        }
+        formData.append('model', selectModelEl.value);
+        sendClassificationRequest(formData);
+      }
+    });
+  }
 }
 
 /* ==========================================================================

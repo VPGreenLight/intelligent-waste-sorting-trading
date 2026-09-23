@@ -117,8 +117,13 @@
         <div class="result-panel glass-card">
           <div class="panel-header">
             <h2>Kết Quả Nhận Diện & Chỉ Dẫn Xử Lý</h2>
-            <div class="engine-badge">
-              <span class="status-dot online"></span> YOLOv8n Offline
+            <div class="model-select-container">
+              <label for="selectModel" class="model-select-label">🤖 AI Model:</label>
+              <select id="selectModel" class="model-select-dropdown">
+                <option value="yolov8n">⚡ YOLOv8n (Siêu tốc)</option>
+                <option value="mobilenet_v3">📱 MobileNetV3 (Mobile)</option>
+                <option value="efficientnet_b0">🎯 EfficientNet-B0 (Chính xác cao)</option>
+              </select>
             </div>
           </div>
 
@@ -152,7 +157,10 @@
               <div class="hero-left">
                 <span class="category-icon" id="resCategoryIcon">🥤</span>
                 <div class="hero-titles">
-                  <span class="category-tag" id="resCategoryType">Rác Tái Chế</span>
+                  <div class="tags-row">
+                    <span class="category-tag" id="resCategoryType">Rác Tái Chế</span>
+                    <span class="model-used-tag" id="resModelUsedTag">⚡ YOLOv8n</span>
+                  </div>
                   <h3 class="category-name" id="resCategoryVn">Rác Tái Chế - Nhựa</h3>
                   <span class="category-en" id="resCategoryEn">Label: PLASTIC</span>
                 </div>

@@ -14,6 +14,7 @@ __pycache__/
 runs/
 *.pt
 !models/best.pt
+!src/Ecolink.AiService/models/best.pt
 yolov8n-cls.pt
 
 # Raw Heavy Training Datasets (Only keep sample val for demo)

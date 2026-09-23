@@ -40,16 +40,10 @@ STATIC_DIR.mkdir(parents=True, exist_ok=True)
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
-# Khởi tạo model
-MODEL_PATH = MODELS_DIR / "best.pt"
-if not MODEL_PATH.exists():
-    fallback = BASE_DIR / "runs" / "classify" / "runs" / "classify" / "waste_yolov8n" / "weights" / "best.pt"
-    if fallback.exists():
-        shutil.copy2(fallback, MODEL_PATH)
-
-print(f"[*] Đang tải mô hình từ: {MODEL_PATH}")
-model = YOLO(str(MODEL_PATH) if MODEL_PATH.exists() else "yolov8n-cls.pt")
-print("[+] Mô hình đã sẵn sàng trong RAM!")
+# Khởi tạo ModelManager hỗ trợ đa mô hình (YOLOv8, MobileNetV3, EfficientNet-B0)
+from model_manager import ModelManager
+model_manager = ModelManager(MODELS_DIR)
+print("[+] ModelManager đa mô hình đã sẵn sàng!")
 
 def load_rules():
     if RULES_FILE.exists():
@@ -103,14 +97,21 @@ def log_scan_stat(category: str, confidence: float, is_ood: bool):
         json.dump(stats, f, ensure_ascii=False, indent=2)
 
 # API: Phân loại rác (Hỗ trợ upload ảnh hoặc gửi đường dẫn ảnh mẫu)
+# API: Lấy danh sách các mô hình AI và trạng thái
+@app.get("/api/models")
+async def get_available_models():
+    return {
+        "models": model_manager.list_available_models(),
+        "default": "yolov8n"
+    }
+
+# API: Phân loại rác đa mô hình (Hỗ trợ upload ảnh hoặc gửi đường dẫn ảnh mẫu)
 @app.post("/api/classify")
 async def classify_waste(
     file: Optional[UploadFile] = File(None),
-    sample_path: Optional[str] = Form(None)
+    sample_path: Optional[str] = Form(None),
+    model: str = Form("yolov8n")
 ):
-    start_time = time.time()
-    temp_img_path = None
-
     try:
         if file is not None:
             contents = await file.read()
@@ -123,43 +124,34 @@ async def classify_waste(
         else:
             raise HTTPException(status_code=400, detail="Cần cung cấp ảnh tải lên hoặc ảnh mẫu")
 
-        # Chạy suy luận với YOLOv8
-        results = model.predict(source=image, imgsz=224, verbose=False)
-        inference_time = round((time.time() - start_time) * 1000, 1)
-
-        result = results[0]
-        top1_idx = result.probs.top1
-        top1_name = result.names[top1_idx]
-        confidence = float(result.probs.top1conf.item())
-
-        # Danh sách phân phối xác suất
-        all_probs = []
-        for idx, score in enumerate(result.probs.data.tolist()):
-            all_probs.append({
-                "label": result.names[idx],
-                "confidence": round(score * 100, 2)
-            })
-        all_probs.sort(key=lambda x: x["confidence"], reverse=True)
+        # Chạy suy luận qua ModelManager với model được chọn
+        pred_data = model_manager.predict(image, model_id=model)
+        top1 = pred_data["top_prediction"]
+        top1_name = top1["label"] if top1 else "trash"
+        confidence = top1["confidence"] if top1 else 0.0
 
         rules_data = load_rules()
         threshold = rules_data.get("confidence_threshold", 0.60)
-        is_ood = confidence < threshold
+        is_ood = (confidence / 100.0) < threshold
 
         rule_info = rules_data.get("rules", {}).get(top1_name.lower(), {})
 
         # Ghi log thống kê
-        log_scan_stat(top1_name, confidence, is_ood)
+        log_scan_stat(top1_name, confidence / 100.0, is_ood)
 
         return {
             "success": True,
             "prediction": {
                 "label": top1_name,
-                "confidence": round(confidence * 100, 2),
-                "confidence_ratio": confidence,
+                "confidence": confidence,
+                "confidence_ratio": confidence / 100.0,
                 "is_out_of_distribution": is_ood,
                 "threshold": round(threshold * 100, 1),
-                "all_probabilities": all_probs,
-                "inference_time_ms": inference_time,
+                "model_used": pred_data["model_id"],
+                "model_name": pred_data["model_name"],
+                "model_family": pred_data["model_family"],
+                "all_probabilities": pred_data["all_probabilities"],
+                "inference_time_ms": pred_data["inference_time_ms"],
                 "rule": rule_info
             }
         }
