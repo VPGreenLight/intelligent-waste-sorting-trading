@@ -95,6 +95,52 @@ class ModelManager:
             })
         return results
 
+    def get_model_details(self, model_id: str) -> Optional[Dict[str, Any]]:
+        """Trả về thông tin kỹ thuật chuyên sâu và benchmark của một mô hình cụ thể"""
+        if model_id not in self.registry:
+            return None
+        
+        info = self.registry[model_id]
+        model_path = self.models_dir / info["file"]
+        exists = model_path.exists()
+        file_size_mb = round(model_path.stat().st_size / (1024 * 1024), 2) if exists else 0.0
+
+        benchmark_map = {
+            "yolov8n": {
+                "val_accuracy": "91.2%",
+                "avg_latency_ms": 2.5,
+                "recommended_for": "Webcam, realtime video stream, edge devices"
+            },
+            "mobilenet_v3": {
+                "val_accuracy": "91.14%",
+                "avg_latency_ms": 6.8,
+                "recommended_for": "Thiết bị di động, app nhúng, máy tính cấu hình cơ bản"
+            },
+            "efficientnet_b0": {
+                "val_accuracy": "92.32%",
+                "avg_latency_ms": 14.5,
+                "recommended_for": "Ảnh rác biến dạng, góc chụp phức tạp, độ chính xác tối đa"
+            }
+        }
+
+        return {
+            "id": model_id,
+            "name": info["name"],
+            "family": info["family"],
+            "params": info["params"],
+            "description": info["description"],
+            "type": info["type"],
+            "file": info["file"],
+            "file_size_mb": file_size_mb,
+            "is_ready": exists,
+            "input_resolution": "224x224 (RGB 3-channel)",
+            "classes_count": len(CLASS_NAMES),
+            "supported_classes": CLASS_NAMES,
+            "class_display_names": DISPLAY_NAMES,
+            "hardware_device": str(DEVICE),
+            "benchmark": benchmark_map.get(model_id, {})
+        }
+
     def _get_or_load_model(self, model_id: str):
         """Lazy loading: Chỉ tải model vào RAM khi được gọi lần đầu"""
         if model_id in self._loaded_models:

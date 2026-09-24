@@ -1,0 +1,30 @@
+$kind: http-request
+name: Submit Misclassification Feedback
+url: "{{baseUrl}}/api/v1/feedback"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |+
+    {
+      "predicted_label": "plastic",
+      "user_reported_label": "paper",
+      "confidence_score": 0.58,
+      "note": "Hộp nước ép giấy nhưng AI nhận diện thành nhựa do nắp chai",
+      "image_url": ""
+    }
+order: 15000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Feedback recorded successfully", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData.success).to.be.true;
+          pm.expect(jsonData.feedback.predicted_label).to.eql("plastic");
+          pm.expect(jsonData.feedback.user_reported_label).to.eql("paper");
+      });
+    language: text/javascript

@@ -1,0 +1,19 @@
+$kind: http-request
+name: Get Inference Statistics
+url: "{{baseUrl}}/api/v1/stats"
+method: GET
+order: 17000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Inference statistics verified", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("total_scans");
+          pm.expect(jsonData).to.have.property("ood_count");
+          pm.expect(jsonData).to.have.property("avg_latency_ms");
+          pm.expect(jsonData).to.have.property("recent");
+      });
+    language: text/javascript

@@ -1,0 +1,17 @@
+$kind: http-request
+name: List Dataset Samples
+url: "{{baseUrl}}/api/v1/samples"
+method: GET
+order: 11000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Sample list contains categories", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData.total_samples).to.be.above(0);
+          pm.expect(jsonData.categories).to.include("plastic");
+      });
+    language: text/javascript

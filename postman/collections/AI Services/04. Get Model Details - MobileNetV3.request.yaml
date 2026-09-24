@@ -1,0 +1,17 @@
+$kind: http-request
+name: Get Model Details - MobileNetV3
+url: "{{baseUrl}}/api/v1/models/mobilenet_v3"
+method: GET
+order: 4000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("MobileNetV3 details verified", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData.id).to.eql("mobilenet_v3");
+          pm.expect(jsonData.is_ready).to.be.true;
+      });
+    language: text/javascript

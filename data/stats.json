@@ -1,15 +1,55 @@
 {
-  "total_scans": 47,
+  "total_scans": 53,
   "categories": {
-    "cardboard": 13,
+    "cardboard": 16,
     "metal": 1,
-    "glass": 8,
+    "glass": 9,
     "plastic": 2,
-    "paper": 9,
+    "paper": 10,
     "trash": 1
   },
-  "ood_count": 13,
+  "ood_count": 14,
   "recent": [
+    {
+      "category": "cardboard",
+      "confidence": 89.9,
+      "is_ood": false,
+      "timestamp": "10:01:42"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 78.6,
+      "is_ood": false,
+      "timestamp": "10:01:27"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 81.0,
+      "is_ood": false,
+      "timestamp": "10:00:38"
+    },
+    {
+      "category": "paper",
+      "confidence": 87.2,
+      "is_ood": false,
+      "timestamp": "09:47:16"
+    },
+    {
+      "category": "glass",
+      "confidence": 82.6,
+      "is_ood": true,
+      "model": "yolov8n",
+      "latency_ms": 62.61,
+      "timestamp": "2026-09-24 09:41:57"
+    },
+    {
+      "category": "glass",
+      "confidence": 82.6,
+      "is_ood": false,
+      "model": "yolov8n",
+      "latency_ms": 492.71,
+      "timestamp": "2026-09-24 09:41:57"
+    },
     {
       "category": "glass",
       "confidence": 96.1,
@@ -63,42 +103,7 @@
       "confidence": 83.1,
       "is_ood": false,
       "timestamp": "16:39:56"
-    },
-    {
-      "category": "trash",
-      "confidence": 88.0,
-      "is_ood": false,
-      "timestamp": "13:07:26"
-    },
-    {
-      "category": "glass",
-      "confidence": 82.6,
-      "is_ood": false,
-      "timestamp": "13:07:23"
-    },
-    {
-      "category": "glass",
-      "confidence": 91.8,
-      "is_ood": false,
-      "timestamp": "13:07:21"
-    },
-    {
-      "category": "glass",
-      "confidence": 96.1,
-      "is_ood": false,
-      "timestamp": "13:07:21"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 100.0,
-      "is_ood": false,
-      "timestamp": "13:07:19"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 83.1,
-      "is_ood": false,
-      "timestamp": "13:04:00"
     }
-  ]
+  ],
+  "avg_latency_ms": 11.33
 }

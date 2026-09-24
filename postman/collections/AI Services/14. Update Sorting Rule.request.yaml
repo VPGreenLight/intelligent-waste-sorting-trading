@@ -1,0 +1,31 @@
+$kind: http-request
+name: Update Sorting Rule
+url: "{{baseUrl}}/api/v1/rules"
+method: PUT
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |+
+    {
+      "category": "plastic",
+      "bin_color_name": "Thùng Màu Vàng / Trắng",
+      "instructions": [
+        "Tráng sạch đồ uống thừa hoặc dầu mỡ bám dính",
+        "Tháo rời nắp nhựa và nhãn mác ni-lông nếu có thể",
+        "Bóp dẹp thân chai để tiết kiệm thể tích thùng chứa"
+      ],
+      "confidence_threshold": 0.60
+    }
+order: 14000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Rules updated successfully", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData.success).to.be.true;
+      });
+    language: text/javascript

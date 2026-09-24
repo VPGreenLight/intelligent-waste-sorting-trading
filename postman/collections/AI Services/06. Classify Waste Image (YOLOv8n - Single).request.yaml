@@ -1,0 +1,31 @@
+$kind: http-request
+name: Classify Waste Image (YOLOv8n - Single)
+url: "{{baseUrl}}/api/v1/classify"
+method: POST
+body:
+  type: formdata
+  content:
+    - key: file
+      type: file
+      src: ""
+    - key: model
+      value: "yolov8n"
+      type: text
+    - key: confidence_threshold
+      value: "0.60"
+      type: text
+order: 6000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Classification succeeded", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData.success).to.be.true;
+          pm.expect(jsonData.model_used).to.eql("yolov8n");
+          pm.expect(jsonData).to.have.property("top_prediction");
+          pm.expect(jsonData.predictions.length).to.be.at.least(1);
+      });
+    language: text/javascript

@@ -1,0 +1,12 @@
+$kind: environment
+name: Local
+values:
+  - key: baseUrl
+    value: http://127.0.0.1:8000
+    enabled: true
+  - key: defaultModel
+    value: yolov8n
+    enabled: true
+  - key: defaultThreshold
+    value: "0.60"
+    enabled: true

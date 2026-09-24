@@ -1,5 +1,15 @@
 [
   {
+    "id": 3,
+    "predicted_label": "plastic",
+    "user_reported_label": "paper",
+    "confidence_score": 0.58,
+    "note": "Test feedback from automated suite",
+    "image_url": "",
+    "status": "pending_verification",
+    "created_at": "2026-09-24 09:41:57"
+  },
+  {
     "id": 2,
     "predicted_label": "cardboard",
     "corrected_label": "plastic",

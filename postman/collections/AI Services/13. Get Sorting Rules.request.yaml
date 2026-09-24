@@ -1,0 +1,18 @@
+$kind: http-request
+name: Get Sorting Rules
+url: "{{baseUrl}}/api/v1/rules"
+method: GET
+order: 13000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Sorting rules knowledge base is loaded", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("rules");
+          pm.expect(jsonData.rules).to.have.property("plastic");
+          pm.expect(jsonData.rules.plastic.bin_color_name).to.be.a("string");
+      });
+    language: text/javascript

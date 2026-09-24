@@ -1,0 +1,17 @@
+$kind: http-request
+name: Get Model Details - EfficientNet-B0
+url: "{{baseUrl}}/api/v1/models/efficientnet_b0"
+method: GET
+order: 5000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("EfficientNet-B0 details verified", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData.id).to.eql("efficientnet_b0");
+          pm.expect(jsonData.is_ready).to.be.true;
+      });
+    language: text/javascript

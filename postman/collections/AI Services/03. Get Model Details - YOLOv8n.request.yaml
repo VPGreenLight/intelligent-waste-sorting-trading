@@ -1,0 +1,18 @@
+$kind: http-request
+name: Get Model Details - YOLOv8n
+url: "{{baseUrl}}/api/v1/models/yolov8n"
+method: GET
+order: 3000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("YOLOv8n details verified", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData.id).to.eql("yolov8n");
+          pm.expect(jsonData.type).to.eql("yolo");
+          pm.expect(jsonData.is_ready).to.be.true;
+      });
+    language: text/javascript

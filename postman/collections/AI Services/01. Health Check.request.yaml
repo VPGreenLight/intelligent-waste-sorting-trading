@@ -1,0 +1,17 @@
+$kind: http-request
+name: Health Check
+url: "{{baseUrl}}/health"
+method: GET
+order: 1000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Service status is healthy", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData.status).to.eql("healthy");
+          pm.expect(jsonData.service).to.eql("EcoLink.AiService");
+      });
+    language: text/javascript

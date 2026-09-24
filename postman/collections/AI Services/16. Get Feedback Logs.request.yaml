@@ -1,0 +1,17 @@
+$kind: http-request
+name: Get Feedback Logs
+url: "{{baseUrl}}/api/v1/feedback"
+method: GET
+order: 16000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Feedback logs list returned", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData).to.have.property("feedback_logs");
+          pm.expect(jsonData.feedback_logs).to.be.an("array");
+      });
+    language: text/javascript

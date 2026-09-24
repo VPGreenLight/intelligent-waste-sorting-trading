@@ -1,0 +1,27 @@
+$kind: http-request
+name: Batch Classify Images
+url: "{{baseUrl}}/api/v1/classify/batch"
+method: POST
+body:
+  type: formdata
+  content:
+    - key: files
+      type: file
+      src: ""
+    - key: model
+      value: "yolov8n"
+      type: text
+order: 10000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      pm.test("Batch scan returns result summary", function () {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData.success).to.be.true;
+          pm.expect(jsonData).to.have.property("total_files");
+          pm.expect(jsonData).to.have.property("results");
+      });
+    language: text/javascript
