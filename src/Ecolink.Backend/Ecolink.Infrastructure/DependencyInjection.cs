@@ -22,6 +22,15 @@ public static class DependencyInjection
         services.AddSingleton<IGamificationService, GamificationService>();
         services.AddSingleton<ITradeTransactionService, TradeTransactionService>();
 
+        // Đăng ký Authentication Service
+        services.AddSingleton<IAuthService, AuthService>();
+
+        // Đăng ký Payment Service (VietQR & Webhook)
+        services.AddSingleton<IPaymentService, PaymentService>();
+
+        // Đăng ký PayOS Gateway Service (Pay-in & Pay-out)
+        services.AddSingleton<IPayOsService, PayOsService>();
+
         return services;
     }
 }
