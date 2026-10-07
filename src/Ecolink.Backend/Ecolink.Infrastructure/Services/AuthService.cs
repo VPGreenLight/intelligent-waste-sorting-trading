@@ -25,7 +25,9 @@ public class AuthService : IAuthService
     public AuthService(ILogger<AuthService> logger, IConfiguration configuration)
     {
         _logger = logger;
-        _jwtSecret = configuration["Jwt:SecretKey"] ?? "EcoLink_Super_Secret_Auth_Signing_Key_For_Demo_2026_XYZ123!";
+        _jwtSecret = configuration["JwtSettings:SecretKey"] 
+                     ?? configuration["Jwt:SecretKey"] 
+                     ?? "EcoLink_Super_Secret_Auth_Signing_Key_For_Demo_2026_XYZ123!";
 
         SeedInitialDemoUsers();
     }

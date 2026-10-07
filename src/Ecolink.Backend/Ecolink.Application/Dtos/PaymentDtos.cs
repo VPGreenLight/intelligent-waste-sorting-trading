@@ -1,19 +1,31 @@
 namespace Ecolink.Application.Dtos;
 
+public enum ServicePackageType
+{
+    VerifiedBadge, // Gói Tích xanh xác minh cơ sở uy tín
+    NoAds,         // Gói Tắt quảng cáo
+    MapBoost       // Gói Đẩy vị trí hiển thị ưu tiên trên bản đồ
+}
+
 public class CreatePayInRequest
 {
     /// <summary>
-    /// Số tiền cần nạp / thanh toán (VNĐ), ví dụ: 20000
+    /// Mã gói dịch vụ nội bộ (VERIFIED_BADGE, NO_ADS, MAP_BOOST)
     /// </summary>
-    public decimal Amount { get; set; } = 20000;
+    public string PackageCode { get; set; } = "VERIFIED_BADGE";
 
     /// <summary>
-    /// Nội dung thanh toán, ví dụ: "Thu gom phe lieu EcoLink"
+    /// Số tiền cần thanh toán (VNĐ)
     /// </summary>
-    public string Description { get; set; } = "Thanh toan phe lieu EcoLink";
+    public decimal Amount { get; set; } = 50000;
 
     /// <summary>
-    /// ID người dùng hoặc đối tác vựa thu gom (tùy chọn)
+    /// Nội dung thanh toán
+    /// </summary>
+    public string Description { get; set; } = "Thanh toan goi Tich Xanh EcoLink";
+
+    /// <summary>
+    /// ID tài khoản User hoặc Recycler đăng ký mua gói
     /// </summary>
     public Guid? UserId { get; set; }
 }
@@ -38,31 +50,11 @@ public class PayInOrderDto
 
 public class VietQrWebhookPayload
 {
-    /// <summary>
-    /// Mã đơn hàng hoặc mã giao dịch phía EcoLink
-    /// </summary>
     public string? OrderCode { get; set; }
-
-    /// <summary>
-    /// Số tiền thực nhận qua ngân hàng
-    /// </summary>
     public decimal Amount { get; set; }
-
-    /// <summary>
-    /// Nội dung tin nhắn biến động số dư hoặc ghi chú
-    /// </summary>
     public string? Description { get; set; }
-
-    /// <summary>
-    /// Mã giao dịch tham chiếu từ phía ngân hàng (FT number)
-    /// </summary>
     public string? Reference { get; set; }
-
     public string? TransactionDateTime { get; set; }
-
-    /// <summary>
-    /// Chữ ký bảo mật từ cổng thanh toán (HMAC-SHA256)
-    /// </summary>
     public string? Signature { get; set; }
 }
 
@@ -72,5 +64,5 @@ public class WebhookResponseDto
     public string Message { get; set; } = string.Empty;
     public string? OrderCode { get; set; }
     public decimal Amount { get; set; }
-    public string? Status { get; set; }
+    public string Status { get; set; } = string.Empty;
 }

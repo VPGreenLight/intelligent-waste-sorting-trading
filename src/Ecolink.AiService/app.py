@@ -153,6 +153,8 @@ class AiScanResponse(BaseModel):
     predictions: List[WastePrediction] = Field(default=[], description="Top-3 kết quả có độ tin cậy cao nhất")
     all_probabilities: List[WastePrediction] = Field(default=[], description="Phân phối xác suất toàn bộ 6 lớp rác")
     sorting_rule: Optional[Dict[str, Any]] = Field(None, description="Quy tắc phân loại và hướng dẫn xử lý tĩnh")
+    pipeline: Optional[str] = Field("two_stage", description="Phương thức suy luận (two_stage_crop_classified, object_detection hoặc single_stage)")
+    cropped_bbox: Optional[List[float]] = Field(None, description="Tọa độ khung chữ nhật được crop loại bỏ phông nền [x1, y1, x2, y2]")
     inference_time_ms: float = Field(..., example=12.4, description="Thời gian suy luận mô hình (mili-giây)")
 
 class BatchScanItem(BaseModel):
@@ -169,6 +171,21 @@ class BatchScanResponse(BaseModel):
     total_inference_time_ms: float
     avg_inference_time_ms: float
     results: List[BatchScanItem]
+
+class DetectedItem(BaseModel):
+    raw_class: str = Field(..., example="plastic", description="Nhãn nhận diện từ mô hình Object Detection")
+    category: str = Field(..., example="plastic", description="Nhóm phân loại rác EcoLink")
+    display_name: str = Field(..., example="Nhựa tái chế (Plastic)", description="Tên tiếng Việt")
+    confidence: float = Field(..., example=0.942, description="Độ tự tin phát hiện")
+    bbox: List[float] = Field(..., example=[120.5, 450.2, 640.0, 2400.0], description="Tọa độ khung [x1, y1, x2, y2]")
+
+class WasteDetectionResponse(BaseModel):
+    success: bool = Field(True, description="Trạng thái thực thi")
+    total_items: int = Field(..., example=4, description="Tổng số lượng món rác được phát hiện trong ảnh")
+    category_summary: Dict[str, int] = Field(..., example={"plastic": 4}, description="Thống kê số lượng theo từng loại rác")
+    detected_objects: List[DetectedItem] = Field(..., description="Chi tiết tọa độ và loại của từng món rác")
+    annotated_image_base64: Optional[str] = Field(None, description="Hình ảnh đã vẽ Bounding Box trực quan (chuỗi Base64 Data URL)")
+    inference_time_ms: float = Field(..., example=12.5, description="Thời gian suy luận (ms)")
 
 class FeedbackCreateRequest(BaseModel):
     predicted_label: str = Field(..., example="plastic")
@@ -232,7 +249,8 @@ def get_model_details(model_id: str):
 @app.post("/api/v1/classify", response_model=AiScanResponse, tags=["3. Waste Classification"])
 async def classify_waste_image(
     file: UploadFile = File(..., description="Tập tin hình ảnh rác cần phân loại (jpg, png, webp)"),
-    model: str = Form("yolov8n", description="Mô hình AI: yolov8n, mobilenet_v3, efficientnet_b0"),
+    model: str = Form("yolov8_detect", description="Mô hình AI: yolov8_detect (Khuyên dùng - Object Detection), yolov8n, mobilenet_v3, efficientnet_b0"),
+    use_detection_crop: bool = Form(True, description="Tự động khoanh vùng vật thể & lọc bỏ phông nền nhiễu trước khi phân loại (Two-Stage)"),
     confidence_threshold: Optional[float] = Form(None, description="Ngưỡng tin cậy OOD (Mặc định 0.60)")
 ):
     """
@@ -260,9 +278,9 @@ async def classify_waste_image(
     rules_data = load_rules_data()
     threshold = confidence_threshold if confidence_threshold is not None else rules_data.get("confidence_threshold", DEFAULT_THRESHOLD)
 
-    # Thực hiện suy luận
+    # Thực hiện suy luận (Hỗ trợ Two-Stage Crop)
     try:
-        pred_result = model_manager.predict(pil_image, model_id=model)
+        pred_result = model_manager.predict(pil_image, model_id=model, use_detection_crop=use_detection_crop)
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -302,8 +320,47 @@ async def classify_waste_image(
         predictions=predictions_dto,
         all_probabilities=all_probs_dto,
         sorting_rule=rule_info,
+        pipeline=pred_result.get("pipeline", "two_stage"),
+        cropped_bbox=pred_result.get("cropped_bbox"),
         inference_time_ms=pred_result["inference_time_ms"]
     )
+
+
+@app.post("/api/v1/detect", response_model=WasteDetectionResponse, tags=["3. Waste Classification"])
+async def detect_waste_objects(
+    file: UploadFile = File(..., description="Tập tin hình ảnh rác cần khoanh vùng và nhận diện (jpg, png, webp)"),
+    confidence_threshold: float = Form(0.25, description="Ngưỡng tin cậy phát hiện vật thể (Mặc định 0.25)")
+):
+    """
+    Nhận diện và định vị từng món rác thải bằng YOLOv8 Object Detection (Cách 2):
+    - Tự động vẽ Bounding Box ôm sát từng chai, lon, hộp, giấy.
+    - Loại bỏ 100% phông nền gây nhiễu (màn hình, bàn phím, bàn làm việc).
+    - Đếm số lượng từng loại rác trong ảnh.
+    - Trả về hình ảnh đã vẽ khung chữ nhật (Base64 JPEG) để hiển thị giao diện.
+    """
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tập tin tải lên phải là hình ảnh hợp lệ (jpg, png, webp)."
+        )
+
+    try:
+        contents = await file.read()
+        pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Không thể đọc file hình ảnh: {str(e)}"
+        )
+
+    try:
+        result = model_manager.detect_objects(pil_image, conf_threshold=confidence_threshold)
+        return WasteDetectionResponse(**result)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Lỗi trong quá trình nhận diện Object Detection: {str(e)}"
+        )
 
 
 @app.post("/api/v1/classify/batch", response_model=BatchScanResponse, tags=["3. Waste Classification"])

@@ -20,7 +20,7 @@ public class AiVisionHttpClient : IAiVisionClient
         _aiServiceBaseUrl = configuration["AiService:BaseUrl"] ?? "http://localhost:8000";
     }
 
-    public async Task<AiScanResultDto> ClassifyWasteImageAsync(Stream imageStream, string fileName, CancellationToken cancellationToken = default)
+    public async Task<AiScanResultDto> ClassifyWasteImageAsync(Stream imageStream, string fileName, string? model = "yolov8_detect", CancellationToken cancellationToken = default)
     {
         try
         {
@@ -29,8 +29,13 @@ public class AiVisionHttpClient : IAiVisionClient
             streamContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
             content.Add(streamContent, "file", fileName);
 
+            if (!string.IsNullOrWhiteSpace(model))
+            {
+                content.Add(new StringContent(model), "model");
+            }
+
             var endpoint = $"{_aiServiceBaseUrl.TrimEnd('/')}/api/v1/classify";
-            _logger.LogInformation("Gửi ảnh phân tích tới AI Vision Service tại: {Endpoint}", endpoint);
+            _logger.LogInformation("Gửi ảnh phân tích tới AI Vision Service với Model '{Model}' tại: {Endpoint}", model, endpoint);
 
             var response = await _httpClient.PostAsync(endpoint, content, cancellationToken);
             if (!response.IsSuccessStatusCode)
@@ -65,6 +70,27 @@ public class AiVisionHttpClient : IAiVisionClient
                     Confidence = 0
                 }
             };
+        }
+    }
+
+    public async Task<object?> GetAvailableModelsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var endpoint = $"{_aiServiceBaseUrl.TrimEnd('/')}/api/v1/models";
+            var response = await _httpClient.GetAsync(endpoint, cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var jsonString = await response.Content.ReadAsStringAsync(cancellationToken);
+            return JsonSerializer.Deserialize<object>(jsonString);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Lỗi lấy danh sách mô hình từ AI Vision Service");
+            return null;
         }
     }
 }

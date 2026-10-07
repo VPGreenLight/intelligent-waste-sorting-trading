@@ -1,4 +1,638 @@
-# **Báo Cáo Khảo Sát & UC**
+**Hệ thống nhận diện loại rác và hướng dẫn phân loại** 
+
+# **1\. Tên đề tài**
+
+### Tiếng Việt: **Hệ thống nhận diện và hỗ trợ phân loại rác bằng hình ảnh**
+
+### Tiếng Anh: **Image-Based Waste Classification and Sorting Guidance System**
+
+# **2\. Lý do chọn đề tài**
+
+Việc phân loại rác tại nguồn thường gặp một vấn đề khá đơn giản nhưng thực tế:
+
+> **Người dùng không chắc một loại rác nên được bỏ vào đâu.**
+
+Ví dụ:
+
+* chai nhựa → thùng nhựa?  
+* hộp xốp → rác tái chế hay rác khác?  
+* lon nước → kim loại?  
+* hộp giấy có dính thức ăn → giấy hay rác khác?  
+* pin → không được bỏ chung với rác thông thường.
+
+Nếu chỉ có các thùng:
+
+> **Hữu cơ | Tái chế | Khác**
+
+thì người dùng vẫn phải tự quyết định.
+
+Đề tài xây dựng một hệ thống giúp:
+
+> **chụp/upload ảnh rác → hệ thống nhận diện → đưa ra hướng dẫn phân loại.**
+
+# **3\. Vấn đề mà hệ thống giải quyết**
+
+**Làm thế nào để hỗ trợ người dùng xác định loại rác từ hình ảnh và lựa chọn phương án phân loại phù hợp?**
+
+Có 2 vấn đề chính.
+
+### **Vấn đề 1 — Không biết rác thuộc loại nào**
+
+Người dùng nhìn một vật thể và không biết:
+
+> Đây là nhựa, giấy, kim loại hay rác khác?
+
+### **Vấn đề 2 — Biết vật thể nhưng không biết xử lý thế nào**
+
+Ví dụ:
+
+> “Đây là chai nhựa.”
+
+nhưng vẫn cần biết:
+
+> Có cần rửa không? Có thể tái chế không? Bỏ vào thùng nào?
+
+Do đó hệ thống không chỉ **nhận diện**, mà còn có phần **hướng dẫn phân loại**.
+
+# **4\. Ý tưởng sản phẩm**
+
+Workflow chính:
+
+Người dùng  
+    ↓  
+Upload / chụp ảnh  
+    ↓  
+AI phân tích hình ảnh  
+    ↓  
+Nhận diện loại rác  
+    ↓  
+Tra cứu quy tắc phân loại  
+    ↓  
+Hướng dẫn xử lý
+
+**Ví dụ:**
+
+> Người dùng chụp một chai nước.
+
+Hệ thống trả:
+
+Loại vật thể: Chai nhựa  
+Nhóm: Nhựa  
+Khả năng tái chế: Có  
+Hướng dẫn:  
+1\. Đổ hết chất lỏng  
+2\. Rửa sạch  
+3\. Bỏ vào thùng rác tái chế
+
+# **5\. Actor**
+
+## **User**
+
+Có thể:
+
+* nhận diện rác  
+* xem hướng dẫn  
+* tìm kiếm loại rác  
+* xem lịch sử  
+* báo cáo kết quả nhận diện sai.
+
+## **Admin**
+
+Có thể:
+
+* quản lý loại rác  
+* quản lý hướng dẫn  
+* quản lý dữ liệu  
+* xem thống kê  
+* xử lý báo cáo.
+
+# **6\. Chức năng chính**
+
+## **Module 1 — Đăng ký / đăng nhập**
+
+User:
+
+* Register  
+* Login  
+* Logout  
+* Profile.
+
+# **Module 2 — Nhận diện rác bằng hình ảnh**
+
+Đây là **chức năng AI trung tâm**.
+
+### **Input**
+
+Người dùng:
+
+> Upload ảnh.
+
+**Ví dụ:**
+
+\[Ảnh chai nhựa\]
+
+### **AI xử lý**
+
+Model phân tích hình ảnh.
+
+### **Output**
+
+Kết quả nhận diện
+
+Chai nhựa
+
+Độ tin cậy:  
+94%
+
+Có thể trả về top-3:
+
+1\. Plastic bottle   94%  
+2\. Glass bottle      4%  
+3\. Other             2%
+
+# **Module 3 — Hướng dẫn phân loại**
+
+Sau khi AI nhận diện: Plastic Bottle
+
+hệ thống **không để AI tự viết hướng dẫn**.
+
+Thay vào đó:
+
+AI  
+ ↓  
+Loại rác  
+ ↓  
+Database quy tắc  
+ ↓  
+Hướng dẫn
+
+**Ví dụ:**
+
+Plastic Bottle  
+Category: Recyclable  
+Bin: Recycling  
+Instructions:  
+✓ Empty liquid  
+✓ Rinse if necessary  
+✓ Put into recycling bin
+
+Điều này giúp hệ thống ổn định hơn.
+
+# **Đây là điểm rất quan trọng về mặt thiết kế AI**
+
+Không nên để ChatGPT/LLM quyết định: “Vật này phải bỏ vào thùng nào.”
+
+Vì quy định phân loại rác có thể thay đổi theo:
+
+* địa phương  
+* đơn vị xử lý  
+* loại rác  
+* chính sách.
+
+Tốt hơn là:
+
+### **AI làm:**
+
+> **Image → Object/Waste Category**
+
+### **Database/Rule Engine làm:**
+
+> **Waste Category → Disposal Instruction**
+
+Kiến trúc:
+
+                Image  
+                   ↓  
+             Vision Model  
+                   ↓  
+          "Plastic Bottle"  
+                   ↓  
+             Rule Database  
+                   ↓  
+        Sorting Recommendation
+
+Như vậy AI chỉ giải quyết **bài toán nhận diện**, còn phần hướng dẫn có thể kiểm soát được.
+
+# **Module 4 — Tìm kiếm loại rác**
+
+Ngoài camera/image, người dùng có thể tìm:
+
+"pin"
+
+hoặc:
+
+"chai nhựa"
+
+Hệ thống trả:
+
+Tên:  
+Chai nhựa PET  
+Nhóm: Nhựa tái chế
+
+Thùng: Recycling
+
+Hướng dẫn:  
+...
+
+Điều này rất hữu ích khi người dùng **không có ảnh**.
+
+# **Module 5 — Chi tiết loại rác**
+
+Mỗi loại rác có một trang riêng.
+
+Ví dụ:
+
+## **Chai nhựa**
+
+Category: Plastic  
+Recyclable: Yes  
+Bin: Recycling
+
+### **Hướng dẫn**
+
+1\. Đổ chất lỏng  
+2\. Làm sạch  
+3\. Tháo phần không cần thiết nếu có  
+4\. Đưa vào thùng tái chế
+
+### **Lưu ý:** Không bỏ chai còn chứa chất lỏng.
+
+# **Module 6 — Lịch sử nhận diện**
+
+User có thể xem:
+
+Lịch sử  
+10/09  
+Plastic Bottle  
+94%
+
+09/09  
+Aluminum Can  
+91%
+
+08/09  
+Cardboard  
+96%
+
+Click vào từng kết quả để xem lại hướng dẫn.
+
+# **Module 7 — Báo cáo kết quả sai**
+
+Đây là chức năng tôi khuyên **nên có**.
+
+Ví dụ AI nhận:
+
+> Plastic Bottle — 89%
+
+nhưng thực tế là:
+
+> Glass Bottle.
+
+User có thể chọn:
+
+\[Report incorrect result\]
+
+và chọn:
+
+Correct category:  
+Glass
+
+Sau đó:
+
+AI Result:  
+Plastic
+
+User Feedback:  
+Glass
+
+Admin có thể kiểm tra.
+
+# **Module 8 — Dashboard Admin**
+
+Admin có thể xem:
+
+Total analyses: 2,350
+
+Plastic: 920  
+Paper: 540  
+Metal: 380  
+Glass: 270  
+Other: 240
+
+Có thể thống kê:
+
+* loại rác phổ biến  
+* số lượt nhận diện  
+* tỷ lệ kết quả bị báo sai  
+* loại rác AI nhận diện kém.
+
+**Ví dụ:**
+
+Recognition Accuracy  
+Plastic       94%  
+Paper         91%  
+Metal         96%  
+Glass         88%  
+Other         72%
+
+Điều này rất hữu ích cho phần đánh giá đồ án.
+
+# **7\. AI nên sử dụng thế nào?**
+
+**Không nên tự xây model Computer Vision từ đầu**.
+
+Có thể sử dụng:
+
+* MobileNet  
+* ResNet  
+* EfficientNet  
+* YOLO nếu muốn detection  
+* hoặc các pretrained vision model phù hợp.
+
+Sau đó fine-tune trên dataset nhỏ.
+
+Pipeline:
+
+Image  
+ ↓  
+Preprocessing  
+ ↓  
+Pretrained Model  
+ ↓  
+Classification  
+ ↓  
+Waste Category
+
+# **8\. Phân loại ở mức nào?**
+
+### **Không nên:**
+
+> Nhận diện tất cả mọi loại rác.
+
+Phạm vi quá lớn.
+
+### **Nên giới hạn:**
+
+Ví dụ **8–12 loại**:
+
+1\. Plastic bottle  
+2\. Plastic container  
+3\. Paper  
+4\. Cardboard  
+5\. Glass bottle  
+6\. Aluminum can  
+7\. Food waste  
+8\. Battery  
+9\. Electronic waste  
+10\. Other
+
+Thậm chí **5–7 nhóm rác** là đủ.
+
+# **9\. Dataset**
+
+Có thể sử dụng dataset công khai về waste classification làm nền tảng.
+
+Sau đó nhóm có thể bổ sung một dataset nhỏ của riêng mình.
+
+**Ví dụ:**
+
+Plastic Bottle     	500 images  
+Paper               	500  
+Cardboard           	400  
+Glass               	400  
+Metal               	400  
+Food                	400  
+Other               	500
+
+Tổng khoảng:
+
+> 3.000–4.000 ảnh
+
+đã có thể đủ cho một đồ án nếu sử dụng transfer learning và phạm vi được kiểm soát.
+
+# **10\. Đánh giá AI**
+
+Không thể chỉ nói:
+
+> “Model nhận diện được.”
+
+Cần có đánh giá.
+
+Có thể dùng:
+
+* Accuracy  
+* Precision  
+* Recall  
+* F1-score  
+* Confusion Matrix.
+
+**Ví dụ:**
+
+Accuracy: 91.5%  
+Precision: 90.8%  
+Recall: 89.7%  
+F1-score: 90.2%
+
+# **11\. Có thể so sánh nhiều model**
+
+Đây là một phần khá đẹp trong báo cáo.
+
+Ví dụ:
+
+| Model | Accuracy | F1 |
+| ----- | ----- | ----- |
+| MobileNet | 88.2% | 87.6% |
+| ResNet | 91.4% | 90.8% |
+| EfficientNet | 93.1% | 92.7% |
+
+Sau đó chọn model tốt nhất để tích hợp vào hệ thống.
+
+Sinh viên vừa có: **nghiên cứu AI**
+
+vừa có: **phát triển Web Application**.
+
+# **12\. Một vấn đề kỹ thuật thực tế**
+
+Không phải ảnh nào cũng rõ.
+
+Ví dụ:
+
+Ảnh 1:  
+chai nhựa rõ  
+→ 96%
+
+nhưng:
+
+Ảnh 2:  
+chai bị che một phần  
+→ 61%
+
+hoặc:
+
+Ảnh 3:  
+nhiều vật thể cùng lúc  
+→ 43%
+
+Do đó hệ thống nên có:
+
+Confidence \< 60%  
+        ↓  
+Không chắc chắn  
+        ↓  
+"Vui lòng chụp lại ảnh rõ hơn"
+
+Đây là một chức năng nhỏ nhưng rất hợp lý.
+
+# **13\. Những chức năng KHÔNG nên làm**
+
+Để tránh vượt quá khả năng nhóm, tôi sẽ bỏ:
+
+ \- nhận diện mọi loại rác  
+ \- tự động điều khiển robot phân loại rác  
+ \- camera realtime phức tạp  
+ \-  IoT sensor  
+ \- tự động phân loại vật lý  
+ \- dự đoán tác động môi trường phức tạp  
+ \- tích hợp hệ thống thu gom rác thành phố  
+ \- chatbot về môi trường.
+
+Đây là **web \+ image classification \+ sorting guidance** là đủ.
+
+# **14\. MVP**
+
+### **User**
+
+1. Register/Login  
+2. Upload image  
+3. Nhận diện rác  
+4. Xem confidence  
+5. Xem hướng dẫn  
+6. Tìm kiếm loại rác  
+7. Xem lịch sử  
+8. Báo cáo kết quả sai
+
+### **AI**
+
+1. Dataset  
+2. Preprocessing  
+3. Transfer learning  
+4. Classification  
+5. Evaluation  
+6. Model deployment
+
+### **Admin**
+
+1. Quản lý loại rác  
+2. Quản lý hướng dẫn  
+3. Xem feedback  
+4. Dashboard.
+
+# **15\. Tiến độ 4 tháng**
+
+### **Tháng 1 — Phân tích \+ dữ liệu**
+
+* Requirement  
+* UI/UX  
+* Database  
+* Dataset  
+* Data preprocessing  
+* Baseline model.
+
+### **Tháng 2 — Xây Web**
+
+* Authentication  
+* Waste category  
+* Upload image  
+* Search  
+* Admin.
+
+### **Tháng 3 — AI**
+
+* Fine-tuning  
+* Model evaluation  
+* Model comparison  
+* API AI  
+* Integration.
+
+### **Tháng 4 — Hoàn thiện**
+
+* Sorting guide  
+* History  
+* Feedback  
+* Dashboard  
+* Testing  
+* Deployment  
+* Report.
+
+# **16\. Điểm mạnh của đề tài**
+
+Đề tài này có một ưu điểm rất rõ:
+
+> **AI có nhiệm vụ cụ thể và nhìn thấy được.**
+
+Người dùng:
+
+**Ảnh rác**
+
+↓
+
+**AI nhận diện**
+
+↓
+
+**Loại rác**
+
+↓
+
+**Hướng dẫn**
+
+↓
+
+**Hành động**
+
+Ví dụ demo chỉ cần vài giây:
+
+> 📷 Chụp chai nhựa  
+>  ↓  
+>  🧠 Plastic Bottle — 94%  
+>  ↓  
+>  ♻️ Recyclable  
+>  ↓  
+>  “Đổ hết nước → làm sạch → bỏ vào thùng tái chế”
+
+Rất dễ trình bày trước hội đồng.
+
+# **17\. Một điểm cần đặc biệt lưu ý**
+
+Nếu chỉ làm:
+
+> **Ảnh → Plastic / Paper / Metal**
+
+thì **đề tài hơi đơn giản và dễ bị đánh giá là “train một model rồi làm giao diện”.**
+
+Để thành **đồ án CNTT hoàn chỉnh**, nên giữ cấu trúc:
+
+> **Recognition \+ Knowledge Base \+ User Workflow**
+
+Tức là:
+
+                IMAGE  
+                   ↓  
+              AI CLASSIFIER  
+                   ↓  
+             WASTE CATEGORY  
+                   ↓  
+          ┌─────────────────┐  
+          │ Knowledge Base  │  
+          └─────────────────┘  
+                   ↓  
+        Sorting Instructions  
+                   ↓  
+         User Decision / Action  
+                   ↓  
+              Feedback
+
+Phần **Knowledge Base \+ hướng dẫn \+ feedback \+ lịch sử \+ admin** chính là thứ biến nó từ một bài toán AI đơn lẻ thành **một sản phẩm web hoàn chỉnh**.
 
 # **Báo cáo Khảo sát AI & Danh sách Usecase: Hệ thống hỗ trợ phân loại và kết nối thu mua rác thải tái chế thông minh**
 
@@ -6,8 +640,7 @@
 
 ### **1.1. Hướng nghiên cứu AI liên quan đã có chưa?**
 
-Việc ứng dụng Thị giác máy tính (Computer Vision) để phân loại rác (Waste Classification) là một hướng nghiên cứu đã có nền tảng rất vững chắc từ năm 2016 đến nay . Quá trình phát triển đã trải qua nhiều giai đoạn, từ Machine Learning cổ điển (SIFT/HOG \+ SVM), qua Học chuyển giao (Transfer Learning với ResNet/AlexNet), và hiện tại đã đạt hiệu suất rất cao bằng các mô hình phát hiện (Detection) và Transformer tiên tiến .
-
+Việc ứng dụng Thị giác máy tính (Computer Vision) để phân loại rác (Waste Classification) là một hướng nghiên cứu đã có nền tảng rất vững chắc từ năm 2016 đến nay . Quá trình phát triển đã trải qua nhiều giai đoạn, từ Machine Learning cổ điển (SIFT/HOG \+ SVM), qua Học chuyển giao (Transfer Learning với ResNet/AlexNet), và hiện tại đã đạt hiệu suất rất cao bằng các mô hình phát hiện (Detection) và Transformer tiên tiến .  
 **Các công trình và sản phẩm tiêu biểu:**
 
 > * **Học thuật:** Các nghiên cứu nổi bật như TrashNet (Yang & Thung, 2016\) đã chứng minh sức mạnh của Transfer Learning. Các nghiên cứu sau đó như TACO (2020) hay ZeroWaste (2022) tiếp tục giải quyết bài toán phức tạp hơn trong thực tế như nhận diện rác bị che khuất, biến dạng, trên đường phố hay băng chuyền công nghiệp .  
@@ -15,10 +648,8 @@ Việc ứng dụng Thị giác máy tính (Computer Vision) để phân loại 
 
 ### **1.2. Cách thức xử lý hiện tại như thế nào?**
 
-Các hệ thống hiện tại chủ yếu sử dụng kiến trúc Mạng nơ-ron tích chập (CNN) kết hợp kỹ thuật **Học chuyển giao (Transfer Learning)** trên các mô hình đã huấn luyện trước (Pretrained Models) thay vì huấn luyện từ đầu .
-
-**Lựa chọn Mô hình (Model Selection):**
-
+Các hệ thống hiện tại chủ yếu sử dụng kiến trúc Mạng nơ-ron tích chập (CNN) kết hợp kỹ thuật **Học chuyển giao (Transfer Learning)** trên các mô hình đã huấn luyện trước (Pretrained Models) thay vì huấn luyện từ đầu .  
+**Lựa chọn Mô hình (Model Selection):**  
 Việc lựa chọn mô hình cần cân bằng giữa độ chính xác và tài nguyên xử lý. Các kiến trúc CNN phổ biến được so sánh :
 
 > * **ResNet-50:** Mô hình tiêu chuẩn, giải quyết được bài toán Vanishing Gradient nhờ kiến trúc Residual Block .  
@@ -41,69 +672,15 @@ Việc lựa chọn mô hình cần cân bằng giữa độ chính xác và tà
 > * **Đánh giá toàn diện:** Không chỉ dùng Accuracy, việc đánh giá mô hình phải dựa trên F1-score, Precision, Recall và đặc biệt là Ma trận nhầm lẫn (Confusion Matrix) để phân tích chi tiết xem mô hình hay nhầm lẫn giữa các loại rác nào (ví dụ: giấy phẳng vs. bìa carton) .  
 > * **Giải pháp Offline Demo:** Mặc dù hệ thống chính gọi API Model Online, nhưng để phòng trường hợp rủi ro mạng khi demo, nhóm nên chuẩn bị một phiên bản **Model chạy Offline**. Giải pháp lý tưởng là sử dụng **MobileNet hoặc YOLO nhẹ** đã được convert sang định dạng TensorFlow.js (để chạy trực tiếp trên trình duyệt) hoặc tflite (nếu demo bằng app di động/desktop). Mô hình này sẽ được nạp sẵn vào bundle của ứng dụng, đảm bảo tính năng nhận diện cốt lõi vẫn hoạt động mượt mà không cần internet.
 
-&nbsp;
-
-## **2\. Tổng hợp chi tiết danh sách dự kiến các Medium Usecase**
-
-Tập trung vào luồng giá trị: **Nhận diện → Hướng dẫn phân loại → Kết nối thu mua/Bàn giao → Tích điểm & Đánh giá**&nbsp;
-
-Dưới đây là danh sách 24 Usecase Medium dự kiến, phân bổ cho 3 nhóm Actor: User, Admin và Đối tác Thu mua.
-
-| STT | Tên Usecase (Chức năng) | Actor (Tác nhân) | Mô tả chi tiết luồng xử lý&nbsp;&nbsp; |
-| :---- | :---- | :---- | :---- |
-| **Nhóm 1: Nhận diện & Hướng dẫn (AI & Knowledge Base)** |  |  |  |
-| 1 | **Nhận diện rác qua ảnh** | User | Gửi ảnh lên hệ thống. AI xử lý, kiểm tra độ tin cậy và trả về Top-3 dự đoán. Nếu độ tin cậy thấp, yêu cầu User chụp lại hoặc chọn thủ công. |
-| 2 | **Tra cứu hướng dẫn theo quy tắc (Rule Engine)** | User | Từ kết quả nhận diện, hệ thống ánh xạ loại rác với chính sách đang áp dụng tại khu vực để xuất ra hướng dẫn chi tiết (rửa sạch, tháo nhãn, bỏ đúng thùng). |
-| 3 | **Tìm kiếm & Xem chi tiết loại rác** | User | Tra cứu bằng từ khóa văn bản khi không có ảnh. Hệ thống trả về chi tiết thông tin, mức độ độc hại và quy tắc xử lý tương ứng. |
-| 4 | **Báo cáo AI nhận diện sai (Feedback)** | User | Gửi báo cáo khi AI dự đoán sai, cung cấp nhãn đúng (Correct Label) để hỗ trợ quá trình cải thiện Dataset và Model sau này. |
-| **Nhóm 2: Kết nối Thu mua & Bàn giao** |  |  |  |
-| 5 | **Tìm điểm thu mua phù hợp theo vị trí (GPS)** | User | Lọc và sắp xếp các cơ sở thu mua gần nhất có tiếp nhận loại vật liệu vừa được nhận diện, ưu tiên các điểm đang mở cửa. |
-| 6 | **Công bố danh mục & điều kiện tiếp nhận** | Đối tác | Cơ sở thu mua thiết lập danh sách các loại rác chấp nhận, giá tham khảo, số lượng tối thiểu và khung giờ hoạt động để hiển thị trên bản đồ. |
-| 7 | **Tạo yêu cầu bàn giao rác** | User | Khai báo khối lượng ước tính và chọn thời gian dự kiến mang rác đến cơ sở đã chọn. |
-| 8 | **Tiếp nhận/Từ chối yêu cầu bàn giao** | Đối tác | Xem danh sách yêu cầu chờ xử lý, chấp nhận hoặc từ chối (có lý do) dựa trên khả năng tiếp nhận thực tế của cơ sở. |
-| 9 | **Xác nhận Biên nhận bàn giao (QR Scan)** | Cả hai | Đối tác nhập khối lượng thực nhận, đơn giá và quét mã QR của User để tạo biên nhận. User kiểm tra trên app, nếu đồng ý thì hệ thống chốt giao dịch. |
-| **Nhóm 3: Tích điểm, Đổi thưởng & Gamification** |  |  |  |
-| 10 | **Xử lý cấp điểm thưởng giao dịch** | System | Dựa trên biên nhận hoàn tất, hệ thống tự động cộng điểm "đóng góp xanh" (hoặc Mầm cây) cho User, độc lập với tiền thanh toán mua bán vật liệu. |
-| 11 | **Đổi điểm lấy quà/voucher** | User | Kiểm tra số dư điểm, đối chiếu kho quà tặng và thực hiện trừ điểm để nhận mã ưu đãi. |
-| 12 | **Quản lý Cây ảo & Mở khóa Eco Fact** | User | Dùng "Mầm cây" kiếm được để nâng cấp "Cây ảo". Khi đạt cấp độ nhất định, hệ thống tự động mở khóa các kiến thức môi trường (Eco Fact). |
-| 13 | **Đánh giá Đối tác sau bàn giao** | User | Chỉ khi có giao dịch hoàn tất, User mới được đánh giá (sao & nhận xét) về tính minh bạch, thái độ và giá cả của cơ sở thu mua. |
-| **Nhóm 4: Quản trị Hệ thống & Dữ liệu (Admin)** |  |  |  |
-| 14 | **Quản lý Danh mục Rác & Hướng dẫn** | Admin | Thêm, sửa, gom nhóm các loại rác (Waste Category) và cập nhật nội dung hướng dẫn tĩnh để đảm bảo dữ liệu Knowledge Base chính xác. |
-| 15 | **Thiết lập Chính sách Phân loại (Sorting Policy)** | Admin | Tạo và cấu hình các quy tắc xử lý (Rule) linh hoạt thay đổi theo từng khu vực địa lý hoặc theo tổ chức cụ thể. |
-| 16 | **Thẩm định Hồ sơ Đối tác Thu mua** | Admin | Kiểm tra thông tin đăng ký của cơ sở (người thu mua cá nhân hoặc cửa hàng), phê duyệt để cấp quyền xuất hiện trên bản đồ tìm kiếm. |
-| 17 | **Xử lý Feedback Báo cáo Nhận diện Sai** | Admin | Review hình ảnh bị nhận diện sai do User gửi, xác nhận nhãn chuẩn (Correct Label) để đưa vào tập dữ liệu chờ duyệt. |
-| 18 | **Quản lý Tập dữ liệu Kiểm chứng (Curate Verified Dataset)** | Admin | Chuyển các ảnh phản hồi đã xác minh thành mẫu dữ liệu sạch, bổ sung vào Dataset Version để chuẩn bị huấn luyện lại mô hình. |
-| 19 | **Quản lý Vòng đời Mô hình AI (Model Lifecycle)** | Admin | Lưu vết các phiên bản mô hình, đánh giá chỉ số (Accuracy, F1-score), so sánh hiệu suất và kích hoạt (Deploy) phiên bản tốt nhất ra môi trường Production. |
-| 20 | **Thiết lập Cấu hình Gamification & Phần thưởng** | Admin | Định nghĩa mức quy đổi vật liệu ra điểm, cấu hình ngân sách quà tặng, số điểm cần để nâng cấp cây và quản lý ngân hàng câu hỏi Eco Fact. |
-| 21 | **Giải quyết Khiếu nại Giao dịch** | Admin | Tiếp nhận tranh chấp giữa User và Đối tác về khối lượng/giá cả, đối chiếu chứng từ biên nhận để ra quyết định điều chỉnh lịch sử điểm. |
-| 22 | **Xem Thống kê Hệ thống (Dashboard Analytics)** | Admin | Theo dõi tỷ lệ phân loại thành công, đo lường độ chính xác của AI theo từng nhóm rác, và thống kê tổng lượng thu gom từ các đối tác. |
-| 23 | **Quản lý Bảng xếp hạng Đóng góp (Leaderboard)** | Admin | Hệ thống tự động tính toán tổng khối lượng đóng góp hợp lệ theo kỳ (tháng/quý) để xếp hạng User và xếp hạng Chất lượng/Khối lượng cho Đối tác. |
-| 24 | **Xuất Báo cáo Dữ liệu (Export Report)** | Admin | Trích xuất các báo cáo dưới dạng Excel/CSV về hoạt động thu gom, dữ liệu nhận diện sai phục vụ cho việc nộp báo cáo đồ án và đánh giá dự án. |
-
-&nbsp;
-
-# **Link Tài liệu tìm hiểu và Demo**
-
 # **Tài Liệu Tham Khảo**
 
-[Intelligent Waste Classification System Using Deep Learning Convolutional Neural Network](https://drive.google.com/file/d/1CZQ1LoDOYVzYbhA31zLQ4c9SgUm6YKhr/view?usp=sharing)
-
+[Intelligent Waste Classification System Using Deep Learning Convolutional Neural Network](https://drive.google.com/file/d/1CZQ1LoDOYVzYbhA31zLQ4c9SgUm6YKhr/view?usp=sharing)  
 [Waste Classification for Sustainable Development Using Image Recognition with Deep Learning Neural Network Models](https://drive.google.com/file/d/13BUjzhUetastGsxKfaxoM-V4rR0J_-Lt/view?usp=sharing)
-
-&nbsp;
 
 # **Bản Demo về AI**
 
-[TrashNet Computer Vision Dataset](https://universe.roboflow.com/trash-recognition-fixed/trashnet-blkh7)
-
-[Model Online Demonstration](https://colab.research.google.com/drive/1TT-YAao0txXLzBlrU8dA4Y-DyVq-kjxz?usp=sharing)
-
-# **Đặt tên Dự án**
-
-Tên tiếng Việt: Hệ thống hỗ trợ phân loại và kết nối thu mua rác thải tái chế thông minh
-
-Tên tiếng Anh: Intelligent Recyclable Waste
-
-Classification and Trade Matching System.&nbsp;
-
+[TrashNet Computer Vision Dataset](https://universe.roboflow.com/trash-recognition-fixed/trashnet-blkh7)  
+[Model Online Demonstration](https://colab.research.google.com/drive/1TT-YAao0txXLzBlrU8dA4Y-DyVq-kjxz?usp=sharing)  
+Tên tiếng Việt: Hệ thống hỗ trợ phân loại và kết nối thu mua rác thải tái chế thông minh  
+Tên tiếng Anh: Intelligent Recyclable Waste Classification and Trade Matching System.   
 Tên viết tắt: EcoLink
