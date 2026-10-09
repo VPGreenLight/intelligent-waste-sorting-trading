@@ -226,7 +226,13 @@ class ModelManager:
     def predict(self, pil_image: Image.Image, model_id: str = "yolov8_detect", use_detection_crop: bool = True) -> Dict[str, Any]:
         """Thực hiện suy luận thống nhất cho tất cả các loại mô hình (Hỗ trợ Two-Stage: Detect -> Crop -> Classify)"""
         if model_id not in self.registry:
-            model_id = "yolov8_detect"
+            model_id = "yolov8n"
+
+        if model_id == "yolov8_detect":
+            detect_path = self.models_dir / self.registry["yolov8_detect"]["file"]
+            if not detect_path.exists():
+                print(f"[!] Warning: Trọng số '{detect_path.name}' chưa có trong thư mục models. Tự động fallback sang mô hình 'yolov8n'.")
+                model_id = "yolov8n"
 
         info = self.registry[model_id]
         start_time = time.perf_counter()

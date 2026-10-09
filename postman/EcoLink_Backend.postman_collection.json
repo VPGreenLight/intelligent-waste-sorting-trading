@@ -1,0 +1,712 @@
+{
+  "info": {
+    "_postman_id": "ecolink-backend-api-v1",
+    "name": "EcoLink Backend Core API",
+    "description": "Bộ sưu tập API hoàn chỉnh phục vụ kiểm thử Hệ thống EcoLink Backend Core (ASP.NET Core Clean Architecture) - Xác thực, Quét rác AI, Thanh toán gói dịch vụ VietQR, Giao dịch phế liệu và Gamification.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Authentication & Users",
+      "item": [
+        {
+          "name": "01. Register User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 400\", function () {",
+                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success && jsonData.token) {",
+                  "    pm.environment.set(\"bearerToken\", jsonData.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"hoangthang\",\n  \"email\": \"hoangthang@example.com\",\n  \"password\": \"Password123@\",\n  \"fullName\": \"Nguyen Hoang Thang\",\n  \"phoneNumber\": \"0987654321\",\n  \"role\": 1\n}"
+            },
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/auth/register",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "auth", "register"]
+            },
+            "description": "Đăng ký tài khoản người dùng hoặc cơ sở thu gom mới."
+          },
+          "response": []
+        },
+        {
+          "name": "02. Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Login successful\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.token).to.not.be.empty;",
+                  "});",
+                  "if (jsonData.token) {",
+                  "    pm.environment.set(\"bearerToken\", jsonData.token);",
+                  "}",
+                  "if (jsonData.user && jsonData.user.id) {",
+                  "    pm.environment.set(\"demoUserId\", jsonData.user.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usernameOrEmail\": \"citizen\",\n  \"password\": \"citizen123\"\n}"
+            },
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/auth/login",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "auth", "login"]
+            },
+            "description": "Đăng nhập với tài khoản mẫu (citizen/citizen123 hoặc collector/collector123) và tự động lưu Bearer token."
+          },
+          "response": []
+        },
+        {
+          "name": "03. Get Current User (Me)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"User info returned\", function () {",
+                  "    pm.expect(jsonData).to.have.property(\"username\");",
+                  "    pm.expect(jsonData).to.have.property(\"email\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{bearerToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/auth/me",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Lấy thông tin người dùng từ Bearer Token."
+          },
+          "response": []
+        },
+        {
+          "name": "04. Get Demo Users",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Demo accounts array returned\", function () {",
+                  "    pm.expect(jsonData.accounts).to.be.an(\"array\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/auth/demo-users",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "auth", "demo-users"]
+            },
+            "description": "Lấy danh sách các tài khoản demo có sẵn trong hệ thống."
+          },
+          "response": []
+        },
+        {
+          "name": "05. VietQR Partner Token Handshake",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Basic Y2xpZW50X2lkOmNsaWVudF9zZWNyZXQ="
+              }
+            ],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/auth/vietqr-token",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "auth", "vietqr-token"]
+            },
+            "description": "Giả lập sinh token Basic Auth chuẩn VietQR / TingoPay."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "2. Waste Scan & Classification",
+      "item": [
+        {
+          "name": "01. Classify Waste Image",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"ApiResponse format returned\", function () {",
+                  "    pm.expect(jsonData).to.have.property(\"success\");",
+                  "    pm.expect(jsonData).to.have.property(\"data\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                {
+                  "key": "file",
+                  "type": "file",
+                  "src": ""
+                },
+                {
+                  "key": "model",
+                  "value": "yolov8_detect",
+                  "type": "text"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/waste-scan/classify",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "waste-scan", "classify"]
+            },
+            "description": "Nhận diện rác thải qua ảnh và tự động map với cơ sở quy tắc tĩnh (thùng rác, các bước xử lý)."
+          },
+          "response": []
+        },
+        {
+          "name": "02. Get Available AI Models",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/waste-scan/models",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "waste-scan", "models"]
+            },
+            "description": "Danh sách các mô hình AI có sẵn (yolov8_detect, mobilenet_v3, efficientnet_b0, yolov8n)."
+          },
+          "response": []
+        },
+        {
+          "name": "03. Get Waste Sorting Rules",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/waste-scan/rules",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "waste-scan", "rules"]
+            },
+            "description": "Tra cứu toàn bộ danh mục quy tắc phân loại rác tĩnh (Rule Engine)."
+          },
+          "response": []
+        },
+        {
+          "name": "04. Submit Scan Feedback",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"imageUrl\": \"https://example.com/waste-sample.jpg\",\n  \"predictedLabel\": \"plastic\",\n  \"confidenceScore\": 0.65,\n  \"userReportedLabel\": \"paper\",\n  \"note\": \"Hộp sữa giấy tráng nhôm bị nhận diện nhầm thành nhựa\"\n}"
+            },
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/waste-scan/feedback",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "waste-scan", "feedback"]
+            },
+            "description": "Báo cáo kết quả phân loại rác sai để quản trị viên kiểm chứng và huấn luyện lại."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "3. Service Payments (VietQR)",
+      "item": [
+        {
+          "name": "01. Create Service Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Payment order created\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property(\"orderCode\");",
+                  "    pm.expect(jsonData.data).to.have.property(\"qrCodeUrl\");",
+                  "});",
+                  "if (jsonData.data && jsonData.data.orderCode) {",
+                  "    pm.environment.set(\"orderCode\", jsonData.data.orderCode);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"packageCode\": \"VERIFIED_BADGE\",\n  \"amount\": 50000,\n  \"description\": \"Thanh toan goi Tich Xanh EcoLink\",\n  \"userId\": \"{{demoUserId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/service-payments/create",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "service-payments", "create"]
+            },
+            "description": "Đăng ký mua gói dịch vụ nội bộ (VERIFIED_BADGE, NO_ADS, MAP_BOOST) và tạo mã VietQR động."
+          },
+          "response": []
+        },
+        {
+          "name": "02. Get Order Status",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Order details returned\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data).to.have.property(\"status\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/service-payments/orders/{{orderCode}}",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "service-payments", "orders", "{{orderCode}}"]
+            },
+            "description": "Tra cứu trạng thái của đơn thanh toán theo mã đơn hàng."
+          },
+          "response": []
+        },
+        {
+          "name": "03. Get All Payment Orders",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/service-payments/orders",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "service-payments", "orders"]
+            },
+            "description": "Xem danh sách toàn bộ các giao dịch thanh toán gói dịch vụ."
+          },
+          "response": []
+        },
+        {
+          "name": "04. Receive Payment Webhook",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 400\", function () {",
+                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"orderCode\": \"{{orderCode}}\",\n  \"amount\": 50000,\n  \"description\": \"Thanh toan goi Tich Xanh EcoLink\",\n  \"reference\": \"FT242817291823\",\n  \"transactionDateTime\": \"2026-10-07 23:25:00\",\n  \"signature\": \"simulated_signature_mock\"\n}"
+            },
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/service-payments/webhook",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "service-payments", "webhook"]
+            },
+            "description": "Webhook tự động từ Ngân hàng / Cổng VietQR gửi thông báo biến động số dư."
+          },
+          "response": []
+        },
+        {
+          "name": "05. Simulate Transfer Success (Mock)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Order marked as PAID\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.status).to.eql(\"PAID\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/service-payments/simulate-transfer/{{orderCode}}",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "service-payments", "simulate-transfer", "{{orderCode}}"]
+            },
+            "description": "Giả lập chuyển khoản thành công để kích hoạt gói dịch vụ mà không cần trả tiền thật."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "4. Trade & Handover",
+      "item": [
+        {
+          "name": "01. Find Nearby Partners",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/trade/partners/nearby?lat=10.7769&lng=106.7009&radiusKm=15&category=plastic",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "trade", "partners", "nearby"],
+              "query": [
+                {
+                  "key": "lat",
+                  "value": "10.7769"
+                },
+                {
+                  "key": "lng",
+                  "value": "106.7009"
+                },
+                {
+                  "key": "radiusKm",
+                  "value": "15"
+                },
+                {
+                  "key": "category",
+                  "value": "plastic"
+                }
+              ]
+            },
+            "description": "Tìm điểm thu gom phế liệu gần nhất theo tọa độ GPS của người dùng."
+          },
+          "response": []
+        },
+        {
+          "name": "02. Create Trade Order",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.order && jsonData.order.id) {",
+                  "    pm.environment.set(\"tradeOrderId\", jsonData.order.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"userId\": \"{{demoUserId}}\",\n  \"partnerId\": \"e1f8a840-7546-4cb8-8e6d-62111d4e4123\",\n  \"scheduledAt\": \"2026-10-10T14:30:00Z\",\n  \"estimatedWeightKg\": 12.5,\n  \"note\": \"Bàn giao 12.5kg chai nhựa PET và vỏ lon nhôm\"\n}"
+            },
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/trade/orders",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "trade", "orders"]
+            },
+            "description": "Tạo đơn hẹn bàn giao rác đến cơ sở thu gom kèm mã QR đơn hàng."
+          },
+          "response": []
+        },
+        {
+          "name": "03. Confirm Receipt by QR",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 404\", function () {",
+                  "    pm.expect([200, 404]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"tradeOrderId\": \"{{tradeOrderId}}\",\n  \"qrSecurityCode\": \"ECO-QR-VALIDATED\",\n  \"actualWeightKg\": 13.0,\n  \"unitPrice\": 4500\n}"
+            },
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/trade/receipts/confirm-qr",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "trade", "receipts", "confirm-qr"]
+            },
+            "description": "Xác nhận biên nhận thu mua qua quét mã QR, chốt thanh toán và cộng Điểm Xanh."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "5. Gamification & Leaderboard",
+      "item": [
+        {
+          "name": "01. Get User Profile",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/gamification/profile/{{demoUserId}}",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "gamification", "profile", "{{demoUserId}}"]
+            },
+            "description": "Lấy thông tin chỉ số sống xanh, cấp độ cây ảo và điểm tích lũy của người dùng."
+          },
+          "response": []
+        },
+        {
+          "name": "02. Get Leaderboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/gamification/leaderboard?top=10",
+              "host": ["{{backendUrl}}"],
+              "path": ["api", "v1", "gamification", "leaderboard"],
+              "query": [
+                {
+                  "key": "top",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Xem bảng xếp hạng đóng góp sống xanh của cộng đồng người dùng."
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

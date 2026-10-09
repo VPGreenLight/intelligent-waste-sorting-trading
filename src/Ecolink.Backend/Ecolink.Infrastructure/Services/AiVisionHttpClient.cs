@@ -51,7 +51,11 @@ public class AiVisionHttpClient : IAiVisionClient
             }
 
             var jsonString = await response.Content.ReadAsStringAsync(cancellationToken);
-            var options = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+            var options = new JsonSerializerOptions 
+            { 
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+            };
             var result = JsonSerializer.Deserialize<AiScanResultDto>(jsonString, options);
 
             return result ?? new AiScanResultDto { Success = false };

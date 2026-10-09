@@ -1,0 +1,17 @@
+$kind: http-request
+name: Get All Payment Orders
+url: "{{backendUrl}}/api/v1/service-payments/orders"
+method: GET
+order: 3000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Orders list returned", function () {
+          pm.expect(jsonData.success).to.be.true;
+          pm.expect(jsonData.data).to.be.an("array");
+      });
+    language: text/javascript

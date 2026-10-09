@@ -29,6 +29,14 @@ data/*.zip
 .DS_Store
 Thumbs.db
 
-# .NET Build Output
+# .NET & Visual Studio
+.vs/
+*.user
+*.userosscache
+*.sln.docstates
+*.suo
+*.userprefs
 [Bb]in/
 [Oo]bj/
+[Dd]ebug/
+[Rr]elease/

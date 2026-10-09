@@ -1,0 +1,17 @@
+$kind: http-request
+name: Simulate Transfer Success (Mock)
+url: "{{backendUrl}}/api/v1/service-payments/simulate-transfer/{{orderCode}}"
+method: POST
+order: 5000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Order marked as PAID", function () {
+          pm.expect(jsonData.success).to.be.true;
+          pm.expect(jsonData.data.status).to.eql("PAID");
+      });
+    language: text/javascript

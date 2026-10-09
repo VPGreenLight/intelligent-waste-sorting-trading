@@ -1,0 +1,29 @@
+$kind: http-request
+name: Confirm Receipt by QR
+url: "{{backendUrl}}/api/v1/trade/receipts/confirm-qr"
+method: POST
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: raw
+  raw: |-
+    {
+      "tradeOrderId": "{{tradeOrderId}}",
+      "qrSecurityCode": "ECO-QR-VALIDATED",
+      "actualWeightKg": 13.0,
+      "unitPrice": 4500
+    }
+order: 3000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 or 404", function () {
+          pm.expect([200, 404]).to.include(pm.response.code);
+      });
+      if (pm.response.code === 200) {
+          var jsonData = pm.response.json();
+          pm.expect(jsonData.success).to.be.true;
+          pm.expect(jsonData.receipt).to.have.property("totalAmountCash");
+      }
+    language: text/javascript

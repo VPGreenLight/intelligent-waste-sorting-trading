@@ -4,9 +4,21 @@ values:
   - key: baseUrl
     value: http://127.0.0.1:8000
     enabled: true
+  - key: backendUrl
+    value: http://localhost:5017
+    enabled: true
   - key: defaultModel
-    value: yolov8n
+    value: yolov8_detect
     enabled: true
   - key: defaultThreshold
     value: "0.60"
+    enabled: true
+  - key: bearerToken
+    value: ""
+    enabled: true
+  - key: orderCode
+    value: ""
+    enabled: true
+  - key: demoUserId
+    value: "d0a6c024-5d55-46aa-bf7d-949e29a99711"
     enabled: true

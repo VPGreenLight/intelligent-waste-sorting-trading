@@ -1,0 +1,33 @@
+$kind: http-request
+name: Create Service Payment
+url: "{{backendUrl}}/api/v1/service-payments/create"
+method: POST
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: raw
+  raw: |-
+    {
+      "packageCode": "VERIFIED_BADGE",
+      "amount": 50000,
+      "description": "Thanh toan goi Tich Xanh EcoLink",
+      "userId": "{{demoUserId}}"
+    }
+order: 1000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Payment order created with QR", function () {
+          pm.expect(jsonData.success).to.be.true;
+          pm.expect(jsonData.data).to.have.property("orderCode");
+          pm.expect(jsonData.data).to.have.property("qrCodeUrl");
+      });
+      if (jsonData.data && jsonData.data.orderCode) {
+          pm.environment.set("orderCode", jsonData.data.orderCode);
+      }
+    language: text/javascript

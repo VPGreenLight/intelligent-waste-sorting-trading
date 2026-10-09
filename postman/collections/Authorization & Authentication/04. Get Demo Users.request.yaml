@@ -1,0 +1,17 @@
+$kind: http-request
+name: Get Demo Users
+url: "{{backendUrl}}/api/v1/auth/demo-users"
+method: GET
+order: 4000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Demo accounts array returned", function () {
+          pm.expect(jsonData.accounts).to.be.an("array");
+          pm.expect(jsonData.accounts.length).to.be.at.least(1);
+      });
+    language: text/javascript

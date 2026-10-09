@@ -1,0 +1,17 @@
+$kind: http-request
+name: Get Available AI Models
+url: "{{backendUrl}}/api/v1/waste-scan/models"
+method: GET
+order: 2000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Available models returned", function () {
+          pm.expect(jsonData.success).to.be.true;
+          pm.expect(jsonData.data).to.have.property("models");
+      });
+    language: text/javascript

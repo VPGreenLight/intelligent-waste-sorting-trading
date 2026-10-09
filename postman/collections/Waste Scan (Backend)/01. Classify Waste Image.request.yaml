@@ -1,0 +1,26 @@
+$kind: http-request
+name: Classify Waste Image
+url: "{{backendUrl}}/api/v1/waste-scan/classify"
+method: POST
+body:
+  type: formdata
+  content:
+    - key: file
+      type: file
+      src: ""
+    - key: model
+      value: "yolov8_detect"
+      type: text
+order: 1000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Standard ApiResponse contract returned", function () {
+          pm.expect(jsonData).to.have.property("success");
+          pm.expect(jsonData).to.have.property("data");
+      });
+    language: text/javascript

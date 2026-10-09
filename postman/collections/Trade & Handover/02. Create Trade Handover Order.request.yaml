@@ -1,0 +1,33 @@
+$kind: http-request
+name: Create Trade Handover Order
+url: "{{backendUrl}}/api/v1/trade/orders"
+method: POST
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: raw
+  raw: |-
+    {
+      "userId": "{{demoUserId}}",
+      "partnerId": "e1f8a840-7546-4cb8-8e6d-62111d4e4123",
+      "scheduledAt": "2026-10-10T14:30:00Z",
+      "estimatedWeightKg": 12.5,
+      "note": "Bàn giao 12.5kg chai nhựa PET và vỏ lon nhôm"
+    }
+order: 2000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Trade order created", function () {
+          pm.expect(jsonData.success).to.be.true;
+          pm.expect(jsonData.order).to.have.property("qrCodeValue");
+      });
+      if (jsonData.order && jsonData.order.id) {
+          pm.environment.set("tradeOrderId", jsonData.order.id);
+      }
+    language: text/javascript

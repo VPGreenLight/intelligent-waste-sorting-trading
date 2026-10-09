@@ -1,0 +1,16 @@
+$kind: http-request
+name: Find Nearby Collection Partners
+url: "{{backendUrl}}/api/v1/trade/partners/nearby?lat=10.7769&lng=106.7009&radiusKm=15&category=plastic"
+method: GET
+order: 1000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Partners array returned", function () {
+          pm.expect(jsonData).to.be.an("array");
+      });
+    language: text/javascript

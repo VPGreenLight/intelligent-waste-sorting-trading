@@ -1,15 +1,127 @@
 {
-  "total_scans": 60,
+  "total_scans": 74,
   "categories": {
-    "cardboard": 19,
+    "cardboard": 29,
     "metal": 1,
     "glass": 9,
     "plastic": 4,
     "paper": 10,
-    "trash": 1
+    "trash": 2
   },
-  "ood_count": 16,
+  "ood_count": 19,
   "recent": [
+    {
+      "category": "cardboard",
+      "confidence": 100.0,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 172.65,
+      "timestamp": "2026-10-08 08:18:10"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 92.4,
+      "is_ood": false,
+      "model": "efficientnet_b0",
+      "latency_ms": 828.4,
+      "timestamp": "2026-10-08 08:18:10"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 81.6,
+      "is_ood": false,
+      "model": "mobilenet_v3",
+      "latency_ms": 680.1,
+      "timestamp": "2026-10-08 08:18:09"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 100.0,
+      "is_ood": false,
+      "model": "yolov8n",
+      "latency_ms": 782.07,
+      "timestamp": "2026-10-08 08:18:08"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 100.0,
+      "is_ood": false,
+      "model": "yolov8n",
+      "latency_ms": 161.85,
+      "timestamp": "2026-10-08 08:17:06"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 138.33,
+      "timestamp": "2026-10-08 08:16:58"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 92.4,
+      "is_ood": false,
+      "model": "efficientnet_b0",
+      "latency_ms": 641.86,
+      "timestamp": "2026-10-08 08:16:58"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 81.6,
+      "is_ood": false,
+      "model": "mobilenet_v3",
+      "latency_ms": 546.54,
+      "timestamp": "2026-10-08 08:16:57"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 100.0,
+      "is_ood": false,
+      "model": "yolov8n",
+      "latency_ms": 172.94,
+      "timestamp": "2026-10-08 08:16:57"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 100.0,
+      "is_ood": false,
+      "model": "yolov8n",
+      "latency_ms": 172.38,
+      "timestamp": "2026-10-08 08:16:18"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 100.0,
+      "is_ood": false,
+      "model": "yolov8n",
+      "latency_ms": 435.0,
+      "timestamp": "2026-10-08 08:15:48"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 251.96,
+      "timestamp": "2026-10-08 08:15:48"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 251.66,
+      "timestamp": "2026-10-08 08:13:32"
+    },
+    {
+      "category": "trash",
+      "confidence": 89.4,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 3174.3,
+      "timestamp": "2026-10-08 08:13:02"
+    },
     {
       "category": "plastic",
       "confidence": 86.8,
@@ -89,77 +201,7 @@
       "confidence": 87.2,
       "is_ood": false,
       "timestamp": "09:47:16"
-    },
-    {
-      "category": "glass",
-      "confidence": 82.6,
-      "is_ood": true,
-      "model": "yolov8n",
-      "latency_ms": 62.61,
-      "timestamp": "2026-09-24 09:41:57"
-    },
-    {
-      "category": "glass",
-      "confidence": 82.6,
-      "is_ood": false,
-      "model": "yolov8n",
-      "latency_ms": 492.71,
-      "timestamp": "2026-09-24 09:41:57"
-    },
-    {
-      "category": "glass",
-      "confidence": 96.1,
-      "is_ood": false,
-      "timestamp": "00:03:06"
-    },
-    {
-      "category": "glass",
-      "confidence": 96.1,
-      "is_ood": false,
-      "timestamp": "23:59:00"
-    },
-    {
-      "category": "glass",
-      "confidence": 96.1,
-      "is_ood": false,
-      "timestamp": "23:47:03"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 100.0,
-      "is_ood": false,
-      "timestamp": "23:44:23"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 81.6,
-      "is_ood": false,
-      "timestamp": "23:32:51"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 100.0,
-      "is_ood": false,
-      "timestamp": "23:27:59"
-    },
-    {
-      "category": "paper",
-      "confidence": 87.2,
-      "is_ood": false,
-      "timestamp": "16:46:41"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 100.0,
-      "is_ood": false,
-      "timestamp": "16:41:00"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 83.1,
-      "is_ood": false,
-      "timestamp": "16:39:56"
     }
   ],
-  "avg_latency_ms": 72.75
+  "avg_latency_ms": 172.63
 }

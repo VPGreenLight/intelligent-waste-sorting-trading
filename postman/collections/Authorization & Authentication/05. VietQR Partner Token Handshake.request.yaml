@@ -1,0 +1,19 @@
+$kind: http-request
+name: VietQR Partner Token Handshake
+url: "{{backendUrl}}/api/v1/auth/vietqr-token"
+method: POST
+headers:
+  - key: Authorization
+    value: "Basic Y2xpZW50X2lkOmNsaWVudF9zZWNyZXQ="
+order: 5000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Token returned", function () {
+          pm.expect(jsonData).to.have.property("access_token");
+      });
+    language: text/javascript

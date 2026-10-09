@@ -1,0 +1,26 @@
+$kind: http-request
+name: Receive Payment Webhook
+url: "{{backendUrl}}/api/v1/service-payments/webhook"
+method: POST
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: raw
+  raw: |-
+    {
+      "orderCode": "{{orderCode}}",
+      "amount": 50000,
+      "description": "Thanh toan goi Tich Xanh EcoLink",
+      "reference": "FT242817291823",
+      "transactionDateTime": "2026-10-07 23:25:00",
+      "signature": "simulated_signature_mock"
+    }
+order: 4000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200 or 400", function () {
+          pm.expect([200, 400]).to.include(pm.response.code);
+      });
+    language: text/javascript
