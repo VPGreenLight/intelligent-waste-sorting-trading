@@ -1,0 +1,108 @@
+<mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <!-- Start State -->
+    <mxCell id="start" parent="1" value="" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#000000;strokeColor=none;" vertex="1">
+      <mxGeometry x="60" y="165" width="30" height="30" as="geometry" />
+    </mxCell>
+    <!-- Active States -->
+    <mxCell id="pending" parent="1" value="Pending&lt;br&gt;&lt;span style='font-size: 10px; font-weight: normal; color: #555;'&gt;Awaiting acceptance&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fontStyle=1;fontSize=13;fontFamily=Helvetica;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#004085;" vertex="1">
+      <mxGeometry x="140" y="150" width="130" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="negotiating" parent="1" value="Negotiating&lt;br&gt;&lt;span style='font-size: 10px; font-weight: normal; color: #555;'&gt;Chat negotiation&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fontStyle=1;fontSize=13;fontFamily=Helvetica;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#004085;" vertex="1">
+      <mxGeometry x="350" y="150" width="130" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="accepted" parent="1" value="Accepted&lt;br&gt;&lt;span style='font-size: 10px; font-weight: normal; color: #555;'&gt;Appointment confirmed&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fontStyle=1;fontSize=13;fontFamily=Helvetica;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#004085;" vertex="1">
+      <mxGeometry x="560" y="150" width="130" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="scheduled" parent="1" value="Scheduled&lt;br&gt;&lt;span style='font-size: 10px; font-weight: normal; color: #555;'&gt;Pickup in progress&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fontStyle=1;fontSize=13;fontFamily=Helvetica;strokeWidth=2;fillColor=#dae8fc;strokeColor=#6c8ebf;fontColor=#004085;" vertex="1">
+      <mxGeometry x="770" y="150" width="140" height="60" as="geometry" />
+    </mxCell>
+    <mxCell id="completed" parent="1" value="Completed&lt;br&gt;&lt;span style='font-size: 10px; font-weight: normal; color: #155724;'&gt;Verified &amp;amp; Points awarded&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fontStyle=1;fontSize=13;fontFamily=Helvetica;strokeWidth=3;fillColor=#d5e8d4;strokeColor=#82b366;fontColor=#155724;" vertex="1">
+      <mxGeometry x="1010" y="145" width="150" height="70" as="geometry" />
+    </mxCell>
+    <!-- Dispute State -->
+    <mxCell id="disputed" parent="1" value="Disputed&lt;br&gt;&lt;span style='font-size: 10px; font-weight: normal; color: #856404;'&gt;Under dispute claim&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fontStyle=1;fontSize=13;fontFamily=Helvetica;strokeWidth=2;fillColor=#fff3cd;strokeColor=#ffc107;fontColor=#856404;" vertex="1">
+      <mxGeometry x="890" y="290" width="140" height="60" as="geometry" />
+    </mxCell>
+    <!-- Terminal Negative States -->
+    <mxCell id="rejected" parent="1" value="Rejected&lt;br&gt;&lt;span style='font-size: 10px; font-weight: normal; color: #721c24;'&gt;Declined by recycler&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fontStyle=1;fontSize=13;fontFamily=Helvetica;strokeWidth=2;fillColor=#f8d7da;strokeColor=#dc3545;fontColor=#721c24;" vertex="1">
+      <mxGeometry x="140" y="360" width="130" height="50" as="geometry" />
+    </mxCell>
+    <mxCell id="expired" parent="1" value="Expired&lt;br&gt;&lt;span style='font-size: 10px; font-weight: normal; color: #721c24;'&gt;24h timeout&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fontStyle=1;fontSize=13;fontFamily=Helvetica;strokeWidth=2;fillColor=#f8d7da;strokeColor=#dc3545;fontColor=#721c24;" vertex="1">
+      <mxGeometry x="310" y="360" width="120" height="50" as="geometry" />
+    </mxCell>
+    <mxCell id="cancelled" parent="1" value="Cancelled&lt;br&gt;&lt;span style='font-size: 10px; font-weight: normal; color: #721c24;'&gt;Order cancelled&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=20;fontStyle=1;fontSize=13;fontFamily=Helvetica;strokeWidth=2;fillColor=#f8d7da;strokeColor=#dc3545;fontColor=#721c24;" vertex="1">
+      <mxGeometry x="560" y="360" width="130" height="50" as="geometry" />
+    </mxCell>
+    <!-- End States -->
+    <mxCell id="end_success" parent="1" value="" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;strokeWidth=2;" vertex="1">
+      <mxGeometry x="1220" y="165" width="30" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="end_rejected" parent="1" value="" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;strokeWidth=2;" vertex="1">
+      <mxGeometry x="190" y="460" width="30" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="end_expired" parent="1" value="" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;strokeWidth=2;" vertex="1">
+      <mxGeometry x="355" y="460" width="30" height="30" as="geometry" />
+    </mxCell>
+    <mxCell id="end_cancelled" parent="1" value="" style="ellipse;html=1;shape=endState;fillColor=#000000;strokeColor=#000000;strokeWidth=2;" vertex="1">
+      <mxGeometry x="610" y="460" width="30" height="30" as="geometry" />
+    </mxCell>
+    <!-- Transitions (Edges) -->
+    <mxCell id="e1" parent="1" source="start" target="pending" value="User creates request" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e2" parent="1" source="pending" target="negotiating" value="Send chat message" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e3" parent="1" source="negotiating" target="accepted" value="Agree &amp;amp; Recycler accepts" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e4" parent="1" source="pending" target="accepted" value="Recycler accepts directly" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e5" parent="1" source="accepted" target="scheduled" value="Pickup time arrived" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e6" parent="1" source="scheduled" target="completed" value="Verify QR receipt&lt;br&gt;[+Award Eco-points]" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e7" parent="1" source="completed" target="end_success" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e8" parent="1" source="scheduled" target="disputed" value="File dispute claim (BR-DSP-01)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e9" parent="1" source="disputed" target="completed" value="Staff resolves &amp;amp; approves" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e10" parent="1" source="disputed" target="cancelled" value="Staff resolves &amp;amp; cancels" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e11" parent="1" source="pending" target="rejected" value="Recycler declines" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e12" parent="1" source="pending" target="expired" value="24h timeout (JOB-03)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e13" parent="1" source="pending" target="cancelled" value="User cancels request" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e14" parent="1" source="negotiating" target="cancelled" value="Cancel negotiation" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e15" parent="1" source="accepted" target="cancelled" value="Cancel appointment (BR-HND-06)" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e16" parent="1" source="rejected" target="end_rejected" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e17" parent="1" source="expired" target="end_expired" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+    <mxCell id="e18" parent="1" source="cancelled" target="end_cancelled" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=10;fontColor=#333333;strokeColor=#4a5568;strokeWidth=1.5;" edge="1">
+      <mxGeometry relative="1" as="geometry" />
+    </mxCell>
+  </root>
+</mxGraphModel>
