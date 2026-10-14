@@ -1,0 +1,162 @@
+// ============================================================================
+// ECOLINK DBML - MODULE 5: GAMIFICATION & REWARDS (ĐIỂM XANH, CÂY ẢO & PHẦN THƯỞNG)
+// Standalone DBML file for dbdiagram.io
+// Features: Green Point Wallet, Streak Check-in, Virtual Tree Growth, Gift & Voucher Shop
+// ============================================================================
+
+Enum point_action_type {
+  Handover_Reward [note: "Thưởng hoàn tất bàn giao phế liệu"]
+  Daily_Checkin [note: "Thưởng điểm danh hàng ngày"]
+  Redeem_Gift [note: "Khấu trừ khi đổi quà/voucher"]
+  Tree_Care [note: "Tưới cây / chăm sóc cây ảo"]
+  Bonus [note: "Thưởng sự kiện chiến dịch môi trường"]
+  Adjustment [note: "Nhân viên điều chỉnh số dư"]
+  Reversal [note: "Thu hồi điểm do giao dịch bị hủy/khiếu nại"]
+}
+
+Enum gift_type {
+  Physical [note: "Hiện vật (Túi vải, bình giữ nhiệt, cây xanh)"]
+  Voucher [note: "Mã giảm giá điện tử (Shopee, Grab, GotIt)"]
+}
+
+Enum redemption_status {
+  Pending [note: "Chờ xử lý xuất kho"]
+  Redeemed [note: "Đã phát mã voucher"]
+  Delivered [note: "Đã giao quà hiện vật đến tay"]
+  Expired [note: "Voucher hết hạn sử dụng"]
+  Cancelled [note: "Hủy đổi và hoàn điểm"]
+}
+
+// ----------------------------------------------------------------------------
+// CÁC BẢNG NỘI BỘ MODULE 5
+// ----------------------------------------------------------------------------
+
+Table UserPointWallet {
+  wallet_id bigint [pk, increment]
+  user_id bigint [not null, unique, ref: - User_Stub.user_id, note: "1 tài khoản có 1 ví điểm duy nhất (BR-GAM-08)"]
+  current_balance bigint [not null, default: 0, note: "Số dư điểm xanh khả dụng"]
+  total_earned bigint [not null, default: 0, note: "Tổng điểm tích lũy trọn đời (xếp hạng Leaderboard)"]
+  total_spent bigint [not null, default: 0, note: "Tổng điểm đã tiêu"]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Ví điểm xanh Gamification, số dư luôn >= 0 (BR-GAM-03)"
+}
+
+Table PointTransactionHistory {
+  transaction_id bigint [pk, increment]
+  wallet_id bigint [not null, ref: > UserPointWallet.wallet_id]
+  user_id bigint [not null, ref: > User_Stub.user_id, note: "Truy vấn nhanh lịch sử theo user"]
+  points bigint [not null, note: "Số điểm biến động (+ cộng, - trừ)"]
+  action_type point_action_type [not null, note: "Loại hành động nhận/trừ điểm"]
+  source_type varchar(50) [note: "Bảng nguồn: HandoverReceipt, DailyCheckinLog, GiftRedemption"]
+  source_id bigint [note: "ID bản ghi nguồn"]
+  idempotency_key varchar(100) [unique, note: "Khóa chống cộng/trừ điểm trùng lặp (BR-GAM-01)"]
+  description text [note: "Diễn giải lý do cộng/trừ điểm"]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (user_id, created_at)
+  }
+
+  Note: "Lịch sử biến động điểm xanh đảm bảo tính nguyên tử và kiểm toán"
+}
+
+Table DailyCheckinLog {
+  checkin_id bigint [pk, increment]
+  user_id bigint [not null, ref: > User_Stub.user_id]
+  checkin_date date [not null, note: "Ngày điểm danh YYYY-MM-DD"]
+  streak_count int [not null, default: 1, note: "Chuỗi ngày liên tục Streak (BR-GAM-09)"]
+  points_awarded bigint [not null, default: 0, note: "Điểm thưởng nhận được"]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (user_id, checkin_date) [unique]
+  }
+
+  Note: "Điểm danh hàng ngày tăng điểm theo chuỗi ngày liên tục (BR-GAM-09)"
+}
+
+Table VirtualTreeProgress {
+  progress_id bigint [pk, increment]
+  user_id bigint [not null, unique, ref: - User_Stub.user_id, note: "Mỗi Citizen có 1 Cây ảo duy nhất"]
+  tree_level int [not null, default: 1, note: "Cấp độ phát triển của Cây (1 -> N)"]
+  growth_points bigint [not null, default: 0, note: "Điểm sinh trưởng của cây"]
+  total_watered int [not null, default: 0, note: "Tổng số lần đã tưới trọn đời"]
+  daily_water_count int [not null, default: 0, note: "Số lần tưới trong ngày hôm nay (BR-GAM-06)"]
+  last_water_date date [note: "Ngày tưới gần nhất để reset daily_water_count"]
+  last_watered_at timestamptz
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Tiến trình chăm sóc Cây ảo & giới hạn số lần tưới mỗi ngày (BR-GAM-06)"
+}
+
+Table GiftInventory {
+  gift_id bigint [pk, increment]
+  gift_name varchar(150) [not null, note: "Tên phần thưởng"]
+  gift_type gift_type [not null, default: 'Physical', note: "Physical: Quà hiện vật, Voucher: Mã giảm giá"]
+  description text [note: "Điều kiện áp dụng"]
+  image_url text [note: "Ảnh quà tặng"]
+  points_required bigint [not null, note: "Số điểm xanh cần đổi"]
+  stock_quantity int [not null, default: 0, note: "Số lượng còn trong kho (BR-GAM-04)"]
+  status varchar(20) [not null, default: 'ACTIVE']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Kho quà tặng hiện vật và voucher điện tử do Staff quản lý (UC S-10)"
+}
+
+Table GiftRedemption {
+  redemption_id bigint [pk, increment]
+  user_id bigint [not null, ref: > User_Stub.user_id, note: "Người đổi quà"]
+  gift_id bigint [not null, ref: > GiftInventory.gift_id]
+  points_spent bigint [not null, note: "Số điểm đã bị trừ (BR-GAM-03)"]
+  quantity int [not null, default: 1]
+  redemption_code varchar(50) [not null, unique, note: "Mã phiếu nhận quà"]
+  voucher_code varchar(100) [note: "Mã code kích hoạt ưu đãi nếu là Voucher điện tử"]
+  expires_at timestamptz [note: "Hạn sử dụng voucher (BR-GAM-05)"]
+  status redemption_status [not null, default: 'Pending']
+  delivery_address text [note: "Địa chỉ giao hàng đối với quà hiện vật"]
+  redeemed_at timestamptz [not null, default: `now()`]
+  fulfilled_at timestamptz [note: "Thời điểm trao quà thành công"]
+
+  Note: "Lịch sử đổi điểm lấy quà tặng và phát mã voucher"
+}
+
+Table EcoFact {
+  fact_id bigint [pk, increment]
+  title varchar(200) [not null, note: "Tiêu đề kiến thức môi trường"]
+  content text [not null, note: "Nội dung giáo dục ý thức phân loại rác"]
+  source_url text [note: "Nguồn tham khảo"]
+  image_url text [note: "Ảnh minh họa"]
+  unlock_tree_level int [not null, default: 1, note: "Cấp độ cây cần đạt để mở khóa Fact (BR-GAM-06)"]
+  status varchar(20) [not null, default: 'ACTIVE']
+  created_by_staff_id bigint [ref: > StaffProfile_Stub.staff_id]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Kiến thức môi trường mở khóa theo từng cấp độ Cây ảo (UC U-14)"
+}
+
+// ----------------------------------------------------------------------------
+// BẢNG THAM CHIẾU NGOÀI (EXTERNAL STUBS)
+// ----------------------------------------------------------------------------
+
+Table User_Stub as "User (Auth Module)" {
+  user_id bigint [pk, note: "Tham chiếu từ Phân hệ Auth"]
+  full_name varchar
+}
+
+Table StaffProfile_Stub as "StaffProfile (Auth Module)" {
+  staff_id bigint [pk, note: "Tham chiếu từ Phân hệ Auth"]
+  staff_code varchar
+}
+
+TableGroup Gamification_Rewards_Module {
+  UserPointWallet
+  PointTransactionHistory
+  DailyCheckinLog
+  VirtualTreeProgress
+  GiftInventory
+  GiftRedemption
+  EcoFact
+}

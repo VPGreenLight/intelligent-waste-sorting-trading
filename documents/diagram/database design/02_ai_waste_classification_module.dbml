@@ -1,0 +1,146 @@
+// ============================================================================
+// ECOLINK DBML - MODULE 2: AI SCANNER & WASTE MANAGEMENT (PHÂN LOẠI AI & DANH MỤC)
+// Standalone DBML file for dbdiagram.io
+// Features: YOLOv8 Bounding Boxes, Rule Engine, Misclassified Feedback Pipeline
+// ============================================================================
+
+Enum category_status {
+  Active [note: "Đang áp dụng"]
+  Inactive [note: "Ngừng sử dụng"]
+}
+
+Enum scan_status {
+  Completed [note: "Nhận diện thành công"]
+  Failed [note: "Lỗi xử lý hình ảnh"]
+  Low_Confidence [note: "Độ tin cậy thấp, cần người dùng xác nhận (BR-CLS-03)"]
+}
+
+Enum report_status {
+  Pending [note: "Chờ nhân viên thẩm định"]
+  Reviewed [note: "Đã duyệt và đưa vào tập dữ liệu"]
+  Rejected [note: "Bác bỏ báo cáo sai"]
+}
+
+Enum dataset_split {
+  Train [note: "Tập huấn luyện mô hình"]
+  Test [note: "Tập kiểm chứng chất lượng"]
+  Validation [note: "Tập đánh giá"]
+}
+
+// ----------------------------------------------------------------------------
+// CÁC BẢNG NỘI BỘ MODULE 2
+// ----------------------------------------------------------------------------
+
+Table MasterWasteCategory {
+  category_id bigint [pk, increment, note: "ID danh mục rác chuẩn"]
+  category_code varchar(50) [not null, unique, note: "Mã rác: plastic, paper, glass, metal, cardboard, trash"]
+  category_name varchar(100) [not null, note: "Tên hiển thị: Nhựa tái chế, Giấy vụn, Kim loại..."]
+  description text [note: "Đặc điểm nhận biết"]
+  standard_bin_color varchar(50) [note: "Màu thùng rác quy chuẩn (Cam, Xanh, Trắng)"]
+  icon_url text [note: "Icon minh họa danh mục"]
+  is_recyclable boolean [not null, default: true, note: "Có giá trị thương mại tái chế hay không"]
+  status category_status [not null, default: 'Active', note: "Chỉ ngừng sử dụng, không xóa vật lý (BR-SRT-04)"]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Danh mục rác chuẩn do Admin cấu hình và kiểm soát"
+}
+
+Table SortingGuidanceRule {
+  rule_id bigint [pk, increment]
+  category_id bigint [not null, unique, ref: - MasterWasteCategory.category_id, note: "Quan hệ 1-1 với Category (BR-SRT-01)"]
+  title varchar(150) [not null, note: "Tiêu đề hướng dẫn phân loại"]
+  preparation_instruction text [not null, note: "Bước sơ chế làm sạch trước khi vứt"]
+  sorting_instruction text [not null, note: "Cách phân tách và chọn thùng chứa"]
+  disposal_instruction text [note: "Hướng dẫn bàn giao cho vựa hoặc điểm thu gom"]
+  warning text [note: "Cảnh báo an toàn (nắp nhọn, pin cháy nổ)"]
+  region varchar(100) [not null, default: 'VN_NATIONAL', note: "Vùng áp dụng quy chuẩn"]
+  status varchar(20) [not null, default: 'ACTIVE', note: "Trạng thái quy tắc Rule Engine"]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Chính sách và hướng dẫn xử lý rác thải trong Rule Engine"
+}
+
+Table AIScanHistory {
+  scan_id bigint [pk, increment]
+  user_id bigint [ref: > User_Stub.user_id, note: "Người quét ảnh; null nếu là Guest"]
+  image_url text [not null, note: "Ảnh rác tải lên Cloudflare R2"]
+  predicted_category_id bigint [ref: > MasterWasteCategory.category_id, note: "Danh mục AI phân loại có độ tin cậy cao nhất"]
+  confidence_score numeric(6,5) [note: "Độ tin cậy của mô hình (0.00000 - 1.00000)"]
+  model_version varchar(100) [note: "Phiên bản mô hình YOLOv8"]
+  scan_status scan_status [not null, default: 'Completed', note: "Completed, Failed, Low_Confidence"]
+  latitude numeric(10,7) [note: "Vị trí quét ảnh phục vụ Heatmap rác"]
+  longitude numeric(11,7) [note: "Kinh độ vị trí quét"]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: "Lịch sử nhận diện hình ảnh của công dân qua mô hình AI"
+}
+
+Table AIScanDetection {
+  detection_id bigint [pk, increment]
+  scan_id bigint [not null, ref: > AIScanHistory.scan_id, note: "Thuộc phiên quét ảnh nào"]
+  category_id bigint [not null, ref: > MasterWasteCategory.category_id, note: "Loại rác của hộp bao này"]
+  confidence_score numeric(6,5) [not null, note: "Độ tin cậy của hộp này"]
+  x_min numeric(10,7) [not null, note: "Tọa độ chuẩn hóa x_min"]
+  y_min numeric(10,7) [not null, note: "Tọa độ chuẩn hóa y_min"]
+  x_max numeric(10,7) [not null, note: "Tọa độ chuẩn hóa x_max"]
+  y_max numeric(10,7) [not null, note: "Tọa độ chuẩn hóa y_max"]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: "Bounding Box chi tiết khi ảnh chứa nhiều vật thể rác cùng lúc (YOLOv8)"
+}
+
+Table MisclassifiedReport {
+  report_id bigint [pk, increment]
+  scan_id bigint [not null, unique, ref: - AIScanHistory.scan_id, note: "Mỗi phiên quét chỉ báo cáo 1 lần"]
+  user_id bigint [not null, ref: > User_Stub.user_id, note: "Người dùng gửi khiếu nại kết quả AI"]
+  predicted_category_id bigint [not null, ref: > MasterWasteCategory.category_id, note: "Nhãn AI đã đoán sai"]
+  user_suggested_category_id bigint [not null, ref: > MasterWasteCategory.category_id, note: "Nhãn người dùng đề xuất"]
+  staff_verified_category_id bigint [ref: > MasterWasteCategory.category_id, note: "Nhãn chính xác cuối cùng do Staff xác nhận"]
+  description text [note: "Mô tả của người dùng"]
+  status report_status [not null, default: 'Pending', note: "Pending, Reviewed, Rejected"]
+  reviewed_by_staff_id bigint [ref: > StaffProfile_Stub.staff_id, note: "Staff chịu trách nhiệm duyệt"]
+  review_note text [note: "Ghi chú thẩm định"]
+  reviewed_at timestamptz [note: "Thời điểm phê duyệt"]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: "Phản hồi AI nhận diện sai, nguồn dữ liệu tái huấn luyện (BR-CLS-05)"
+}
+
+Table VerifiedDataset {
+  dataset_id bigint [pk, increment]
+  category_id bigint [not null, ref: > MasterWasteCategory.category_id, note: "Nhãn rác đã chuẩn hóa"]
+  image_url text [not null, note: "Ảnh mẫu trong kho huấn luyện"]
+  annotation_url text [note: "Tọa độ Bounding box định dạng YOLO"]
+  source varchar(255) [note: "Nguồn ảnh: Feedback người dùng, Thực địa, TrashNet"]
+  dataset_split dataset_split [not null, default: 'Train', note: "Train, Test, Validation (BR-CLS-07: không trùng lặp)"]
+  verified_by_staff_id bigint [not null, ref: > StaffProfile_Stub.staff_id, note: "Staff đã gán nhãn kiểm chứng"]
+  verified_at timestamptz [not null, default: `now()`]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: "Tập dữ liệu chuẩn hóa phục vụ huấn luyện và đánh giá mô hình AI"
+}
+
+// ----------------------------------------------------------------------------
+// BẢNG THAM CHIẾU NGOÀI (EXTERNAL STUBS)
+// ----------------------------------------------------------------------------
+
+Table User_Stub as "User (Auth Module)" {
+  user_id bigint [pk, note: "Tham chiếu từ Phân hệ Auth"]
+  full_name varchar [note: "Tên người dùng"]
+}
+
+Table StaffProfile_Stub as "StaffProfile (Auth Module)" {
+  staff_id bigint [pk, note: "Tham chiếu từ Phân hệ Auth"]
+  staff_code varchar [note: "Mã nhân viên"]
+}
+
+TableGroup AI_Waste_Module {
+  MasterWasteCategory
+  SortingGuidanceRule
+  AIScanHistory
+  AIScanDetection
+  MisclassifiedReport
+  VerifiedDataset
+}

@@ -1,0 +1,183 @@
+<mxfile host="app.diagrams.net" modified="2026-10-13T16:00:00.000Z" agent="EcoLink Architecture Generator" version="24.7.5">
+  <diagram id="ecolink-software-architecture" name="Software Architecture">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="arch_doc_header" parent="1" value="&lt;b style='font-size: 18px; color: #212121;'&gt;2. System Design&lt;/b&gt;&lt;br&gt;&lt;b style='font-size: 15px; color: #37474f;'&gt;2.1 Software Architecture&lt;/b&gt;&lt;br&gt;&lt;b style='font-size: 13px; color: #455a64;'&gt;2.1.1 System Architecture&lt;/b&gt;" style="text;html=1;align=left;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1">
+          <mxGeometry x="60" y="25" width="220" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cont_users" parent="1" value="Users" style="shape=folder;fontStyle=1;tabWidth=90;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#fffde7;strokeColor=#fbc02d;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=3;fontSize=12;fontColor=#f57f17;" vertex="1">
+          <mxGeometry x="60" y="85" width="670" height="85" as="geometry" />
+        </mxCell>
+
+        <mxCell id="user_citizen" parent="1" value="&lt;b&gt;Citizen&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9.5px; font-weight: normal; color: #616161;'&gt;(Browser / Mobile)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#ffffff;strokeColor=#bdbdbd;strokeWidth=1.2;fontColor=#212121;fontSize=11;" vertex="1">
+          <mxGeometry x="78" y="115" width="145" height="42" as="geometry" />
+        </mxCell>
+
+        <mxCell id="user_recycler" parent="1" value="&lt;b&gt;Recycler&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9.5px; font-weight: normal; color: #616161;'&gt;(Browser)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#ffffff;strokeColor=#bdbdbd;strokeWidth=1.2;fontColor=#212121;fontSize=11;" vertex="1">
+          <mxGeometry x="240" y="115" width="145" height="42" as="geometry" />
+        </mxCell>
+
+        <mxCell id="user_staff" parent="1" value="&lt;b&gt;Operations Staff&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9.5px; font-weight: normal; color: #616161;'&gt;(Browser)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#ffffff;strokeColor=#bdbdbd;strokeWidth=1.2;fontColor=#212121;fontSize=11;" vertex="1">
+          <mxGeometry x="402" y="115" width="145" height="42" as="geometry" />
+        </mxCell>
+
+        <mxCell id="user_admin" parent="1" value="&lt;b&gt;Admin&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9.5px; font-weight: normal; color: #616161;'&gt;(Browser)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=18;fillColor=#ffffff;strokeColor=#bdbdbd;strokeWidth=1.2;fontColor=#212121;fontSize=11;" vertex="1">
+          <mxGeometry x="565" y="115" width="145" height="42" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_users_to_fe" parent="1" source="cont_users" target="cont_frontend" value="&lt;b&gt;HTTPS&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#37474f;strokeWidth=1.5;endArrow=classic;fontStyle=1;fontSize=10.5;fontColor=#37474f;align=center;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="395" y="170" as="sourcePoint" />
+            <mxPoint x="395" y="225" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="cont_frontend" parent="1" value="Frontend Container" style="shape=folder;fontStyle=1;tabWidth=140;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#fffde7;strokeColor=#fbc02d;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=3;fontSize=12;fontColor=#f57f17;" vertex="1">
+          <mxGeometry x="240" y="225" width="310" height="85" as="geometry" />
+        </mxCell>
+
+        <mxCell id="fe_tech_box" parent="1" value="&lt;b style='font-size: 11.5px; color: #0d47a1;'&gt;React 19 + TypeScript&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9.5px; color: #37474f;'&gt;Vite + TailwindCSS (SPA)&lt;br&gt;Leaflet Map &amp;amp; Lucide Icons&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=16;fillColor=#e3f2fd;strokeColor=#42a5f5;strokeWidth=1.5;align=center;" vertex="1">
+          <mxGeometry x="265" y="252" width="260" height="48" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_fe_to_oauth" parent="1" source="cont_frontend" target="cont_ext_oauth" value="&lt;b&gt;HTTPS&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9px; font-weight: normal; color: #bf360c;'&gt;(Token Verification)&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#e65100;strokeWidth=1.5;endArrow=classic;fontStyle=1;fontSize=10;fontColor=#bf360c;align=center;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="670" y="260" />
+              <mxPoint x="670" y="260" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="edge_fe_to_be_rest" parent="1" source="cont_frontend" target="cont_backend" value="&lt;b&gt;REST API&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9px; font-weight: normal; color: #0d47a1;'&gt;Axios + Bearer Token&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1565c0;strokeWidth=1.8;endArrow=classic;fontStyle=1;fontSize=10;fontColor=#0d47a1;align=center;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="320" y="310" as="sourcePoint" />
+            <mxPoint x="320" y="390" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="320" y="330" />
+              <mxPoint x="320" y="390" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="edge_fe_to_be_ws" parent="1" source="cont_frontend" target="cont_backend" value="&lt;b&gt;WebSocket / WSS&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9px; font-weight: normal; color: #1b5e20;'&gt;SignalR (Chat &amp;amp; Alerts)&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#2e7d32;strokeWidth=1.8;endArrow=classic;fontStyle=1;fontSize=10;fontColor=#1b5e20;align=center;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="470" y="310" as="sourcePoint" />
+            <mxPoint x="470" y="390" as="targetPoint" />
+            <Array as="points">
+              <mxPoint x="470" y="330" />
+              <mxPoint x="470" y="390" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="cont_backend" parent="1" value="Backend Container" style="shape=folder;fontStyle=1;tabWidth=140;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#fffde7;strokeColor=#fbc02d;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=3;fontSize=12;fontColor=#f57f17;" vertex="1">
+          <mxGeometry x="120" y="390" width="550" height="95" as="geometry" />
+        </mxCell>
+
+        <mxCell id="be_tech_box" parent="1" value="&lt;b style='font-size: 12px; color: #1b5e20;'&gt;.NET 8 Web API&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 10px; color: #2e7d32;'&gt;ASP.NET Core (Clean Architecture)&lt;br&gt;WebApi | Application | Domain | Infrastructure&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=16;fillColor=#e8f5e9;strokeColor=#66bb6a;strokeWidth=1.5;align=center;" vertex="1">
+          <mxGeometry x="250" y="420" width="290" height="52" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_be_to_db" parent="1" source="cont_backend" target="cont_database" value="&lt;b&gt;EF Core &amp;amp; Redis Multiplexer&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9px; font-weight: normal; color: #4a148c;'&gt;Connection Strings (Npgsql / PostGIS)&lt;/span&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#7b1fa2;strokeWidth=1.5;endArrow=classic;fontStyle=1;fontSize=9.5;fontColor=#4a148c;align=center;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="395" y="485" as="sourcePoint" />
+            <mxPoint x="395" y="555" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="cont_database" parent="1" value="Database" style="shape=folder;fontStyle=1;tabWidth=90;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#fffde7;strokeColor=#fbc02d;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=3;fontSize=12;fontColor=#f57f17;" vertex="1">
+          <mxGeometry x="120" y="555" width="550" height="95" as="geometry" />
+        </mxCell>
+
+        <mxCell id="db_pg" parent="1" value="&lt;b style='font-size: 11px; color: #4a148c;'&gt;PostgreSQL 16 + PostGIS&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9.5px; color: #6a1b9a;'&gt;ecolink_db (Spatial Coordinates, GIS,&lt;br&gt;User, Order, Reward, Audit Logs)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=16;fillColor=#f3e5f5;strokeColor=#ab47bc;strokeWidth=1.5;align=center;" vertex="1">
+          <mxGeometry x="145" y="585" width="240" height="52" as="geometry" />
+        </mxCell>
+
+        <mxCell id="db_redis" parent="1" value="&lt;b style='font-size: 11px; color: #b71c1c;'&gt;Redis 7 In-Memory Cache&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9.5px; color: #c62828;'&gt;Leaderboard, Rules Engine Cache,&lt;br&gt;Session Tokens &amp;amp; Distributed Lock&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=16;fillColor=#ffebee;strokeColor=#ef5350;strokeWidth=1.5;align=center;" vertex="1">
+          <mxGeometry x="405" y="585" width="240" height="52" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cont_ext_oauth" parent="1" value="External Services" style="shape=folder;fontStyle=1;tabWidth=120;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#fffde7;strokeColor=#fbc02d;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=2;fontSize=11;fontColor=#f57f17;" vertex="1">
+          <mxGeometry x="780" y="225" width="230" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_oauth_box" parent="1" value="&lt;b style='font-size: 11px; color: #bf360c;'&gt;Google Auth Platform&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9.5px; color: #555;'&gt;(OAuth 2.0 / OpenID Connect)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=16;fillColor=#fff3e0;strokeColor=#fb8c00;strokeWidth=1.2;align=center;" vertex="1">
+          <mxGeometry x="795" y="248" width="200" height="42" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cont_ext_smtp" parent="1" value="External Services" style="shape=folder;fontStyle=1;tabWidth=120;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#fffde7;strokeColor=#fbc02d;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=2;fontSize=11;fontColor=#f57f17;" vertex="1">
+          <mxGeometry x="780" y="320" width="230" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_smtp_box" parent="1" value="&lt;b style='font-size: 11px; color: #b71c1c;'&gt;SMTP Provider&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9.5px; color: #555;'&gt;(Email Notifications &amp;amp; OTP)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=16;fillColor=#ffebee;strokeColor=#ef5350;strokeWidth=1.2;align=center;" vertex="1">
+          <mxGeometry x="795" y="343" width="200" height="42" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cont_ext_ai" parent="1" value="AI Microservice" style="shape=folder;fontStyle=1;tabWidth=120;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#fffde7;strokeColor=#fbc02d;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=2;fontSize=11;fontColor=#f57f17;" vertex="1">
+          <mxGeometry x="780" y="415" width="230" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_ai_box" parent="1" value="&lt;b style='font-size: 11px; color: #311b92;'&gt;EcoVision AI Service&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9.5px; color: #555;'&gt;(Python FastAPI + YOLOv8)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=16;fillColor=#ede7f6;strokeColor=#7e57c2;strokeWidth=1.2;align=center;" vertex="1">
+          <mxGeometry x="795" y="438" width="200" height="42" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cont_ext_r2" parent="1" value="External Services" style="shape=folder;fontStyle=1;tabWidth=120;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#fffde7;strokeColor=#fbc02d;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=2;fontSize=11;fontColor=#f57f17;" vertex="1">
+          <mxGeometry x="780" y="510" width="230" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_r2_box" parent="1" value="&lt;b style='font-size: 11px; color: #006064;'&gt;Cloudflare R2 Storage&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9.5px; color: #555;'&gt;(Cloud Object Storage - S3 API)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=16;fillColor=#e0f7fa;strokeColor=#00acc1;strokeWidth=1.2;align=center;" vertex="1">
+          <mxGeometry x="795" y="533" width="200" height="42" as="geometry" />
+        </mxCell>
+
+        <mxCell id="cont_ext_vietqr" parent="1" value="External Services" style="shape=folder;fontStyle=1;tabWidth=120;tabHeight=20;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#fffde7;strokeColor=#fbc02d;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=2;fontSize=11;fontColor=#f57f17;" vertex="1">
+          <mxGeometry x="780" y="605" width="230" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="ext_vietqr_box" parent="1" value="&lt;b style='font-size: 11px; color: #1b5e20;'&gt;VietQR Payment Gateway&lt;/b&gt;&lt;br&gt;&lt;span style='font-size: 9.5px; color: #555;'&gt;(Dynamic VietQR Generator API)&lt;/span&gt;" style="rounded=1;whiteSpace=wrap;html=1;arcSize=16;fillColor=#e8f5e9;strokeColor=#43a047;strokeWidth=1.2;align=center;" vertex="1">
+          <mxGeometry x="795" y="628" width="200" height="42" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_be_to_smtp" parent="1" source="cont_backend" target="cont_ext_smtp" value="&lt;b&gt;SMTP Client&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#c62828;strokeWidth=1.5;endArrow=classic;fontStyle=1;fontSize=9.5;fontColor=#b71c1c;align=center;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="420" />
+              <mxPoint x="720" y="358" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="edge_be_to_ai" parent="1" source="cont_backend" target="cont_ext_ai" value="&lt;b&gt;HTTP / REST (Inference)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#1565c0;strokeWidth=1.8;endArrow=classic;fontStyle=1;fontSize=9.5;fontColor=#0d47a1;align=center;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="730" y="445" />
+              <mxPoint x="730" y="452" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="edge_be_to_r2" parent="1" source="cont_backend" target="cont_ext_r2" value="&lt;b&gt;HTTPS (File Upload)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#00838f;strokeWidth=1.5;endArrow=classic;fontStyle=1;fontSize=9.5;fontColor=#006064;align=center;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="720" y="465" />
+              <mxPoint x="720" y="548" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="edge_be_to_vietqr" parent="1" source="cont_backend" target="cont_ext_vietqr" value="&lt;b&gt;HTTPS / REST (QR Gen)&lt;/b&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeColor=#2e7d32;strokeWidth=1.5;endArrow=classic;fontStyle=1;fontSize=9.5;fontColor=#1b5e20;align=center;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="705" y="480" />
+              <mxPoint x="705" y="642" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="arch_caption" parent="1" value="&lt;b style='font-size: 15px; color: #212121;'&gt;System Architecture for EcoLink system&lt;/b&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1">
+          <mxGeometry x="270" y="700" width="300" height="30" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

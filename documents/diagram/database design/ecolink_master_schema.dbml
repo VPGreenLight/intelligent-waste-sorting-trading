@@ -1,0 +1,798 @@
+// ============================================================================
+// ECOLINK SYSTEM - MASTER DATABASE SCHEMA (DBML)
+// Platform: PostgreSQL 16+ with PostGIS Extension
+// Designed for: dbdiagram.io & Clean Architecture / DDD
+// Capstone Project: SEP490 - Intelligent Waste Sorting & Trading Platform
+// Total Tables: 33 | Enums: 17 | Table Groups: 7
+// ============================================================================
+
+// ============================================================================
+// 0. ENUMS (Kiểu dữ liệu liệt kê hệ thống)
+// ============================================================================
+
+Enum user_role {
+  User [note: "Công dân phân loại và bán phế liệu"]
+  Recycler [note: "Cơ sở thu mua / Vựa ve chai"]
+  Staff [note: "Nhân viên vận hành hệ thống"]
+  Admin [note: "Quản trị viên cấp cao"]
+}
+
+Enum user_status {
+  Active [note: "Đang hoạt động"]
+  Locked [note: "Khóa tạm thời do sai mật khẩu"]
+  Suspended [note: "Đình chỉ do vi phạm quy chuẩn"]
+  Pending_Verification [note: "Chờ xác minh email"]
+}
+
+Enum verification_status {
+  Pending [note: "Chờ duyệt hồ sơ"]
+  Verified [note: "Đã thẩm định thành công"]
+  Rejected [note: "Bị từ chối"]
+}
+
+Enum active_status {
+  Online [note: "Đang mở cửa nhận thu gom trên bản đồ GPS"]
+  Offline [note: "Tạm dừng hoạt động / Nghỉ"]
+}
+
+Enum category_status {
+  Active [note: "Đang áp dụng"]
+  Inactive [note: "Ngừng sử dụng"]
+}
+
+Enum scan_status {
+  Completed [note: "Nhận diện thành công"]
+  Failed [note: "Lỗi xử lý hình ảnh"]
+  Low_Confidence [note: "Độ tin cậy thấp, cần người dùng xác nhận"]
+}
+
+Enum report_status {
+  Pending [note: "Chờ nhân viên thẩm định"]
+  Reviewed [note: "Đã duyệt và chuyển vào kho dữ liệu"]
+  Rejected [note: "Bác bỏ phản hồi sai"]
+}
+
+Enum dataset_split {
+  Train [note: "Tập huấn luyện mô hình"]
+  Test [note: "Tập kiểm chứng chất lượng"]
+  Validation [note: "Tập đánh giá siêu tham số"]
+}
+
+Enum request_status {
+  Pending [note: "Chờ cơ sở thu mua phản hồi"]
+  Negotiating [note: "Đang thương lượng giá / khung giờ qua chat"]
+  Accepted [note: "Đã chấp nhận và chốt lịch thu gom"]
+  Scheduled [note: "Đang trên đường đến thu gom"]
+  Completed [note: "Đã hoàn tất giao dịch và cấp điểm"]
+  Rejected [note: "Cơ sở từ chối yêu cầu"]
+  Cancelled [note: "Một trong hai bên hủy hẹn"]
+  Disputed [note: "Đang có khiếu nại tranh chấp"]
+  Expired [note: "Hết hạn phản hồi"]
+}
+
+Enum message_type {
+  TEXT [note: "Tin nhắn văn bản"]
+  IMAGE [note: "Ảnh chụp bằng chứng"]
+  PROPOSAL [note: "Đề nghị giá mới hoặc đổi khung giờ thu gom"]
+  SYSTEM [note: "Thông báo hệ thống trong cuộc hội thoại"]
+}
+
+Enum complaint_status {
+  Pending [note: "Chờ nhân viên tiếp nhận"]
+  Investigating [note: "Đang xác minh hai chiều"]
+  Resolved [note: "Đã ra phán quyết giải quyết"]
+  Dismissed [note: "Bác bỏ khiếu nại"]
+}
+
+Enum complaint_outcome {
+  User_Compensated [note: "Khuyến nghị Recycler bồi hoàn cho User"]
+  Dismissed [note: "Bác bỏ khiếu nại, giữ nguyên kết quả"]
+  Warning_Issued [note: "Cảnh cáo tài khoản vi phạm"]
+}
+
+Enum review_status {
+  Visible [note: "Hiển thị công khai"]
+  Hidden [note: "Bị ẩn do vi phạm tiêu chuẩn"]
+  Reported [note: "Bị cộng đồng báo cáo"]
+  Deleted [note: "Tác giả tự xóa"]
+}
+
+Enum order_status {
+  Pending [note: "Chờ thanh toán qua mã VietQR"]
+  Paid [note: "Thanh toán thành công và kích hoạt gói"]
+  Expired [note: "Mã QR hết hạn"]
+  Cancelled [note: "Đơn bị hủy"]
+}
+
+Enum payment_status {
+  Pending [note: "Đang chờ webhook ngân hàng"]
+  Success [note: "Giao dịch khớp số tiền và mã đơn"]
+  Failed [note: "Giao dịch thất bại"]
+  Refunded [note: "Đã hoàn tiền"]
+}
+
+Enum target_role {
+  User [note: "Áp dụng cho Citizen"]
+  Recycler [note: "Áp dụng cho Vựa phế liệu"]
+  All [note: "Áp dụng toàn bộ"]
+}
+
+Enum point_action_type {
+  Handover_Reward [note: "Thưởng hoàn tất bàn giao phế liệu"]
+  Daily_Checkin [note: "Thưởng điểm danh hàng ngày"]
+  Redeem_Gift [note: "Khấu trừ khi đổi quà/voucher"]
+  Tree_Care [note: "Tưới cây / chăm sóc cây ảo"]
+  Bonus [note: "Thưởng sự kiện chiến dịch môi trường"]
+  Adjustment [note: "Nhân viên điều chỉnh số dư"]
+  Reversal [note: "Thu hồi điểm do giao dịch bị hủy/khiếu nại"]
+}
+
+Enum gift_type {
+  Physical [note: "Hiện vật (Túi vải, bình giữ nhiệt, cây xanh)"]
+  Voucher [note: "Mã giảm giá điện tử (Shopee, Grab, GotIt)"]
+}
+
+Enum redemption_status {
+  Pending [note: "Chờ xử lý xuất kho"]
+  Redeemed [note: "Đã phát mã voucher"]
+  Delivered [note: "Đã giao quà hiện vật đến tay"]
+  Expired [note: "Voucher hết hạn sử dụng"]
+  Cancelled [note: "Hủy đổi và hoàn điểm"]
+}
+
+Enum post_status {
+  Draft [note: "Nhân viên đang soạn thảo"]
+  Pending_Approval [note: "Đã gửi chờ Admin duyệt"]
+  Approved [note: "Admin đã duyệt công khai"]
+  Rejected [note: "Admin từ chối duyệt bài"]
+}
+
+Enum survey_status {
+  Draft [note: "Bản nháp"]
+  Active [note: "Đang mở nhận ý kiến"]
+  Closed [note: "Đã đóng đợt khảo sát"]
+}
+
+Enum question_type {
+  Rating_1_5 [note: "Chấm điểm 1 đến 5 sao"]
+  Multiple_Choice [note: "Trắc nghiệm nhiều lựa chọn"]
+  Text [note: "Ý kiến đóng góp tự do"]
+}
+
+// ============================================================================
+// 1. PHÂN HỆ TÀI KHOẢN & XÁC THỰC (ACCOUNTS & AUTHENTICATION)
+// ============================================================================
+
+Table User {
+  user_id bigint [pk, increment, note: "ID duy nhất của tài khoản"]
+  username varchar(50) [not null, unique, note: "Tên đăng nhập hệ thống"]
+  password_hash varchar(255) [note: "Mật khẩu mã hóa BCrypt; null nếu dùng Google OAuth"]
+  full_name varchar(100) [not null, note: "Họ và tên hiển thị"]
+  email varchar(255) [not null, unique, note: "Email định danh duy nhất (BR-AUTH-01)"]
+  phone_number varchar(20) [note: "Số điện thoại liên lạc"]
+  avatar_url text [note: "Ảnh đại diện trên Cloudflare R2"]
+  role user_role [not null, default: 'User', note: "Vai trò: User, Recycler, Staff, Admin"]
+  is_google_auth boolean [not null, default: false, note: "Xác thực qua Google OAuth (BR-AUTH-02)"]
+  status user_status [not null, default: 'Active', note: "Trạng thái hoạt động tài khoản"]
+  failed_login_attempts int [not null, default: 0, note: "Đếm số lần đăng nhập sai (BR-AUTH-04)"]
+  lockout_until timestamptz [note: "Thời điểm hết hạn khóa tài khoản tạm thời"]
+  created_at timestamptz [not null, default: `now()`, note: "Thời điểm đăng ký tài khoản"]
+  updated_at timestamptz [not null, default: `now()`, note: "Thời điểm cập nhật thông tin gần nhất"]
+
+  Note: "Bảng người dùng cốt lõi đại diện cho mọi tác nhân trong hệ sinh thái EcoLink"
+}
+
+Table RecyclerProfile {
+  recycler_id bigint [pk, ref: - User.user_id, note: "Khóa chính 1-1 với User"]
+  facility_name varchar(150) [not null, note: "Tên cơ sở thu mua / vựa ve chai"]
+  representative_name varchar(100) [note: "Tên người đại diện pháp luật"]
+  business_address text [not null, note: "Địa chỉ cơ sở kinh doanh thực tế"]
+  latitude numeric(10,7) [not null, note: "Vĩ độ GPS"]
+  longitude numeric(11,7) [not null, note: "Kinh độ GPS"]
+  geom text [not null, note: "PostGIS Geometry(Point, 4326) phục vụ tìm kiếm bán kính ST_DWithin"]
+  operating_hours varchar(100) [note: "Giờ mở cửa thu gom (Ví dụ: 08:00 - 18:00)"]
+  contact_phone varchar(20) [not null, note: "Hotline thu gom"]
+  description text [note: "Giới thiệu năng lực phương tiện và trang thiết bị"]
+  legal_permit_url text [note: "Giấy phép kinh doanh/môi trường nộp cho Staff thẩm định (UC G-03, S-04)"]
+  business_photo_url text [note: "Ảnh chụp mặt tiền cơ sở thu mua"]
+  verification_status verification_status [not null, default: 'Pending', note: "Trạng thái duyệt hồ sơ của Staff"]
+  active_status active_status [not null, default: 'Offline', note: "Bật/Tắt hiển thị trên bản đồ GPS (UC R-02)"]
+  rejection_reason text [note: "Lý do Staff từ chối duyệt cơ sở (BR-MTH-02, MSG-MTH-05)"]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Hồ sơ đối tác thu gom ve chai, tích hợp dữ liệu không gian PostGIS"
+}
+
+Table StaffProfile {
+  staff_id bigint [pk, ref: - User.user_id, note: "Khóa chính 1-1 với User"]
+  staff_code varchar(30) [not null, unique, note: "Mã nhân viên (VD: STF-2026-001)"]
+  department varchar(100) [note: "Phòng ban công tác"]
+  position varchar(100) [note: "Chức vụ đảm nhiệm"]
+  status varchar(20) [not null, default: 'ACTIVE', note: "Trạng thái công tác"]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: "Hồ sơ nhân viên vận hành hệ thống Back-office"
+}
+
+Table StaffPermissionAssignment {
+  assignment_id bigint [pk, increment]
+  staff_id bigint [not null, ref: > StaffProfile.staff_id, note: "Nhân viên được cấp quyền"]
+  permission_code varchar(50) [not null, note: "Mã quyền: REVIEW_AI, HANDLE_COMPLAINT, VERIFY_RECYCLER, MANAGE_BLOG, MANAGE_INVENTORY"]
+  granted_by bigint [not null, ref: > User.user_id, note: "Admin đã phân quyền"]
+  granted_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (staff_id, permission_code) [unique]
+  }
+
+  Note: "Phân quyền chi tiết cho Staff theo UC A-04 và BR-ADM-02"
+}
+
+Table PasswordResetToken {
+  token_id bigint [pk, increment]
+  user_id bigint [not null, ref: > User.user_id]
+  token_hash varchar(255) [not null, unique, note: "Token băm bảo mật gửi qua Email"]
+  expires_at timestamptz [not null, note: "Thời điểm hết hạn (BR-AUTH-06)"]
+  used_at timestamptz [note: "Thời điểm đã sử dụng (dùng 1 lần duy nhất)"]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: "Quản lý mã OTP/Link đặt lại mật khẩu an toàn"
+}
+
+// ============================================================================
+// 2. PHÂN HỆ AI & DANH MỤC RÁC THẢI (AI & WASTE MANAGEMENT)
+// ============================================================================
+
+Table MasterWasteCategory {
+  category_id bigint [pk, increment, note: "ID danh mục rác chuẩn"]
+  category_code varchar(50) [not null, unique, note: "Mã rác: plastic, paper, glass, metal, cardboard, trash"]
+  category_name varchar(100) [not null, note: "Tên hiển thị: Nhựa tái chế, Giấy vụn, Kim loại..."]
+  description text [note: "Đặc điểm nhận biết"]
+  standard_bin_color varchar(50) [note: "Màu thùng rác quy chuẩn (Cam, Xanh, Trắng)"]
+  icon_url text [note: "Icon minh họa danh mục"]
+  is_recyclable boolean [not null, default: true, note: "Có giá trị thương mại tái chế hay không"]
+  status category_status [not null, default: 'Active', note: "Chỉ ngừng sử dụng, không xóa vật lý (BR-SRT-04)"]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Danh mục rác chuẩn do Admin cấu hình và kiểm soát"
+}
+
+Table SortingGuidanceRule {
+  rule_id bigint [pk, increment]
+  category_id bigint [not null, unique, ref: - MasterWasteCategory.category_id, note: "Quan hệ 1-1 với Category (BR-SRT-01)"]
+  title varchar(150) [not null, note: "Tiêu đề hướng dẫn phân loại"]
+  preparation_instruction text [not null, note: "Bước sơ chế làm sạch trước khi vứt"]
+  sorting_instruction text [not null, note: "Cách phân tách và chọn thùng chứa"]
+  disposal_instruction text [note: "Hướng dẫn bàn giao cho vựa hoặc điểm thu gom"]
+  warning text [note: "Cảnh báo an toàn (nắp nhọn, pin cháy nổ)"]
+  region varchar(100) [not null, default: 'VN_NATIONAL', note: "Vùng áp dụng quy chuẩn"]
+  status varchar(20) [not null, default: 'ACTIVE', note: "Trạng thái quy tắc Rule Engine"]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Chính sách và hướng dẫn xử lý rác thải trong Rule Engine"
+}
+
+Table AIScanHistory {
+  scan_id bigint [pk, increment]
+  user_id bigint [ref: > User.user_id, note: "Người quét ảnh; null nếu là Guest"]
+  image_url text [not null, note: "Ảnh rác tải lên Cloudflare R2"]
+  predicted_category_id bigint [ref: > MasterWasteCategory.category_id, note: "Danh mục AI phân loại có độ tin cậy cao nhất"]
+  confidence_score numeric(6,5) [note: "Độ tin cậy của mô hình (0.00000 - 1.00000)"]
+  model_version varchar(100) [note: "Phiên bản mô hình YOLOv8"]
+  scan_status scan_status [not null, default: 'Completed', note: "Completed, Failed, Low_Confidence (BR-CLS-03)"]
+  latitude numeric(10,7) [note: "Vị trí quét ảnh phục vụ Heatmap rác"]
+  longitude numeric(11,7) [note: "Kinh độ vị trí quét"]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (user_id, created_at)
+  }
+
+  Note: "Lịch sử nhận diện hình ảnh của công dân qua mô hình AI"
+}
+
+Table AIScanDetection {
+  detection_id bigint [pk, increment]
+  scan_id bigint [not null, ref: > AIScanHistory.scan_id, note: "Thuộc phiên quét ảnh nào"]
+  category_id bigint [not null, ref: > MasterWasteCategory.category_id, note: "Loại rác của hộp bao này"]
+  confidence_score numeric(6,5) [not null, note: "Độ tin cậy của hộp này"]
+  x_min numeric(10,7) [not null, note: "Tọa độ chuẩn hóa x_min"]
+  y_min numeric(10,7) [not null, note: "Tọa độ chuẩn hóa y_min"]
+  x_max numeric(10,7) [not null, note: "Tọa độ chuẩn hóa x_max"]
+  y_max numeric(10,7) [not null, note: "Tọa độ chuẩn hóa y_max"]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: "Bounding Box chi tiết khi ảnh chứa nhiều vật thể rác cùng lúc (YOLOv8)"
+}
+
+Table MisclassifiedReport {
+  report_id bigint [pk, increment]
+  scan_id bigint [not null, unique, ref: - AIScanHistory.scan_id, note: "Mỗi phiên quét chỉ báo cáo 1 lần"]
+  user_id bigint [not null, ref: > User.user_id, note: "Người dùng gửi khiếu nại kết quả AI"]
+  predicted_category_id bigint [not null, ref: > MasterWasteCategory.category_id, note: "Nhãn AI đã đoán sai"]
+  user_suggested_category_id bigint [not null, ref: > MasterWasteCategory.category_id, note: "Nhãn người dùng đề xuất"]
+  staff_verified_category_id bigint [ref: > MasterWasteCategory.category_id, note: "Nhãn chính xác cuối cùng do Staff xác nhận"]
+  description text [note: "Mô tả của người dùng"]
+  status report_status [not null, default: 'Pending', note: "Pending, Reviewed, Rejected"]
+  reviewed_by_staff_id bigint [ref: > StaffProfile.staff_id, note: "Staff chịu trách nhiệm duyệt"]
+  review_note text [note: "Ghi chú thẩm định"]
+  reviewed_at timestamptz [note: "Thời điểm phê duyệt"]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: "Phản hồi AI nhận diện sai, nguồn dữ liệu tái huấn luyện (BR-CLS-05)"
+}
+
+Table VerifiedDataset {
+  dataset_id bigint [pk, increment]
+  category_id bigint [not null, ref: > MasterWasteCategory.category_id, note: "Nhãn rác đã chuẩn hóa"]
+  image_url text [not null, note: "Ảnh mẫu trong kho huấn luyện"]
+  annotation_url text [note: "Tọa độ Bounding box định dạng YOLO"]
+  source varchar(255) [note: "Nguồn ảnh: Feedback người dùng, Thực địa, TrashNet"]
+  dataset_split dataset_split [not null, default: 'Train', note: "Train, Test, Validation (BR-CLS-07: không trùng lặp)"]
+  verified_by_staff_id bigint [not null, ref: > StaffProfile.staff_id, note: "Staff đã gán nhãn kiểm chứng"]
+  verified_at timestamptz [not null, default: `now()`]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: "Tập dữ liệu chuẩn hóa phục vụ huấn luyện và đánh giá mô hình AI"
+}
+
+// ============================================================================
+// 3. PHÂN HỆ THU GOM, THƯƠNG LƯỢNG & BÀN GIAO (COLLECTION & TRADING)
+// ============================================================================
+
+Table RecyclerPriceList {
+  price_id bigint [pk, increment]
+  recycler_id bigint [not null, ref: > RecyclerProfile.recycler_id, note: "Cơ sở áp dụng mức giá này"]
+  category_id bigint [not null, ref: > MasterWasteCategory.category_id, note: "Loại phế liệu thu mua"]
+  price_per_kg numeric(12,2) [not null, note: "Giá thu mua tham chiếu (VNĐ/kg)"]
+  min_quantity_kg numeric(12,3) [not null, default: 1.000, note: "Khối lượng tối thiểu nhận gom"]
+  effective_from timestamptz [not null, default: `now()`, note: "Thời điểm giá bắt đầu hiệu lực"]
+  effective_to timestamptz [note: "Thời điểm hết hạn (null = vô thời hạn)"]
+  status varchar(20) [not null, default: 'ACTIVE']
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (recycler_id, category_id) [unique]
+  }
+
+  Note: "Bảng giá thu mua phế liệu công khai của từng vựa ve chai"
+}
+
+Table HandoverRequest {
+  request_id bigint [pk, increment]
+  request_code varchar(50) [not null, unique, note: "Mã đơn hàng: HND-2026-XXXX"]
+  user_id bigint [not null, ref: > User.user_id, note: "Công dân tạo đơn thu gom"]
+  recycler_id bigint [not null, ref: > RecyclerProfile.recycler_id, note: "Vựa ve chai nhận gom"]
+  pickup_address text [not null, note: "Địa chỉ đến lấy phế liệu"]
+  latitude numeric(10,7) [note: "Vĩ độ địa chỉ gom"]
+  longitude numeric(11,7) [note: "Kinh độ địa chỉ gom"]
+  geom text [note: "PostGIS Geometry(Point, 4326) phục vụ dẫn đường thu gom"]
+  waste_photo_url text [note: "Ảnh chụp đống phế liệu người dân tải lên"]
+  proposed_time_slot timestamptz [not null, note: "Khung giờ User đề xuất khi tạo đơn (BR-NEG-04)"]
+  confirmed_time_slot timestamptz [note: "Khung giờ chốt chính thức khi Recycler ấn Accept (BR-NEG-05)"]
+  actual_handover_at timestamptz [note: "Thời điểm hai bên gặp mặt thực tế"]
+  status request_status [not null, default: 'Pending', note: "Luồng trạng thái 1 chiều (BR-HND-02)"]
+  user_note text [note: "Chỉ dẫn đường vào hẻm/nhà"]
+  recycler_note text [note: "Ghi chú của người thu mua"]
+  cancel_reason text [note: "Lý do hủy đơn hoặc từ chối (UC U-07, R-04)"]
+  cancelled_by bigint [ref: > User.user_id, note: "Bên thực hiện thao tác hủy"]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (user_id, status, created_at)
+    (recycler_id, status, created_at)
+  }
+
+  Note: "Yêu cầu bàn giao phế liệu tích hợp thỏa thuận khung giờ thu gom"
+}
+
+Table HandoverRequestItem {
+  item_id bigint [pk, increment]
+  request_id bigint [not null, ref: > HandoverRequest.request_id, note: "Thuộc đơn bàn giao nào"]
+  category_id bigint [not null, ref: > MasterWasteCategory.category_id, note: "Loại phế liệu gom"]
+  estimated_weight_kg numeric(12,3) [not null, default: 0.000, note: "Khối lượng User ước tính (kg)"]
+  actual_weight_kg numeric(12,3) [note: "Khối lượng Recycler đo thực tế tại chỗ (kg)"]
+  agreed_price_per_kg numeric(12,2) [note: "Đơn giá đã chốt thương lượng (VNĐ/kg)"]
+  item_note text [note: "Ghi chú phân loại phế liệu"]
+  created_at timestamptz [not null, default: `now()`]
+
+  Note: "Chi tiết các loại phế liệu trong một đơn thu gom"
+}
+
+Table ChatMessage {
+  message_id bigint [pk, increment]
+  request_id bigint [not null, ref: > HandoverRequest.request_id, note: "Thuộc đơn giao dịch nào"]
+  sender_user_id bigint [not null, ref: > User.user_id, note: "Bên gửi tin nhắn"]
+  message_type message_type [not null, default: 'TEXT', note: "TEXT, IMAGE, PROPOSAL, SYSTEM"]
+  message_content text [note: "Nội dung văn bản"]
+  attachment_url text [note: "Ảnh đính kèm trên R2"]
+  proposal_data text [note: "JSON cấu trúc giá mới hoặc giờ mới để hiển thị tương tác"]
+  is_read boolean [not null, default: false]
+  sent_at timestamptz [not null, default: `now()`, note: "Lưu vĩnh viễn làm bằng chứng (BR-NEG-01)"]
+  read_at timestamptz
+
+  indexes {
+    (request_id, sent_at)
+  }
+
+  Note: "Tin nhắn thương lượng giá & lịch hẹn trực tiếp giữa 2 bên qua SignalR"
+}
+
+Table HandoverReceipt {
+  receipt_id bigint [pk, increment]
+  request_id bigint [not null, unique, ref: - HandoverRequest.request_id, note: "1 đơn gom có đúng 1 biên lai hoàn tất"]
+  receipt_code varchar(50) [not null, unique, note: "Mã biên lai: RCP-2026-XXXX"]
+  user_id bigint [not null, ref: > User.user_id, note: "Công dân nhận tiền"]
+  recycler_id bigint [not null, ref: > RecyclerProfile.recycler_id, note: "Vựa chi trả tiền mặt"]
+  total_weight_kg numeric(12,3) [not null, note: "Tổng khối lượng thực tế đã cân (kg)"]
+  total_amount_cash numeric(14,2) [not null, note: "Tổng tiền mặt thanh toán trực tiếp (VNĐ)"]
+  points_awarded bigint [not null, default: 0, note: "Điểm xanh thưởng cấp cho cả hai bên (BR-GAM-01)"]
+  scale_proof_photo_url text [not null, note: "Ảnh chụp màn hình cân đo thực tế (BR-HND-04)"]
+  receipt_image_url text [note: "Ảnh hóa đơn/phiếu ký tay"]
+  created_at timestamptz [not null, default: `now()`, note: "Thời điểm Recycler lập biên nhận"]
+  confirmed_by_user_at timestamptz [not null, note: "Thời điểm User bấm xác nhận chốt giao dịch"]
+
+  Note: "Biên lai hoàn tất bàn giao phế liệu và ghi nhận khối lượng thực tế"
+}
+
+Table TransactionReview {
+  review_id bigint [pk, increment]
+  request_id bigint [not null, ref: > HandoverRequest.request_id, note: "Đơn giao dịch được đánh giá"]
+  reviewer_id bigint [not null, ref: > User.user_id, note: "Bên thực hiện đánh giá (User hoặc Recycler)"]
+  reviewee_id bigint [not null, ref: > User.user_id, note: "Bên nhận đánh giá"]
+  rating_stars smallint [not null, note: "Số sao từ 1 đến 5 (BR-RVW-02)"]
+  comment text [note: "Nhận xét thái độ và độ chuẩn xác"]
+  status review_status [not null, default: 'Visible', note: "Visible, Hidden, Reported, Deleted (BR-RVW-03)"]
+  moderated_by bigint [ref: > User.user_id, note: "Staff/Admin ẩn bài nếu vi phạm tiêu chuẩn"]
+  moderation_reason text [note: "Lý do kiểm duyệt ẩn đánh giá"]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (request_id, reviewer_id) [unique]
+  }
+
+  Note: "Đánh giá 2 chiều có cơ chế kiểm duyệt nội dung độc hại (BR-RVW-01/03)"
+}
+
+Table TransactionComplaint {
+  complaint_id bigint [pk, increment]
+  request_id bigint [not null, ref: > HandoverRequest.request_id, note: "Đơn xảy ra tranh chấp"]
+  submitted_by bigint [not null, ref: > User.user_id, note: "Bên đứng đơn khiếu nại (BR-DSP-01)"]
+  complaint_type varchar(50) [not null, note: "Lý do: Sai khối lượng, Ép giá, Thái độ xấu"]
+  description text [not null, note: "Nội dung tường trình chi tiết sự việc"]
+  evidence_url text [note: "Ảnh chụp chứng cứ sai lệch"]
+  status complaint_status [not null, default: 'Pending', note: "Pending, Investigating, Resolved, Dismissed"]
+  assigned_staff_id bigint [ref: > StaffProfile.staff_id, note: "Staff được giao thụ lý hồ sơ"]
+  resolution_outcome complaint_outcome [note: "Kết quả phán quyết ràng buộc (BR-DSP-04)"]
+  resolution_note text [note: "Giải trình quyết định của Staff"]
+  created_at timestamptz [not null, default: `now()`]
+  resolved_at timestamptz [note: "Thời điểm giải quyết xong"]
+
+  Note: "Xử lý khiếu nại giao dịch do Staff làm trọng tài phân xử"
+}
+
+// ============================================================================
+// 4. PHÂN HỆ DỊCH VỤ NỘI BỘ & THANH TOÁN VIETQR (SERVICE & PAYMENT)
+// ============================================================================
+
+Table ServicePackage {
+  package_id bigint [pk, increment]
+  package_code varchar(50) [not null, unique, note: "Mã gói: RECYCLER_VERIFIED_BADGE, NO_ADS_MONTHLY"]
+  package_name varchar(100) [not null, note: "Tên gói dịch vụ"]
+  target_role target_role [not null, default: 'All', note: "Đối tượng: User, Recycler, All"]
+  description text [note: "Mô tả đặc quyền của gói"]
+  price_vnd numeric(14,2) [not null, note: "Giá gói niêm yết (VNĐ)"]
+  duration_days int [not null, note: "Thời hạn gói (30, 90, 365 ngày)"]
+  features text [note: "JSON cấu hình đặc quyền mở khóa"]
+  status varchar(20) [not null, default: 'ACTIVE', note: "ACTIVE, INACTIVE"]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Gói tính năng trả phí của nền tảng (Tắt quảng cáo, Huy hiệu xác minh Tích xanh)"
+}
+
+Table ServiceOrder {
+  order_id bigint [pk, increment]
+  order_code varchar(50) [not null, unique, note: "Mã đơn hàng: SRV-2026-XXXX"]
+  user_id bigint [not null, ref: > User.user_id, note: "Người thanh toán"]
+  package_id bigint [not null, ref: > ServicePackage.package_id, note: "Gói dịch vụ đã mua"]
+  amount_vnd numeric(14,2) [not null, note: "Số tiền cần thanh toán chính xác (VNĐ)"]
+  payment_method varchar(30) [not null, default: 'VIETQR', note: "Phương thức VietQR động"]
+  qr_payload text [note: "Chuỗi chuẩn EMVCo để render mã VietQR trên Frontend (BR-PAY-01)"]
+  qr_code_url text [note: "Link ảnh mã QR từ PayOS/VietQR"]
+  payment_reference varchar(255) [unique, note: "Mã tham chiếu ngân hàng/PayOS"]
+  gateway_transaction_no varchar(100) [note: "Mã giao dịch thực tế trên cổng"]
+  payment_status payment_status [not null, default: 'Pending']
+  order_status order_status [not null, default: 'Pending']
+  webhook_payload text [note: "Toàn bộ dữ liệu callback phục vụ đối soát Admin (UC A-11)"]
+  paid_at timestamptz [note: "Thời điểm ghi nhận tiền vào tài khoản"]
+  starts_at timestamptz [note: "Thời điểm kích hoạt gói"]
+  expires_at timestamptz [note: "Thời điểm hết hạn gói"]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    order_code
+  }
+
+  Note: "Đơn mua gói dịch vụ thanh toán qua VietQR động tự động kích hoạt"
+}
+
+// ============================================================================
+// 5. PHÂN HỆ GAMIFICATION & PHẦN THƯỞNG (GAMIFICATION & REWARDS)
+// ============================================================================
+
+Table UserPointWallet {
+  wallet_id bigint [pk, increment]
+  user_id bigint [not null, unique, ref: - User.user_id, note: "1 tài khoản có 1 ví điểm duy nhất (BR-GAM-08)"]
+  current_balance bigint [not null, default: 0, note: "Số dư điểm xanh khả dụng"]
+  total_earned bigint [not null, default: 0, note: "Tổng điểm tích lũy trọn đời (xếp hạng Leaderboard)"]
+  total_spent bigint [not null, default: 0, note: "Tổng điểm đã tiêu"]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Ví điểm xanh Gamification, số dư luôn >= 0 (BR-GAM-03)"
+}
+
+Table PointTransactionHistory {
+  transaction_id bigint [pk, increment]
+  wallet_id bigint [not null, ref: > UserPointWallet.wallet_id]
+  user_id bigint [not null, ref: > User.user_id, note: "Truy vấn nhanh lịch sử theo user"]
+  points bigint [not null, note: "Số điểm biến động (+ cộng, - trừ)"]
+  action_type point_action_type [not null, note: "Loại hành động nhận/trừ điểm"]
+  source_type varchar(50) [note: "Bảng nguồn: HandoverReceipt, DailyCheckinLog, GiftRedemption"]
+  source_id bigint [note: "ID bản ghi nguồn"]
+  idempotency_key varchar(100) [unique, note: "Khóa chống cộng/trừ điểm trùng lặp (BR-GAM-01)"]
+  description text [note: "Diễn giải lý do cộng/trừ điểm"]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (user_id, created_at)
+  }
+
+  Note: "Lịch sử biến động điểm xanh đảm bảo tính nguyên tử và kiểm toán"
+}
+
+Table DailyCheckinLog {
+  checkin_id bigint [pk, increment]
+  user_id bigint [not null, ref: > User.user_id]
+  checkin_date date [not null, note: "Ngày điểm danh YYYY-MM-DD"]
+  streak_count int [not null, default: 1, note: "Chuỗi ngày liên tục Streak (BR-GAM-09)"]
+  points_awarded bigint [not null, default: 0, note: "Điểm thưởng nhận được"]
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (user_id, checkin_date) [unique]
+  }
+
+  Note: "Điểm danh hàng ngày tăng điểm theo chuỗi ngày liên tục (BR-GAM-09)"
+}
+
+Table VirtualTreeProgress {
+  progress_id bigint [pk, increment]
+  user_id bigint [not null, unique, ref: - User.user_id, note: "Mỗi Citizen có 1 Cây ảo duy nhất"]
+  tree_level int [not null, default: 1, note: "Cấp độ phát triển của Cây (1 -> N)"]
+  growth_points bigint [not null, default: 0, note: "Điểm sinh trưởng của cây"]
+  total_watered int [not null, default: 0, note: "Tổng số lần đã tưới trọn đời"]
+  daily_water_count int [not null, default: 0, note: "Số lần tưới trong ngày hôm nay (BR-GAM-06)"]
+  last_water_date date [note: "Ngày tưới gần nhất để reset daily_water_count"]
+  last_watered_at timestamptz
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Tiến trình chăm sóc Cây ảo & giới hạn số lần tưới mỗi ngày (BR-GAM-06)"
+}
+
+Table GiftInventory {
+  gift_id bigint [pk, increment]
+  gift_name varchar(150) [not null, note: "Tên phần thưởng"]
+  gift_type gift_type [not null, default: 'Physical', note: "Physical: Quà hiện vật, Voucher: Mã giảm giá"]
+  description text [note: "Điều kiện áp dụng"]
+  image_url text [note: "Ảnh quà tặng"]
+  points_required bigint [not null, note: "Số điểm xanh cần đổi"]
+  stock_quantity int [not null, default: 0, note: "Số lượng còn trong kho (BR-GAM-04)"]
+  status varchar(20) [not null, default: 'ACTIVE']
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Kho quà tặng hiện vật và voucher điện tử do Staff quản lý (UC S-10)"
+}
+
+Table GiftRedemption {
+  redemption_id bigint [pk, increment]
+  user_id bigint [not null, ref: > User.user_id, note: "Người đổi quà"]
+  gift_id bigint [not null, ref: > GiftInventory.gift_id]
+  points_spent bigint [not null, note: "Số điểm đã bị trừ (BR-GAM-03)"]
+  quantity int [not null, default: 1]
+  redemption_code varchar(50) [not null, unique, note: "Mã phiếu nhận quà"]
+  voucher_code varchar(100) [note: "Mã code kích hoạt ưu đãi nếu là Voucher điện tử"]
+  expires_at timestamptz [note: "Hạn sử dụng voucher (BR-GAM-05)"]
+  status redemption_status [not null, default: 'Pending']
+  delivery_address text [note: "Địa chỉ giao hàng đối với quà hiện vật"]
+  redeemed_at timestamptz [not null, default: `now()`]
+  fulfilled_at timestamptz [note: "Thời điểm trao quà thành công"]
+
+  Note: "Lịch sử đổi điểm lấy quà tặng và phát mã voucher"
+}
+
+Table EcoFact {
+  fact_id bigint [pk, increment]
+  title varchar(200) [not null, note: "Tiêu đề kiến thức môi trường"]
+  content text [not null, note: "Nội dung giáo dục ý thức phân loại rác"]
+  source_url text [note: "Nguồn tham khảo"]
+  image_url text [note: "Ảnh minh họa"]
+  unlock_tree_level int [not null, default: 1, note: "Cấp độ cây cần đạt để mở khóa Fact (BR-GAM-06)"]
+  status varchar(20) [not null, default: 'ACTIVE']
+  created_by_staff_id bigint [ref: > StaffProfile.staff_id]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Kiến thức môi trường mở khóa theo từng cấp độ Cây ảo (UC U-14)"
+}
+
+// ============================================================================
+// 6. PHÂN HỆ KHẢO SÁT & ĐÁNH GIÁ (SURVEY & FEEDBACK)
+// ============================================================================
+
+Table Survey {
+  survey_id bigint [pk, increment]
+  title varchar(200) [not null, note: "Tiêu đề đợt khảo sát"]
+  description text [note: "Mục đích khảo sát dịch vụ"]
+  target_role target_role [not null, default: 'All', note: "User, Recycler, All"]
+  status survey_status [not null, default: 'Draft']
+  start_date timestamptz [not null]
+  end_date timestamptz [not null]
+  created_by_staff_id bigint [not null, ref: > StaffProfile.staff_id]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Đợt khảo sát định kỳ chất lượng dịch vụ nền tảng (BR-RVW-04)"
+}
+
+Table SurveyQuestion {
+  question_id bigint [pk, increment]
+  survey_id bigint [not null, ref: > Survey.survey_id]
+  question_text text [not null, note: "Nội dung câu hỏi"]
+  question_type question_type [not null, note: "Rating_1_5, Multiple_Choice, Text"]
+  options text [note: "JSON danh sách các lựa chọn trắc nghiệm"]
+  order_index int [not null, default: 0, note: "Thứ tự câu hỏi"]
+  is_required boolean [not null, default: true]
+
+  Note: "Danh sách câu hỏi trong bảng khảo sát"
+}
+
+Table SurveyResponse {
+  response_id bigint [pk, increment]
+  survey_id bigint [not null, ref: > Survey.survey_id]
+  user_id bigint [not null, ref: > User.user_id]
+  answers text [not null, note: "JSON chứa câu trả lời phục vụ tổng hợp ẩn danh (BR-RVW-05)"]
+  submitted_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (survey_id, user_id) [unique]
+  }
+
+  Note: "Kết quả trả lời khảo sát ẩn danh của người dùng (BR-RVW-05)"
+}
+
+// ============================================================================
+// 7. PHÂN HỆ NỘI DUNG, THÔNG BÁO & KIỂM TOÁN (CONTENT, NOTIFICATION & AUDIT)
+// ============================================================================
+
+Table BlogPost {
+  post_id bigint [pk, increment]
+  author_staff_id bigint [not null, ref: > StaffProfile.staff_id, note: "Nhân viên biên soạn (BR-ADM-08)"]
+  title varchar(250) [not null, note: "Tiêu đề bài viết"]
+  slug varchar(280) [not null, unique, note: "Đường dẫn URL thân thiện SEO"]
+  summary text [note: "Tóm tắt bài viết"]
+  content text [not null, note: "Nội dung bài viết (Markdown/HTML)"]
+  cover_image_url text [note: "Ảnh bìa bài viết"]
+  status post_status [not null, default: 'Draft', note: "Draft -> Pending_Approval -> Approved (BR-ADM-08)"]
+  approved_by_admin_id bigint [ref: > User.user_id, note: "Admin phê duyệt bài viết"]
+  rejection_reason text [note: "Lý do từ chối nếu không đạt"]
+  approved_at timestamptz
+  published_at timestamptz [note: "Thời điểm công khai cho người dùng đọc"]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Bài viết Blog tuyên truyền do Staff viết và Admin duyệt (UC S-08, A-09)"
+}
+
+Table Notification {
+  notification_id bigint [pk, increment]
+  user_id bigint [not null, ref: > User.user_id, note: "Người nhận thông báo"]
+  title varchar(200) [not null, note: "Tiêu đề thông báo"]
+  message text [not null, note: "Nội dung thông báo"]
+  notification_type varchar(50) [not null, note: "TRANSACTION, AI_SCAN, GAMIFICATION, SYSTEM, COMPLAINT"]
+  reference_type varchar(50) [note: "Bảng liên kết: HandoverRequest, ServiceOrder"]
+  reference_id bigint [note: "ID bản ghi liên kết"]
+  is_read boolean [not null, default: false]
+  read_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (user_id, is_read, created_at)
+  }
+
+  Note: "Thông báo đẩy đa kênh (Web In-App qua SignalR, Mobile qua Firebase FCM)"
+}
+
+Table AuditLog {
+  audit_id bigint [pk, increment]
+  actor_user_id bigint [ref: > User.user_id, note: "Người thực hiện hành động"]
+  action varchar(100) [not null, note: "Tên thao tác: LOCK_ACCOUNT, VERIFY_RECYCLER, RESOLVE_COMPLAINT"]
+  entity_type varchar(100) [note: "Đối tượng bị tác động"]
+  entity_id varchar(100) [note: "ID bản ghi bị tác động"]
+  old_values text [note: "JSON dữ liệu trước khi sửa"]
+  new_values text [note: "JSON dữ liệu sau khi sửa"]
+  ip_address varchar(45) [note: "Địa chỉ IP máy khách (BR-ADM-05)"]
+  user_agent text [note: "Trình duyệt/thiết bị thao tác"]
+  created_at timestamptz [not null, default: `now()`, note: "Bất biến, không thể sửa/xóa (BR-ADM-05)"]
+
+  indexes {
+    created_at
+  }
+
+  Note: "Nhật ký kiểm toán an ninh hệ thống bất biến (Audit Trail)"
+}
+
+// ============================================================================
+// 8. TABLE GROUPS (GOM CỤM THEO MODULE TRÊN DBDATABASE.IO)
+// ============================================================================
+
+TableGroup 01_Auth_Module {
+  User
+  RecyclerProfile
+  StaffProfile
+  StaffPermissionAssignment
+  PasswordResetToken
+}
+
+TableGroup 02_AI_Waste_Module {
+  MasterWasteCategory
+  SortingGuidanceRule
+  AIScanHistory
+  AIScanDetection
+  MisclassifiedReport
+  VerifiedDataset
+}
+
+TableGroup 03_Collection_Trading_Module {
+  RecyclerPriceList
+  HandoverRequest
+  HandoverRequestItem
+  ChatMessage
+  HandoverReceipt
+  TransactionReview
+  TransactionComplaint
+}
+
+TableGroup 04_Payment_Service_Module {
+  ServicePackage
+  ServiceOrder
+}
+
+TableGroup 05_Gamification_Rewards_Module {
+  UserPointWallet
+  PointTransactionHistory
+  DailyCheckinLog
+  VirtualTreeProgress
+  GiftInventory
+  GiftRedemption
+  EcoFact
+}
+
+TableGroup 06_Survey_Feedback_Module {
+  Survey
+  SurveyQuestion
+  SurveyResponse
+}
+
+TableGroup 07_Content_Admin_Audit_Module {
+  BlogPost
+  Notification
+  AuditLog
+}

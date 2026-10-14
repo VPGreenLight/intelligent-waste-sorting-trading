@@ -1,0 +1,237 @@
+<mxfile host="app.diagrams.net" modified="2026-10-14T10:00:00.000Z" agent="EcoLink Package Diagram Generator" version="24.7.5">
+  <diagram id="ecolink-backend-package-diagram" name="Backend Package Diagram">
+    <mxGraphModel dx="1600" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" background="#ffffff" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="pkg_system_users" parent="1" value="System Users" style="shape=folder;fontStyle=1;tabWidth=95;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=3;fontSize=12;fontColor=#212121;" vertex="1">
+          <mxGeometry x="40" y="160" width="130" height="95" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_users_to_system" parent="1" source="pkg_system_users" target="pkg_ecolink_system" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#212121;strokeWidth=1.5;endArrow=open;endFill=0;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="170" y="207" as="sourcePoint" />
+            <mxPoint x="220" y="207" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="pkg_ecolink_system" parent="1" value="EcoLink System" style="shape=folder;fontStyle=1;tabWidth=140;tabHeight=24;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=4;fontSize=13;fontColor=#212121;" vertex="1">
+          <mxGeometry x="220" y="40" width="790" height="880" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pkg_presentation_layer" parent="1" value="Presentation Layer" style="shape=folder;fontStyle=1;tabWidth=140;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=top;align=center;spacingTop=3;fontSize=12;fontColor=#212121;" vertex="1">
+          <mxGeometry x="240" y="80" width="750" height="170" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p_pkg_auth" parent="1" value="Guest &amp;amp; Auth" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="260" y="115" width="165" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p_pkg_user" parent="1" value="User Services" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="445" y="115" width="165" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p_pkg_waste" parent="1" value="Waste Services" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="630" y="115" width="165" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p_pkg_recycling" parent="1" value="Recycling Services" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="815" y="115" width="155" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p_pkg_gamification" parent="1" value="Gamification" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="260" y="180" width="165" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p_pkg_recycler" parent="1" value="Recycler Services" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="445" y="180" width="165" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p_pkg_staff" parent="1" value="Staff Services" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="630" y="180" width="165" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="p_pkg_admin" parent="1" value="Admin Services" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="815" y="180" width="155" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_pres_to_serv" parent="1" source="pkg_presentation_layer" target="pkg_services_layer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#212121;strokeWidth=1.5;endArrow=open;endFill=0;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="615" y="250" as="sourcePoint" />
+            <mxPoint x="615" y="280" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="pkg_services_layer" parent="1" value="Services Layer" style="shape=folder;fontStyle=1;tabWidth=120;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=top;align=center;spacingTop=3;fontSize=12;fontColor=#212121;" vertex="1">
+          <mxGeometry x="240" y="280" width="750" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s_pkg_auth" parent="1" value="Authentication&lt;br&gt;Service" style="shape=folder;fontStyle=0;tabWidth=38;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="255" y="320" width="135" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s_pkg_ai" parent="1" value="AI Service" style="shape=folder;fontStyle=0;tabWidth=38;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="405" y="320" width="135" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s_pkg_transaction" parent="1" value="Transaction&lt;br&gt;Service" style="shape=folder;fontStyle=0;tabWidth=38;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="555" y="320" width="135" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s_pkg_notification" parent="1" value="Notification&lt;br&gt;Service" style="shape=folder;fontStyle=0;tabWidth=38;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="705" y="320" width="135" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="s_pkg_payment" parent="1" value="Payment&lt;br&gt;Service" style="shape=folder;fontStyle=0;tabWidth=38;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="850" y="320" width="125" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_serv_to_biz" parent="1" source="pkg_services_layer" target="pkg_business_layer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#212121;strokeWidth=1.5;endArrow=open;endFill=0;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="615" y="430" as="sourcePoint" />
+            <mxPoint x="615" y="460" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="pkg_business_layer" parent="1" value="Business Layer" style="shape=folder;fontStyle=1;tabWidth=120;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=top;align=center;spacingTop=3;fontSize=12;fontColor=#212121;" vertex="1">
+          <mxGeometry x="240" y="460" width="750" height="150" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_pkg_user" parent="1" value="User&lt;br&gt;Management" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="260" y="505" width="165" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_pkg_waste" parent="1" value="Waste&lt;br&gt;Management" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="445" y="505" width="165" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_pkg_trade" parent="1" value="Trade&lt;br&gt;Management" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="630" y="505" width="165" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="b_pkg_payment" parent="1" value="Payment &amp;amp;&lt;br&gt;Financial" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="815" y="505" width="155" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_biz_to_data" parent="1" source="pkg_business_layer" target="pkg_data_layer" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#212121;strokeWidth=1.5;endArrow=open;endFill=0;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="615" y="610" as="sourcePoint" />
+            <mxPoint x="615" y="640" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="pkg_data_layer" parent="1" value="Data Layer" style="shape=folder;fontStyle=1;tabWidth=100;tabHeight=22;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=top;align=center;spacingTop=3;fontSize=12;fontColor=#212121;" vertex="1">
+          <mxGeometry x="240" y="640" width="750" height="255" as="geometry" />
+        </mxCell>
+
+        <mxCell id="d_pkg_user" parent="1" value="User Data" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="260" y="690" width="165" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="d_pkg_waste" parent="1" value="Waste Data" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="445" y="690" width="165" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="d_pkg_transaction" parent="1" value="Transaction Data" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="630" y="690" width="165" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="d_pkg_payment" parent="1" value="Payment Data" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="815" y="690" width="155" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="d_pkg_gamification" parent="1" value="Gamification &amp;amp;&lt;br&gt;Reward Data" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="260" y="770" width="165" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="d_pkg_spatial" parent="1" value="Spatial PostGIS&lt;br&gt;Data Store" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="445" y="770" width="165" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="d_pkg_chat" parent="1" value="Chat History &amp;amp;&lt;br&gt;Negotiation Data" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="630" y="770" width="165" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="d_pkg_redis" parent="1" value="Redis Cache &amp;amp;&lt;br&gt;Leaderboard Store" style="shape=folder;fontStyle=0;tabWidth=45;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="815" y="770" width="155" height="60" as="geometry" />
+        </mxCell>
+
+        <mxCell id="pkg_cross_cutting" parent="1" value="Cross-Cutting" style="shape=folder;fontStyle=1;tabWidth=110;tabHeight=24;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=4;fontSize=12;fontColor=#212121;" vertex="1">
+          <mxGeometry x="1060" y="55" width="160" height="420" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_pkg_security" parent="1" value="Security" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="1075" y="95" width="130" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_pkg_communication" parent="1" value="Communication" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="1075" y="155" width="130" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_pkg_notification" parent="1" value="Notification" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="1075" y="215" width="130" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_pkg_audit" parent="1" value="Audit Logging" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="1075" y="275" width="130" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_pkg_exception" parent="1" value="Global Exception&lt;br&gt;Handling" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=10.5;" vertex="1">
+          <mxGeometry x="1075" y="335" width="130" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="c_pkg_schedulers" parent="1" value="Background Jobs&lt;br&gt;(Hangfire)" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=10.5;" vertex="1">
+          <mxGeometry x="1075" y="400" width="130" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_system_to_cross" parent="1" source="pkg_ecolink_system" target="pkg_cross_cutting" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#212121;strokeWidth=1.5;startArrow=open;endArrow=open;startFill=0;endFill=0;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1010" y="260" as="sourcePoint" />
+            <mxPoint x="1060" y="260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+        <mxCell id="pkg_external_systems" parent="1" value="External Systems" style="shape=folder;fontStyle=1;tabWidth=130;tabHeight=24;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.5;verticalAlign=top;align=center;spacingTop=4;fontSize=12;fontColor=#212121;" vertex="1">
+          <mxGeometry x="1270" y="55" width="165" height="520" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_pkg_oauth" parent="1" value="Google OAuth" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="1285" y="95" width="135" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_pkg_email" parent="1" value="Email / OTP" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="1285" y="155" width="135" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_pkg_ai" parent="1" value="AI Vision Model" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="1285" y="215" width="135" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_pkg_gps" parent="1" value="GPS / Map Service" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="1285" y="275" width="135" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_pkg_vietqr" parent="1" value="VietQR" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="1285" y="335" width="135" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_pkg_r2" parent="1" value="R2Cloud Storage" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=11;" vertex="1">
+          <mxGeometry x="1285" y="395" width="135" height="50" as="geometry" />
+        </mxCell>
+
+        <mxCell id="e_pkg_fcm" parent="1" value="Firebase FCM&lt;br&gt;(Push Service)" style="shape=folder;fontStyle=0;tabWidth=40;tabHeight=14;tabPosition=left;html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#212121;strokeWidth=1.2;verticalAlign=middle;align=center;fontSize=10.5;" vertex="1">
+          <mxGeometry x="1285" y="455" width="135" height="55" as="geometry" />
+        </mxCell>
+
+        <mxCell id="edge_cross_to_ext" parent="1" source="pkg_cross_cutting" target="pkg_external_systems" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;dashed=1;strokeColor=#212121;strokeWidth=1.5;startArrow=open;endArrow=open;startFill=0;endFill=0;" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1220" y="260" as="sourcePoint" />
+            <mxPoint x="1270" y="260" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

@@ -40,7 +40,7 @@
 
 [V. Project Scope & Limitations	8](#v.-project-scope-&-limitations)
 
-[1\. Major Features	9](#1.-major-features)
+[1\. Major Features	8](#1.-major-features)
 
 [2\. Limitations & Exclusions	9](#2.-limitations-&-exclusions)
 
@@ -112,14 +112,10 @@ Additionally, the project aims to connect users with smart recycling purchasing 
 
 # **II. Product Background** {#ii.-product-background}
 
-Based on the practical issues outlined in the project's research, sorting waste at the source currently faces a massive barrier stemming from a very simple reality: users are often unsure where a specific type of waste should be thrown.
-
-Imagine a daily scenario: You have just finished a meal in a styrofoam box or drank a bottle of water. Standing in front of trash bins labeled "Organic", "Recyclable", and "Other", you start to wonder. Should a styrofoam box with food residue go into the recycling bin or the other bin? For a plastic bottle, which bin does it go to? Or for items like old batteries, how can they be handled since they cannot be thrown out with regular household waste?
-
-Because there are no ready answers at that moment, users still have to make their own decisions on the spot. Even with a good intention to protect the environment, this confusion leads to improper disposal, causing recyclable materials to be ruined or sent to landfills.
-
-The core problem here is two-fold. First, when looking at an object, users simply do not know what category it belongs to (e.g., whether it is plastic, paper, metal, or other waste). Second, even if they know what the item is (for example, a plastic bottle), they do not know the proper handling process, such as whether it needs to be washed, if it is recyclable, or which specific bin it belongs to.
-
+Based on the practical issues outlined in the project's research, sorting waste at the source currently faces a massive barrier stemming from a very simple reality: users are often unsure where a specific type of waste should be thrown.  
+Imagine a daily scenario: You have just finished a meal in a styrofoam box or drank a bottle of water. Standing in front of trash bins labeled "Organic", "Recyclable", and "Other", you start to wonder. Should a styrofoam box with food residue go into the recycling bin or the other bin? For a plastic bottle, which bin does it go to? Or for items like old batteries, how can they be handled since they cannot be thrown out with regular household waste?  
+Because there are no ready answers at that moment, users still have to make their own decisions on the spot. Even with a good intention to protect the environment, this confusion leads to improper disposal, causing recyclable materials to be ruined or sent to landfills.  
+The core problem here is two-fold. First, when looking at an object, users simply do not know what category it belongs to (e.g., whether it is plastic, paper, metal, or other waste). Second, even if they know what the item is (for example, a plastic bottle), they do not know the proper handling process, such as whether it needs to be washed, if it is recyclable, or which specific bin it belongs to.  
 This is the exact reason the EcoLink system was created. Instead of forcing users to memorize complicated waste sorting rules, the system provides an extremely simple workflow: the user takes or uploads a photo of the waste, the AI recognizes the item, and the system looks up the sorting rules to provide a clear instruction. For example, if a user snaps a picture of a water bottle, the system will immediately identify it as a plastic bottle and provide visual handling instructions, such as: "1. Empty liquid, 2\. Rinse if necessary, 3\. Put it into the recycling bin". By providing guidance right at the moment of disposal, the product turns a confusing daily chore into a confident and eco-friendly habit.
 
 # **III. Existing Solutions** {#iii.-existing-solutions}
@@ -163,8 +159,6 @@ Litterati is a US-based citizen-science application that uses AI (branded as Lit
 | ***Strengths*** | The only solution reviewed that applies AI image analysis directly to waste photos; large-scale dataset validated by National Science Foundation funding; effective at creating accountability for brand-level plastic pollution  |
 | ***Weaknesses*** | The AI classifies litter for *research and accountability purposes*, not for giving individual users sorting instructions; the app is designed for outdoor litter photography, not for household disposal decisions; there is no knowledge base of sorting rules, no handling guidance, and no connection to recycling buyers  |
 | ***GAP for this project*** | Litterati demonstrates that AI-based waste photo classification is feasible, but it is built entirely for community data collection — not for the moment-of-disposal decision a household user faces. It answers "what brand polluted here?" rather than "what should I do with this item right now?". Litterati does not provide step-by-step handling instructions, has no knowledge base tied to Vietnamese waste policy, and has no feature for connecting users with trade partners. It addresses the analytical layer while leaving the practical user need unsolved.  |
-
-## 
 
 ## **4\. VECA**   {#4.-veca}
 

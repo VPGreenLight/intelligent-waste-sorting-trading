@@ -1,0 +1,93 @@
+// ============================================================================
+// ECOLINK DBML - MODULE 7: CONTENT, NOTIFICATIONS & AUDIT (NỘI DUNG, THÔNG BÁO & KIỂM TOÁN)
+// Standalone DBML file for dbdiagram.io
+// Features: Blog Management & Review, Multi-channel Notifications, Immutable Audit Trail
+// ============================================================================
+
+Enum post_status {
+  Draft [note: "Nhân viên đang soạn thảo"]
+  Pending_Approval [note: "Đã gửi chờ Admin duyệt (BR-ADM-08)"]
+  Approved [note: "Admin đã duyệt công khai"]
+  Rejected [note: "Admin từ chối duyệt bài"]
+}
+
+// ----------------------------------------------------------------------------
+// CÁC BẢNG NỘI BỘ MODULE 7
+// ----------------------------------------------------------------------------
+
+Table BlogPost {
+  post_id bigint [pk, increment]
+  author_staff_id bigint [not null, ref: > StaffProfile_Stub.staff_id, note: "Nhân viên biên soạn (BR-ADM-08)"]
+  title varchar(250) [not null, note: "Tiêu đề bài viết"]
+  slug varchar(280) [not null, unique, note: "Đường dẫn URL thân thiện SEO"]
+  summary text [note: "Tóm tắt bài viết"]
+  content text [not null, note: "Nội dung bài viết (Markdown/HTML)"]
+  cover_image_url text [note: "Ảnh bìa bài viết"]
+  status post_status [not null, default: 'Draft', note: "Draft -> Pending_Approval -> Approved (BR-ADM-08)"]
+  approved_by_admin_id bigint [ref: > User_Stub.user_id, note: "Admin phê duyệt bài viết"]
+  rejection_reason text [note: "Lý do từ chối nếu không đạt"]
+  approved_at timestamptz
+  published_at timestamptz [note: "Thời điểm công khai cho người dùng đọc"]
+  created_at timestamptz [not null, default: `now()`]
+  updated_at timestamptz [not null, default: `now()`]
+
+  Note: "Bài viết Blog tuyên truyền do Staff viết và Admin duyệt (UC S-08, A-09)"
+}
+
+Table Notification {
+  notification_id bigint [pk, increment]
+  user_id bigint [not null, ref: > User_Stub.user_id, note: "Người nhận thông báo"]
+  title varchar(200) [not null, note: "Tiêu đề thông báo"]
+  message text [not null, note: "Nội dung thông báo"]
+  notification_type varchar(50) [not null, note: "TRANSACTION, AI_SCAN, GAMIFICATION, SYSTEM, COMPLAINT"]
+  reference_type varchar(50) [note: "Bảng liên kết: HandoverRequest, ServiceOrder"]
+  reference_id bigint [note: "ID bản ghi liên kết"]
+  is_read boolean [not null, default: false]
+  read_at timestamptz
+  created_at timestamptz [not null, default: `now()`]
+
+  indexes {
+    (user_id, is_read, created_at)
+  }
+
+  Note: "Thông báo đẩy đa kênh (Web In-App qua SignalR, Mobile qua Firebase FCM)"
+}
+
+Table AuditLog {
+  audit_id bigint [pk, increment]
+  actor_user_id bigint [ref: > User_Stub.user_id, note: "Người thực hiện hành động"]
+  action varchar(100) [not null, note: "Tên thao tác: LOCK_ACCOUNT, VERIFY_RECYCLER, RESOLVE_COMPLAINT"]
+  entity_type varchar(100) [note: "Đối tượng bị tác động"]
+  entity_id varchar(100) [note: "ID bản ghi bị tác động"]
+  old_values text [note: "JSON dữ liệu trước khi sửa"]
+  new_values text [note: "JSON dữ liệu sau khi sửa"]
+  ip_address varchar(45) [note: "Địa chỉ IP máy khách (BR-ADM-05)"]
+  user_agent text [note: "Trình duyệt/thiết bị thao tác"]
+  created_at timestamptz [not null, default: `now()`, note: "Bất biến, không thể sửa/xóa (BR-ADM-05)"]
+
+  indexes {
+    created_at
+  }
+
+  Note: "Nhật ký kiểm toán an ninh hệ thống bất biến (Audit Trail)"
+}
+
+// ----------------------------------------------------------------------------
+// BẢNG THAM CHIẾU NGOÀI (EXTERNAL STUBS)
+// ----------------------------------------------------------------------------
+
+Table User_Stub as "User (Auth Module)" {
+  user_id bigint [pk, note: "Tham chiếu từ Phân hệ Auth"]
+  full_name varchar
+}
+
+Table StaffProfile_Stub as "StaffProfile (Auth Module)" {
+  staff_id bigint [pk, note: "Tham chiếu từ Phân hệ Auth"]
+  staff_code varchar
+}
+
+TableGroup Content_Admin_Audit_Module {
+  BlogPost
+  Notification
+  AuditLog
+}

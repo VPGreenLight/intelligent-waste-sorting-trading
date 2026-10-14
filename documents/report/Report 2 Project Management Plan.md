@@ -6,7 +6,7 @@
 
 **Report 2 – Project Management Plan**
 
-– Hanoi, Aug 2026 –
+– Hanoi, Sep 2026 –
 
 **Table of Contents**
 
