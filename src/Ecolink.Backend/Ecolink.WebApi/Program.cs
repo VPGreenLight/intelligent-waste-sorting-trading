@@ -1,13 +1,70 @@
+using System.Text;
+using Ecolink.Application;
+using Ecolink.Application.Common;
 using Ecolink.Infrastructure;
+using Ecolink.WebApi.Middlewares;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Thêm Controllers
-builder.Services.AddControllers();
+// Thêm Controllers kèm chuẩn hoá phản hồi lỗi Model Binding theo api_design_and_response_contract_guidelines.md
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(e => e.Value?.Errors.Count > 0)
+                .SelectMany(e => e.Value!.Errors.Select(x => $"{e.Key}: {x.ErrorMessage}"))
+                .ToList();
+
+            var response = ApiResponse<object>.Fail(
+                message: "Dữ liệu đầu vào không hợp lệ.",
+                messageCode: "MSG-GEN-01",
+                errors: errors
+            );
+
+            return new BadRequestObjectResult(response);
+        };
+    });
+
+// Thêm dịch vụ tầng Application (FluentValidation Validators)
+builder.Services.AddApplicationServices();
 
 // Thêm dịch vụ tầng Infrastructure (AI Client, Rule Engine, Geo Matching, Gamification, Auth)
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// Cấu hình JWT Bearer Authentication & Authorization
+var jwtSecret = builder.Configuration["JwtSettings:SecretKey"] 
+                ?? "EcoLink_Super_Secure_Secret_Key_For_JWT_Signing_2026_XYZ987!";
+var jwtIssuer = builder.Configuration["JwtSettings:Issuer"] ?? "EcoLinkBackend";
+var jwtAudience = builder.Configuration["JwtSettings:Audience"] ?? "EcoLinkApp";
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.RequireHttpsMetadata = false;
+    options.SaveToken = true;
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
+        ValidateLifetime = true,
+        ClockSkew = TimeSpan.Zero
+    };
+});
+builder.Services.AddAuthorization();
 
 // Cấu hình Swagger / OpenAPI Documentation
 builder.Services.AddEndpointsApiExplorer();
@@ -59,7 +116,12 @@ builder.Services.AddCors(options =>
 var app = builder.Build();
 
 // Cấu hình HTTP request pipeline
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 app.UseCors("AllowAll");
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Kích hoạt Swagger UI cho cả Local và Tunnel (ngrok)
 app.UseSwagger();

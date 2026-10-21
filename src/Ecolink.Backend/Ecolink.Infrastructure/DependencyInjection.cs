@@ -44,8 +44,10 @@ public static class DependencyInjection
         services.AddSingleton<IGamificationService, GamificationService>();
         services.AddSingleton<ITradeTransactionService, TradeTransactionService>();
 
-        // Đăng ký Authentication Service
-        services.AddSingleton<IAuthService, AuthService>();
+        // Đăng ký Authentication & Token & Email Services (Module 1 - AUTH)
+        services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IEmailService, GmailSmtpEmailService>();
+        services.AddScoped<IAuthService, AuthService>();
 
         // Đăng ký Payment Service (VietQR & Webhook)
         services.AddSingleton<IPaymentService, PaymentService>();

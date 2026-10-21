@@ -40,3 +40,12 @@ Thumbs.db
 [Oo]bj/
 [Dd]ebug/
 [Rr]elease/
+
+# Secrets & Local Credentials
+client_secret*.json
+*.credentials.json
+documents/client_secret*.json
+
+# Scratch & Temporary Scripts
+scratch/
+

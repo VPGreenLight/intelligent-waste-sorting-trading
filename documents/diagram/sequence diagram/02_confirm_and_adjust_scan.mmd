@@ -1,0 +1,43 @@
+sequenceDiagram
+    autonumber
+    actor User as Nguoi dan (Citizen)
+    participant UI as React Web App
+    participant Ctrl as WasteScanController
+    participant Svc as WasteScanService
+    participant Repo as AIScanHistoryRepository
+    participant Rule as WasteRuleEngineService
+    participant DB as PostgreSQL (ApplicationDbContext)
+
+    opt Truong hop 1: Nguoi dung dong y voi ket qua AI
+        User->>+UI: 1. Bam 'Xac nhan dung loai rac'
+        UI->>+Ctrl: 2. POST /api/v1/waste-scans/{scanId}/confirm
+        Ctrl->>+Svc: 3. ConfirmScanAsync(scanId, userId, ct)
+        Svc->>+Repo: 4. GetByIdAsync(scanId)
+        Repo->>+DB: 5. SELECT * FROM ai_scan_histories WHERE scan_id = @id
+        DB-->>-Repo: 6. Return AIScanHistory entity
+        Repo-->>-Svc: 7. Return scanHistory
+        Svc->>+Repo: 8. UpdateAsync(scanHistory.Confirm())
+        Repo->>+DB: 9. UPDATE ai_scan_histories SET confirmed_category_id = predicted_category_id, confirmed_at = NOW()
+        DB-->>-Repo: 10. 1 row affected
+        Repo-->>-Svc: 11. Complete Task
+        Svc-->>-Ctrl: 12. Return true
+        Ctrl-->>-UI: 13. 200 OK: ApiResponse<object> (MSG-CLS-05: Xac nhan thanh cong)
+        UI-->>-User: 14. Hien thi Toast thanh cong, dieu huong sang 'Dat lich thu gom'
+    end
+
+    opt Truong hop 2: Nguoi dung thay sai va tu chon lai bang tay
+        User->>+UI: 15. Bam 'Chon loai rac khac' -> Chon danh muc tu Dropdown
+        UI->>+Ctrl: 16. PUT /api/v1/waste-scans/{scanId}/adjust (Body: AdjustScanRequestDto)
+        Ctrl->>+Svc: 17. AdjustScanAsync(scanId, userId, dto, ct)
+        Svc->>+Repo: 18. GetByIdAsync(scanId)
+        Repo-->>-Svc: 19. Return scanHistory
+        Svc->>+Repo: 20. UpdateAsync(scanHistory.Adjust(newCategoryId))
+        Repo->>+DB: 21. UPDATE ai_scan_histories SET confirmed_category_id = newCategoryId, scan_status = 'Completed'
+        DB-->>-Repo: 22. 1 row affected
+        Repo-->>-Svc: 23. Complete Task
+        Svc->>+Rule: 24. GetSortingGuideAsync(newCategoryCode, ct)
+        Rule-->>-Svc: 25. Return new WasteSortingGuideDto (Quy chuan phan loai moi)
+        Svc-->>-Ctrl: 26. Return WasteScanResponseDto (Huong dan lam sach moi)
+        Ctrl-->>-UI: 27. 200 OK: ApiResponse<WasteScanResponseDto> (MSG-CLS-06)
+        UI-->>-User: 28. Cap nhat giao dien huong dan lam sach theo loai rac moi chon
+    end
