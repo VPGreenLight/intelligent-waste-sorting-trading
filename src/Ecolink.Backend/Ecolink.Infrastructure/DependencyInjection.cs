@@ -1,5 +1,6 @@
 using Ecolink.Application.Interfaces;
 using Ecolink.Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -9,6 +10,27 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
+        // Đăng ký Interceptor kiểm toán tự động & xóa mềm
+        services.AddScoped<Data.Interceptors.AuditableEntityInterceptor>();
+
+        // Đăng ký CSDL PostgreSQL + PostGIS NetTopologySuite
+        var connectionString = configuration.GetConnectionString("DefaultConnection") 
+                               ?? configuration.GetConnectionString("PostgreSQL");
+
+        if (!string.IsNullOrEmpty(connectionString) && !connectionString.Contains("{CORE_POSTGRES_CONNECTION_STRING}"))
+        {
+            services.AddDbContext<Data.ApplicationDbContext>((sp, options) =>
+            {
+                var interceptor = sp.GetRequiredService<Data.Interceptors.AuditableEntityInterceptor>();
+                options.UseNpgsql(connectionString, npgsqlOptions =>
+                {
+                    npgsqlOptions.UseNetTopologySuite();
+                    npgsqlOptions.MigrationsAssembly(typeof(Data.ApplicationDbContext).Assembly.FullName);
+                })
+                .AddInterceptors(interceptor);
+            });
+        }
+
         // Đăng ký HttpClient gọi AI Vision Service
         services.AddHttpClient<IAiVisionClient, AiVisionHttpClient>();
 

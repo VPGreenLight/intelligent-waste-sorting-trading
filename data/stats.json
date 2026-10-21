@@ -1,15 +1,31 @@
 {
-  "total_scans": 83,
+  "total_scans": 85,
   "categories": {
     "cardboard": 30,
     "metal": 3,
     "glass": 10,
     "plastic": 6,
     "paper": 11,
-    "trash": 2
+    "trash": 3
   },
-  "ood_count": 21,
+  "ood_count": 22,
   "recent": [
+    {
+      "category": "trash",
+      "confidence": 76.2,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 584.22,
+      "timestamp": "2026-10-20 22:53:01"
+    },
+    {
+      "category": "trash",
+      "confidence": 32.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 952.42,
+      "timestamp": "2026-10-20 22:49:52"
+    },
     {
       "category": "paper",
       "confidence": 82.1,
@@ -193,23 +209,7 @@
       "model": "yolov8_detect",
       "latency_ms": 3174.3,
       "timestamp": "2026-10-08 08:13:02"
-    },
-    {
-      "category": "plastic",
-      "confidence": 86.8,
-      "is_ood": false,
-      "model": "mobilenet_v3",
-      "latency_ms": 292.76,
-      "timestamp": "2026-10-07 00:09:28"
-    },
-    {
-      "category": "plastic",
-      "confidence": 44.0,
-      "is_ood": true,
-      "model": "mobilenet_v3",
-      "latency_ms": 575.42,
-      "timestamp": "2026-10-06 23:53:07"
     }
   ],
-  "avg_latency_ms": 203.98
+  "avg_latency_ms": 217.26
 }
