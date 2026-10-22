@@ -1,15 +1,191 @@
 {
-  "total_scans": 85,
+  "total_scans": 107,
   "categories": {
     "cardboard": 30,
     "metal": 3,
     "glass": 10,
     "plastic": 6,
-    "paper": 11,
+    "paper": 13,
     "trash": 3
   },
-  "ood_count": 22,
+  "ood_count": 42,
   "recent": [
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "nonexistent_model",
+      "latency_ms": 524.85,
+      "timestamp": "2026-10-21 22:21:17"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 420.21,
+      "timestamp": "2026-10-21 22:21:16"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 513.15,
+      "timestamp": "2026-10-21 22:21:15"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 502.98,
+      "timestamp": "2026-10-21 22:21:14"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 521.6,
+      "timestamp": "2026-10-21 22:21:13"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 512.78,
+      "timestamp": "2026-10-21 22:21:12"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 534.26,
+      "timestamp": "2026-10-21 22:21:11"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "nonexistent_model",
+      "latency_ms": 547.62,
+      "timestamp": "2026-10-21 21:55:51"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 506.82,
+      "timestamp": "2026-10-21 21:55:49"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 509.99,
+      "timestamp": "2026-10-21 21:55:48"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 490.16,
+      "timestamp": "2026-10-21 21:55:47"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 561.44,
+      "timestamp": "2026-10-21 21:55:46"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 512.89,
+      "timestamp": "2026-10-21 21:55:45"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 459.54,
+      "timestamp": "2026-10-21 21:55:44"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 536.03,
+      "timestamp": "2026-10-21 21:47:06"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 522.01,
+      "timestamp": "2026-10-21 21:47:04"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 545.0,
+      "timestamp": "2026-10-21 21:43:16"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 528.66,
+      "timestamp": "2026-10-21 21:43:14"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 256.14,
+      "timestamp": "2026-10-21 21:40:10"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 211.08,
+      "timestamp": "2026-10-21 21:40:09"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 240.83,
+      "timestamp": "2026-10-21 21:39:51"
+    },
+    {
+      "category": "unknown",
+      "confidence": 0.0,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 467.81,
+      "timestamp": "2026-10-21 21:39:49"
+    },
     {
       "category": "trash",
       "confidence": 76.2,
@@ -33,183 +209,7 @@
       "model": "yolov8n",
       "latency_ms": 694.59,
       "timestamp": "2026-10-09 21:34:32"
-    },
-    {
-      "category": "metal",
-      "confidence": 90.9,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 1087.78,
-      "timestamp": "2026-10-09 21:29:16"
-    },
-    {
-      "category": "metal",
-      "confidence": 90.9,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 265.02,
-      "timestamp": "2026-10-08 09:25:47"
-    },
-    {
-      "category": "plastic",
-      "confidence": 52.6,
-      "is_ood": true,
-      "model": "mobilenet_v3",
-      "latency_ms": 364.08,
-      "timestamp": "2026-10-08 09:08:48"
-    },
-    {
-      "category": "glass",
-      "confidence": 95.9,
-      "is_ood": false,
-      "model": "yolov8n",
-      "latency_ms": 281.5,
-      "timestamp": "2026-10-08 09:08:19"
-    },
-    {
-      "category": "plastic",
-      "confidence": 58.2,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 270.5,
-      "timestamp": "2026-10-08 08:21:27"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 81.0,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 240.68,
-      "timestamp": "2026-10-08 08:21:16"
-    },
-    {
-      "category": "plastic",
-      "confidence": 94.2,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 299.36,
-      "timestamp": "2026-10-08 08:19:52"
-    },
-    {
-      "category": "plastic",
-      "confidence": 94.7,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 652.34,
-      "timestamp": "2026-10-08 08:19:42"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 100.0,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 172.65,
-      "timestamp": "2026-10-08 08:18:10"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 92.4,
-      "is_ood": false,
-      "model": "efficientnet_b0",
-      "latency_ms": 828.4,
-      "timestamp": "2026-10-08 08:18:10"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 81.6,
-      "is_ood": false,
-      "model": "mobilenet_v3",
-      "latency_ms": 680.1,
-      "timestamp": "2026-10-08 08:18:09"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 100.0,
-      "is_ood": false,
-      "model": "yolov8n",
-      "latency_ms": 782.07,
-      "timestamp": "2026-10-08 08:18:08"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 100.0,
-      "is_ood": false,
-      "model": "yolov8n",
-      "latency_ms": 161.85,
-      "timestamp": "2026-10-08 08:17:06"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 138.33,
-      "timestamp": "2026-10-08 08:16:58"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 92.4,
-      "is_ood": false,
-      "model": "efficientnet_b0",
-      "latency_ms": 641.86,
-      "timestamp": "2026-10-08 08:16:58"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 81.6,
-      "is_ood": false,
-      "model": "mobilenet_v3",
-      "latency_ms": 546.54,
-      "timestamp": "2026-10-08 08:16:57"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 100.0,
-      "is_ood": false,
-      "model": "yolov8n",
-      "latency_ms": 172.94,
-      "timestamp": "2026-10-08 08:16:57"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 100.0,
-      "is_ood": false,
-      "model": "yolov8n",
-      "latency_ms": 172.38,
-      "timestamp": "2026-10-08 08:16:18"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 100.0,
-      "is_ood": false,
-      "model": "yolov8n",
-      "latency_ms": 435.0,
-      "timestamp": "2026-10-08 08:15:48"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 251.96,
-      "timestamp": "2026-10-08 08:15:48"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 251.66,
-      "timestamp": "2026-10-08 08:13:32"
-    },
-    {
-      "category": "trash",
-      "confidence": 89.4,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 3174.3,
-      "timestamp": "2026-10-08 08:13:02"
     }
   ],
-  "avg_latency_ms": 217.26
+  "avg_latency_ms": 270.0
 }

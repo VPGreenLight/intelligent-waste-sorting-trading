@@ -1,0 +1,118 @@
+classDiagram
+    direction TB
+
+    %% Presentation Layer
+    class WasteScanController {
+        - IWasteScanService _scanService
+        + ClassifyWaste(request) Task
+        + ConfirmResult(scanId, request) Task
+        + ReportMisclassification(scanId, request) Task
+    }
+    class AiCurationController {
+        - IAiCurationService _curationService
+        + GetPendingReports(page, size) Task
+        + VerifyAndCurate(reportId, request) Task
+    }
+
+    %% Application Layer
+    class IWasteScanService {
+        <<interface>>
+        + ClassifyWasteAsync(file, model) Task
+        + ConfirmScanAsync(scanId, userId) Task
+        + ReportMisclassificationAsync(scanId, report) Task
+    }
+    class WasteScanService {
+        - IAiVisionClient _aiClient
+        - IStorageService _storageService
+        - IWasteRuleEngineService _ruleEngine
+        - IAIScanHistoryRepository _scanRepo
+    }
+    class IAiCurationService {
+        <<interface>>
+        + GetPendingReportsAsync(page, size) Task
+        + VerifyAndCurateReportAsync(reportId, request) Task
+    }
+    class AiCurationService {
+        - IMisclassifiedReportRepository _reportRepo
+        - IVerifiedDatasetRepository _datasetRepo
+    }
+
+    %% Ports (Interfaces)
+    class IAiVisionClient {
+        <<interface>>
+        + ClassifyWasteImageAsync(stream, model) Task
+    }
+    class IStorageService {
+        <<interface>>
+        + UploadImageAsync(stream, fileName) Task
+    }
+    class IAIScanHistoryRepository {
+        <<interface>>
+        + AddAsync(scan) Task
+        + GetByIdAsync(scanId) Task
+    }
+
+    %% Infrastructure Layer
+    class AiVisionHttpClient {
+        + ClassifyWasteImageAsync(stream, model) Task
+    }
+    class CloudflareR2StorageService {
+        + UploadImageAsync(stream, fileName) Task
+    }
+    class AIScanHistoryRepository {
+        - ApplicationDbContext _dbContext
+        + AddAsync(scan) Task
+        + GetByIdAsync(scanId) Task
+    }
+
+    %% Domain Layer
+    class AIScanHistory {
+        + long ScanId
+        + Guid UserId
+        + string ImageUrl
+        + long PredictedCategoryId
+        + decimal ConfidenceScore
+        + ScanStatus Status
+        + Confirm(catId) void
+    }
+    class MasterWasteCategory {
+        + long CategoryId
+        + string CategoryCode
+        + string CategoryName
+        + string StandardBinColor
+        + bool IsRecyclable
+    }
+    class SortingGuidanceRule {
+        + long RuleId
+        + long CategoryId
+        + string Title
+        + string PreparationInstruction
+        + string SortingInstruction
+    }
+    class MisclassifiedReport {
+        + long ReportId
+        + long ScanId
+        + Guid UserId
+        + long UserSuggestedCategoryId
+        + ReportStatus Status
+        + Approve(staffId, catId) void
+    }
+
+    %% Core Clean Architecture Connectors
+    WasteScanController --> IWasteScanService
+    AiCurationController --> IAiCurationService
+    WasteScanService ..|> IWasteScanService
+    AiCurationService ..|> IAiCurationService
+
+    %% Outbound Dependency Inversion
+    WasteScanService --> IAiVisionClient
+    WasteScanService --> IStorageService
+    WasteScanService --> IAIScanHistoryRepository
+    AiVisionHttpClient ..|> IAiVisionClient
+    CloudflareR2StorageService ..|> IStorageService
+    AIScanHistoryRepository ..|> IAIScanHistoryRepository
+
+    %% Domain Model Relationships
+    MasterWasteCategory "1" -- "1" SortingGuidanceRule
+    AIScanHistory "N" --> "1" MasterWasteCategory
+    MisclassifiedReport "1" --> "1" AIScanHistory

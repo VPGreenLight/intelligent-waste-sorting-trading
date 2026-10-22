@@ -1,0 +1,179 @@
+classDiagram
+    direction TB
+
+    namespace Presentation_Layer {
+        class WasteScanController {
+            - IWasteScanService _scanService
+            + ClassifyWaste(request) Task
+            + ConfirmResult(scanId, request) Task
+            + AdjustResult(scanId, request) Task
+            + ReportMisclassification(scanId, request) Task
+        }
+        class AiCurationController {
+            - IAiCurationService _curationService
+            + GetPendingReports(page, size) Task
+            + VerifyAndCurate(reportId, request) Task
+        }
+    }
+
+    namespace Application_Layer {
+        class IWasteScanService {
+            <<interface>>
+            + ClassifyWasteAsync(file, model) Task
+            + ConfirmScanAsync(scanId, userId) Task
+            + AdjustScanAsync(scanId, newCatId) Task
+            + ReportMisclassificationAsync(scanId, report) Task
+        }
+        class WasteScanService {
+            - IAiVisionClient _aiClient
+            - IStorageService _storageService
+            - IWasteRuleEngineService _ruleEngine
+            - IAIScanHistoryRepository _scanRepo
+            + ClassifyWasteAsync(file, model) Task
+            + ConfirmScanAsync(scanId, userId) Task
+            + AdjustScanAsync(scanId, newCatId) Task
+            + ReportMisclassificationAsync(scanId, report) Task
+        }
+        class IAiCurationService {
+            <<interface>>
+            + GetPendingReportsAsync(page, size) Task
+            + VerifyAndCurateReportAsync(reportId, request) Task
+        }
+        class AiCurationService {
+            - IMisclassifiedReportRepository _reportRepo
+            - IVerifiedDatasetRepository _datasetRepo
+            + GetPendingReportsAsync(page, size) Task
+            + VerifyAndCurateReportAsync(reportId, request) Task
+        }
+        class IAiVisionClient {
+            <<interface>>
+            + ClassifyWasteImageAsync(stream, model) Task
+        }
+        class IStorageService {
+            <<interface>>
+            + UploadImageAsync(stream, fileName) Task
+        }
+        class IWasteRuleEngineService {
+            <<interface>>
+            + GetSortingGuideAsync(categoryCode) Task
+        }
+        class IAIScanHistoryRepository {
+            <<interface>>
+            + AddAsync(scan) Task
+            + GetByIdAsync(scanId) Task
+            + UpdateAsync(scan) Task
+        }
+        class IMisclassifiedReportRepository {
+            <<interface>>
+            + AddAsync(report) Task
+            + GetPendingListAsync(page, size) Task
+        }
+        class IVerifiedDatasetRepository {
+            <<interface>>
+            + AddAsync(dataset) Task
+        }
+    }
+
+    namespace Infrastructure_Layer {
+        class AiVisionHttpClient {
+            - HttpClient _httpClient
+            + ClassifyWasteImageAsync(stream, model) Task
+        }
+        class CloudflareR2StorageService {
+            - AmazonS3Client _s3Client
+            + UploadImageAsync(stream, fileName) Task
+        }
+        class WasteRuleEngineService {
+            + GetSortingGuideAsync(categoryCode) Task
+        }
+        class AIScanHistoryRepository {
+            + AddAsync(scan) Task
+            + GetByIdAsync(scanId) Task
+        }
+        class MisclassifiedReportRepository {
+            + AddAsync(report) Task
+            + GetPendingListAsync(page, size) Task
+        }
+        class VerifiedDatasetRepository {
+            + AddAsync(dataset) Task
+        }
+        class ApplicationDbContext {
+            + DbSet~AIScanHistory~ AIScanHistories
+            + DbSet~MasterWasteCategory~ MasterWasteCategories
+            + DbSet~SortingGuidanceRule~ SortingGuidanceRules
+            + DbSet~MisclassifiedReport~ MisclassifiedReports
+            + DbSet~VerifiedDataset~ VerifiedDatasets
+        }
+    }
+
+    namespace Domain_Layer {
+        class AIScanHistory {
+            + long ScanId
+            + Guid UserId
+            + string ImageUrl
+            + long PredictedCategoryId
+            + decimal ConfidenceScore
+            + ScanStatus Status
+            + Confirm(catId) void
+        }
+        class MasterWasteCategory {
+            + long CategoryId
+            + string CategoryCode
+            + string CategoryName
+            + string StandardBinColor
+            + bool IsRecyclable
+        }
+        class SortingGuidanceRule {
+            + long RuleId
+            + long CategoryId
+            + string Title
+            + string PreparationInstruction
+            + string SortingInstruction
+        }
+        class MisclassifiedReport {
+            + long ReportId
+            + long ScanId
+            + Guid UserId
+            + long UserSuggestedCategoryId
+            + ReportStatus Status
+            + Approve(staffId, catId) void
+        }
+        class VerifiedDataset {
+            + long DatasetId
+            + long CategoryId
+            + string ImageUrl
+            + DatasetSplit Split
+            + Guid VerifiedByStaffId
+        }
+    }
+
+    %% Relationships - Presentation to Application
+    WasteScanController --> IWasteScanService
+    AiCurationController --> IAiCurationService
+
+    %% Relationships - Application Realization & Ports
+    WasteScanService ..|> IWasteScanService
+    AiCurationService ..|> IAiCurationService
+    WasteScanService --> IAiVisionClient
+    WasteScanService --> IStorageService
+    WasteScanService --> IWasteRuleEngineService
+    WasteScanService --> IAIScanHistoryRepository
+    AiCurationService --> IMisclassifiedReportRepository
+    AiCurationService --> IVerifiedDatasetRepository
+
+    %% Relationships - Infrastructure Realizations
+    AiVisionHttpClient ..|> IAiVisionClient
+    CloudflareR2StorageService ..|> IStorageService
+    WasteRuleEngineService ..|> IWasteRuleEngineService
+    AIScanHistoryRepository ..|> IAIScanHistoryRepository
+    MisclassifiedReportRepository ..|> IMisclassifiedReportRepository
+    VerifiedDatasetRepository ..|> IVerifiedDatasetRepository
+    AIScanHistoryRepository --> ApplicationDbContext
+    MisclassifiedReportRepository --> ApplicationDbContext
+    VerifiedDatasetRepository --> ApplicationDbContext
+
+    %% Relationships - Domain Associations
+    MasterWasteCategory "1" -- "1" SortingGuidanceRule
+    AIScanHistory "N" --> "1" MasterWasteCategory
+    MisclassifiedReport "1" --> "1" AIScanHistory
+    VerifiedDataset "N" --> "1" MasterWasteCategory
