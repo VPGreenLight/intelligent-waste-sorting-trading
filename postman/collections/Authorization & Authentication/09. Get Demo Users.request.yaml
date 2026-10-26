@@ -1,8 +1,8 @@
 $kind: http-request
-name: Get Demo Users
+name: 09. Get Demo Users
 url: "{{backendUrl}}/api/v1/auth/demo-users"
 method: GET
-order: 4000
+order: 9000
 scripts:
   - type: afterResponse
     code: |-

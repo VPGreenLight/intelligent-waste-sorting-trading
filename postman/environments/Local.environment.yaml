@@ -22,3 +22,9 @@ values:
   - key: demoUserId
     value: "d0a6c024-5d55-46aa-bf7d-949e29a99711"
     enabled: true
+  - key: refreshToken
+    value: ""
+    enabled: true
+  - key: resetToken
+    value: "sample_reset_token_32chars_test"
+    enabled: true

@@ -1,11 +1,11 @@
 $kind: http-request
-name: Get Current User (Me)
+name: 08. Get Current User (Me)
 url: "{{backendUrl}}/api/v1/auth/me"
 method: GET
 headers:
   - key: Authorization
     value: "Bearer {{bearerToken}}"
-order: 3000
+order: 8000
 scripts:
   - type: afterResponse
     code: |-
