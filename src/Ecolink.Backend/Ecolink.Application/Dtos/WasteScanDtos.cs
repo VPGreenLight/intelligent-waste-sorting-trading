@@ -15,6 +15,7 @@ public class AiScanResultDto
     public WastePredictionDto? TopPrediction { get; set; }
     public List<WastePredictionDto> Predictions { get; set; } = new();
     public double InferenceTimeMs { get; set; }
+    public string? ErrorMessage { get; set; }
 }
 
 public class WasteSortingGuideDto

@@ -45,8 +45,9 @@ public class AiVisionHttpClient : IAiVisionClient
                 return new AiScanResultDto
                 {
                     Success = false,
-                    IsOutOfDistribution = true,
-                    InferenceTimeMs = 0
+                    IsOutOfDistribution = false,
+                    InferenceTimeMs = 0,
+                    ErrorMessage = !string.IsNullOrWhiteSpace(errorBody) ? errorBody : $"AI Service trả về mã lỗi {response.StatusCode}"
                 };
             }
 
@@ -58,7 +59,7 @@ public class AiVisionHttpClient : IAiVisionClient
             };
             var result = JsonSerializer.Deserialize<AiScanResultDto>(jsonString, options);
 
-            return result ?? new AiScanResultDto { Success = false };
+            return result ?? new AiScanResultDto { Success = false, ErrorMessage = "Không thể giải mã phản hồi từ AI Service." };
         }
         catch (Exception ex)
         {
@@ -66,7 +67,9 @@ public class AiVisionHttpClient : IAiVisionClient
             return new AiScanResultDto
             {
                 Success = false,
-                IsOutOfDistribution = true,
+                IsOutOfDistribution = false,
+                InferenceTimeMs = 0,
+                ErrorMessage = $"Lỗi kết nối tới AI Service: {ex.Message}",
                 TopPrediction = new WastePredictionDto
                 {
                     Label = "unknown",

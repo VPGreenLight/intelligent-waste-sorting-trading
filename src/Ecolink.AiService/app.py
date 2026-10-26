@@ -259,6 +259,12 @@ async def classify_waste_image(
     - Kiểm tra ngoại lai (OOD): Nếu độ tin cậy < ngưỡng (0.60) thì đánh dấu `is_out_of_distribution = true`.
     - Tự động liên kết bảng quy tắc xử lý rác tĩnh (thùng rác, các bước chuẩn bị).
     """
+    if model not in model_manager.registry:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Mô hình '{model}' không tồn tại. Danh sách mô hình hỗ trợ: {list(model_manager.registry.keys())}"
+        )
+
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -267,7 +273,14 @@ async def classify_waste_image(
 
     try:
         contents = await file.read()
+        if not contents or len(contents) == 0:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Tập tin hình ảnh tải lên không có dữ liệu (rỗng)."
+            )
         pil_image = Image.open(io.BytesIO(contents)).convert("RGB")
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -281,6 +294,11 @@ async def classify_waste_image(
     # Thực hiện suy luận (Hỗ trợ Two-Stage Crop)
     try:
         pred_result = model_manager.predict(pil_image, model_id=model, use_detection_crop=use_detection_crop)
+    except ValueError as ve:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(ve)
+        )
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -372,6 +390,12 @@ async def classify_waste_batch(
     """Phân loại rác theo lô nhiều ảnh (Batch Classification) để kiểm thử hiệu năng và độ chính xác"""
     if not files:
         raise HTTPException(status_code=400, detail="Cần cung cấp ít nhất một file ảnh.")
+
+    if model not in model_manager.registry:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Mô hình '{model}' không tồn tại. Danh sách mô hình hỗ trợ: {list(model_manager.registry.keys())}"
+        )
 
     rules_data = load_rules_data()
     threshold = confidence_threshold if confidence_threshold is not None else rules_data.get("confidence_threshold", DEFAULT_THRESHOLD)

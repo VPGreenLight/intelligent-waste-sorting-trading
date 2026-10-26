@@ -42,18 +42,39 @@ public class WasteScanController : ControllerBase
             return BadRequest(ApiResponse<object>.Fail("Vui lòng tải lên file ảnh hợp lệ.", "MSG-CLS-04"));
         }
 
+        var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".webp", ".bmp" };
+        var extension = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+        if (string.IsNullOrEmpty(extension) || !allowedExtensions.Contains(extension))
+        {
+            return BadRequest(ApiResponse<object>.Fail("Tập tin tải lên phải là hình ảnh hợp lệ (.jpg, .jpeg, .png, .webp).", "MSG-CLS-05"));
+        }
+
+        var validModels = new[] { "yolov8_detect", "mobilenet_v3", "efficientnet_b0", "yolov8n" };
+        if (!string.IsNullOrWhiteSpace(model) && !validModels.Contains(model.Trim().ToLowerInvariant()))
+        {
+            return BadRequest(ApiResponse<object>.Fail($"Mô hình '{model}' không tồn tại. Danh sách mô hình hỗ trợ: {string.Join(", ", validModels)}.", "MSG-CLS-06"));
+        }
+
         _logger.LogInformation("Tiếp nhận yêu cầu phân loại ảnh: {FileName} ({Length} bytes) với mô hình: {Model}", 
             file.FileName, file.Length, model);
 
         using var stream = file.OpenReadStream();
         var aiResult = await _aiClient.ClassifyWasteImageAsync(stream, file.FileName, model, ct);
 
+        if (!aiResult.Success)
+        {
+            var errorMsg = !string.IsNullOrWhiteSpace(aiResult.ErrorMessage) 
+                ? aiResult.ErrorMessage 
+                : "Không thể phân tích hình ảnh từ AI Vision Service.";
+            return BadRequest(ApiResponse<object>.Fail(errorMsg, "MSG-CLS-03"));
+        }
+
         var response = new WasteScanResponseDto
         {
             AiResult = aiResult
         };
 
-        // Kiểm tra Out-of-Distribution
+        // Kiểm tra Out-of-Distribution (ảnh hợp lệ nhưng rác lạ hoặc độ tin cậy < 60%)
         if (aiResult.IsOutOfDistribution || aiResult.TopPrediction == null || aiResult.TopPrediction.Confidence < aiResult.ConfidenceThreshold)
         {
             response.Message = "Hệ thống không nhận diện chắc chắn (> 60%) hoặc vật thể không thuộc nhóm rác hỗ trợ. Vui lòng chụp lại hình ảnh ở góc rõ hơn.";
