@@ -226,7 +226,7 @@ class ModelManager:
     def predict(self, pil_image: Image.Image, model_id: str = "yolov8_detect", use_detection_crop: bool = True) -> Dict[str, Any]:
         """Thực hiện suy luận thống nhất cho tất cả các loại mô hình (Hỗ trợ Two-Stage: Detect -> Crop -> Classify)"""
         if model_id not in self.registry:
-            model_id = "yolov8n"
+            raise ValueError(f"Mô hình '{model_id}' không tồn tại hoặc chưa được hỗ trợ. Các mô hình khả dụng: {list(self.registry.keys())}")
 
         if model_id == "yolov8_detect":
             detect_path = self.models_dir / self.registry["yolov8_detect"]["file"]

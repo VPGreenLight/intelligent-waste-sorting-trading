@@ -7,21 +7,61 @@
   },
   "item": [
     {
-      "name": "1. Authentication & Users",
+      "name": "00. Backend Health Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test(\"Status code is 200\", function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "var jsonData = pm.response.json();",
+              "pm.test(\"Health status is Healthy\", function () {",
+              "    pm.expect(jsonData.status).to.equal(\"Healthy\");",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{backendUrl}}/health",
+          "host": [
+            "{{backendUrl}}"
+          ],
+          "path": [
+            "health"
+          ]
+        },
+        "description": "Kiểm tra tình trạng sức khỏe của máy chủ ASP.NET Core Web API."
+      },
+      "response": []
+    },
+    {
+      "name": "1. Authentication & Users (Full 10 Endpoints)",
       "item": [
         {
-          "name": "01. Register User",
+          "name": "01. Register Citizen User",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "pm.test(\"Status code is 200 or 400\", function () {",
-                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "pm.test(\"Status code is 201 or 400\", function () {",
+                  "    pm.expect([200, 201, 400]).to.include(pm.response.code);",
                   "});",
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.success && jsonData.token) {",
-                  "    pm.environment.set(\"bearerToken\", jsonData.token);",
+                  "var token = (jsonData.data && jsonData.data.accessToken) || jsonData.token;",
+                  "if (token) {",
+                  "    pm.environment.set(\"bearerToken\", token);",
+                  "}",
+                  "var rToken = (jsonData.data && jsonData.data.refreshToken) || jsonData.refreshToken;",
+                  "if (rToken) {",
+                  "    pm.environment.set(\"refreshToken\", rToken);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -36,21 +76,79 @@
                 "value": "application/json"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"username\": \"hoangthang\",\n  \"email\": \"hoangthang@example.com\",\n  \"password\": \"Password123@\",\n  \"fullName\": \"Nguyen Hoang Thang\",\n  \"phoneNumber\": \"0987654321\",\n  \"role\": 1\n}"
-            },
             "url": {
               "raw": "{{backendUrl}}/api/v1/auth/register",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "auth", "register"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register"
+              ]
             },
-            "description": "Đăng ký tài khoản người dùng hoặc cơ sở thu gom mới."
+            "description": "Endpoint phục vụ kiểm thử Module Authentication: 01. Register Citizen User.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"hoangthang\",\n  \"email\": \"hoangthang@example.com\",\n  \"password\": \"Password123@\",\n  \"fullName\": \"Nguyen Hoang Thang\",\n  \"phoneNumber\": \"0987654321\"\n}"
+            }
           },
           "response": []
         },
         {
-          "name": "02. Login",
+          "name": "02. Register Recycler Partner (GPS)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201 or 400\", function () {",
+                  "    pm.expect([200, 201, 400]).to.include(pm.response.code);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Registration response structured\", function () {",
+                  "    pm.expect(jsonData).to.have.property(\"success\");",
+                  "});",
+                  "var token = (jsonData.data && jsonData.data.accessToken) || jsonData.token;",
+                  "if (token) {",
+                  "    pm.environment.set(\"bearerToken\", token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/auth/register-recycler",
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "register-recycler"
+              ]
+            },
+            "description": "Endpoint phục vụ kiểm thử Module Authentication: 02. Register Recycler Partner (GPS).",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"vechai_phuclam\",\n  \"email\": \"vechai.phuclam@example.com\",\n  \"password\": \"Password123@\",\n  \"fullName\": \"Tran Van Phuc\",\n  \"phoneNumber\": \"0912345678\",\n  \"facilityName\": \"Vua Phe Lieu Phuc Lam\",\n  \"representativeName\": \"Tran Van Phuc\",\n  \"businessAddress\": \"123 Nguyen Huu Tho, Phuong Tan Phong, Quan 7, TP. Ho Chi Minh\",\n  \"latitude\": 10.7328,\n  \"longitude\": 106.7025,\n  \"operatingHours\": \"07:30 - 18:30\",\n  \"contactPhone\": \"0912345678\",\n  \"description\": \"Chuyen thu mua giay vuon, bia carton, nhua PET/HDPE va kim loai so luong lon gia cao.\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03. Login",
           "event": [
             {
               "listen": "test",
@@ -60,15 +158,22 @@
                   "    pm.response.to.have.status(200);",
                   "});",
                   "var jsonData = pm.response.json();",
-                  "pm.test(\"Login successful\", function () {",
+                  "pm.test(\"Login successful and token returned\", function () {",
                   "    pm.expect(jsonData.success).to.be.true;",
-                  "    pm.expect(jsonData.token).to.not.be.empty;",
+                  "    var token = (jsonData.data && jsonData.data.accessToken) || jsonData.token;",
+                  "    pm.expect(token).to.not.be.empty;",
                   "});",
-                  "if (jsonData.token) {",
-                  "    pm.environment.set(\"bearerToken\", jsonData.token);",
+                  "var token = (jsonData.data && jsonData.data.accessToken) || jsonData.token;",
+                  "if (token) {",
+                  "    pm.environment.set(\"bearerToken\", token);",
                   "}",
-                  "if (jsonData.user && jsonData.user.id) {",
-                  "    pm.environment.set(\"demoUserId\", jsonData.user.id);",
+                  "var rToken = (jsonData.data && jsonData.data.refreshToken) || jsonData.refreshToken;",
+                  "if (rToken) {",
+                  "    pm.environment.set(\"refreshToken\", rToken);",
+                  "}",
+                  "var user = (jsonData.data && jsonData.data.user) || jsonData.user;",
+                  "if (user && user.id) {",
+                  "    pm.environment.set(\"demoUserId\", user.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -83,21 +188,232 @@
                 "value": "application/json"
               }
             ],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/auth/login",
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Endpoint phục vụ kiểm thử Module Authentication: 03. Login.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"usernameOrEmail\": \"citizen\",\n  \"password\": \"citizen123\"\n}"
-            },
-            "url": {
-              "raw": "{{backendUrl}}/api/v1/auth/login",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "auth", "login"]
-            },
-            "description": "Đăng nhập với tài khoản mẫu (citizen/citizen123 hoặc collector/collector123) và tự động lưu Bearer token."
+            }
           },
           "response": []
         },
         {
-          "name": "03. Get Current User (Me)",
+          "name": "04. Google OAuth Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Google Auth handshake successful\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});",
+                  "var token = (jsonData.data && jsonData.data.accessToken) || jsonData.token;",
+                  "if (token) {",
+                  "    pm.environment.set(\"bearerToken\", token);",
+                  "}",
+                  "var rToken = (jsonData.data && jsonData.data.refreshToken) || jsonData.refreshToken;",
+                  "if (rToken) {",
+                  "    pm.environment.set(\"refreshToken\", rToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/auth/google",
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "google"
+              ]
+            },
+            "description": "Endpoint phục vụ kiểm thử Module Authentication: 04. Google OAuth Login.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"idToken\": \"mock-citizen.google@gmail.com\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05. Refresh Access Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 401\", function () {",
+                  "    pm.expect([200, 401]).to.include(pm.response.code);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.success) {",
+                  "    var token = (jsonData.data && jsonData.data.accessToken) || jsonData.token;",
+                  "    if (token) {",
+                  "        pm.environment.set(\"bearerToken\", token);",
+                  "    }",
+                  "    var rToken = (jsonData.data && jsonData.data.refreshToken) || jsonData.refreshToken;",
+                  "    if (rToken) {",
+                  "        pm.environment.set(\"refreshToken\", rToken);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/auth/refresh-token",
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "refresh-token"
+              ]
+            },
+            "description": "Endpoint phục vụ kiểm thử Module Authentication: 05. Refresh Access Token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "06. Forgot Password Request",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Forgot password generic response (BR-AUTH-06)\", function () {",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.messageCode).to.equal(\"MSG-AUTH-05\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/auth/forgot-password",
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Endpoint phục vụ kiểm thử Module Authentication: 06. Forgot Password Request.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"citizen@example.com\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "07. Reset Password with Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200 or 400\", function () {",
+                  "    pm.expect([200, 400]).to.include(pm.response.code);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Response received\", function () {",
+                  "    pm.expect(jsonData).to.have.property(\"success\");",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{backendUrl}}/api/v1/auth/reset-password",
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Endpoint phục vụ kiểm thử Module Authentication: 07. Reset Password with Token.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"citizen@example.com\",\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"NewPassword123@\",\n  \"confirmPassword\": \"NewPassword123@\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "08. Get Current User (Me)",
           "event": [
             {
               "listen": "test",
@@ -126,15 +442,22 @@
             ],
             "url": {
               "raw": "{{backendUrl}}/api/v1/auth/me",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "auth", "me"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "me"
+              ]
             },
-            "description": "Lấy thông tin người dùng từ Bearer Token."
+            "description": "Endpoint phục vụ kiểm thử Module Authentication: 08. Get Current User (Me)."
           },
           "response": []
         },
         {
-          "name": "04. Get Demo Users",
+          "name": "09. Get Demo Users",
           "event": [
             {
               "listen": "test",
@@ -146,6 +469,7 @@
                   "var jsonData = pm.response.json();",
                   "pm.test(\"Demo accounts array returned\", function () {",
                   "    pm.expect(jsonData.accounts).to.be.an(\"array\");",
+                  "    pm.expect(jsonData.accounts.length).to.be.at.least(1);",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -157,15 +481,22 @@
             "header": [],
             "url": {
               "raw": "{{backendUrl}}/api/v1/auth/demo-users",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "auth", "demo-users"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "demo-users"
+              ]
             },
-            "description": "Lấy danh sách các tài khoản demo có sẵn trong hệ thống."
+            "description": "Endpoint phục vụ kiểm thử Module Authentication: 09. Get Demo Users."
           },
           "response": []
         },
         {
-          "name": "05. VietQR Partner Token Handshake",
+          "name": "10. VietQR Partner Token Handshake",
           "event": [
             {
               "listen": "test",
@@ -173,6 +504,10 @@
                 "exec": [
                   "pm.test(\"Status code is 200\", function () {",
                   "    pm.response.to.have.status(200);",
+                  "});",
+                  "var jsonData = pm.response.json();",
+                  "pm.test(\"Token returned\", function () {",
+                  "    pm.expect(jsonData).to.have.property(\"access_token\");",
                   "});"
                 ],
                 "type": "text/javascript"
@@ -189,10 +524,17 @@
             ],
             "url": {
               "raw": "{{backendUrl}}/api/v1/auth/vietqr-token",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "auth", "vietqr-token"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "vietqr-token"
+              ]
             },
-            "description": "Giả lập sinh token Basic Auth chuẩn VietQR / TingoPay."
+            "description": "Endpoint phục vụ kiểm thử Module Authentication: 10. VietQR Partner Token Handshake."
           },
           "response": []
         }
@@ -241,8 +583,15 @@
             },
             "url": {
               "raw": "{{backendUrl}}/api/v1/waste-scan/classify",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "waste-scan", "classify"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "waste-scan",
+                "classify"
+              ]
             },
             "description": "Nhận diện rác thải qua ảnh và tự động map với cơ sở quy tắc tĩnh (thùng rác, các bước xử lý)."
           },
@@ -268,8 +617,15 @@
             "header": [],
             "url": {
               "raw": "{{backendUrl}}/api/v1/waste-scan/models",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "waste-scan", "models"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "waste-scan",
+                "models"
+              ]
             },
             "description": "Danh sách các mô hình AI có sẵn (yolov8_detect, mobilenet_v3, efficientnet_b0, yolov8n)."
           },
@@ -295,8 +651,15 @@
             "header": [],
             "url": {
               "raw": "{{backendUrl}}/api/v1/waste-scan/rules",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "waste-scan", "rules"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "waste-scan",
+                "rules"
+              ]
             },
             "description": "Tra cứu toàn bộ danh mục quy tắc phân loại rác tĩnh (Rule Engine)."
           },
@@ -331,8 +694,15 @@
             },
             "url": {
               "raw": "{{backendUrl}}/api/v1/waste-scan/feedback",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "waste-scan", "feedback"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "waste-scan",
+                "feedback"
+              ]
             },
             "description": "Báo cáo kết quả phân loại rác sai để quản trị viên kiểm chứng và huấn luyện lại."
           },
@@ -381,8 +751,15 @@
             },
             "url": {
               "raw": "{{backendUrl}}/api/v1/service-payments/create",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "service-payments", "create"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "service-payments",
+                "create"
+              ]
             },
             "description": "Đăng ký mua gói dịch vụ nội bộ (VERIFIED_BADGE, NO_ADS, MAP_BOOST) và tạo mã VietQR động."
           },
@@ -413,8 +790,16 @@
             "header": [],
             "url": {
               "raw": "{{backendUrl}}/api/v1/service-payments/orders/{{orderCode}}",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "service-payments", "orders", "{{orderCode}}"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "service-payments",
+                "orders",
+                "{{orderCode}}"
+              ]
             },
             "description": "Tra cứu trạng thái của đơn thanh toán theo mã đơn hàng."
           },
@@ -440,8 +825,15 @@
             "header": [],
             "url": {
               "raw": "{{backendUrl}}/api/v1/service-payments/orders",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "service-payments", "orders"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "service-payments",
+                "orders"
+              ]
             },
             "description": "Xem danh sách toàn bộ các giao dịch thanh toán gói dịch vụ."
           },
@@ -476,8 +868,15 @@
             },
             "url": {
               "raw": "{{backendUrl}}/api/v1/service-payments/webhook",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "service-payments", "webhook"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "service-payments",
+                "webhook"
+              ]
             },
             "description": "Webhook tự động từ Ngân hàng / Cổng VietQR gửi thông báo biến động số dư."
           },
@@ -508,8 +907,16 @@
             "header": [],
             "url": {
               "raw": "{{backendUrl}}/api/v1/service-payments/simulate-transfer/{{orderCode}}",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "service-payments", "simulate-transfer", "{{orderCode}}"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "service-payments",
+                "simulate-transfer",
+                "{{orderCode}}"
+              ]
             },
             "description": "Giả lập chuyển khoản thành công để kích hoạt gói dịch vụ mà không cần trả tiền thật."
           },
@@ -540,8 +947,16 @@
             "header": [],
             "url": {
               "raw": "{{backendUrl}}/api/v1/trade/partners/nearby?lat=10.7769&lng=106.7009&radiusKm=15&category=plastic",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "trade", "partners", "nearby"],
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trade",
+                "partners",
+                "nearby"
+              ],
               "query": [
                 {
                   "key": "lat",
@@ -598,8 +1013,15 @@
             },
             "url": {
               "raw": "{{backendUrl}}/api/v1/trade/orders",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "trade", "orders"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trade",
+                "orders"
+              ]
             },
             "description": "Tạo đơn hẹn bàn giao rác đến cơ sở thu gom kèm mã QR đơn hàng."
           },
@@ -634,8 +1056,16 @@
             },
             "url": {
               "raw": "{{backendUrl}}/api/v1/trade/receipts/confirm-qr",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "trade", "receipts", "confirm-qr"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "trade",
+                "receipts",
+                "confirm-qr"
+              ]
             },
             "description": "Xác nhận biên nhận thu mua qua quét mã QR, chốt thanh toán và cộng Điểm Xanh."
           },
@@ -666,8 +1096,16 @@
             "header": [],
             "url": {
               "raw": "{{backendUrl}}/api/v1/gamification/profile/{{demoUserId}}",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "gamification", "profile", "{{demoUserId}}"]
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gamification",
+                "profile",
+                "{{demoUserId}}"
+              ]
             },
             "description": "Lấy thông tin chỉ số sống xanh, cấp độ cây ảo và điểm tích lũy của người dùng."
           },
@@ -693,8 +1131,15 @@
             "header": [],
             "url": {
               "raw": "{{backendUrl}}/api/v1/gamification/leaderboard?top=10",
-              "host": ["{{backendUrl}}"],
-              "path": ["api", "v1", "gamification", "leaderboard"],
+              "host": [
+                "{{backendUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "gamification",
+                "leaderboard"
+              ],
               "query": [
                 {
                   "key": "top",

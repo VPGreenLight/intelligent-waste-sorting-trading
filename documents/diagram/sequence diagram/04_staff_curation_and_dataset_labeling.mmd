@@ -1,0 +1,45 @@
+sequenceDiagram
+    autonumber
+    actor Staff as Nhan vien kiem duyet (Staff / Admin)
+    participant UI as React Web App (Back-office Portal)
+    participant Ctrl as AiCurationController
+    participant Svc as AiCurationService
+    participant RepoRep as MisclassifiedReportRepository
+    participant RepoDS as VerifiedDatasetRepository
+    participant DB as PostgreSQL (ApplicationDbContext)
+
+    rect rgb(240, 248, 255)
+    Note over Staff, DB: Giai doan 1: Tiep nhan hang doi kiem duyet AI (SCR-STF-02)
+    Staff->>+UI: 1. Mo man hinh 'Hang doi kiem duyet AI'
+    UI->>+Ctrl: 2. GET /api/v1/staff/ai-curation/reports?status=Pending&page=1&size=20
+    Ctrl->>+Svc: 3. GetPendingReportsAsync(page, size, ct)
+    Svc->>+RepoRep: 4. GetPendingListAsync(page, size)
+    RepoRep->>+DB: 5. SELECT r.*, s.image_url, c.category_name FROM misclassified_reports r ... WHERE r.status = 'Pending'
+    DB-->>-RepoRep: 6. Return List<MisclassifiedReport> kem ImageUrl & Label
+    RepoRep-->>-Svc: 7. Return reports
+    Svc-->>-Ctrl: 8. Return PagedResult<CurationReportItemDto>
+    Ctrl-->>-UI: 9. 200 OK: ApiResponse<PagedResult<CurationReportItemDto>>
+    UI-->>-Staff: 10. Hien thi danh sach anh, nhan AI du doan va nhan User de xuat
+    end
+
+    rect rgb(245, 255, 250)
+    Note over Staff, DB: Giai doan 2: Nhan vien tham dinh nhan va duyet dua vao kho du lieu Retrain
+    Staff->>+UI: 11. Xem anh thuc te, chon nhan chuan xac, chon DatasetSplit='Train' va bam 'Phe duyet'
+    UI->>+Ctrl: 12. POST /api/v1/staff/ai-curation/reports/{reportId}/verify (Body: CurateReportRequestDto)
+    Ctrl->>+Svc: 13. VerifyAndCurateReportAsync(reportId, staffId, dto, ct)
+    Svc->>+RepoRep: 14. GetByIdAsync(reportId)
+    RepoRep->>+DB: 15. SELECT * FROM misclassified_reports WHERE report_id = @id
+    DB-->>-RepoRep: 16. Return report entity
+    RepoRep-->>-Svc: 17. Return report
+    Svc->>+RepoRep: 18. UpdateAsync(report.Approve(staffId, verifiedCatId))
+    RepoRep->>+DB: 19. UPDATE misclassified_reports SET status='Reviewed', staff_verified_category_id=..., reviewed_by=..., reviewed_at=NOW()
+    DB-->>-RepoRep: 20. 1 row affected
+    RepoRep-->>-Svc: 21. Complete Task
+    Svc->>+RepoDS: 22. AddAsync(VerifiedDataset { imageUrl, catId, split='Train', verifiedBy=staffId })
+    RepoDS->>+DB: 23. INSERT INTO verified_datasets (category_id, image_url, dataset_split, verified_by_staff_id, verified_at)
+    DB-->>-RepoDS: 24. 1 row affected (dataset_id)
+    RepoDS-->>-Svc: 25. Complete Task
+    Svc-->>-Ctrl: 26. Return true
+    Ctrl-->>-UI: 27. 200 OK: ApiResponse<object> (MSG-CUR-02: Phe duyet nhan thanh cong)
+    UI-->>-Staff: 28. Toast thong bao: Anh da duoc dua vao tap du lieu chuan bi Retrain!
+    end

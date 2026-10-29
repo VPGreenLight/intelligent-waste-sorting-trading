@@ -1,0 +1,41 @@
+$kind: http-request
+name: 02. Register Recycler Partner (GPS)
+url: "{{backendUrl}}/api/v1/auth/register-recycler"
+method: POST
+headers:
+  - key: Content-Type
+    value: "application/json"
+body:
+  type: raw
+  raw: |-
+    {
+      "username": "vechai_phuclam",
+      "email": "vechai.phuclam@example.com",
+      "password": "Password123@",
+      "fullName": "Tran Van Phuc",
+      "phoneNumber": "0912345678",
+      "facilityName": "Vua Phe Lieu Phuc Lam",
+      "representativeName": "Tran Van Phuc",
+      "businessAddress": "123 Nguyen Huu Tho, Phuong Tan Phong, Quan 7, TP. Ho Chi Minh",
+      "latitude": 10.7328,
+      "longitude": 106.7025,
+      "operatingHours": "07:30 - 18:30",
+      "contactPhone": "0912345678",
+      "description": "Chuyen thu mua giay vuon, bia carton, nhua PET/HDPE va kim loai so luong lon gia cao."
+    }
+order: 2000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 201 or 400", function () {
+          pm.expect([200, 201, 400]).to.include(pm.response.code);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Registration response structured", function () {
+          pm.expect(jsonData).to.have.property("success");
+      });
+      var token = (jsonData.data && jsonData.data.accessToken) || jsonData.token;
+      if (token) {
+          pm.environment.set("bearerToken", token);
+      }
+    language: text/javascript

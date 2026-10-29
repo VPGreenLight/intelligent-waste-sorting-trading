@@ -646,12 +646,19 @@ Xây dựng bộ test case kiểm thử toàn diện theo [test_case_specificati
 
 ## LỘ TRÌNH THỰC HIỆN TỪNG BƯỚC (STEP-BY-STEP CHECKLIST)
 
-- [ ] **Bước 1:** Cập nhật các Entities (`User`, `RecyclerProfile`, `StaffProfile`, `StaffPermissionAssignment`, `PasswordResetToken`, `RefreshToken`) vào thư mục `src/Ecolink.Backend/Ecolink.Domain/Entities/Auth/`.
-- [ ] **Bước 2:** Cài đặt `Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite` và cấu hình Fluent API trong `Ecolink.Infrastructure`.
-- [ ] **Bước 3:** Chạy `docker compose up -d ecolink-db` và xác minh container PostGIS 3.4 hoạt động.
-- [ ] **Bước 4:** Tạo Migration `InitialAuthModule` và thực thi `dotnet ef database update` vào PostgreSQL.
-- [ ] **Bước 5:** Hiện thực hóa `GmailSmtpEmailService` bằng `MailKit` và cấu hình App Password trong `appsettings.json`.
-- [ ] **Bước 6:** Hiện thực hóa logic Google Token Verification bằng `Google.Apis.Auth`.
-- [ ] **Bước 7:** Hoàn thiện `AuthService` thay thế mock in-memory, kết nối `ApplicationDbContext` xử lý 7 nghiệp vụ.
-- [ ] **Bước 8:** Cập nhật `AuthController` với 7 endpoints, tích hợp Cookie Refresh Token và ApiResponse standard envelope.
-- [ ] **Bước 9:** Test kiểm thử trên Swagger UI (`http://localhost:5000/swagger`) và Postman.
+- [x] **Bước 1:** Cập nhật các Entities (`User`, `RecyclerProfile`, `StaffProfile`, `StaffPermissionAssignment`, `PasswordResetToken`, `RefreshToken`) vào thư mục `src/Ecolink.Backend/Ecolink.Domain/Entities/Auth/`.
+- [x] **Bước 2:** Cài đặt `Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite` và cấu hình Fluent API trong `Ecolink.Infrastructure`.
+- [x] **Bước 3:** Chạy `docker compose up -d ecolink-db` và xác minh container PostGIS 3.4 hoạt động.
+- [x] **Bước 4:** Tạo Migration `InitialAuthModule` và thực thi `dotnet ef database update` vào PostgreSQL.
+- [x] **Bước 5:** Hiện thực hóa `GmailSmtpEmailService` bằng `MailKit` và cấu hình App Password trong `appsettings.json`.
+- [x] **Bước 6:** Hiện thực hóa logic Google Token Verification bằng `Google.Apis.Auth`.
+- [x] **Bước 7:** Hoàn thiện `AuthService` thay thế mock in-memory, kết nối `ApplicationDbContext` xử lý 7 nghiệp vụ.
+- [x] **Bước 8:** Cập nhật `AuthController` với 7 endpoints, tích hợp Cookie Refresh Token và ApiResponse standard envelope.
+- [x] **Bước 9:** Test kiểm thử trên Swagger UI (`http://localhost:5000/swagger`) và Postman.
+
+---
+
+### TỔNG KẾT TIẾN ĐỘ THỰC HIỆN
+- **Trạng thái:**  **100% HOÀN THÀNH TẤT CẢ 9 BƯỚC**
+- **Ngày hoàn tất nghiệm thu:** 21/10/2026
+- **Kết quả kiểm thử:** Toàn bộ 7/7 Endpoints và 6 Bộ Validator FluentValidation đã vượt qua kiểm thử tự động, tích hợp hoàn tất với PostgreSQL 16 + PostGIS 3.4 và các dịch vụ bên ngoài (Google OAuth 2.0, Gmail SMTP).

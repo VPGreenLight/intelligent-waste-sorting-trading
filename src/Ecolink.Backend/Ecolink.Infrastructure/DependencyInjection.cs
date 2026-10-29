@@ -44,8 +44,14 @@ public static class DependencyInjection
         services.AddSingleton<IGamificationService, GamificationService>();
         services.AddSingleton<ITradeTransactionService, TradeTransactionService>();
 
-        // Đăng ký Authentication Service
-        services.AddSingleton<IAuthService, AuthService>();
+        // Đăng ký Authentication & Token & Email Services (Module 1 - AUTH)
+        services.AddScoped<ITokenService, JwtTokenService>();
+        services.AddScoped<IEmailService, GmailSmtpEmailService>();
+        services.AddScoped<IAuthService, AuthService>();
+
+        // Đăng ký Recycler Onboarding & Verification + Cloudflare R2 Storage (U-17 & S-04)
+        services.AddHttpClient<IFileStorageService, CloudflareR2StorageService>();
+        services.AddScoped<IRecyclerOnboardingService, RecyclerOnboardingService>();
 
         // Đăng ký Payment Service (VietQR & Webhook)
         services.AddSingleton<IPaymentService, PaymentService>();

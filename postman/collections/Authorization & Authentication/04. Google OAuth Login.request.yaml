@@ -1,0 +1,33 @@
+$kind: http-request
+name: 04. Google OAuth Login
+url: "{{backendUrl}}/api/v1/auth/google"
+method: POST
+headers:
+  - key: Content-Type
+    value: "application/json"
+body:
+  type: raw
+  raw: |-
+    {
+      "idToken": "mock-citizen.google@gmail.com"
+    }
+order: 4000
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test("Status code is 200", function () {
+          pm.response.to.have.status(200);
+      });
+      var jsonData = pm.response.json();
+      pm.test("Google Auth handshake successful", function () {
+          pm.expect(jsonData.success).to.be.true;
+      });
+      var token = (jsonData.data && jsonData.data.accessToken) || jsonData.token;
+      if (token) {
+          pm.environment.set("bearerToken", token);
+      }
+      var rToken = (jsonData.data && jsonData.data.refreshToken) || jsonData.refreshToken;
+      if (rToken) {
+          pm.environment.set("refreshToken", rToken);
+      }
+    language: text/javascript
