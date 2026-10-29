@@ -49,6 +49,10 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, GmailSmtpEmailService>();
         services.AddScoped<IAuthService, AuthService>();
 
+        // Đăng ký Recycler Onboarding & Verification + Cloudflare R2 Storage (U-17 & S-04)
+        services.AddHttpClient<IFileStorageService, CloudflareR2StorageService>();
+        services.AddScoped<IRecyclerOnboardingService, RecyclerOnboardingService>();
+
         // Đăng ký Payment Service (VietQR & Webhook)
         services.AddSingleton<IPaymentService, PaymentService>();
 
