@@ -11,6 +11,9 @@ public class RecyclerProfileConfiguration : IEntityTypeConfiguration<RecyclerPro
         builder.ToTable("recycler_profiles");
         builder.HasKey(r => r.UserId).HasName("pk_recycler_profiles");
 
+        // Bỏ cột Id thừa kế từ BaseEntity vì khóa chính là UserId (Shared PK 1-1 với users)
+        builder.Ignore(r => r.Id);
+
         builder.Property(r => r.UserId).HasColumnName("user_id");
         builder.Property(r => r.FacilityName).HasColumnName("facility_name").HasMaxLength(150).IsRequired();
         builder.Property(r => r.RepresentativeName).HasColumnName("representative_name").HasMaxLength(100);

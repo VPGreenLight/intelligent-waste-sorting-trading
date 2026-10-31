@@ -28,126 +28,182 @@ namespace Ecolink.Infrastructure.Data.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("AdminVerifiedLabel")
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("admin_verified_label");
 
                     b.Property<double>("ConfidenceScore")
-                        .HasColumnType("double precision");
+                        .HasColumnType("double precision")
+                        .HasColumnName("confidence_score");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<string>("ImageUrl")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("image_url");
 
                     b.Property<string>("Note")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("note");
 
                     b.Property<string>("PredictedLabel")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("predicted_label");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.Property<Guid?>("UserId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
 
                     b.Property<string>("UserReportedLabel")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("user_reported_label");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_ai_feedback_logs");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("idx_ai_feedback_logs_user_id");
 
-                    b.ToTable("AIFeedbackLogs");
+                    b.ToTable("ai_feedback_logs", (string)null);
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.AcceptedMaterial", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<decimal>("MinimumQuantityKg")
-                        .HasColumnType("numeric");
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)")
+                        .HasDefaultValue(1.0m)
+                        .HasColumnName("minimum_quantity_kg");
 
                     b.Property<Guid>("PartnerId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("partner_id");
 
                     b.Property<decimal>("PricePerKg")
-                        .HasColumnType("numeric");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("price_per_kg");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.Property<Guid>("WasteCategoryId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("waste_category_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_accepted_materials");
 
-                    b.HasIndex("PartnerId");
+                    b.HasIndex("PartnerId")
+                        .HasDatabaseName("idx_accepted_materials_partner_id");
 
-                    b.HasIndex("WasteCategoryId");
+                    b.HasIndex("WasteCategoryId")
+                        .HasDatabaseName("idx_accepted_materials_waste_category_id");
 
-                    b.ToTable("AcceptedMaterials");
+                    b.ToTable("accepted_materials", (string)null);
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.CollectionPartner", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("Address")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("address");
 
                     b.Property<string>("ContactPhone")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("contact_phone");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<string>("FacilityName")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("facility_name");
 
                     b.Property<bool>("IsVerified")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_verified");
 
                     b.Property<double>("Latitude")
-                        .HasColumnType("double precision");
+                        .HasColumnType("double precision")
+                        .HasColumnName("latitude");
 
                     b.Property<double>("Longitude")
-                        .HasColumnType("double precision");
+                        .HasColumnType("double precision")
+                        .HasColumnName("longitude");
 
                     b.Property<string>("OperatingHours")
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("operating_hours");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_collection_partners");
 
                     b.HasIndex("UserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("uq_collection_partners_user_id");
 
-                    b.ToTable("CollectionPartners");
+                    b.ToTable("collection_partners", (string)null);
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.PasswordResetToken", b =>
@@ -324,9 +380,6 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(150)")
                         .HasColumnName("facility_name");
 
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -458,38 +511,76 @@ namespace Ecolink.Infrastructure.Data.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("ApplicableRegion")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("VN_NATIONAL")
+                        .HasColumnName("applicable_region");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<string>("HandlingAction")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("handling_action");
 
                     b.Property<string>("HazardWarning")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("hazard_warning");
 
                     b.Property<string>("PreparationSteps")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("preparation_steps");
+
+                    b.Property<string>("SortingInstruction")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("")
+                        .HasColumnName("sorting_instruction");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("ACTIVE")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasDefaultValue("")
+                        .HasColumnName("title");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.Property<Guid>("WasteCategoryId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_sorting_guidance_rules");
 
                     b.HasIndex("WasteCategoryId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("uq_sorting_guidance_rules_category_id");
 
-                    b.ToTable("SortingRule");
+                    b.ToTable("sorting_guidance_rules", (string)null);
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.StaffPermissionAssignment", b =>
@@ -558,9 +649,6 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("department");
 
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -609,81 +697,118 @@ namespace Ecolink.Infrastructure.Data.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<decimal>("EstimatedWeightKg")
-                        .HasColumnType("numeric");
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)")
+                        .HasColumnName("estimated_weight_kg");
 
                     b.Property<string>("Note")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("note");
 
                     b.Property<Guid>("PartnerId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("partner_id");
 
                     b.Property<DateTime>("ScheduledAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("scheduled_at");
 
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_trade_orders");
 
-                    b.HasIndex("PartnerId");
+                    b.HasIndex("PartnerId")
+                        .HasDatabaseName("idx_trade_orders_partner_id");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("idx_trade_orders_user_id");
 
-                    b.ToTable("TradeOrders");
+                    b.ToTable("trade_orders", (string)null);
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.TransactionReceipt", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<decimal>("ActualWeightKg")
-                        .HasColumnType("numeric");
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)")
+                        .HasColumnName("actual_weight_kg");
 
                     b.Property<DateTime>("CompletedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("completed_at")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<int>("PointsAwarded")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("points_awarded");
 
                     b.Property<string>("QrSecurityCode")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("qr_security_code");
 
                     b.Property<decimal>("TotalAmountCash")
-                        .HasColumnType("numeric");
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("total_amount_cash");
 
                     b.Property<Guid>("TradeOrderId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("trade_order_id");
 
                     b.Property<decimal>("UnitPrice")
-                        .HasColumnType("numeric");
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("unit_price");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_transaction_receipts");
 
                     b.HasIndex("TradeOrderId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("uq_transaction_receipts_trade_order_id");
 
-                    b.ToTable("TransactionReceipts");
+                    b.ToTable("transaction_receipts", (string)null);
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.User", b =>
@@ -804,83 +929,144 @@ namespace Ecolink.Infrastructure.Data.Migrations
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<int>("CurrentGreenPoints")
-                        .HasColumnType("integer");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("current_green_points");
 
                     b.Property<int>("TotalLifetimePoints")
-                        .HasColumnType("integer");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("total_lifetime_points");
 
                     b.Property<decimal>("TotalRecycledKg")
-                        .HasColumnType("numeric");
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("total_recycled_kg");
 
                     b.Property<int>("TotalWasteScanned")
-                        .HasColumnType("integer");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("total_waste_scanned");
 
                     b.Property<int>("TreeExperience")
-                        .HasColumnType("integer");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("tree_experience");
 
                     b.Property<int>("TreeLevel")
-                        .HasColumnType("integer");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("tree_level");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
                     b.Property<Guid>("UserId")
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_user_eco_profiles");
 
                     b.HasIndex("UserId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("uq_user_eco_profiles_user_id");
 
-                    b.ToTable("UserEcoProfiles");
+                    b.ToTable("user_eco_profiles", (string)null);
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.WasteCategory", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
 
                     b.Property<string>("Code")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("code");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("description");
 
                     b.Property<string>("IconUrl")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("icon_url");
+
+                    b.Property<bool>("IsRecyclable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_recyclable");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("name");
 
                     b.Property<string>("StandardBinColor")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("standard_bin_color");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Active")
+                        .HasColumnName("status");
 
                     b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
 
-                    b.HasKey("Id");
+                    b.HasKey("Id")
+                        .HasName("pk_waste_categories");
 
-                    b.ToTable("WasteCategories");
+                    b.HasIndex("Code")
+                        .IsUnique()
+                        .HasDatabaseName("uq_waste_categories_code");
+
+                    b.ToTable("waste_categories", (string)null);
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.AIFeedbackLog", b =>
                 {
                     b.HasOne("Ecolink.Domain.Entities.User", "User")
                         .WithMany("Feedbacks")
-                        .HasForeignKey("UserId");
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_ai_feedback_logs_users");
 
                     b.Navigation("User");
                 });
@@ -891,13 +1077,15 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .WithMany("AcceptedMaterials")
                         .HasForeignKey("PartnerId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_accepted_materials_collection_partners");
 
                     b.HasOne("Ecolink.Domain.Entities.WasteCategory", "WasteCategory")
                         .WithMany("AcceptedMaterials")
                         .HasForeignKey("WasteCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_accepted_materials_waste_categories");
 
                     b.Navigation("Partner");
 
@@ -910,7 +1098,8 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .WithOne("PartnerProfile")
                         .HasForeignKey("Ecolink.Domain.Entities.CollectionPartner", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_collection_partners_users");
 
                     b.Navigation("User");
                 });
@@ -978,7 +1167,8 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .WithOne("SortingRule")
                         .HasForeignKey("Ecolink.Domain.Entities.SortingRule", "WasteCategoryId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_sorting_guidance_rules_waste_categories");
 
                     b.Navigation("WasteCategory");
                 });
@@ -1013,13 +1203,15 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .WithMany("ReceivedOrders")
                         .HasForeignKey("PartnerId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_trade_orders_collection_partners");
 
                     b.HasOne("Ecolink.Domain.Entities.User", "User")
                         .WithMany("TradeOrders")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_trade_orders_users");
 
                     b.Navigation("Partner");
 
@@ -1032,7 +1224,8 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .WithOne("Receipt")
                         .HasForeignKey("Ecolink.Domain.Entities.TransactionReceipt", "TradeOrderId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_transaction_receipts_trade_orders");
 
                     b.Navigation("TradeOrder");
                 });
@@ -1043,7 +1236,8 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .WithOne("EcoProfile")
                         .HasForeignKey("Ecolink.Domain.Entities.UserEcoProfile", "UserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("fk_user_eco_profiles_users");
 
                     b.Navigation("User");
                 });

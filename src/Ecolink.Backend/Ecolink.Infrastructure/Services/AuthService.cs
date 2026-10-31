@@ -602,81 +602,146 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Đảm bảo luôn có các tài khoản Demo chuẩn sẵn sàng trong PostgreSQL
+    /// Đảm bảo luôn có các tài khoản Demo, Danh mục phế liệu chuẩn và Bảng giá mẫu (BR-MTH-03) sẵn sàng trong PostgreSQL
     /// </summary>
     private async Task EnsureDemoUsersAsync(CancellationToken ct)
     {
-        if (await _dbContext.Users.AnyAsync(ct))
+        var demoCollectorId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+
+        if (!await _dbContext.Users.AnyAsync(ct))
         {
-            return;
+            var defaultPasswordHash = BCrypt.Net.BCrypt.HashPassword("citizen123");
+            var collectorPasswordHash = BCrypt.Net.BCrypt.HashPassword("collector123");
+            var adminPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123");
+
+            var demoCitizen = new User
+            {
+                Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+                Username = "citizen",
+                Email = "citizen@ecolink.vn",
+                PasswordHash = defaultPasswordHash,
+                FullName = "Nguyễn Văn Dân",
+                PhoneNumber = "0901234567",
+                Role = UserRole.Citizen,
+                Status = UserStatus.Active,
+                EcoProfile = new UserEcoProfile
+                {
+                    CurrentGreenPoints = 150,
+                    TotalLifetimePoints = 300,
+                    TreeLevel = 2,
+                    TreeExperience = 45,
+                    TotalRecycledKg = 12.5m,
+                    TotalWasteScanned = 18
+                }
+            };
+
+            var demoCollector = new User
+            {
+                Id = demoCollectorId,
+                Username = "collector",
+                Email = "collector@ecolink.vn",
+                PasswordHash = collectorPasswordHash,
+                FullName = "Trần Thu Gom (Vựa phế liệu EcoGreen)",
+                PhoneNumber = "0988776655",
+                Role = UserRole.Recycler,
+                Status = UserStatus.Active,
+                RecyclerProfile = new RecyclerProfile
+                {
+                    UserId = demoCollectorId,
+                    FacilityName = "Vựa phế liệu EcoGreen",
+                    RepresentativeName = "Trần Thu Gom",
+                    BusinessAddress = "123 Đường Nguyễn Hữu Cảnh, P. 22, Bình Thạnh, TP.HCM",
+                    Latitude = 10.7938m,
+                    Longitude = 106.7182m,
+                    Location = new Point(106.7182, 10.7938) { SRID = 4326 },
+                    OperatingHours = "07:30 - 18:30",
+                    ContactPhone = "0988776655",
+                    VerificationStatus = VerificationStatus.Verified,
+                    ActiveStatus = RecyclerActiveStatus.Online
+                }
+            };
+
+            var demoAdmin = new User
+            {
+                Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
+                Username = "admin",
+                Email = "admin@ecolink.vn",
+                PasswordHash = adminPasswordHash,
+                FullName = "Quản trị viên EcoLink",
+                PhoneNumber = "0912345678",
+                Role = UserRole.Admin,
+                Status = UserStatus.Active
+            };
+
+            _dbContext.Users.AddRange(demoCitizen, demoCollector, demoAdmin);
+            await _dbContext.SaveChangesAsync(ct);
+
+            _logger.LogInformation("Khởi tạo thành công 3 tài khoản Demo (citizen, collector, admin) trong PostgreSQL");
         }
 
-        var defaultPasswordHash = BCrypt.Net.BCrypt.HashPassword("citizen123");
-        var collectorPasswordHash = BCrypt.Net.BCrypt.HashPassword("collector123");
-        var adminPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123");
-
-        var demoCitizen = new User
+        // Seed 6 danh mục rác chuẩn (waste_categories) nếu chưa có
+        var defaultCategories = new (string Code, string Name, string BinColor, bool IsRecyclable)[]
         {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            Username = "citizen",
-            Email = "citizen@ecolink.vn",
-            PasswordHash = defaultPasswordHash,
-            FullName = "Nguyễn Văn Dân",
-            PhoneNumber = "0901234567",
-            Role = UserRole.Citizen,
-            Status = UserStatus.Active,
-            EcoProfile = new UserEcoProfile
+            ("plastic", "Nhựa tái chế (Plastic)", "Cam", true),
+            ("paper", "Giấy báo & Tài liệu (Paper)", "Xanh Dương", true),
+            ("glass", "Thủy tinh (Glass)", "Trắng", true),
+            ("metal", "Kim loại & Vỏ lon (Metal)", "Xám Kim Loại", true),
+            ("cardboard", "Bìa Carton (Cardboard)", "Nâu Vàng", true),
+            ("trash", "Rác thải thông thường / Không thể tái chế", "Đen", false)
+        };
+
+        var existingCodes = await _dbContext.WasteCategories.Select(c => c.Code).ToListAsync(ct);
+        var missingCategories = defaultCategories.Where(d => !existingCodes.Contains(d.Code)).ToList();
+        if (missingCategories.Count > 0)
+        {
+            foreach (var (code, name, binColor, isRecyclable) in missingCategories)
             {
-                CurrentGreenPoints = 150,
-                TotalLifetimePoints = 300,
-                TreeLevel = 2,
-                TreeExperience = 45,
-                TotalRecycledKg = 12.5m,
-                TotalWasteScanned = 18
+                _dbContext.WasteCategories.Add(new WasteCategory
+                {
+                    Code = code,
+                    Name = name,
+                    StandardBinColor = binColor,
+                    IsRecyclable = isRecyclable,
+                    Status = "Active"
+                });
             }
-        };
+            await _dbContext.SaveChangesAsync(ct);
+        }
 
-        var demoCollector = new User
+        // Đảm bảo tài khoản demoCollector (đang Online) luôn có bảng giá niêm yết hợp lệ theo BR-MTH-03
+        var hasCollectorPrices = await _dbContext.RecyclerPrices.AnyAsync(p => p.RecyclerId == demoCollectorId, ct);
+        if (!hasCollectorPrices && await _dbContext.RecyclerProfiles.AnyAsync(r => r.UserId == demoCollectorId, ct))
         {
-            Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            Username = "collector",
-            Email = "collector@ecolink.vn",
-            PasswordHash = collectorPasswordHash,
-            FullName = "Trần Thu Gom (Vựa phế liệu EcoGreen)",
-            PhoneNumber = "0988776655",
-            Role = UserRole.Recycler,
-            Status = UserStatus.Active,
-            RecyclerProfile = new RecyclerProfile
+            var categoriesByCode = await _dbContext.WasteCategories
+                .Where(c => c.IsRecyclable)
+                .ToDictionaryAsync(c => c.Code, ct);
+
+            var demoPrices = new (string Code, decimal PricePerKg, decimal MinKg, string Conditions)[]
             {
-                UserId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-                FacilityName = "Vựa phế liệu EcoGreen",
-                RepresentativeName = "Trần Thu Gom",
-                BusinessAddress = "123 Đường Nguyễn Hữu Cảnh, P. 22, Bình Thạnh, TP.HCM",
-                Latitude = 10.7938m,
-                Longitude = 106.7182m,
-                Location = new Point(106.7182, 10.7938) { SRID = 4326 },
-                OperatingHours = "07:30 - 18:30",
-                ContactPhone = "0988776655",
-                VerificationStatus = VerificationStatus.Verified,
-                ActiveStatus = RecyclerActiveStatus.Online
+                ("plastic", 7000m, 1.0m, "Chai nhựa PET/HDPE đã tráng sạch, bẹp chai"),
+                ("paper", 4500m, 2.0m, "Giấy báo, tài liệu khô ráo, không dính dầu mỡ"),
+                ("metal", 25000m, 0.5m, "Vỏ lon nhôm, sắt vụn đã dốc sạch nước"),
+                ("cardboard", 3800m, 3.0m, "Thùng carton gập phẳng, khô ráo")
+            };
+
+            foreach (var (code, price, minKg, cond) in demoPrices)
+            {
+                if (categoriesByCode.TryGetValue(code, out var cat))
+                {
+                    _dbContext.RecyclerPrices.Add(new RecyclerPrice
+                    {
+                        RecyclerId = demoCollectorId,
+                        WasteCategoryId = cat.Id,
+                        PricePerKg = price,
+                        MinQuantityKg = minKg,
+                        CollectionConditions = cond,
+                        Status = PriceStatus.Active
+                    });
+                }
             }
-        };
 
-        var demoAdmin = new User
-        {
-            Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-            Username = "admin",
-            Email = "admin@ecolink.vn",
-            PasswordHash = adminPasswordHash,
-            FullName = "Quản trị viên EcoLink",
-            PhoneNumber = "0912345678",
-            Role = UserRole.Admin,
-            Status = UserStatus.Active
-        };
-
-        _dbContext.Users.AddRange(demoCitizen, demoCollector, demoAdmin);
-        await _dbContext.SaveChangesAsync(ct);
-
-        _logger.LogInformation("Khởi tạo thành công 3 tài khoản Demo (citizen, collector, admin) trong PostgreSQL");
+            await _dbContext.SaveChangesAsync(ct);
+            _logger.LogInformation("Đã khởi tạo bảng giá mẫu (recycler_price_list) cho Vựa phế liệu EcoGreen (BR-MTH-03).");
+        }
     }
 }
