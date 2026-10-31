@@ -1,0 +1,1243 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Top" ss:WrapText="1"/>
+   <Borders/>
+   <Font ss:FontName="Tahoma" ss:Size="10" ss:Color="#000000"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="SummaryLabel">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Tahoma" ss:Size="10" ss:Bold="1"/>
+  </Style>
+  <Style ss:ID="SummaryLabelItalic">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Tahoma" ss:Size="10" ss:Bold="1" ss:Italic="1"/>
+  </Style>
+  <Style ss:ID="SummaryValue">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Tahoma" ss:Size="10"/>
+  </Style>
+  <Style ss:ID="SummaryValueLeft">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Tahoma" ss:Size="10"/>
+  </Style>
+  <Style ss:ID="TableHeader">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Center" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Tahoma" ss:Size="10" ss:Color="#FFFF99" ss:Bold="1"/>
+   <Interior ss:Color="#6B8E23" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="MethodRow">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Center"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Tahoma" ss:Size="10" ss:Bold="1"/>
+   <Interior ss:Color="#CCFFFF" ss:Pattern="Solid"/>
+  </Style>
+  <Style ss:ID="DataCell">
+   <Alignment ss:Horizontal="Left" ss:Vertical="Top" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Tahoma" ss:Size="10"/>
+  </Style>
+  <Style ss:ID="DataCellCenter">
+   <Alignment ss:Horizontal="Center" ss:Vertical="Top" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1"/>
+   </Borders>
+   <Font ss:FontName="Tahoma" ss:Size="10"/>
+  </Style>
+ </Styles>
+
+ <!-- ==================== SHEET 1: AUTHENTICATION MODULE ==================== -->
+ <Worksheet ss:Name="1_Authentication">
+  <Table>
+   <Column ss:Width="85"/>
+   <Column ss:Width="160"/>
+   <Column ss:Width="200"/>
+   <Column ss:Width="280"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="130"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="160"/>
+
+   <Row ss:Index="2">
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Code Module</Data></Cell>
+    <Cell ss:MergeAcross="2" ss:StyleID="SummaryValueLeft"><Data ss:Type="String">AuthService (Authentication &amp; Account Management)</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Number of TCs</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">22</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="SummaryValue"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Round</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Failed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Pending</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">22</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">22</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">22</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Type</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Boundary</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Count</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">9</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">10</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">3</Data></Cell>
+   </Row>
+
+   <Row ss:Index="11" ss:Height="28">
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test Case ID</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Pre-conditions</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Input parameters</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Expected Results</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Type</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test date</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Tester</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Defect IDs</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Note</Data></Cell>
+   </Row>
+
+   <!-- Method 1: RegisterUserAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">RegisterUserAsync</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC001</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">DB ecolink_db đã kết nối; chưa có user "nguyenvana" hoặc email "vana@ecolink.vn"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Username="nguyenvana"; Email="vana@ecolink.vn"; Password="Pass@123"; FullName="Nguyễn Văn A"; PhoneNumber="0901234567"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AuthResponseDto { Success = true, Role = "Citizen", Status = "Active" }&#10;Exception: N/A&#10;Log Message: "Người dùng Citizen mới đăng ký thành công: nguyenvana (vana@ecolink.vn)"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tạo kèm UserEcoProfile với TreeLevel = 1</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC002</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Email "citizen@ecolink.vn" đã tồn tại trong bảng users</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Username="newuser01"; Email="citizen@ecolink.vn"; Password="Pass@123"; FullName="Trần Văn B"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-01", "MSG-AUTH-01")&#10;Log Message: "Email này đã được sử dụng. Vui lòng chọn email khác."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra BR-AUTH-01 trùng Email</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC003</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Username "citizen" đã tồn tại trong bảng users</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Username="citizen"; Email="unique_b@ecolink.vn"; Password="Pass@123"; FullName="Trần Văn B"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-01", "MSG-AUTH-01")&#10;Log Message: "Tên đăng nhập này đã tồn tại. Vui lòng chọn tên khác."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra BR-AUTH-01 trùng Username</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC004</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chưa tồn tại user "user_min"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Username="user_min"; Email="min@ecolink.vn"; Password="123456"; FullName="Lê C"; PhoneNumber=null</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AuthResponseDto { Success = true, User.PhoneNumber = null }&#10;Exception: N/A&#10;Log Message: "Người dùng Citizen mới đăng ký thành công: user_min (min@ecolink.vn)"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Biên độ dài mật khẩu tối thiểu = 6 ký tự</Data></Cell>
+   </Row>
+
+   <!-- Method 2: RegisterRecyclerAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">RegisterRecyclerAsync</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC005</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chưa tồn tại user "recycler_new" trong bảng users</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Username="recycler_new"; Email="vua_xanh@ecolink.vn"; FacilityName="Vựa Tái Chế Xanh"; Latitude=10.7769; Longitude=106.7009</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AuthResponseDto { Success = true, User.Role = "Recycler", User.Status = "PendingVerification" }&#10;Exception: N/A&#10;Log Message: "Đối tác Recycler mới đăng ký hồ sơ: Vựa Tái Chế Xanh (User: recycler_new)"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tạo Point(106.7009, 10.7769) SRID 4326</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC006</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Email "collector@ecolink.vn" đã tồn tại trong bảng users</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Username="recycler_dup"; Email="collector@ecolink.vn"; FacilityName="Vựa B"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-01", "MSG-AUTH-01")&#10;Log Message: "Email này đã được sử dụng."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn trùng email đối tác</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC007</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chưa tồn tại user "recycler_bound"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Username="recycler_bound"; Email="bound@ecolink.vn"; FacilityName="Vựa Cực Bắc"; Latitude=90.0; Longitude=180.0; OperatingHours=null</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AuthResponseDto { Success = true, User.Status = "PendingVerification" }&#10;Exception: N/A&#10;Log Message: "Đối tác Recycler mới đăng ký hồ sơ: Vựa Cực Bắc (User: recycler_bound)"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Biên tọa độ WGS84 Lat=90, Lon=180</Data></Cell>
+   </Row>
+
+   <!-- Method 3: LoginAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">LoginAsync</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC008</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tài khoản "citizen" đang Active, FailedLoginAttempts = 0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UsernameOrEmail="citizen"; Password="citizen123"; clientIp="127.0.0.1"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AuthResponseDto { Success = true, TokenType = "Bearer", User.Username = "citizen" }&#10;Exception: N/A&#10;Log Message: "Người dùng citizen đăng nhập thành công từ IP 127.0.0.1"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đăng nhập chuẩn bằng Username</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC009</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tài khoản "citizen@ecolink.vn" đang Active</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UsernameOrEmail="  CITIZEN@ECOLINK.VN  "; Password="citizen123"; clientIp="127.0.0.1"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AuthResponseDto { Success = true, User.Email = "citizen@ecolink.vn" }&#10;Exception: N/A&#10;Log Message: "Người dùng citizen đăng nhập thành công từ IP 127.0.0.1"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tự động Trim() và ToLowerInvariant()</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC010</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Không tồn tại user "ghost_user" trong DB</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UsernameOrEmail="ghost_user"; Password="citizen123"; clientIp="127.0.0.1"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-03", "MSG-AUTH-01")&#10;Log Message: "Tên đăng nhập, email hoặc mật khẩu không chính xác."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thông báo chung chống dò tìm tài khoản</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC011</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tài khoản "citizen" đã nhập sai 4 lần (FailedLoginAttempts = 4)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UsernameOrEmail="citizen"; Password="wrong_pass_5th"; clientIp="127.0.0.1"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-04", "MSG-AUTH-03")&#10;Log Message: "Tài khoản citizen bị khóa 15 phút do nhập sai 5 lần từ IP 127.0.0.1"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chạm ngưỡng biên 5 lần sai liên tiếp (BR-AUTH-04)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC012</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tài khoản "citizen" đang bị khóa (Status = Locked, LockoutUntil = UtcNow + 10m)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UsernameOrEmail="citizen"; Password="citizen123"; clientIp="127.0.0.1"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-04", "MSG-AUTH-03")&#10;Log Message: "Tài khoản tạm thời bị khóa do nhập sai mật khẩu quá 5 lần. Vui lòng thử lại sau 10 phút."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn đăng nhập trong thời gian khóa</Data></Cell>
+   </Row>
+
+   <!-- Method 4: AuthenticateGoogleAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">AuthenticateGoogleAsync</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC013</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Email "newgoogle@gmail.com" chưa tồn tại trong bảng users</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">idToken="mock-newgoogle@gmail.com"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AuthResponseDto { Success = true, User.Email = "newgoogle@gmail.com", User.IsGoogleAuth = true }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tự động tạo Citizen từ Google OAuth</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC014</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Email "citizen@ecolink.vn" đã tồn tại trong DB</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">idToken="mock-citizen@ecolink.vn"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AuthResponseDto { Success = true, User.Email = "citizen@ecolink.vn", User.IsGoogleAuth = true }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Liên kết tài khoản hiện có với Google</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC015</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Google ID Token bị hỏng chữ ký hoặc hết hạn</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">idToken="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.invalid"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-07", "MSG-AUTH-01")&#10;Log Message: "Xác thực Google ID Token thất bại"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bắt ngoại lệ InvalidJwtException</Data></Cell>
+   </Row>
+
+   <!-- Method 5: RefreshTokenAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">RefreshTokenAsync</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC016</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">RefreshToken tồn tại trong DB với IsRevoked = false, ExpiresAt &gt; UtcNow</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">refreshToken="valid_raw_refresh_token"; clientIp="127.0.0.1"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AuthResponseDto { Success = true, Message = "Làm mới phiên làm việc thành công." }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Token Rotation: thu hồi cũ, cấp mới</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC017</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">RefreshToken trong DB đã có IsRevoked = true</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">refreshToken="revoked_raw_refresh_token"; clientIp="10.0.0.5"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-05", "MSG-AUTH-10")&#10;Log Message: "Phát hiện Token Replay Attack! Thu hồi toàn bộ RefreshToken của UserId {UserId}"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chống Replay Attack (BR-AUTH-05)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC018</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">RefreshToken đã hết hạn hoặc không tồn tại</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">refreshToken="expired_or_unknown_token"; clientIp="127.0.0.1"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-05", "MSG-NTF-01")&#10;Log Message: "Phiên làm việc không tồn tại hoặc đã hết hạn. Vui lòng đăng nhập lại."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đánh dấu IsRevoked = true nếu hết hạn</Data></Cell>
+   </Row>
+
+   <!-- Method 6: ForgotPasswordAsync & ResetPasswordAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">ForgotPasswordAsync &amp; ResetPasswordAsync</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC019</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">User "citizen@ecolink.vn" tồn tại; chưa gửi yêu cầu trong 60s qua</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">email="citizen@ecolink.vn"; clientIp="127.0.0.1"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: Task.CompletedTask&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lưu PasswordResetToken 15p &amp; gửi SMTP</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC020</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">User "citizen@ecolink.vn" vừa tạo token cách đây 20s (&lt; 1 phút)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">email="citizen@ecolink.vn"; clientIp="127.0.0.1"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: Task.CompletedTask&#10;Exception: N/A&#10;Log Message: "Email citizen@ecolink.vn bị rate limit yêu cầu quên mật khẩu trong 1 phút"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Rate limit 60s theo BR-AUTH-09</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC021</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Có PasswordResetToken hợp lệ (UsedAt == null, ExpiresAt &gt; UtcNow)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Email="citizen@ecolink.vn"; Token="valid_reset_token"; NewPassword="NewPass@2026"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: Task.CompletedTask&#10;Exception: N/A&#10;Log Message: "Người dùng citizen (citizen@ecolink.vn) đã đặt lại mật khẩu mới thành công"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cập nhật mật khẩu &amp; thu hồi RefreshTokens</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC022</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Gọi ResetPasswordAsync với mật khẩu ngắn hơn 6 ký tự</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Email="citizen@ecolink.vn"; Token="valid_reset_token"; NewPassword="12345"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-06", "MSG-AUTH-01")&#10;Log Message: "Mật khẩu mới tối thiểu phải có 6 ký tự."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra độ dài mật khẩu mới (BR-AUTH-06)</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+
+ <!-- ==================== SHEET 2: AI WASTE CLASSIFICATION MODULE ==================== -->
+ <Worksheet ss:Name="2_AI_Classification">
+  <Table>
+   <Column ss:Width="85"/>
+   <Column ss:Width="160"/>
+   <Column ss:Width="200"/>
+   <Column ss:Width="280"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="130"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="160"/>
+
+   <Row ss:Index="2">
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Code Module</Data></Cell>
+    <Cell ss:MergeAcross="2" ss:StyleID="SummaryValueLeft"><Data ss:Type="String">AI Waste Classification &amp; Rule Engine</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Number of TCs</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">18</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="SummaryValue"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Round</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Failed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Pending</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">18</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">18</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">18</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Type</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Boundary</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Count</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">9</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">5</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">4</Data></Cell>
+   </Row>
+
+   <Row ss:Index="11" ss:Height="28">
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test Case ID</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Pre-conditions</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Input parameters</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Expected Results</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Type</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test date</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Tester</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Defect IDs</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Note</Data></Cell>
+   </Row>
+
+   <!-- Method 1: ClassifyWasteImageAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">ClassifyWasteImageAsync (AiVisionHttpClient)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC001</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">AI Vision Service (localhost:8000) hoạt động, trả về HTTP 200 OK</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">imageStream=MemoryStream(valid_jpeg); fileName="plastic_bottle.jpg"; model="yolov8_detect"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AiScanResultDto { Success = true, IsOutOfDistribution = false, TopPrediction.Label = "plastic" }&#10;Exception: N/A&#10;Log Message: "Gửi ảnh phân tích tới AI Vision Service với Model 'yolov8_detect' tại: http://localhost:8000/api/v1/classify"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Luồng phân loại chuẩn qua HttpClient</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC002</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">AI Vision Service hoạt động, truyền model = "yolov8n"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">imageStream=MemoryStream(valid_png); fileName="cardboard_box.png"; model="yolov8n"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AiScanResultDto { Success = true, TopPrediction.Label = "cardboard" }&#10;Exception: N/A&#10;Log Message: "Gửi ảnh phân tích tới AI Vision Service với Model 'yolov8n' tại: http://localhost:8000/api/v1/classify"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Phân loại với mô hình YOLOv8 Nano</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC003</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">AI Vision Service trả về HTTP 400 BadRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">imageStream=MemoryStream(bytes); fileName="test.jpg"; model="invalid_model"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AiScanResultDto { Success = false, ErrorMessage = "Mô hình 'invalid_model' không tồn tại." }&#10;Exception: N/A&#10;Log Message: "AI Service trả về mã lỗi: BadRequest, Body: Mô hình 'invalid_model' không tồn tại."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Xử lý an toàn khi AI trả về HTTP != 2xx</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC004</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">AI Vision Service bị ngắt kết nối (HttpRequestException)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">imageStream=MemoryStream(valid_jpeg); fileName="bottle.jpg"; model="yolov8_detect"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AiScanResultDto { Success = false, TopPrediction.Label = "unknown" }&#10;Exception: N/A&#10;Log Message: "Lỗi kết nối tới AI Vision Service"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Fallback an toàn không làm sập Core Backend</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC005</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">AI Vision Service trả về HTTP 200 nhưng body JSON là "null"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">imageStream=MemoryStream(valid_jpeg); fileName="empty_json.jpg"; model="yolov8_detect"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AiScanResultDto { Success = false, ErrorMessage = "Không thể giải mã phản hồi từ AI Service." }&#10;Exception: N/A&#10;Log Message: "Gửi ảnh phân tích tới AI Vision Service với Model 'yolov8_detect'..."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra null-coalescing khi deserialize</Data></Cell>
+   </Row>
+
+   <!-- Method 2: classify_waste_image & submit_misclassification_feedback -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">classify_waste_image &amp; submit_misclassification_feedback (Ecolink.AiService)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC006</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Trọng số yolov8_detect đã nạp vào ModelManager</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">file="bottle.jpg"; model="yolov8_detect"; use_detection_crop=True; confidence_threshold=0.60</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AiScanResponse { success = True, is_out_of_distribution = False, top_prediction.label = "plastic", sorting_rule != None }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Suy luận Two-Stage Crop + gắn quy tắc tĩnh</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC007</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Mô hình trả về top_prediction.confidence = 0.60 (chạm biên OOD)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">file="blurry_paper.jpg"; model="mobilenet_v3"; confidence_threshold=0.60</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AiScanResponse { success = True, is_out_of_distribution = False, confidence_threshold = 0.60 }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Biên confidence == 0.60 hợp lệ (BR-AI-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC008</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Mô hình trả về top_prediction.confidence = 0.599 (&lt; 0.60)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">file="ood_shoe.jpg"; model="efficientnet_b0"; confidence_threshold=0.60</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AiScanResponse { success = True, is_out_of_distribution = True, sorting_rule = None }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kích hoạt cảnh báo OOD (BR-AI-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC009</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Gửi tên model không có trong model_manager.registry</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">file="bottle.jpg"; model="resnet50_unknown"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: HTTPException (status_code=400)&#10;Log Message: "Mô hình 'resnet50_unknown' không tồn tại..."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn tên model không hợp lệ</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC010</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Gửi file không phải ảnh (content_type = "application/pdf")</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">file=UploadFile("document.pdf", "application/pdf"); model="yolov8_detect"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: HTTPException (status_code=400)&#10;Log Message: "Tập tin tải lên phải là hình ảnh hợp lệ (jpg, png, webp)."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra MIME type đầu vào</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC011</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Gửi file ảnh có kích thước 0 byte</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">file=UploadFile("empty.jpg", "image/jpeg", b""); model="yolov8_detect"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: HTTPException (status_code=400)&#10;Log Message: "Tập tin hình ảnh tải lên không có dữ liệu (rỗng)."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Biên kích thước file = 0 byte</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC012</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">File data/feedback.json sẵn sàng ghi nhận báo cáo (U-03)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">predicted_label="plastic"; user_reported_label="glass"; confidence_score=0.62; note="Chai thủy tinh"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: { "success": True, "feedback": { "status": "pending_verification" } }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lưu log phản hồi AI để retrain (U-03)</Data></Cell>
+   </Row>
+
+   <!-- Method 3: WasteRuleEngineService -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">GetSortingGuideAsync, GetAllRulesAsync &amp; InvalidateRuleCacheAsync (WasteRuleEngineService)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC013</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">_ruleCache đã nạp sẵn 6 quy tắc mặc định</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">categoryCode="plastic"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: WasteSortingGuideDto { CategoryCode = "plastic", StandardBinColor = "Cam" }&#10;Exception: N/A&#10;Log Message: "Tìm thấy quy tắc phân loại cho loại rác: plastic"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tra cứu quy tắc phân loại chuẩn (U-04)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC014</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">_ruleCache đã nạp sẵn 6 quy tắc mặc định</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">categoryCode="  PAPER  "</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: WasteSortingGuideDto { CategoryCode = "paper", StandardBinColor = "Xanh Dương" }&#10;Exception: N/A&#10;Log Message: "Tìm thấy quy tắc phân loại cho loại rác: paper"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chuẩn hóa ToLowerInvariant().Trim()</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC015</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">_ruleCache không chứa mã "battery_hazard"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">categoryCode="battery_hazard"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: N/A&#10;Log Message: "Không tìm thấy quy tắc cấu hình cho loại rác: battery_hazard"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Trả về null khi không khớp</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC016</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">_ruleCache đang chứa 6 danh mục mặc định</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IEnumerable&lt;WasteSortingGuideDto&gt; (Count = 6)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lấy toàn bộ 6 danh mục hướng dẫn</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC017</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">_ruleCache đang có khóa "plastic"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">categoryCode="plastic"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: Task.CompletedTask&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Xóa cache cục bộ của 1 danh mục</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC018</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">_ruleCache đã bị xóa 1 phần trước đó</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">categoryCode=null</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: Task.CompletedTask (Cache Count = 6)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Khôi phục toàn bộ _ruleCache</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+
+ <!-- ==================== SHEET 3: RECYCLER ONBOARDING MODULE ==================== -->
+ <Worksheet ss:Name="3_Recycler_Onboarding">
+  <Table>
+   <Column ss:Width="85"/>
+   <Column ss:Width="160"/>
+   <Column ss:Width="200"/>
+   <Column ss:Width="280"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="130"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="160"/>
+
+   <Row ss:Index="2">
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Code Module</Data></Cell>
+    <Cell ss:MergeAcross="2" ss:StyleID="SummaryValueLeft"><Data ss:Type="String">RecyclerOnboardingService &amp; CloudflareR2StorageService</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Number of TCs</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="SummaryValue"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Round</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Failed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Pending</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Type</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Boundary</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Count</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">7</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">9</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">4</Data></Cell>
+   </Row>
+
+   <Row ss:Index="11" ss:Height="28">
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test Case ID</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Pre-conditions</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Input parameters</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Expected Results</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Type</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test date</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Tester</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Defect IDs</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Note</Data></Cell>
+   </Row>
+
+   <!-- Method 1: UploadFileAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">UploadFileAsync (CloudflareR2StorageService)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC001</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cấu hình CloudflareR2 hợp lệ; R2 S3 endpoint trả về HTTP 200 OK</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">fileName="giay_phep.jpg"; contentType="image/jpeg"; fileSize=1048576; folder="recycler-onboarding/permits"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: "https://pub-44be889e3c6b4fd4ae0e2cca3ac1fdd2.r2.dev/recycler-onboarding/permits/{guid}.jpg"&#10;Exception: N/A&#10;Log Message: "Tải tệp lên Cloudflare R2 thành công: recycler-onboarding/permits/{guid}.jpg..."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Ký số AWS SigV4 HMAC-SHA256 &amp; trả về R2 URL</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC002</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cấu hình CloudflareR2 hợp lệ</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">fileName="permit.pdf"; contentType="application/pdf"; fileSize=5242880 (Đúng 5MB)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: "https://pub-44be889e3c6b4fd4ae0e2cca3ac1fdd2.r2.dev/recycler-onboarding/permits/{guid}.pdf"&#10;Exception: N/A&#10;Log Message: "Tải tệp lên Cloudflare R2 thành công..."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Biên trên kích thước tệp = 5MB</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC003</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tệp vượt quá giới hạn 5MB đúng 1 byte</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">fileName="oversize.png"; contentType="image/png"; fileSize=5242881 (5MB + 1B)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-01", "MSG-GEN-01")&#10;Log Message: "Dung lượng tệp vượt quá giới hạn cho phép (Tối đa 5MB)."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn tệp &gt; 5MB</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC004</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tệp tải lên rỗng (fileSize = 0)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">fileName="empty.jpg"; contentType="image/jpeg"; fileSize=0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-01", "MSG-GEN-01")&#10;Log Message: "Tệp tải lên không được để trống."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Biên dưới kích thước tệp = 0 byte</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC005</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tệp có phần mở rộng không nằm trong danh sách trắng</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">fileName="script.exe"; contentType="application/octet-stream"; fileSize=1024</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-01", "MSG-GEN-01")&#10;Log Message: "Định dạng tệp '.exe' không được hỗ trợ. Chỉ chấp nhận: .jpg, .jpeg, .png, .webp, .pdf."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn tải lên tệp thực thi</Data></Cell>
+   </Row>
+
+   <!-- Method 2: SubmitUpgradeApplicationAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">SubmitUpgradeApplicationAsync (RecyclerOnboardingService - U-17)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC006</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">User "citizen" đang Active và chưa có RecyclerProfile</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId="11111111-..."; FacilityName="Vựa Tái Chế Bình Thạnh"; Latitude=10.8012; Longitude=106.7115</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerApplicationDetailDto { VerificationStatus = "Pending", ActiveStatus = "Offline" }&#10;Exception: N/A&#10;Log Message: "Người dùng citizen (11111111-...) đã gửi hồ sơ nâng cấp Recycler..."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nộp hồ sơ nâng cấp lần đầu (U-17)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC007</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">User "citizen" có RecyclerProfile đang ở trạng thái Rejected</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId="11111111-..."; FacilityName="Vựa Tái Chế Bình Thạnh Mới"; LegalPermitUrl="https://.../new.pdf"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerApplicationDetailDto { VerificationStatus = "Pending", RejectionReason = null }&#10;Exception: N/A&#10;Log Message: "Người dùng citizen (11111111-...) đã gửi hồ sơ nâng cấp Recycler..."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nộp lại (Re-apply) sau khi bị từ chối</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC008</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">User "citizen" đang có hồ sơ ở trạng thái Pending</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId="11111111-..."; request=ApplyRecyclerUpgradeRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-01", "MSG-MTH-03")&#10;Log Message: "Hồ sơ cơ sở của bạn đang trong hàng đợi thẩm định. Vui lòng chờ kết quả từ nhân viên."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn gửi trùng khi đang chờ duyệt</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC009</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">User "collector" đã có hồ sơ Verified</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId="22222222-..."; request=ApplyRecyclerUpgradeRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-01", "MSG-MTH-04")&#10;Log Message: "Hồ sơ cơ sở của bạn đã được phê duyệt trước đó."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn nộp lại khi đã là Recycler</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC010</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">User đang bị đình chỉ (Status = Suspended)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=suspendedUserId; request=ApplyRecyclerUpgradeRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-05", "MSG-AUTH-04")&#10;Log Message: "Tài khoản đang bị khóa hoặc đình chỉ, không thể gửi yêu cầu nâng cấp."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn tài khoản vi phạm nâng cấp</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC011</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId không tồn tại trong bảng users</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId="99999999-9999-9999-9999-999999999999"; request=ApplyRecyclerUpgradeRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: NotFoundException&#10;Log Message: "Không tìm thấy tài khoản người dùng."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra khóa ngoại userId</Data></Cell>
+   </Row>
+
+   <!-- Method 3: GetMyApplicationAsync & GetApplicationsForStaffAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">GetMyApplicationAsync &amp; GetApplicationsForStaffAsync (RecyclerOnboardingService)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC012</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">User "citizen" đã nộp hồ sơ RecyclerProfile</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId="11111111-1111-1111-1111-111111111111"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerApplicationDetailDto { VerificationStatus = "Pending" }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tra cứu trạng thái hồ sơ cá nhân</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC013</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">User mới chưa từng nộp hồ sơ (RecyclerProfile == null)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=newCitizenUserId</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: NotFoundException&#10;Log Message: "Bạn chưa gửi hồ sơ đăng ký nâng cấp Cơ sở thu gom nào."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Trả về 404 khi chưa nộp hồ sơ</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC014</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Trong DB có 2 hồ sơ (1 Pending, 1 Verified)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Status="Pending"; Keyword="Bình Thạnh"; PageNumber=1; PageSize=10</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: PagedResult&lt;RecyclerApplicationDetailDto&gt; { TotalRecords = 1 }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lọc hồ sơ theo trạng thái và từ khóa</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC015</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Truyền tham số phân trang vượt biên âm và vượt trần</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Status=null; Keyword=null; PageNumber=-2; PageSize=500</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: PagedResult&lt;RecyclerApplicationDetailDto&gt; { PageNumber = 1, PageSize = 100 }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tự động kẹp biên PageNumber=1, PageSize=100</Data></Cell>
+   </Row>
+
+   <!-- Method 4: VerifyApplicationAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">VerifyApplicationAsync (RecyclerOnboardingService - S-04)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC016</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ của targetUserId đang ở trạng thái Pending</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">staffUserId="33333333-..."; targetUserId="11111111-..."; IsApproved=true; RejectionReason=null</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerApplicationDetailDto { VerificationStatus = "Verified", CurrentRole = "Recycler" }&#10;Exception: N/A&#10;Log Message: "Staff 33333333-... đã APPROVE hồ sơ Recycler của User 11111111-..."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Duyệt hồ sơ &amp; nâng cấp Role = Recycler</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC017</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ của targetUserId đang ở trạng thái Pending</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">staffUserId="33333333-..."; targetUserId="11111111-..."; IsApproved=false; RejectionReason="Giấy phép bị mờ"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerApplicationDetailDto { VerificationStatus = "Rejected", CurrentRole = "Citizen" }&#10;Exception: N/A&#10;Log Message: "Staff 33333333-... đã REJECT hồ sơ Recycler của User 11111111-..."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Từ chối kèm lý do &amp; gửi email (BR-MTH-02)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC018</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ đang Pending; Staff từ chối nhưng bỏ trống lý do</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">staffUserId="33333333-..."; targetUserId="11111111-..."; IsApproved=false; RejectionReason="   "</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-02", "MSG-MTH-05")&#10;Log Message: "Bắt buộc phải nhập lý do từ chối khi không phê duyệt hồ sơ (BR-MTH-02)."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bắt buộc có lý do khi Reject (BR-MTH-02)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC019</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ của targetUserId đã ở trạng thái Verified trước đó</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">staffUserId="33333333-..."; targetUserId="22222222-..."; IsApproved=true</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-01", "MSG-GEN-01")&#10;Log Message: "Chỉ có thể thẩm định hồ sơ đang ở trạng thái 'Pending' (Trạng thái hiện tại: 'Verified')."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn thẩm định lại hồ sơ đã hoàn tất</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC020</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">targetUserId không có hồ sơ trong bảng recycler_profiles</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">staffUserId="33333333-..."; targetUserId="99999999-..."; IsApproved=true</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: NotFoundException&#10;Log Message: "Không tìm thấy hồ sơ đăng ký Recycler cần thẩm định."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-29</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra tồn tại của hồ sơ cần duyệt</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+</Workbook>
+

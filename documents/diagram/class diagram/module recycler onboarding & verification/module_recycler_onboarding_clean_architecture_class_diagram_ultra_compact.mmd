@@ -1,0 +1,99 @@
+classDiagram
+    direction TB
+
+    %% Presentation Layer
+    class RecyclerApplicationsController {
+        - IRecyclerOnboardingService _onboardingService
+        - IFileStorageService _fileStorageService
+        + UploadDocument(file, documentType, ct) Task~ActionResult~
+        + SubmitApplication(ApplyRecyclerUpgradeRequest, ct) Task~ActionResult~
+        + GetMyApplication(ct) Task~ActionResult~
+        + GetApplicationsForStaff(RecyclerApplicationFilterRequest, ct) Task~ActionResult~
+        + GetApplicationByUserId(userId, ct) Task~ActionResult~
+        + VerifyApplication(userId, VerifyRecyclerApplicationRequest, ct) Task~ActionResult~
+    }
+
+    %% Application Layer (Inbound & Outbound Ports)
+    class IRecyclerOnboardingService {
+        <<interface>>
+        + SubmitUpgradeApplicationAsync(userId, request, ct) Task~RecyclerApplicationDetailDto~
+        + GetMyApplicationAsync(userId, ct) Task~RecyclerApplicationDetailDto~
+        + GetApplicationsForStaffAsync(filter, ct) Task~PagedResult~
+        + GetApplicationByUserIdAsync(targetUserId, ct) Task~RecyclerApplicationDetailDto~
+        + VerifyApplicationAsync(staffId, targetUserId, request, ct) Task~RecyclerApplicationDetailDto~
+    }
+    class IFileStorageService {
+        <<interface>>
+        + UploadFileAsync(stream, fileName, contentType, size, folder, ct) Task~string~
+    }
+    class IEmailService {
+        <<interface>>
+        + SendEmailAsync(email, name, subject, htmlBody, ct) Task
+    }
+
+    %% Infrastructure Layer (Adapters & Implementations)
+    class RecyclerOnboardingService {
+        - ApplicationDbContext _dbContext
+        - IEmailService _emailService
+        + SubmitUpgradeApplicationAsync(userId, request, ct) Task~RecyclerApplicationDetailDto~
+        + GetMyApplicationAsync(userId, ct) Task~RecyclerApplicationDetailDto~
+        + GetApplicationsForStaffAsync(filter, ct) Task~PagedResult~
+        + GetApplicationByUserIdAsync(targetUserId, ct) Task~RecyclerApplicationDetailDto~
+        + VerifyApplicationAsync(staffId, targetUserId, request, ct) Task~RecyclerApplicationDetailDto~
+    }
+    class CloudflareR2StorageService {
+        - HttpClient _httpClient
+        - string _accountId
+        - string _bucketName
+        - string _publicUrl
+        + UploadFileAsync(stream, fileName, contentType, size, folder, ct) Task~string~
+    }
+    class GmailSmtpEmailService {
+        - IConfiguration _configuration
+        + SendEmailAsync(email, name, subject, htmlBody, ct) Task
+    }
+    class ApplicationDbContext {
+        + DbSet~User~ Users
+        + DbSet~RecyclerProfile~ RecyclerProfiles
+    }
+
+    %% Domain Layer (Core Entities)
+    class User {
+        + Guid Id
+        + string Username
+        + string Email
+        + string FullName
+        + UserRole Role
+        + UserStatus Status
+    }
+    class RecyclerProfile {
+        + Guid UserId
+        + string FacilityName
+        + string? RepresentativeName
+        + string BusinessAddress
+        + decimal Latitude
+        + decimal Longitude
+        + Point Location
+        + string OperatingHours
+        + string ContactPhone
+        + string? LegalPermitUrl
+        + string? BusinessPhotoUrl
+        + VerificationStatus VerificationStatus
+        + RecyclerActiveStatus ActiveStatus
+        + string? RejectionReason
+    }
+
+    %% Core Clean Architecture Connectors
+    RecyclerApplicationsController --> IRecyclerOnboardingService
+    RecyclerApplicationsController --> IFileStorageService
+    RecyclerOnboardingService ..|> IRecyclerOnboardingService
+
+    %% Outbound Dependency Inversion
+    CloudflareR2StorageService ..|> IFileStorageService
+    RecyclerOnboardingService --> IEmailService
+    RecyclerOnboardingService --> ApplicationDbContext
+    GmailSmtpEmailService ..|> IEmailService
+
+    %% Domain Model Relationships
+    User "1" *-- "0..1" RecyclerProfile : submits & verifies (Citizen -> Recycler)
+

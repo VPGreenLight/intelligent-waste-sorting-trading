@@ -1,0 +1,57 @@
+sequenceDiagram
+    autonumber
+    actor User as Nguoi dung
+    participant UI as React Web App
+    participant Ctrl as AuthController
+    participant Svc as AuthService
+    participant Token as JwtTokenService
+    participant DB as PostgreSQL (ApplicationDbContext)
+
+    User->>+UI: 1. Nhap Username/Email va Password
+    UI->>+Ctrl: 2. POST /api/v1/auth/login (LoginRequestDto)
+    Ctrl->>+Svc: 3. LoginAsync(request, clientIp, ct)
+    Svc->>+DB: 4. SELECT * FROM users LEFT JOIN UserEcoProfiles WHERE username = @id OR email = @id
+    
+    alt Khong tim thay tai khoan (BR-AUTH-03)
+        DB-->>Svc: 5a. Return null
+        Svc-->>Ctrl: 6a. Throw BusinessRuleException ("BR-AUTH-03", "MSG-AUTH-01")
+        Ctrl-->>UI: 7a. 400 Bad Request: Sai thong tin dang nhap
+        UI-->>User: 8a. Hien thi loi MSG-AUTH-01
+    else Tim thay tai khoan
+        DB-->>-Svc: 5b. Return User entity
+        
+        alt Tai khoan dang bi khoa tam thoi (Status == Locked & LockoutUntil > UtcNow)
+            Svc-->>Ctrl: 6b. Throw BusinessRuleException ("BR-AUTH-04", "MSG-AUTH-03")
+            Ctrl-->>UI: 7b. 400 Bad Request: Tai khoan tam khoa, thu lai sau X phut
+            UI-->>User: 8b. Hien thi canh bao khoa tam thoi (BR-AUTH-04)
+        else Tai khoan khong bi khoa (hoac da het thoi gian 15 phut khoa)
+            Note over Svc: Kiem tra mat khau bang BCrypt.Verify(password, user.PasswordHash)
+            
+            alt Sai mat khau (isPasswordValid == false)
+                Note over Svc: Tang FailedLoginAttempts++
+                alt FailedLoginAttempts >= 5 (Cham nguong Brute-force BR-AUTH-04)
+                    Svc->>+DB: 9c. UPDATE users SET status = 'Locked', lockout_until = NOW() + 15m
+                    DB-->>-Svc: 10c. 1 row affected
+                    Svc-->>Ctrl: 11c. Throw BusinessRuleException ("BR-AUTH-04", "MSG-AUTH-03")
+                    Ctrl-->>UI: 12c. 400 Bad Request: Khoa tai khoan 15 phut do sai 5 lan
+                else FailedLoginAttempts < 5
+                    Svc->>+DB: 9d. UPDATE users SET failed_login_attempts = @count
+                    DB-->>-Svc: 10d. 1 row affected
+                    Svc-->>Ctrl: 11d. Throw BusinessRuleException ("BR-AUTH-03", "MSG-AUTH-01")
+                    Ctrl-->>UI: 12d. 400 Bad Request: Sai ten dang nhap hoac mat khau
+                end
+            else Dung mat khau (isPasswordValid == true)
+                Svc->>+DB: 9e. UPDATE users SET failed_login_attempts = 0, lockout_until = NULL
+                DB-->>-Svc: 10e. 1 row affected
+                Svc->>+Token: 11e. GenerateAccessToken(user) & GenerateRefreshToken()
+                Token-->>-Svc: 12e. Return AccessToken (30m) & RefreshToken (7d)
+                Svc->>+DB: 13e. INSERT INTO refresh_tokens (user_id, token_hash, created_by_ip)
+                DB-->>-Svc: 14e. 1 row affected
+                Svc-->>-Ctrl: 15e. Return AuthResponseDto
+                Note over Ctrl: Gan HttpOnly Cookie 'refreshToken' (SameSite=Strict)
+                Ctrl-->>-UI: 16e. 200 OK: ApiResponse<AuthResponseDto> (MSG-GEN-01)
+                UI-->>-User: 17e. Luu AccessToken & Dieu huong theo Role (Citizen/Recycler/Staff/Admin)
+            end
+        end
+    end
+
