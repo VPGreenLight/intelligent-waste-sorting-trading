@@ -30,6 +30,15 @@ public class RecyclerProfile : BaseAuditableEntity
     public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Pending;
     public RecyclerActiveStatus ActiveStatus { get; set; } = RecyclerActiveStatus.Offline;
     public string? RejectionReason { get; set; }
+
+    /// <summary>Ghi chú bận tạm thời hiển thị cho người dân .</summary>
+    public string? BusyReason { get; set; }
+
+    /// <summary>Lịch hoạt động cố định theo tuần, lưu dạng JSON (xem ScheduleDayDto).</summary>
+    public string? WeeklyScheduleJson { get; set; }
+
+    /// <summary>Bảng giá thu mua phế liệu của cơ sở (R-01).</summary>
+    public ICollection<RecyclerPrice> Prices { get; set; } = new List<RecyclerPrice>();
 }
 
 /// <summary>

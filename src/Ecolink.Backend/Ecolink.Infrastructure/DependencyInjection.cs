@@ -49,6 +49,9 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, GmailSmtpEmailService>();
         services.AddScoped<IAuthService, AuthService>();
 
+        // Đăng ký Recycler Profile, Pricing & Availability Service (R-01, R-02)
+        services.AddScoped<IRecyclerManagementService, RecyclerManagementService>();
+
         // Đăng ký Payment Service (VietQR & Webhook)
         services.AddSingleton<IPaymentService, PaymentService>();
 

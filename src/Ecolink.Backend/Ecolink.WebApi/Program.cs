@@ -1,8 +1,10 @@
 using System.Text;
 using Ecolink.Application;
 using Ecolink.Application.Common;
+using Ecolink.Application.Interfaces;
 using Ecolink.Infrastructure;
 using Ecolink.WebApi.Middlewares;
+using Ecolink.WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -36,6 +38,10 @@ builder.Services.AddApplicationServices();
 
 // Thêm dịch vụ tầng Infrastructure (AI Client, Rule Engine, Geo Matching, Gamification, Auth)
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// Lấy thông tin người dùng hiện tại (UserId/Role) từ JWT cho Controller và Audit Interceptor
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Cấu hình JWT Bearer Authentication & Authorization
 var jwtSecret = builder.Configuration["JwtSettings:SecretKey"] 

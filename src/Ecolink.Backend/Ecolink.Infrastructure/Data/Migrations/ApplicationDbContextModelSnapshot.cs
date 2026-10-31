@@ -193,6 +193,77 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("password_reset_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.RecyclerPrice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("price_id");
+
+                    b.Property<string>("CollectionConditions")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("collection_conditions");
+
+                    b.Property<DateTime>("EffectiveFrom")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("effective_from")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime?>("EffectiveTo")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("effective_to");
+
+                    b.Property<decimal>("MinQuantityKg")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)")
+                        .HasDefaultValue(1.0m)
+                        .HasColumnName("min_quantity_kg");
+
+                    b.Property<decimal>("PricePerKg")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("price_per_kg");
+
+                    b.Property<Guid>("RecyclerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recycler_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("WasteCategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_recycler_price_list");
+
+                    b.HasIndex("WasteCategoryId");
+
+                    b.HasIndex("RecyclerId", "WasteCategoryId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_recycler_price_list_recycler_category");
+
+                    b.ToTable("recycler_price_list", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_recycler_price_list_min_quantity_positive", "min_quantity_kg > 0");
+
+                            t.HasCheckConstraint("ck_recycler_price_list_price_positive", "price_per_kg > 0");
+                        });
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.RecyclerProfile", b =>
                 {
                     b.Property<Guid>("UserId")
@@ -213,6 +284,11 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Property<string>("BusinessPhotoUrl")
                         .HasColumnType("text")
                         .HasColumnName("business_photo_url");
+
+                    b.Property<string>("BusyReason")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("busy_reason");
 
                     b.Property<string>("ContactPhone")
                         .IsRequired()
@@ -307,6 +383,10 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("verification_status");
+
+                    b.Property<string>("WeeklyScheduleJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("weekly_schedule");
 
                     b.HasKey("UserId")
                         .HasName("pk_recycler_profiles");
@@ -847,6 +927,27 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.RecyclerPrice", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.RecyclerProfile", "Recycler")
+                        .WithMany("Prices")
+                        .HasForeignKey("RecyclerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_recycler_price_list_recycler_profiles");
+
+                    b.HasOne("Ecolink.Domain.Entities.WasteCategory", "WasteCategory")
+                        .WithMany()
+                        .HasForeignKey("WasteCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_recycler_price_list_waste_categories");
+
+                    b.Navigation("Recycler");
+
+                    b.Navigation("WasteCategory");
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.RecyclerProfile", b =>
                 {
                     b.HasOne("Ecolink.Domain.Entities.User", "User")
@@ -952,6 +1053,11 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("AcceptedMaterials");
 
                     b.Navigation("ReceivedOrders");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.RecyclerProfile", b =>
+                {
+                    b.Navigation("Prices");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.StaffProfile", b =>
