@@ -52,6 +52,10 @@ public static class DependencyInjection
         // Đăng ký Recycler Profile, Pricing & Availability Service (R-01, R-02)
         services.AddScoped<IRecyclerManagementService, RecyclerManagementService>();
 
+        // Đăng ký Recycler Onboarding & Verification + Cloudflare R2 Storage (U-17 & S-04)
+        services.AddHttpClient<IFileStorageService, CloudflareR2StorageService>();
+        services.AddScoped<IRecyclerOnboardingService, RecyclerOnboardingService>();
+
         // Đăng ký Payment Service (VietQR & Webhook)
         services.AddSingleton<IPaymentService, PaymentService>();
 

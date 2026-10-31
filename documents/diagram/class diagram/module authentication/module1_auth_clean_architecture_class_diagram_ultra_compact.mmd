@@ -1,0 +1,123 @@
+classDiagram
+    direction TB
+
+    %% Presentation Layer
+    class AuthController {
+        - IAuthService _authService
+        - ILogger~AuthController~ _logger
+        + Register(RegisterUserRequestDto) Task~ActionResult~
+        + Login(LoginRequestDto) Task~ActionResult~
+        + GoogleLogin(GoogleAuthRequestDto) Task~ActionResult~
+        + RefreshToken(RefreshTokenRequestDto) Task~ActionResult~
+        + ForgotPassword(ForgotPasswordRequestDto) Task~ActionResult~
+        + ResetPassword(ResetPasswordRequestDto) Task~ActionResult~
+    }
+
+    %% Application Layer (Inbound & Outbound Ports)
+    class IAuthService {
+        <<interface>>
+        + RegisterUserAsync(request, ct) Task~AuthResponseDto~
+        + LoginAsync(request, clientIp, ct) Task~AuthResponseDto~
+        + AuthenticateGoogleAsync(idToken, ct) Task~AuthResponseDto~
+        + RefreshTokenAsync(refreshToken, clientIp, ct) Task~AuthResponseDto~
+        + ForgotPasswordAsync(email, clientIp, ct) Task
+        + ResetPasswordAsync(request, ct) Task
+    }
+    class ITokenService {
+        <<interface>>
+        + GenerateAccessToken(user) string
+        + GenerateRefreshToken() Tuple~string, string~
+        + HashToken(token) string
+        + GetPrincipalFromExpiredToken(token) ClaimsPrincipal
+    }
+    class IEmailService {
+        <<interface>>
+        + SendPasswordResetEmailAsync(email, name, token, ct) Task
+        + SendEmailAsync(email, name, subject, htmlBody, ct) Task
+    }
+
+    %% Infrastructure Layer (Service Implementations & Persistence)
+    class AuthService {
+        - ApplicationDbContext _dbContext
+        - ITokenService _tokenService
+        - IEmailService _emailService
+        - IConfiguration _configuration
+        + RegisterUserAsync(request, ct) Task~AuthResponseDto~
+        + LoginAsync(request, clientIp, ct) Task~AuthResponseDto~
+        + AuthenticateGoogleAsync(idToken, ct) Task~AuthResponseDto~
+        + RefreshTokenAsync(refreshToken, clientIp, ct) Task~AuthResponseDto~
+        + ForgotPasswordAsync(email, clientIp, ct) Task
+        + ResetPasswordAsync(request, ct) Task
+    }
+    class JwtTokenService {
+        - string _secretKey
+        - int _accessTokenExpirationMinutes
+        - int _refreshTokenExpirationDays
+        + GenerateAccessToken(user) string
+        + GenerateRefreshToken() Tuple~string, string~
+        + HashToken(token) string
+    }
+    class GmailSmtpEmailService {
+        - IConfiguration _configuration
+        + SendPasswordResetEmailAsync(email, name, token, ct) Task
+        + SendEmailAsync(email, name, subject, htmlBody, ct) Task
+    }
+    class ApplicationDbContext {
+        + DbSet~User~ Users
+        + DbSet~UserEcoProfile~ UserEcoProfiles
+        + DbSet~RefreshToken~ RefreshTokens
+        + DbSet~PasswordResetToken~ PasswordResetTokens
+    }
+
+    %% Domain Layer (Core Entities)
+    class User {
+        + Guid Id
+        + string Username
+        + string Email
+        + string? PasswordHash
+        + string FullName
+        + UserRole Role = Citizen
+        + UserStatus Status = Active
+        + bool IsGoogleAuth
+        + int FailedLoginAttempts
+        + DateTime? LockoutUntil
+    }
+    class UserEcoProfile {
+        + Guid Id
+        + Guid UserId
+        + int CurrentGreenPoints
+        + int TreeLevel
+        + decimal TotalRecycledKg
+    }
+    class RefreshToken {
+        + Guid Id
+        + Guid UserId
+        + string TokenHash
+        + DateTime ExpiresAt
+        + bool IsRevoked
+        + string? ReplacedByTokenHash
+    }
+    class PasswordResetToken {
+        + Guid Id
+        + Guid UserId
+        + string TokenHash
+        + DateTime ExpiresAt
+        + DateTime? UsedAt
+    }
+
+    %% Core Clean Architecture Connectors
+    AuthController --> IAuthService
+    AuthService ..|> IAuthService
+
+    %% Outbound Dependency Inversion
+    AuthService --> ITokenService
+    AuthService --> IEmailService
+    AuthService --> ApplicationDbContext
+    JwtTokenService ..|> ITokenService
+    GmailSmtpEmailService ..|> IEmailService
+
+    %% Domain Model Relationships
+    User "1" *-- "1" UserEcoProfile : initializes on Register
+    User "1" -- "0..*" RefreshToken : rotates & revokes
+    User "1" -- "0..*" PasswordResetToken : generates (TTL 15m)
+

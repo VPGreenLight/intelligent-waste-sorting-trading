@@ -1,0 +1,48 @@
+sequenceDiagram
+    autonumber
+    actor Staff as Nhan vien / Admin (Role: Staff / Admin)
+    participant UI as React Web App (Back-office Dashboard)
+    participant Ctrl as RecyclerApplicationsController
+    participant Svc as RecyclerOnboardingService
+    participant Mail as GmailSmtpEmailService
+    participant DB as PostgreSQL (ApplicationDbContext)
+
+    Staff->>+UI: 1. Mo trang Quan ly Ho so Nang cap Co so Thu mua (Loc Status = Pending)
+    UI->>+Ctrl: 2. GET /api/v1/recycler-applications?status=Pending&pageNumber=1&pageSize=10
+    Ctrl->>+Svc: 3. GetApplicationsForStaffAsync(filter, ct)
+    Svc->>+DB: 4. SELECT * FROM recycler_profiles JOIN users WHERE verification_status = 'Pending'
+    DB-->>-Svc: 5. Return Paged List of RecyclerProfiles
+    Svc-->>-Ctrl: 6. Return PagedResult<RecyclerApplicationDetailDto>
+    Ctrl-->>-UI: 7. 200 OK: ApiResponse<PagedResult>
+    UI-->>-Staff: 8. Hien thi danh sach ho so & anh Giay phep kinh doanh / Toa do GPS
+
+    Staff->>+UI: 9. Kiem tra chung tu & Bam 'Phe duyet (Approve)' hoac 'Tu choi (Reject)'
+    UI->>+Ctrl: 10. PUT /api/v1/recycler-applications/{userId}/verification (VerifyRecyclerApplicationRequest)
+    Ctrl->>+Svc: 11. VerifyApplicationAsync(staffUserId, targetUserId, request, ct)
+    Svc->>+DB: 12. SELECT * FROM recycler_profiles JOIN users WHERE user_id = @targetUserId
+    DB-->>-Svc: 13. Return profile & user
+
+    alt Tu choi nhung khong nhap ly do (IsApproved == false & RejectionReason == empty - Vi pham BR-MTH-02)
+        Svc-->>Ctrl: 14a. Throw BusinessRuleException ("BR-MTH-02", "MSG-MTH-05")
+        Ctrl-->>UI: 15a. 400 Bad Request: Bat buoc phai nhap ly do tu choi (BR-MTH-02)
+        UI-->>Staff: 16a. Yeu cau Staff nhap ly do tu choi (>= 10 ky tu)
+    else Phe duyet Ho so (IsApproved == true)
+        Note over Svc: 1. profile.VerificationStatus = Verified<br/>2. Nang cap user.Role = UserRole.Recycler (Citizen -> Recycler)
+        Svc->>+DB: 14b. UPDATE recycler_profiles SET verification_status = 'Verified' & UPDATE users SET role = 'Recycler'
+        DB-->>-Svc: 15b. 2 rows affected (Commit Transaction)
+        Svc->>+Mail: 16b. SendEmailAsync(user.Email, "Chuc mung! Ho so Co so thu mua da duoc duyet - MSG-MTH-04")
+        Mail-->>-Svc: 17b. Sent SMTP Email
+        Svc-->>Ctrl: 18b. Return RecyclerApplicationDetailDto (CurrentRole = "Recycler", VerificationStatus = "Verified")
+        Ctrl-->>UI: 19b. 200 OK: ApiResponse (MSG-MTH-04)
+        UI-->>Staff: 20b. Thong bao phe duyet thanh cong (User chinh thuc tro thanh Recycler)
+    else Tu choi Ho so hop le (IsApproved == false & Co RejectionReason - BR-MTH-02)
+        Note over Svc: 1. profile.VerificationStatus = Rejected<br/>2. Luu profile.RejectionReason, giu nguyen user.Role = Citizen
+        Svc->>+DB: 14c. UPDATE recycler_profiles SET verification_status = 'Rejected', rejection_reason = @reason
+        DB-->>-Svc: 15c. 1 row affected
+        Svc->>+Mail: 16c. SendEmailAsync(user.Email, "Thong bao ket qua tham dinh kem ly do tu choi - MSG-MTH-05")
+        Mail-->>-Svc: 17c. Sent SMTP Email
+        Svc-->>-Ctrl: 18c. Return RecyclerApplicationDetailDto (CurrentRole = "Citizen", VerificationStatus = "Rejected")
+        Ctrl-->>-UI: 19c. 200 OK: ApiResponse (MSG-MTH-05)
+        UI-->>-Staff: 20c. Cap nhat trang thai Rejected (Cho phep Citizen sua va Re-apply)
+    end
+

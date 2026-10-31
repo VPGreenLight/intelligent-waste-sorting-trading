@@ -1,0 +1,94 @@
+<mxGraphModel dx="2455" dy="1541" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+  <root>
+    <mxCell id="0" />
+    <mxCell id="1" parent="0" />
+    <mxCell id="g1" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;horizontal=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=16;fontFamily=Helvetica;fontColor=#000000;swimlaneLine=1;" value="1. XÁC THỰC &amp; QUẢN LÝ TÀI KHOẢN" vertex="1">
+      <mxGeometry height="340" width="340" x="40" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="bf01" parent="g1" style="rounded=0;whiteSpace=wrap;html=1;arcSize=14;fontSize=16;fontFamily=Helvetica;strokeWidth=1.5;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" value="&lt;b&gt;BF-01: Đăng ký &amp;amp; Onboarding&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;• Cấp JWT &amp;amp; Phiên đăng nhập&lt;br/&gt;• Cộng điểm chào mừng thành viên mới" vertex="1">
+      <mxGeometry height="90" width="280" x="30" y="80" as="geometry" />
+    </mxCell>
+    <mxCell id="bf02" parent="g1" style="rounded=0;whiteSpace=wrap;html=1;arcSize=14;fontSize=16;fontFamily=Helvetica;strokeWidth=1.5;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" value="&lt;b&gt;BF-02: Kiểm duyệt Kho bãi Recycler&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;• Thẩm định CCCD/GPKD &amp;amp; Kho bãi&lt;br/&gt;• Thiết lập vị trí kho &amp;amp; Bảng giá" vertex="1">
+      <mxGeometry height="90" width="280" x="30" y="200" as="geometry" />
+    </mxCell>
+    <mxCell id="g2" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;horizontal=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=16;fontFamily=Helvetica;fontColor=#000000;swimlaneLine=1;" value="2. PHÂN LOẠI RÁC THÔNG MINH (AI)" vertex="1">
+      <mxGeometry height="340" width="340" x="420" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="bf03" parent="g2" style="rounded=0;whiteSpace=wrap;html=1;arcSize=14;fontSize=16;fontFamily=Helvetica;strokeWidth=1.5;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" value="&lt;b&gt;BF-03: Nhận diện &amp;amp; Phân loại Rác&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;• Quét ảnh qua AI Service&lt;br/&gt;• Hướng dẫn màu thùng &amp;amp; phân loại&lt;br/&gt;• Hỗ trợ chọn thủ công nếu ảnh không rõ" vertex="1">
+      <mxGeometry height="140" width="280" x="30" y="110" as="geometry" />
+    </mxCell>
+    <mxCell id="g3" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;horizontal=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=16;fontFamily=Helvetica;fontColor=#000000;swimlaneLine=1;" value="3. KẾT NỐI THU MUA &amp; BÀN GIAO" vertex="1">
+      <mxGeometry height="340" width="340" x="800" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="bf04" parent="g3" style="rounded=0;whiteSpace=wrap;html=1;arcSize=14;fontSize=16;fontFamily=Helvetica;strokeWidth=1.5;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" value="&lt;b&gt;BF-04: Kết nối Cơ sở &amp;amp; Bàn giao&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;• Người dùng chủ động tìm kiếm cơ sở&lt;br/&gt;• Đặt lịch hẹn &amp;amp; thương lượng trực tiếp&lt;br/&gt;• Cân rác, tạo biên nhận QR điện tử&lt;br/&gt;• Hệ thống ghi nhận lịch sử &amp;amp; khối lượng" vertex="1">
+      <mxGeometry height="160" width="280" x="30" y="90" as="geometry" />
+    </mxCell>
+    <mxCell id="g4" parent="1" style="swimlane;whiteSpace=wrap;html=1;startSize=40;horizontal=1;fillColor=#ffffff;strokeColor=#000000;strokeWidth=1.5;fontStyle=1;fontSize=16;fontFamily=Helvetica;fontColor=#000000;swimlaneLine=1;" value="4. HỆ THỐNG ECO POINT &amp; MÔ HÌNH AI" vertex="1">
+      <mxGeometry height="340" width="380" x="1180" y="40" as="geometry" />
+    </mxCell>
+    <mxCell id="bf05" parent="g4" style="rounded=0;whiteSpace=wrap;html=1;arcSize=14;fontSize=16;fontFamily=Helvetica;strokeWidth=1.5;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" value="&lt;b&gt;BF-05: Hệ thống Eco Point &amp;amp; Đổi Quà&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;• Điểm danh hàng ngày (Streak Bonus)&lt;br/&gt;• Xem video quảng cáo (giới hạn lượt/ngày)&lt;br/&gt;• Đổi mã quà tặng / voucher tại Cửa hàng" vertex="1">
+      <mxGeometry height="110" width="320" x="30" y="60" as="geometry" />
+    </mxCell>
+    <mxCell id="bf06" parent="g4" style="rounded=0;whiteSpace=wrap;html=1;arcSize=14;fontSize=16;fontFamily=Helvetica;strokeWidth=1.5;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" value="&lt;b&gt;BF-06: Thu thập Phản hồi &amp;amp; Tái huấn luyện AI&lt;/b&gt;&lt;br/&gt;&lt;br/&gt;• Người dùng gửi phản hồi khi AI đoán sai&lt;br/&gt;• Staff duyệt mẫu &amp;amp; Xuất tập dữ liệu&lt;br/&gt;• Admin cập nhật mô hình mới vào hệ thống" vertex="1">
+      <mxGeometry height="120" width="320" x="30" y="190" as="geometry" />
+    </mxCell>
+    <mxCell id="e_bf01_bf03" edge="1" parent="1" source="bf01" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=16;fontColor=#000000;strokeColor=#000000;strokeWidth=1.5;" target="bf03" value="Tài khoản công dân">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="380" y="125" />
+          <mxPoint x="420" y="180" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e_bf02_bf04" edge="1" parent="1" source="bf02" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=16;fontColor=#000000;strokeColor=#000000;strokeWidth=1.5;" target="bf04" value="Cơ sở thu gom hoạt động">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="380" y="245" />
+          <mxPoint x="400" y="360" />
+          <mxPoint x="780" y="360" />
+          <mxPoint x="800" y="170" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e_bf01_bf04" edge="1" parent="1" source="bf01" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=16;fontColor=#000000;strokeColor=#000000;strokeWidth=1.5;" target="bf04" value="Công dân chủ động tìm kiếm">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="380" y="125" />
+          <mxPoint x="400" y="20" />
+          <mxPoint x="780" y="20" />
+          <mxPoint x="800" y="170" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e_bf03_bf06" edge="1" parent="1" source="bf03" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=16;fontColor=#000000;strokeColor=#000000;strokeWidth=1.5;" target="bf06" value="Phản hồi ảnh AI nhận diện sai">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="760" y="180" />
+          <mxPoint x="780" y="400" />
+          <mxPoint x="1160" y="400" />
+          <mxPoint x="1180" y="250" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e_bf01_bf05" edge="1" parent="1" source="bf01" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=16;fontColor=#000000;strokeColor=#000000;strokeWidth=1.5;" target="bf05" value="Tài khoản tích điểm">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="380" y="125" />
+          <mxPoint x="400" y="10" />
+          <mxPoint x="1160" y="10" />
+          <mxPoint x="1180" y="115" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+    <mxCell id="e_bf06_bf03" edge="1" parent="1" source="bf06" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=16;fontColor=#000000;strokeColor=#000000;strokeWidth=1.5;" target="bf03" value="Mô hình mới cập nhật vào hệ thống">
+      <mxGeometry relative="1" as="geometry">
+        <Array as="points">
+          <mxPoint x="1180" y="250" />
+          <mxPoint x="1150" y="320" />
+          <mxPoint x="780" y="320" />
+          <mxPoint x="760" y="180" />
+        </Array>
+      </mxGeometry>
+    </mxCell>
+  </root>
+</mxGraphModel>
