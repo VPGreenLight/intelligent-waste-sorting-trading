@@ -16,6 +16,7 @@ Tài liệu đặc tả API của hệ thống EcoLink được chia thành các
 | **02** | [`02_module_recycler_onboarding_api.md`](./02_module_recycler_onboarding_api.md) | **Module 2: Recycler Onboarding & Verification (`MTH` / `U-17` & `S-04`)** | `/api/v1/recycler-applications` | Tải chứng từ/ảnh cơ sở lên Cloudflare R2, Người dân (`Citizen`) nộp đơn nâng cấp lên Cơ sở thu gom (`Recycler`) kèm tọa độ PostGIS, `Staff/Admin` thẩm định (Duyệt / Từ chối). |
 | **03** | [`03_module_ai_waste_classification_api.md`](./03_module_ai_waste_classification_api.md) | **Module 3: AI Waste Classification & Rule Engine (`CLS` & `SRT`)** | `/api/v1/waste-scan`<br>`/api/v1/classify` | Nhận diện rác đa mô hình (`yolov8_detect`, `mobilenet_v3`, `efficientnet_b0`, `yolov8n`), kiểm tra ngưỡng OOD (60%), tra cứu hướng dẫn xử lý Rule Engine và báo cáo AI nhận diện sai. |
 | **04** | [`04_module_trading_gamification_payment_api.md`](./04_module_trading_gamification_payment_api.md) | **Module 4: Geo-Matching, Trading, Gamification & Payment (`MTH`, `HND`, `GAM`, `PAY`)** | `/api/v1/trade`<br>`/api/v1/gamification` | Tìm kiếm điểm thu mua gần nhất theo GPS, tạo đơn hẹn bàn giao rác, quét QR chốt biên nhận, tích điểm xanh & Cây ảo, bảng xếp hạng và thanh toán VietQR / PayOS. |
+| **05** | [`05_module_recycler_profile_pricing_availability_api.md`](./05_module_recycler_profile_pricing_availability_api.md) | **Module 5: Recycler Profile, Pricing & Availability (`MTH` / `R-01` & `R-02`)** | `/api/v1/recycler`<br>`/api/v1/waste-categories` | Quản lý hồ sơ cơ sở thu gom, danh mục phế liệu chuẩn, cấu hình bảng giá thu mua (`VND/kg`, khối lượng tối thiểu, lưu hàng loạt), bật/tắt trạng thái `Online`/`Offline` và lịch hoạt động theo tuần. |
 
 ---
 
@@ -43,7 +44,7 @@ Authorization: Bearer <eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...>
 ### 3.2. Các Vai trò Hệ thống (User Roles)
 * `Guest`: Khách vãng lai chưa đăng nhập (chỉ gọi được các API công khai như đăng ký, đăng nhập, tra cứu quy tắc tĩnh).
 * `Citizen` (`User`): Người dân đã đăng ký tài khoản (quét rác AI, tìm điểm thu gom, tạo đơn bàn giao, tích điểm xanh, nộp hồ sơ xin nâng cấp lên `Recycler`).
-* `Recycler`: Đối tác / Cơ sở thu mua phế liệu đã được `Staff` phê duyệt hồ sơ qua Module 2 (nhận đơn bàn giao, quét QR xác nhận khối lượng).
+* `Recycler`: Đối tác / Cơ sở thu mua phế liệu đã được `Staff` phê duyệt hồ sơ qua Module 2 (quản lý hồ sơ & bảng giá thu mua `R-01`, bật/tắt trạng thái mở cửa `R-02`, nhận đơn bàn giao, quét QR xác nhận khối lượng).
 * `Staff`: Nhân viên vận hành hệ thống (thẩm định hồ sơ `Recycler`, duyệt phản hồi ảnh AI sai, xử lý khiếu nại).
 * `Admin`: Quản trị viên toàn quyền (quản lý chính sách Rule Engine, danh mục rác, tài khoản nhân viên, báo cáo).
 
@@ -51,6 +52,7 @@ Authorization: Bearer <eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...>
 > **Ranh giới nghiệp vụ nâng cấp vai trò (`Guest` $\rightarrow$ `Citizen` $\rightarrow$ `Recycler`):**
 > * Khi đăng ký mới tại Module 1 (`POST /api/v1/auth/register` hoặc `POST /api/v1/auth/google`), tài khoản tạo ra mặc định mang vai trò **`Citizen`** (`User`).
 > * Để trở thành **`Recycler`**, người dùng có tài khoản `Citizen` phải nộp hồ sơ đăng ký cơ sở thu gom tại Module 2 (`POST /api/v1/recycler-applications`) và được `Staff/Admin` phê duyệt (`PUT /api/v1/recycler-applications/{userId}/verification`).
+> * Sau khi được duyệt lên **`Recycler`**, đối tác truy cập Module 5 (`/api/v1/recycler/*`) để thiết lập bảng giá phế liệu (`R-01`) và bật trạng thái `Online` (`R-02`) trước khi xuất hiện trên bản đồ tìm kiếm của người dân (`U-05`).
 
 ---
 
@@ -134,12 +136,12 @@ Các API truy vấn danh sách có phân trang trả về đối tượng `Paged
 
 | HTTP Status | Loại Exception trong Backend | Mã `messageCode` mặc định | Ý nghĩa & Trường hợp xảy ra |
 |:---:|:---|:---|:---|
-| **`200 OK`** | — | `MSG-GEN-01` / `MSG-[MOD]-XX` | Truy vấn (`GET`), cập nhật (`PUT`) hoặc thực thi tác vụ (`POST` login, scan AI) thành công. |
-| **`201 Created`** | — | `MSG-AUTH-08` / `MSG-MTH-03` | Khởi tạo tài nguyên mới thành công (`POST` đăng ký tài khoản, nộp hồ sơ nâng cấp Recycler). |
+| **`200 OK`** | — | `MSG-GEN-01` / `MSG-[MOD]-XX` | Truy vấn (`GET`), cập nhật (`PUT`/`PATCH`) hoặc thực thi tác vụ (`POST` login, scan AI) thành công. |
+| **`201 Created`** | — | `MSG-AUTH-08` / `MSG-MTH-03` | Khởi tạo tài nguyên mới thành công (`POST` đăng ký tài khoản, nộp hồ sơ nâng cấp Recycler, thêm dòng giá phế liệu). |
 | **`400 Bad Request`** | `BusinessRuleException`<br>`ValidationException` | `MSG-[MOD]-XX`<br>`MSG-GEN-01` | Dữ liệu đầu vào sai định dạng (FluentValidation) hoặc vi phạm quy tắc nghiệp vụ (`BR-*`). |
 | **`401 Unauthorized`** | `UnauthorizedAccessException` | `MSG-UNAUTHORIZED`<br>`MSG-NTF-01` | Thiếu JWT Bearer Token, Token hết hạn, sai chữ ký, hoặc Refresh Token không hợp lệ. |
-| **`403 Forbidden`** | ASP.NET Authorization | — | Đã đăng nhập nhưng vai trò (`Role`) không có quyền truy cập endpoint (VD: `Citizen` gọi API của `Staff`). |
-| **`404 Not Found`** | `NotFoundException` | `MSG-NOT-FOUND` | Không tìm thấy bản ghi theo ID yêu cầu (VD: chưa nộp hồ sơ Recycler, không tìm thấy người dùng). |
+| **`403 Forbidden`** | ASP.NET Authorization | — | Đã đăng nhập nhưng vai trò (`Role`) không có quyền truy cập endpoint (VD: `Citizen` gọi API của `Recycler` hoặc `Staff`). |
+| **`404 Not Found`** | `NotFoundException` | `MSG-NOT-FOUND` | Không tìm thấy bản ghi theo ID yêu cầu (VD: chưa nộp hồ sơ Recycler, không tìm thấy dòng giá). |
 | **`500 Internal Server Error`** | `Exception` (Unhandled) | `MSG-SYS-500` | Lỗi hệ thống hoặc kết nối dịch vụ ngoài. Hệ thống ẩn chi tiết kỹ thuật và trả về thông báo an toàn. |
 
 ---
@@ -153,4 +155,6 @@ Các API truy vấn danh sách có phân trang trả về đối tượng `Paged
 | **`MSG-UNAUTHORIZED`** | Hệ thống chung | Toast | Không xác định được định danh người dùng từ Token hoặc phiên không hợp lệ. |
 | **`MSG-SYS-500`** | Hệ thống chung | Toast | Đã xảy ra sự cố trong quá trình xử lý hệ thống. Vui lòng thử lại sau. |
 | **`MSG-NTF-01`** | Thông báo / Phiên | Toast | Phiên làm việc của bạn đã hết hạn. Vui lòng đăng nhập lại. |
-
+| **`MSG-MTH-03`** | Hồ sơ & Bản đồ (`MTH`) | Inline / Banner | Hồ sơ cơ sở của bạn đang được xem xét và sẽ xuất hiện trong tìm kiếm sau khi được duyệt. |
+| **`MSG-MTH-05`** | Hồ sơ & Bản đồ (`MTH`) | Inline / Banner | Hồ sơ cơ sở của bạn chưa được duyệt kèm lý do từ chối. Vui lòng cập nhật và gửi lại. |
+| **`MSG-MTH-06`** | Hồ sơ & Bản đồ (`MTH`) | Toast / Inline | Vui lòng thêm ít nhất một loại phế liệu nhận mua và một vị trí hợp lệ trước khi hoạt động. |

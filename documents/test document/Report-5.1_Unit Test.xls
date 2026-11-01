@@ -1239,5 +1239,383 @@
    </Row>
   </Table>
  </Worksheet>
-</Workbook>
 
+ <!-- ==================== SHEET 4: RECYCLER PROFILE, PRICING & AVAILABILITY ==================== -->
+ <Worksheet ss:Name="4_Recycler_Pricing_Avail">
+  <Table>
+   <Column ss:Width="85"/>
+   <Column ss:Width="160"/>
+   <Column ss:Width="200"/>
+   <Column ss:Width="280"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="130"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="160"/>
+
+   <Row ss:Index="2">
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Code Module</Data></Cell>
+    <Cell ss:MergeAcross="2" ss:StyleID="SummaryValueLeft"><Data ss:Type="String">RecyclerManagementService (R-01 &amp; R-02: Profile, Pricing &amp; Availability)</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Number of TCs</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="SummaryValue"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Round</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Failed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Pending</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Type</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Boundary</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Count</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">10</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">7</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">3</Data></Cell>
+   </Row>
+
+   <Row ss:Index="11" ss:Height="28">
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test Case ID</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Pre-conditions</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Input parameters</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Expected Results</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Type</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test date</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Tester</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Defect IDs</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Note</Data></Cell>
+   </Row>
+
+   <!-- Method 1: GetWasteCategoriesAsync, GetProfileAsync & UpdateProfileAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">GetWasteCategoriesAsync, GetProfileAsync &amp; UpdateProfileAsync (RecyclerManagementService)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC001</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Báº£ng waste_categories chÆ°a cÃ³ dá»¯ liá»‡u hoáº·c thiáº¿u danh má»¥c</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">(KhÃ´ng cÃ³ tham sá»‘ Ä‘áº§u vÃ o)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IReadOnlyList&lt;WasteCategoryDto&gt; (Count = 5: cardboard, paper, metal, plastic, glass)&#10;Exception: N/A&#10;Log Message: "ÄÃ£ khá»Ÿi táº¡o {Count} danh má»¥c pháº¿ liá»‡u chuáº©n."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tá»± khá»Ÿi táº¡o 5 danh má»¥c chuáº©n &amp; loáº¡i trá»« "trash"</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC002</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">TÃ i khoáº£n "collector" (22222222-...) Ä‘ang Active, VerificationStatus = Verified</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; FacilityName="Vá»±a pháº¿ liá»‡u EcoGreen Thá»§ Äá»©c"; Latitude=10.8462; Longitude=106.7895</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerProfileDto { FacilityName = "Vá»±a pháº¿ liá»‡u EcoGreen Thá»§ Äá»©c", VerificationStatus = "Verified", ActivePriceCount = 4 }&#10;Exception: N/A&#10;Log Message: "Recycler 22222222-... Ä‘Ã£ cáº­p nháº­t há»“ sÆ¡ cÆ¡ sá»Ÿ."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cáº­p nháº­t há»“ sÆ¡ &amp; Ä‘á»“ng bá»™ tá»a Ä‘á»™ PostGIS SRID 4326</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC003</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ RecyclerProfile Ä‘ang á»Ÿ tráº¡ng thÃ¡i Rejected</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="11111111-..."; FacilityName="Vá»±a TÃ¡i Cháº¿ BÃ¬nh Tháº¡nh"; Latitude=10.8012; Longitude=106.7115</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerProfileDto { VerificationStatus = "Pending", RejectionReason = null, ActiveStatus = "Offline" }&#10;Exception: N/A&#10;Log Message: "Recycler 11111111-... Ä‘Ã£ cáº­p nháº­t há»“ sÆ¡ cÆ¡ sá»Ÿ."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chuyá»ƒn Rejected -&gt; Pending Ä‘á»ƒ duyá»‡t láº¡i (BR-MTH-02)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC004</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ RecyclerProfile tá»“n táº¡i vÃ  Ä‘ang Active</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; FacilityName="Vá»±a EcoGreen"; Latitude=0; Longitude=0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-MTH-06")&#10;Log Message: "Vá»‹ trÃ­ cÆ¡ sá»Ÿ khÃ´ng há»£p lá»‡. Vui lÃ²ng chá»n vá»‹ trÃ­ trÃªn báº£n Ä‘á»“ hoáº·c nháº­p tá»a Ä‘á»™ chÃ­nh xÃ¡c."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cháº·n tá»a Ä‘á»™ gá»‘c khÃ´ng há»£p lá»‡ (0, 0) (BR-MTH-03)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC005</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">TÃ i khoáº£n cá»§a recyclerId Ä‘ang bá»‹ Ä‘Ã¬nh chá»‰ (User.Status = Suspended)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=suspendedRecyclerId; request=UpdateRecyclerProfileRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-05", "MSG-AUTH-04")&#10;Log Message: "TÃ i khoáº£n Ä‘Ã£ bá»‹ Ä‘Ã¬nh chá»‰ hoáº·c vÃ´ hiá»‡u hÃ³a. Vui lÃ²ng liÃªn há»‡ bá»™ pháº­n há»— trá»£."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cháº·n tÃ i khoáº£n bá»‹ khÃ³a chá»‰nh sá»­a há»“ sÆ¡ (BR-AUTH-05)</Data></Cell>
+   </Row>
+
+   <!-- Method 2: GetPricesAsync & AddPriceAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">GetPricesAsync &amp; AddPriceAsync (RecyclerManagementService - R-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC006</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">CÆ¡ sá»Ÿ cÃ³ 4 dÃ²ng giÃ¡ Active (dÃ²ng "paper" cÃ³ UpdatedAt = UtcNow - 35 days)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; keyword="paper"; isActive=true</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IReadOnlyList&lt;RecyclerPriceDto&gt; (Count = 1, WasteCategoryCode = "paper", IsActive = true, IsOutdated = true)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lá»c báº£ng giÃ¡ &amp; Ä‘Ã¡nh dáº¥u IsOutdated &gt; 30 ngÃ y (JOB-04)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC007</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘Ã£ Verified; danh má»¥c "glass" chÆ°a cÃ³ trong báº£ng giÃ¡ cá»§a cÆ¡ sá»Ÿ</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; WasteCategoryId=glassCategoryId; PricePerKg=2500; MinQuantityKg=5.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerPriceDto { WasteCategoryCode = "glass", PricePerKg = 2500, MinQuantityKg = 5.0, IsActive = true }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">ThÃªm má»›i loáº¡i pháº¿ liá»‡u nháº­n thu mua (R-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC008</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘Ã£ Verified; nháº­p giÃ¡ láº» tháº­p phÃ¢n hoáº·c &lt;= 0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; WasteCategoryId=glassCategoryId; PricePerKg=2500.5; MinQuantityKg=1.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-GEN-01")&#10;Log Message: "GiÃ¡ thu mua pháº£i lÃ  sá»‘ nguyÃªn dÆ°Æ¡ng (VND/kg)."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiá»ƒm tra biÃªn giÃ¡ nguyÃªn dÆ°Æ¡ng VND/kg</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC009</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘Ã£ Verified; chá»n danh má»¥c rÃ¡c khÃ´ng tÃ¡i cháº¿ (Code = "trash")</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; WasteCategoryId=trashCategoryId; PricePerKg=1000; MinQuantityKg=1.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-GEN-01")&#10;Log Message: "RÃ¡c tháº£i thÃ´ng thÆ°á»ng khÃ´ng thá»ƒ Ä‘Æ°a vÃ o danh sÃ¡ch pháº¿ liá»‡u nháº­n mua."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cháº·n Ä‘Æ°a rÃ¡c khÃ´ng tÃ¡i cháº¿ vÃ o báº£ng giÃ¡</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC010</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Danh má»¥c "plastic" Ä‘Ã£ tá»“n táº¡i trong recycler_price_list cá»§a cÆ¡ sá»Ÿ</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; WasteCategoryId=plasticCategoryId; PricePerKg=7500; MinQuantityKg=1.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-GEN-01")&#10;Log Message: "Loáº¡i pháº¿ liá»‡u nÃ y Ä‘Ã£ cÃ³ trong báº£ng giÃ¡. Vui lÃ²ng chá»‰nh sá»­a dÃ²ng hiá»‡n cÃ³."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Äáº£m báº£o tÃ­nh duy nháº¥t (recycler_id, category_id)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC011</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ RecyclerProfile Ä‘ang á»Ÿ tráº¡ng thÃ¡i Pending</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="11111111-..."; WasteCategoryId=plasticCategoryId; PricePerKg=7000; MinQuantityKg=1.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-01", "MSG-MTH-03")&#10;Log Message: "Há»“ sÆ¡ cÆ¡ sá»Ÿ Ä‘ang chá» Staff phÃª duyá»‡t. Báº¡n chá»‰ cÃ³ thá»ƒ thao tÃ¡c sau khi Ä‘Æ°á»£c duyá»‡t."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thá»±c thi BR-MTH-01: pháº£i Ä‘Æ°á»£c duyá»‡t má»›i cáº¥u hÃ¬nh giÃ¡</Data></Cell>
+   </Row>
+
+   <!-- Method 3: UpdatePriceAsync & BulkSavePricesAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">UpdatePriceAsync &amp; BulkSavePricesAsync (RecyclerManagementService - R-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC012</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">CÆ¡ sá»Ÿ Ä‘Ã£ Verified; dÃ²ng giÃ¡ priceId tá»“n táº¡i vÃ  cÃ²n dÃ²ng Active khÃ¡c</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; priceId=plasticPriceId; PricePerKg=7500; MinQuantityKg=1.5; IsActive=false</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerPriceDto { Id = plasticPriceId, PricePerKg = 7500, MinQuantityKg = 1.5, IsActive = false }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyá»…n Äá»©c</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Táº¡m ngÆ°ng thu mua thay vÃ¬ xÃ³a cá»©ng (BR-MTH-07)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC013</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">CÆ¡ sá»Ÿ Ä‘ang Online vÃ  chá»‰ cÃ²n duy nháº¥t 1 dÃ²ng giÃ¡ Active</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; priceId=lastActivePriceId; IsActive=false</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-MTH-06")&#10;Log Message: "Vui lÃ²ng thÃªm Ã­t nháº¥t má»™t loáº¡i pháº¿ liá»‡u nháº­n mua vÃ  má»™t vá»‹ trÃ­ há»£p lá»‡ trÆ°á»›c khi hoáº¡t Ä‘á»™ng."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyá»…n Äá»©c</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cháº·n táº¯t dÃ²ng Active cuá»‘i cÃ¹ng khi Ä‘ang Online (EF-03)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC014</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">CÆ¡ sá»Ÿ Ä‘Ã£ Verified, Ä‘ang cÃ³ dÃ²ng "plastic" vÃ  chÆ°a cÃ³ dÃ²ng "glass"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; Items=[{ plasticId, 7200 }, { glassId, 2500 }]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IReadOnlyList&lt;RecyclerPriceDto&gt; (Cáº­p nháº­t plastic = 7200, thÃªm má»›i glass = 2500, IsOutdated = false)&#10;Exception: N/A&#10;Log Message: "Recycler 22222222-... Ä‘Ã£ lÆ°u báº£ng giÃ¡ (2 dÃ²ng)."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyá»…n Äá»©c</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">LÆ°u hÃ ng loáº¡t báº£ng giÃ¡ &amp; lÃ m má»›i UpdatedAt (JOB-04)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC015</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Danh sÃ¡ch Items gá»­i lÃªn cÃ³ 2 pháº§n tá»­ trÃ¹ng WasteCategoryId</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; Items=[{ plasticId, 7000 }, { plasticId, 7500 }]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-GEN-01")&#10;Log Message: "Danh sÃ¡ch cÃ³ loáº¡i pháº¿ liá»‡u bá»‹ trÃ¹ng láº·p."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyá»…n Äá»©c</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cháº·n danh sÃ¡ch lÆ°u hÃ ng loáº¡t bá»‹ trÃ¹ng láº·p</Data></Cell>
+   </Row>
+
+   <!-- Method 4: GetAvailabilityAsync, UpdateAvailabilityAsync & UpdateScheduleAsync -->
+   <Row>
+    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">GetAvailabilityAsync, UpdateAvailabilityAsync &amp; UpdateScheduleAsync (RecyclerManagementService - R-02)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC016</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘Ã£ Verified, Ä‘ang Offline, cÃ³ tá»a Ä‘á»™ GPS há»£p lá»‡ vÃ  activePriceCount = 4</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; IsOnline=true; BusyReason=null</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AvailabilityDto { IsOnline = true, ActiveStatus = "Online", BusyReason = null, ActivePriceCount = 4 }&#10;Exception: N/A&#10;Log Message: "Recycler 22222222-... chuyá»ƒn tráº¡ng thÃ¡i hoáº¡t Ä‘á»™ng: Online"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Báº­t tráº¡ng thÃ¡i Online hiá»ƒn thá»‹ trÃªn báº£n Ä‘á»“ (R-02)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC017</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘ang Online</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; IsOnline=false; BusyReason="Kho bÃ£i Ä‘ang báº£o trÃ¬ cÃ¢n Ä‘iá»‡n tá»­ Ä‘áº¿n 15:00"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AvailabilityDto { IsOnline = false, ActiveStatus = "Offline", BusyReason = "Kho bÃ£i Ä‘ang báº£o trÃ¬ cÃ¢n Ä‘iá»‡n tá»­ Ä‘áº¿n 15:00" }&#10;Exception: N/A&#10;Log Message: "Recycler 22222222-... chuyá»ƒn tráº¡ng thÃ¡i hoáº¡t Ä‘á»™ng: Offline"</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chuyá»ƒn sang Offline chá»‰ áº©n khá»i báº£n Ä‘á»“ má»›i (BR-MTH-06)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC018</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘Ã£ Verified nhÆ°ng chÆ°a cÃ³ loáº¡i pháº¿ liá»‡u nÃ o Ä‘ang nháº­n mua (activePriceCount == 0)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; IsOnline=true</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-MTH-06")&#10;Log Message: "Vui lÃ²ng thÃªm Ã­t nháº¥t má»™t loáº¡i pháº¿ liá»‡u nháº­n mua vÃ  má»™t vá»‹ trÃ­ há»£p lá»‡ trÆ°á»›c khi hoáº¡t Ä‘á»™ng."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cháº·n báº­t Online khi chÆ°a cÃ³ báº£ng giÃ¡ (BR-MTH-03)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC019</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ cá»§a recyclerId Ä‘Ã£ Verified</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; Days=[T2..T6: 08:00-17:30, T7: 08:00-12:00, CN: IsClosed=true]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AvailabilityDto { OperatingHours = "T2-T6: 08:00 - 17:30; T7: 08:00 - 12:00", WeeklySchedule.Count = 7 }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyá»…n Äá»©c</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">LÆ°u lá»‹ch tuáº§n JSON &amp; gá»™p chuá»—i OperatingHours</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC020</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘Ã£ Verified; truyá»n giá» Ä‘Ã³ng cá»­a báº±ng hoáº·c sá»›m hÆ¡n giá» má»Ÿ cá»­a</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; Days=[{ DayOfWeek = 1, IsClosed = false, OpenTime = "17:00", CloseTime = "17:00" }]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-GEN-01")&#10;Log Message: "Giá» Ä‘Ã³ng cá»­a cá»§a T2 pháº£i sau giá» má»Ÿ cá»­a."</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyá»…n Äá»©c</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiá»ƒm tra biÃªn thá»i gian closeTime &gt; openTime</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+</Workbook>
