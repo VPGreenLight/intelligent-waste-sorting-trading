@@ -1,0 +1,132 @@
+classDiagram
+    direction TB
+
+    %% Presentation Layer (Ecolink.WebApi)
+    class RecyclersDiscoveryController {
+        - IGeoMatchingService _geoMatchingService
+        - IValidator~NearbyRecyclerFilterRequest~ _nearbyValidator
+        + SearchNearby(NearbyRecyclerFilterRequest, ct) Task~ActionResult~
+        + GetRecyclerDetail(recyclerId, lat, lng, ct) Task~ActionResult~
+    }
+    class TradeController {
+        - IGeoMatchingService _geoMatchingService
+        - ITradeTransactionService _tradeService
+        + GetNearbyPartners(lat, lng, category, radiusKm, ct) Task~IActionResult~
+    }
+
+    %% Application Layer (Inbound & Outbound Ports + Validators)
+    class IGeoMatchingService {
+        <<interface>>
+        + FindNearestPartnersAsync(lat, lng, categoryCode, radiusKm, ct) Task~IEnumerable_CollectionPartnerDto~
+        + SearchNearbyRecyclersAsync(NearbyRecyclerFilterRequest, ct) Task~NearbyRecyclerSearchResponseDto~
+        + GetRecyclerPublicDetailAsync(recyclerId, userLat, userLng, ct) Task~CollectionPartnerDto~
+    }
+    class IWasteRuleEngineService {
+        <<interface>>
+        + GetSortingGuideAsync(categoryCode, ct) Task~WasteSortingGuideDto~
+        + GetAllRulesAsync(ct) Task~IEnumerable_WasteSortingGuideDto~
+    }
+    class NearbyRecyclerFilterValidator {
+        + ValidateAsync(NearbyRecyclerFilterRequest, ct) Task~ValidationResult~
+    }
+    class NearbyRecyclerSearchResponseDto {
+        + int TotalFound
+        + double SearchRadiusKm
+        + string? FilteredCategory
+        + IReadOnlyList~CollectionPartnerDto~ Items
+        + DiscoveryFallbackSuggestionDto? FallbackSuggestion
+    }
+    class DiscoveryFallbackSuggestionDto {
+        + double SuggestedExpandedRadiusKm
+        + string GuidanceMessage
+        + WasteSortingGuideDto? PublicBinSortingGuide
+        + bool AllowCommunityPickupPost
+    }
+    class CollectionPartnerDto {
+        + Guid Id
+        + string FacilityName
+        + string? RepresentativeName
+        + string Address
+        + double Latitude
+        + double Longitude
+        + double DistanceKm
+        + string ContactPhone
+        + string OperatingHours
+        + List~AcceptedMaterialDto~ Materials
+    }
+
+    %% Infrastructure Layer (Adapters & Implementations)
+    class GeoMatchingService {
+        - ILogger~GeoMatchingService~ _logger
+        - ApplicationDbContext? _db
+        - IWasteRuleEngineService? _ruleEngine
+        + FindNearestPartnersAsync(lat, lng, categoryCode, radiusKm, ct) Task~IEnumerable_CollectionPartnerDto~
+        + SearchNearbyRecyclersAsync(NearbyRecyclerFilterRequest, ct) Task~NearbyRecyclerSearchResponseDto~
+        + GetRecyclerPublicDetailAsync(recyclerId, userLat, userLng, ct) Task~CollectionPartnerDto~
+        - CalculateDistanceKm(lat1, lon1, lat2, lon2) double
+        - MapProfileToPartnerDto(RecyclerProfile, distanceKm) CollectionPartnerDto
+    }
+    class WasteRuleEngineService {
+        - ApplicationDbContext? _db
+        + GetSortingGuideAsync(categoryCode, ct) Task~WasteSortingGuideDto~
+    }
+    class ApplicationDbContext {
+        + DbSet~User~ Users
+        + DbSet~RecyclerProfile~ RecyclerProfiles
+        + DbSet~RecyclerPrice~ RecyclerPrices
+        + DbSet~WasteCategory~ WasteCategories
+    }
+
+    %% Domain Layer (Core Entities)
+    class User {
+        + Guid Id
+        + string Username
+        + UserRole Role = Recycler
+        + UserStatus Status = Active
+    }
+    class RecyclerProfile {
+        + Guid UserId
+        + string FacilityName
+        + string BusinessAddress
+        + decimal Latitude
+        + decimal Longitude
+        + Point Location
+        + string OperatingHours
+        + string ContactPhone
+        + VerificationStatus VerificationStatus = Verified
+        + RecyclerActiveStatus ActiveStatus = Online
+    }
+    class RecyclerPrice {
+        + Guid Id
+        + Guid RecyclerId
+        + Guid WasteCategoryId
+        + decimal PricePerKg
+        + decimal MinQuantityKg
+        + string? CollectionConditions
+        + PriceStatus Status = Active
+        + DateTime UpdatedAt
+    }
+    class WasteCategory {
+        + Guid Id
+        + string Code
+        + string Name
+        + string StandardBinColor
+        + bool IsRecyclable
+    }
+
+    %% Clean Architecture Connectors
+    RecyclersDiscoveryController --> IGeoMatchingService
+    RecyclersDiscoveryController --> NearbyRecyclerFilterValidator
+    TradeController --> IGeoMatchingService
+    GeoMatchingService ..|> IGeoMatchingService
+    WasteRuleEngineService ..|> IWasteRuleEngineService
+    GeoMatchingService --> IWasteRuleEngineService
+    GeoMatchingService --> ApplicationDbContext
+    NearbyRecyclerSearchResponseDto *-- CollectionPartnerDto
+    NearbyRecyclerSearchResponseDto *-- DiscoveryFallbackSuggestionDto
+
+    %% Domain Relationships
+    User "1" *-- "1" RecyclerProfile : owns 1-1 profile (PK user_id)
+    RecyclerProfile "1" *-- "1..*" RecyclerPrice : lists active prices (BR-MTH-03)
+    WasteCategory "1" -- "0..*" RecyclerPrice : classifies recyclable material
+

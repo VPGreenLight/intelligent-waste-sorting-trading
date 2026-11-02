@@ -1,0 +1,31 @@
+sequenceDiagram
+    autonumber
+    actor Citizen as Citizen (User)
+    participant Ctrl as RecyclersDiscoveryController
+    participant Svc as GeoMatchingService
+    participant DB as ApplicationDbContext (PostgreSQL)
+    participant MW as GlobalExceptionMiddleware
+
+    Note over Citizen,MW: UC U-05 (Phan 2): XEM HO SO CONG KHAI, GIO MO CUA & BANG GIA NIEM YET CUA CO SO TREN BAN DO
+
+    Citizen->>Ctrl: GET /api/v1/recyclers/{recyclerId}?lat=10.7769&lng=106.7009
+    Ctrl->>Svc: GetRecyclerPublicDetailAsync(recyclerId, lat, lng, ct)
+
+    Svc->>DB: SELECT RecyclerProfile + User + Prices(Status = Active) + WasteCategory<br/>WHERE UserId = recyclerId AND VerificationStatus = Verified AND User.Status = Active
+
+    alt Co so khong ton tai, chua duoc Staff duyet (Pending/Rejected) hoac tai khoan bi khoa (BR-MTH-01, BR-MTH-06)
+        DB-->>Svc: null
+        Svc-->>MW: throw NotFoundException ("Khong tim thay co so thu mua hoac co so chua duoc phe duyet.")
+        MW-->>Citizen: 404 Not Found (ApiResponse.Fail: MSG-NOT-FOUND)
+    else Co so hop le va da duoc phe duyet (Verified)
+        DB-->>Svc: RecyclerProfile + Active Prices (PriceStatus.Active)
+        alt Co truyen toa do nguoi dung (lat != 0 || lng != 0)
+            Svc->>Svc: Tinh DistanceKm = Round(CalculateDistanceKm(userLat, userLng, profile.Lat, profile.Lng), 2) (BR-MTH-05)
+        else Khong truyen toa do
+            Svc->>Svc: DistanceKm = 0.0
+        end
+        Svc->>Svc: MapProfileToPartnerDto (FacilityName, Address, OperatingHours, ContactPhone, Active Materials)
+        Svc-->>Ctrl: CollectionPartnerDto
+        Ctrl-->>Citizen: 200 OK (ApiResponse.Ok: MSG-GEN-01 - Lay thong tin co so thu mua thanh cong)
+    end
+

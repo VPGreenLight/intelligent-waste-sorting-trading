@@ -1316,91 +1316,109 @@
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Defect IDs</Data></Cell>
     <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Note</Data></Cell>
    </Row>
-
-   <!-- Method 1: GetWasteCategoriesAsync, GetProfileAsync & UpdateProfileAsync -->
-   <Row>
-    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">GetWasteCategoriesAsync, GetProfileAsync &amp; UpdateProfileAsync (RecyclerManagementService)</Data></Cell>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">GetWasteCategoriesAsync, GetProfileAsync &amp; UpdateProfileAsync (RecyclerManagementService)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC001</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Báº£ng waste_categories chÆ°a cÃ³ dá»¯ liá»‡u hoáº·c thiáº¿u danh má»¥c</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">(KhÃ´ng cÃ³ tham sá»‘ Ä‘áº§u vÃ o)</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IReadOnlyList&lt;WasteCategoryDto&gt; (Count = 5: cardboard, paper, metal, plastic, glass)&#10;Exception: N/A&#10;Log Message: "ÄÃ£ khá»Ÿi táº¡o {Count} danh má»¥c pháº¿ liá»‡u chuáº©n."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bảng waste_categories trong DB chưa có dữ liệu hoặc chỉ có một phần danh mục</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">*(Không có tham số đầu vào)*</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IReadOnlyList&lt;WasteCategoryDto&gt; (Count = 5: cardboard, paper, metal, plastic, glass)&#10;Exception: N/A&#10;Log Message: &quot;Đã khởi tạo {Count} danh mục phế liệu chuẩn.&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tá»± khá»Ÿi táº¡o 5 danh má»¥c chuáº©n &amp; loáº¡i trá»« "trash"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tự động khởi tạo 5 danh mục tái chế chuẩn và loại trừ &quot;trash&quot;</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC002</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">TÃ i khoáº£n "collector" (22222222-...) Ä‘ang Active, VerificationStatus = Verified</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; FacilityName="Vá»±a pháº¿ liá»‡u EcoGreen Thá»§ Äá»©c"; Latitude=10.8462; Longitude=106.7895</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerProfileDto { FacilityName = "Vá»±a pháº¿ liá»‡u EcoGreen Thá»§ Äá»©c", VerificationStatus = "Verified", ActivePriceCount = 4 }&#10;Exception: N/A&#10;Log Message: "Recycler 22222222-... Ä‘Ã£ cáº­p nháº­t há»“ sÆ¡ cÆ¡ sá»Ÿ."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tài khoản &quot;collector&quot; (22222222-...) đang Active, VerificationStatus = Verified, có 4 dòng giá Active</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-2222-2222-2222-222222222222&quot;;&#10;FacilityName=&quot;Vựa phế liệu EcoGreen Thủ Đức&quot;;&#10;BusinessAddress=&quot;125 Lê Văn Việt, TP. Thủ Đức&quot;;&#10;Latitude=10.8462;&#10;Longitude=106.7895;&#10;ContactPhone=&quot;0902222222&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerProfileDto { RecyclerId = &quot;22222222-...&quot;, FacilityName = &quot;Vựa phế liệu EcoGreen Thủ Đức&quot;, Latitude = 10.8462, Longitude = 106.7895, VerificationStatus = &quot;Verified&quot;, ActivePriceCount = 4 }&#10;Exception: N/A&#10;Log Message: &quot;Recycler 22222222-2222-2222-2222-222222222222 đã cập nhật hồ sơ cơ sở.&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cáº­p nháº­t há»“ sÆ¡ &amp; Ä‘á»“ng bá»™ tá»a Ä‘á»™ PostGIS SRID 4326</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cập nhật hồ sơ &amp; đồng bộ tọa độ PostGIS Point(106.7895, 10.8462) SRID 4326</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC003</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ RecyclerProfile Ä‘ang á»Ÿ tráº¡ng thÃ¡i Rejected</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="11111111-..."; FacilityName="Vá»±a TÃ¡i Cháº¿ BÃ¬nh Tháº¡nh"; Latitude=10.8012; Longitude=106.7115</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerProfileDto { VerificationStatus = "Pending", RejectionReason = null, ActiveStatus = "Offline" }&#10;Exception: N/A&#10;Log Message: "Recycler 11111111-... Ä‘Ã£ cáº­p nháº­t há»“ sÆ¡ cÆ¡ sá»Ÿ."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ RecyclerProfile đang ở trạng thái Rejected (RejectionReason = &quot;Ảnh kho bãi chưa rõ&quot;)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;11111111-1111-1111-1111-111111111111&quot;;&#10;FacilityName=&quot;Vựa Tái Chế Bình Thạnh&quot;;&#10;Latitude=10.8012;&#10;Longitude=106.7115;&#10;BusinessPhotoUrl=&quot;https://.../new_photo.jpg&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerProfileDto { VerificationStatus = &quot;Pending&quot;, RejectionReason = null, ActiveStatus = &quot;Offline&quot; }&#10;Exception: N/A&#10;Log Message: &quot;Recycler 11111111-1111-1111-1111-111111111111 đã cập nhật hồ sơ cơ sở.&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chuyá»ƒn Rejected -&gt; Pending Ä‘á»ƒ duyá»‡t láº¡i (BR-MTH-02)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chuyển trạng thái Rejected -&gt; Pending để chờ Staff duyệt lại (BR-MTH-02)</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC004</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ RecyclerProfile tá»“n táº¡i vÃ  Ä‘ang Active</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; FacilityName="Vá»±a EcoGreen"; Latitude=0; Longitude=0</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-MTH-06")&#10;Log Message: "Vá»‹ trÃ­ cÆ¡ sá»Ÿ khÃ´ng há»£p lá»‡. Vui lÃ²ng chá»n vá»‹ trÃ­ trÃªn báº£n Ä‘á»“ hoáº·c nháº­p tá»a Ä‘á»™ chÃ­nh xÃ¡c."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ RecyclerProfile tồn tại và tài khoản đang Active</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-2222-2222-2222-222222222222&quot;;&#10;FacilityName=&quot;Vựa EcoGreen&quot;;&#10;Latitude=0;&#10;Longitude=0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-MTH-03&quot;, &quot;MSG-MTH-06&quot;)&#10;Log Message: &quot;Vị trí cơ sở không hợp lệ. Vui lòng chọn vị trí trên bản đồ hoặc nhập tọa độ chính xác.&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cháº·n tá»a Ä‘á»™ gá»‘c khÃ´ng há»£p lá»‡ (0, 0) (BR-MTH-03)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn tọa độ gốc không hợp lệ (0, 0) (BR-MTH-03)</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC005</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">TÃ i khoáº£n cá»§a recyclerId Ä‘ang bá»‹ Ä‘Ã¬nh chá»‰ (User.Status = Suspended)</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=suspendedRecyclerId; request=UpdateRecyclerProfileRequest</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-AUTH-05", "MSG-AUTH-04")&#10;Log Message: "TÃ i khoáº£n Ä‘Ã£ bá»‹ Ä‘Ã¬nh chá»‰ hoáº·c vÃ´ hiá»‡u hÃ³a. Vui lÃ²ng liÃªn há»‡ bá»™ pháº­n há»— trá»£."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tài khoản của recyclerId đang bị đình chỉ (User.Status = Suspended)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=suspendedRecyclerId;&#10;request=UpdateRecyclerProfileRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-AUTH-05&quot;, &quot;MSG-AUTH-04&quot;)&#10;Log Message: &quot;Tài khoản đã bị đình chỉ hoặc vô hiệu hóa. Vui lòng liên hệ bộ phận hỗ trợ.&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cháº·n tÃ i khoáº£n bá»‹ khÃ³a chá»‰nh sá»­a há»“ sÆ¡ (BR-AUTH-05)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn tài khoản bị khóa chỉnh sửa hồ sơ (BR-AUTH-05)</Data></Cell>
    </Row>
-
-   <!-- Method 2: GetPricesAsync & AddPriceAsync -->
-   <Row>
-    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">GetPricesAsync &amp; AddPriceAsync (RecyclerManagementService - R-01)</Data></Cell>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">GetPricesAsync &amp; AddPriceAsync (RecyclerManagementService - R-01)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC006</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">CÆ¡ sá»Ÿ cÃ³ 4 dÃ²ng giÃ¡ Active (dÃ²ng "paper" cÃ³ UpdatedAt = UtcNow - 35 days)</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; keyword="paper"; isActive=true</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IReadOnlyList&lt;RecyclerPriceDto&gt; (Count = 1, WasteCategoryCode = "paper", IsActive = true, IsOutdated = true)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở có 4 dòng giá Active (trong đó dòng &quot;paper&quot; có UpdatedAt = UtcNow - 35 days) và 1 dòng Inactive</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;keyword=&quot;paper&quot;;&#10;isActive=true</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IReadOnlyList&lt;RecyclerPriceDto&gt; (Count = 1, WasteCategoryCode = &quot;paper&quot;, IsActive = true, IsOutdated = true)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
@@ -1408,13 +1426,13 @@
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lá»c báº£ng giÃ¡ &amp; Ä‘Ã¡nh dáº¥u IsOutdated &gt; 30 ngÃ y (JOB-04)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tìm kiếm bảng giá theo từ khóa và đánh dấu IsOutdated = true khi quá 30 ngày (JOB-04)</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC007</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘Ã£ Verified; danh má»¥c "glass" chÆ°a cÃ³ trong báº£ng giÃ¡ cá»§a cÆ¡ sá»Ÿ</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; WasteCategoryId=glassCategoryId; PricePerKg=2500; MinQuantityKg=5.0</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerPriceDto { WasteCategoryCode = "glass", PricePerKg = 2500, MinQuantityKg = 5.0, IsActive = true }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ của recyclerId đã Verified; danh mục &quot;glass&quot; chưa có trong bảng giá của cơ sở</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;WasteCategoryId=glassCategoryId;&#10;PricePerKg=2500;&#10;MinQuantityKg=5.0;&#10;CollectionConditions=&quot;Chai thủy tinh nguyên vẹn, đã súc sạch&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerPriceDto { WasteCategoryCode = &quot;glass&quot;, PricePerKg = 2500, MinQuantityKg = 5.0, IsActive = true, IsOutdated = false }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
@@ -1422,13 +1440,13 @@
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">ThÃªm má»›i loáº¡i pháº¿ liá»‡u nháº­n thu mua (R-01)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thêm mới loại phế liệu nhận thu mua (R-01, BR-MTH-03)</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC008</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘Ã£ Verified; nháº­p giÃ¡ láº» tháº­p phÃ¢n hoáº·c &lt;= 0</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; WasteCategoryId=glassCategoryId; PricePerKg=2500.5; MinQuantityKg=1.0</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-GEN-01")&#10;Log Message: "GiÃ¡ thu mua pháº£i lÃ  sá»‘ nguyÃªn dÆ°Æ¡ng (VND/kg)."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ của recyclerId đã Verified; nhập giá lẻ thập phân hoặc &lt;= 0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;WasteCategoryId=glassCategoryId;&#10;PricePerKg=2500.5 (hoặc 0);&#10;MinQuantityKg=1.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-MTH-03&quot;, &quot;MSG-GEN-01&quot;)&#10;Log Message: &quot;Giá thu mua phải là số nguyên dương (VND/kg).&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
@@ -1436,13 +1454,13 @@
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiá»ƒm tra biÃªn giÃ¡ nguyÃªn dÆ°Æ¡ng VND/kg</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra biên giá thu mua bắt buộc là số nguyên dương VND/kg</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC009</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘Ã£ Verified; chá»n danh má»¥c rÃ¡c khÃ´ng tÃ¡i cháº¿ (Code = "trash")</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; WasteCategoryId=trashCategoryId; PricePerKg=1000; MinQuantityKg=1.0</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-GEN-01")&#10;Log Message: "RÃ¡c tháº£i thÃ´ng thÆ°á»ng khÃ´ng thá»ƒ Ä‘Æ°a vÃ o danh sÃ¡ch pháº¿ liá»‡u nháº­n mua."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ của recyclerId đã Verified; chọn danh mục rác không tái chế (Code = &quot;trash&quot;)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;WasteCategoryId=trashCategoryId;&#10;PricePerKg=1000;&#10;MinQuantityKg=1.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-MTH-03&quot;, &quot;MSG-GEN-01&quot;)&#10;Log Message: &quot;Rác thải thông thường không thể đưa vào danh sách phế liệu nhận mua.&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
@@ -1450,13 +1468,13 @@
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cháº·n Ä‘Æ°a rÃ¡c khÃ´ng tÃ¡i cháº¿ vÃ o báº£ng giÃ¡</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn đưa rác sinh hoạt không tái chế vào bảng giá thu mua</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC010</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Danh má»¥c "plastic" Ä‘Ã£ tá»“n táº¡i trong recycler_price_list cá»§a cÆ¡ sá»Ÿ</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; WasteCategoryId=plasticCategoryId; PricePerKg=7500; MinQuantityKg=1.0</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-GEN-01")&#10;Log Message: "Loáº¡i pháº¿ liá»‡u nÃ y Ä‘Ã£ cÃ³ trong báº£ng giÃ¡. Vui lÃ²ng chá»‰nh sá»­a dÃ²ng hiá»‡n cÃ³."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Danh mục &quot;plastic&quot; đã tồn tại trong recycler_price_list của recyclerId</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;WasteCategoryId=plasticCategoryId;&#10;PricePerKg=7500;&#10;MinQuantityKg=1.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-MTH-03&quot;, &quot;MSG-GEN-01&quot;)&#10;Log Message: &quot;Loại phế liệu này đã có trong bảng giá. Vui lòng chỉnh sửa dòng hiện có.&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
@@ -1464,13 +1482,13 @@
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Äáº£m báº£o tÃ­nh duy nháº¥t (recycler_id, category_id)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đảm bảo tính duy nhất (recycler_id, category_id)</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC011</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ RecyclerProfile Ä‘ang á»Ÿ tráº¡ng thÃ¡i Pending</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="11111111-..."; WasteCategoryId=plasticCategoryId; PricePerKg=7000; MinQuantityKg=1.0</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-01", "MSG-MTH-03")&#10;Log Message: "Há»“ sÆ¡ cÆ¡ sá»Ÿ Ä‘ang chá» Staff phÃª duyá»‡t. Báº¡n chá»‰ cÃ³ thá»ƒ thao tÃ¡c sau khi Ä‘Æ°á»£c duyá»‡t."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ RecyclerProfile đang ở trạng thái Pending (chưa được Staff duyệt)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;11111111-...&quot;;&#10;WasteCategoryId=plasticCategoryId;&#10;PricePerKg=7000;&#10;MinQuantityKg=1.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-MTH-01&quot;, &quot;MSG-MTH-03&quot;)&#10;Log Message: &quot;Hồ sơ cơ sở đang chờ Staff phê duyệt. Bạn chỉ có thể thao tác sau khi được duyệt.&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
@@ -1478,143 +1496,576 @@
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thá»±c thi BR-MTH-01: pháº£i Ä‘Æ°á»£c duyá»‡t má»›i cáº¥u hÃ¬nh giÃ¡</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thực thi BR-MTH-01: chỉ cơ sở đã duyệt mới được cấu hình giá</Data></Cell>
    </Row>
-
-   <!-- Method 3: UpdatePriceAsync & BulkSavePricesAsync -->
-   <Row>
-    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">UpdatePriceAsync &amp; BulkSavePricesAsync (RecyclerManagementService - R-01)</Data></Cell>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">UpdatePriceAsync &amp; BulkSavePricesAsync (RecyclerManagementService - R-01)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC012</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">CÆ¡ sá»Ÿ Ä‘Ã£ Verified; dÃ²ng giÃ¡ priceId tá»“n táº¡i vÃ  cÃ²n dÃ²ng Active khÃ¡c</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; priceId=plasticPriceId; PricePerKg=7500; MinQuantityKg=1.5; IsActive=false</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở đã Verified; dòng giá priceId (&quot;plastic&quot;) tồn tại và cơ sở còn các dòng giá Active khác</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;priceId=plasticPriceId;&#10;PricePerKg=7500;&#10;MinQuantityKg=1.5;&#10;IsActive=false</Data></Cell>
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: RecyclerPriceDto { Id = plasticPriceId, PricePerKg = 7500, MinQuantityKg = 1.5, IsActive = false }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyá»…n Äá»©c</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Táº¡m ngÆ°ng thu mua thay vÃ¬ xÃ³a cá»©ng (BR-MTH-07)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cập nhật đơn giá &amp; tạm ngưng thu mua thay vì xóa cứng (BR-MTH-07)</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC013</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">CÆ¡ sá»Ÿ Ä‘ang Online vÃ  chá»‰ cÃ²n duy nháº¥t 1 dÃ²ng giÃ¡ Active</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; priceId=lastActivePriceId; IsActive=false</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-MTH-06")&#10;Log Message: "Vui lÃ²ng thÃªm Ã­t nháº¥t má»™t loáº¡i pháº¿ liá»‡u nháº­n mua vÃ  má»™t vá»‹ trÃ­ há»£p lá»‡ trÆ°á»›c khi hoáº¡t Ä‘á»™ng."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở đang Online và chỉ còn duy nhất 1 dòng giá Active (otherActive == 0)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;priceId=lastActivePriceId;&#10;IsActive=false</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-MTH-03&quot;, &quot;MSG-MTH-06&quot;)&#10;Log Message: &quot;Vui lòng thêm ít nhất một loại phế liệu nhận mua và một vị trí hợp lệ trước khi hoạt động.&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyá»…n Äá»©c</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cháº·n táº¯t dÃ²ng Active cuá»‘i cÃ¹ng khi Ä‘ang Online (EF-03)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn tắt dòng giá Active cuối cùng khi đang Online (EF-03, BR-MTH-03)</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC014</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">CÆ¡ sá»Ÿ Ä‘Ã£ Verified, Ä‘ang cÃ³ dÃ²ng "plastic" vÃ  chÆ°a cÃ³ dÃ²ng "glass"</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; Items=[{ plasticId, 7200 }, { glassId, 2500 }]</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IReadOnlyList&lt;RecyclerPriceDto&gt; (Cáº­p nháº­t plastic = 7200, thÃªm má»›i glass = 2500, IsOutdated = false)&#10;Exception: N/A&#10;Log Message: "Recycler 22222222-... Ä‘Ã£ lÆ°u báº£ng giÃ¡ (2 dÃ²ng)."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở đã Verified, đang có dòng giá &quot;plastic&quot; (UpdatedAt cũ) và chưa có dòng &quot;glass&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;Items=[{ WasteCategoryId=plasticId, IsActive=true, PricePerKg=7200 }, { WasteCategoryId=glassId, IsActive=true, PricePerKg=2500 }]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IReadOnlyList&lt;RecyclerPriceDto&gt; (Cập nhật plastic = 7200, thêm mới glass = 2500, IsOutdated = false cho cả 2 dòng)&#10;Exception: N/A&#10;Log Message: &quot;Recycler 22222222-... đã lưu bảng giá (2 dòng).&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyá»…n Äá»©c</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">LÆ°u hÃ ng loáº¡t báº£ng giÃ¡ &amp; lÃ m má»›i UpdatedAt (JOB-04)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lưu hàng loạt bảng giá (*Save price sheet*) và làm mới UpdatedAt (JOB-04)</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC015</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Danh sÃ¡ch Items gá»­i lÃªn cÃ³ 2 pháº§n tá»­ trÃ¹ng WasteCategoryId</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; Items=[{ plasticId, 7000 }, { plasticId, 7500 }]</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-GEN-01")&#10;Log Message: "Danh sÃ¡ch cÃ³ loáº¡i pháº¿ liá»‡u bá»‹ trÃ¹ng láº·p."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Danh sách Items gửi lên có 2 phần tử trùng WasteCategoryId</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;Items=[{ WasteCategoryId=plasticId, PricePerKg=7000 }, { WasteCategoryId=plasticId, PricePerKg=7500 }]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-MTH-03&quot;, &quot;MSG-GEN-01&quot;)&#10;Log Message: &quot;Danh sách có loại phế liệu bị trùng lặp.&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyá»…n Äá»©c</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cháº·n danh sÃ¡ch lÆ°u hÃ ng loáº¡t bá»‹ trÃ¹ng láº·p</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn danh sách lưu hàng loạt chứa danh mục trùng lặp</Data></Cell>
    </Row>
-
-   <!-- Method 4: GetAvailabilityAsync, UpdateAvailabilityAsync & UpdateScheduleAsync -->
-   <Row>
-    <Cell ss:MergeAcross="11" ss:StyleID="MethodRow"><Data ss:Type="String">GetAvailabilityAsync, UpdateAvailabilityAsync &amp; UpdateScheduleAsync (RecyclerManagementService - R-02)</Data></Cell>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">GetAvailabilityAsync, UpdateAvailabilityAsync &amp; UpdateScheduleAsync (RecyclerManagementService - R-02)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC016</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘Ã£ Verified, Ä‘ang Offline, cÃ³ tá»a Ä‘á»™ GPS há»£p lá»‡ vÃ  activePriceCount = 4</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; IsOnline=true; BusyReason=null</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AvailabilityDto { IsOnline = true, ActiveStatus = "Online", BusyReason = null, ActivePriceCount = 4 }&#10;Exception: N/A&#10;Log Message: "Recycler 22222222-... chuyá»ƒn tráº¡ng thÃ¡i hoáº¡t Ä‘á»™ng: Online"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ đã Verified, hiện đang Offline (BusyReason = &quot;Nghỉ trưa&quot;), có tọa độ GPS hợp lệ và activePriceCount = 4</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;IsOnline=true;&#10;BusyReason=null</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AvailabilityDto { IsOnline = true, ActiveStatus = &quot;Online&quot;, BusyReason = null, ActivePriceCount = 4 }&#10;Exception: N/A&#10;Log Message: &quot;Recycler 22222222-... chuyển trạng thái hoạt động: Online&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Báº­t tráº¡ng thÃ¡i Online hiá»ƒn thá»‹ trÃªn báº£n Ä‘á»“ (R-02)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bật trạng thái Online để hiển thị trên bản đồ tìm kiếm (R-02)</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC017</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘ang Online</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; IsOnline=false; BusyReason="Kho bÃ£i Ä‘ang báº£o trÃ¬ cÃ¢n Ä‘iá»‡n tá»­ Ä‘áº¿n 15:00"</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AvailabilityDto { IsOnline = false, ActiveStatus = "Offline", BusyReason = "Kho bÃ£i Ä‘ang báº£o trÃ¬ cÃ¢n Ä‘iá»‡n tá»­ Ä‘áº¿n 15:00" }&#10;Exception: N/A&#10;Log Message: "Recycler 22222222-... chuyá»ƒn tráº¡ng thÃ¡i hoáº¡t Ä‘á»™ng: Offline"</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ đang Online</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;IsOnline=false;&#10;BusyReason=&quot;Kho bãi đang bảo trì cân điện tử đến 15:00&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AvailabilityDto { IsOnline = false, ActiveStatus = &quot;Offline&quot;, BusyReason = &quot;Kho bãi đang bảo trì cân điện tử đến 15:00&quot; }&#10;Exception: N/A&#10;Log Message: &quot;Recycler 22222222-... chuyển trạng thái hoạt động: Offline&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chuyá»ƒn sang Offline chá»‰ áº©n khá»i báº£n Ä‘á»“ má»›i (BR-MTH-06)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chuyển sang Offline chỉ ẩn khỏi bản đồ mới, giữ nguyên đơn đang xử lý (BR-MTH-06)</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC018</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘Ã£ Verified nhÆ°ng chÆ°a cÃ³ loáº¡i pháº¿ liá»‡u nÃ o Ä‘ang nháº­n mua (activePriceCount == 0)</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; IsOnline=true</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-MTH-06")&#10;Log Message: "Vui lÃ²ng thÃªm Ã­t nháº¥t má»™t loáº¡i pháº¿ liá»‡u nháº­n mua vÃ  má»™t vá»‹ trÃ­ há»£p lá»‡ trÆ°á»›c khi hoáº¡t Ä‘á»™ng."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ đã Verified nhưng chưa có loại phế liệu nào đang nhận mua (activePriceCount == 0)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;IsOnline=true</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-MTH-03&quot;, &quot;MSG-MTH-06&quot;)&#10;Log Message: &quot;Vui lòng thêm ít nhất một loại phế liệu nhận mua và một vị trí hợp lệ trước khi hoạt động.&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">HoÃ ng Tháº¯ng Nguyá»…n</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cháº·n báº­t Online khi chÆ°a cÃ³ báº£ng giÃ¡ (BR-MTH-03)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn bật Online khi chưa có bảng giá hoạt động (BR-MTH-03)</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC019</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ cá»§a recyclerId Ä‘Ã£ Verified</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; Days=[T2..T6: 08:00-17:30, T7: 08:00-12:00, CN: IsClosed=true]</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AvailabilityDto { OperatingHours = "T2-T6: 08:00 - 17:30; T7: 08:00 - 12:00", WeeklySchedule.Count = 7 }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ của recyclerId đã Verified</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;Days=[T2..T6: 08:00-17:30, T7: 08:00-12:00, CN: IsClosed=true]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: AvailabilityDto { OperatingHours = &quot;T2-T6: 08:00 - 17:30; T7: 08:00 - 12:00&quot;, WeeklySchedule.Count = 7 }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyá»…n Äá»©c</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">LÆ°u lá»‹ch tuáº§n JSON &amp; gá»™p chuá»—i OperatingHours</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lưu lịch tuần JSON và tự động gộp ngày liên tiếp thành chuỗi OperatingHours</Data></Cell>
    </Row>
    <Row ss:Height="45">
     <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC020</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Há»“ sÆ¡ Ä‘Ã£ Verified; truyá»n giá» Ä‘Ã³ng cá»­a báº±ng hoáº·c sá»›m hÆ¡n giá» má»Ÿ cá»­a</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId="22222222-..."; Days=[{ DayOfWeek = 1, IsClosed = false, OpenTime = "17:00", CloseTime = "17:00" }]</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException ("BR-MTH-03", "MSG-GEN-01")&#10;Log Message: "Giá» Ä‘Ã³ng cá»­a cá»§a T2 pháº£i sau giá» má»Ÿ cá»­a."</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ của recyclerId đã Verified; truyền giờ đóng cửa bằng hoặc sớm hơn giờ mở cửa</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;&#10;Days=[{ DayOfWeek = 1, IsClosed = false, OpenTime = &quot;17:00&quot;, CloseTime = &quot;17:00&quot; }]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-MTH-03&quot;, &quot;MSG-GEN-01&quot;)&#10;Log Message: &quot;Giờ đóng cửa của T2 phải sau giờ mở cửa.&quot;</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-10-31</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyá»…n Äá»©c</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
     <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
-    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiá»ƒm tra biÃªn thá»i gian closeTime &gt; openTime</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra biên thời gian closeTime &gt; openTime</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+
+ <!-- ==================== SHEET 5: LOCATION-BASED RECYCLER DISCOVERY (U-05) ==================== -->
+ <Worksheet ss:Name="5_Recycler_Discovery_U05">
+  <Table>
+   <Column ss:Width="85"/>
+   <Column ss:Width="160"/>
+   <Column ss:Width="200"/>
+   <Column ss:Width="280"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="130"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="160"/>
+
+   <Row ss:Index="2">
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Code Module</Data></Cell>
+    <Cell ss:MergeAcross="2" ss:StyleID="SummaryValueLeft"><Data ss:Type="String">GeoMatchingService &amp; NearbyRecyclerFilterValidator (U-05: Location-Based Discovery)</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Number of TCs</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="SummaryValue"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Round</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Failed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Pending</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Type</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Boundary</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Count</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">10</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">6</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">4</Data></Cell>
+   </Row>
+
+   <Row ss:Index="11" ss:Height="28">
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test Case ID</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Pre-conditions</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Input parameters</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Expected Results</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Type</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test date</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Tester</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Defect IDs</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Note</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">FindNearestPartnersAsync (GeoMatchingService - U-05)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC001</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Trong recycler_profiles có 2 cơ sở Verified + Online + User.Status = Active có bảng giá Active: Cơ sở A cách 2.66 km, Cơ sở B cách 6.10 km</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">latitude=10.7769;&#10;longitude=106.7009;&#10;categoryCode=null;&#10;radiusKm=10.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IEnumerable&lt;CollectionPartnerDto&gt; (Count = 2, Items[0].DistanceKm = 2.66 &lt;= Items[1].DistanceKm = 6.10)&#10;Exception: N/A&#10;Log Message: &quot;Tìm cơ sở thu mua đã xác minh (Verified + Online) gần tọa độ trong bán kính 10km, loại rác: Tất cả&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tìm kiếm cơ sở gần nhất và sắp xếp mặc định theo khoảng cách tăng dần (BR-MTH-04)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC002</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở A nhận plastic, paper; Cơ sở B nhận plastic, glass (PriceStatus.Active)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">latitude=10.7769;&#10;longitude=106.7009;&#10;categoryCode=&quot;glass&quot;;&#10;radiusKm=10.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IEnumerable&lt;CollectionPartnerDto&gt; (Count = 1, chỉ chứa Cơ sở B có dòng giá glass Active)&#10;Exception: N/A&#10;Log Message: &quot;Tìm cơ sở thu mua đã xác minh (Verified + Online) gần tọa độ trong bán kính 10km, loại rác: glass&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lọc cơ sở theo đúng mã loại rác từ bước quét AI (BR-MTH-04, BR-MTH-07)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC003</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Có 1 cơ sở đang Pending, 1 cơ sở bị Rejected và 1 cơ sở đã Verified trong cùng bán kính 5 km</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">latitude=10.7769;&#10;longitude=106.7009;&#10;categoryCode=null;&#10;radiusKm=5.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IEnumerable&lt;CollectionPartnerDto&gt; (Count = 1, chỉ trả về cơ sở Verified, loại bỏ hoàn toàn Pending/Rejected)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thực thi BR-MTH-01: chỉ hiển thị cơ sở đã được Staff phê duyệt</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC004</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Có 1 cơ sở Verified nhưng đang Offline (tắt tại R-02) và 1 cơ sở Verified có User.Status = Suspended ngay tại tọa độ tìm kiếm</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">latitude=10.7938;&#10;longitude=106.7182;&#10;categoryCode=null;&#10;radiusKm=10.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IEnumerable&lt;CollectionPartnerDto&gt; (Count = 0, không trả về cơ sở Offline hoặc Suspended)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thực thi BR-MTH-06: ẩn ngay lập tức cơ sở Offline hoặc bị đình chỉ</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC005</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở Verified + Online có dòng giá metal đang ở trạng thái PriceStatus.Inactive (tạm ngưng mua tại R-01)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">latitude=10.7938;&#10;longitude=106.7182;&#10;categoryCode=&quot;metal&quot;;&#10;radiusKm=10.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IEnumerable&lt;CollectionPartnerDto&gt; (Count = 0 khi lọc metal)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thực thi BR-MTH-07: dòng giá Inactive không xuất hiện khi người dân tìm kiếm</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC006</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở A nằm ở khoảng cách đúng bằng biên bán kính distanceKm == 5.00 km</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">latitude=10.7769;&#10;longitude=106.7009;&#10;categoryCode=&quot;plastic&quot;;&#10;radiusKm=5.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IEnumerable&lt;CollectionPartnerDto&gt; (Count = 1, DistanceKm = 5.0)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra biên khoảng cách distance &lt;= radiusKm</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC007</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tài khoản demo &quot;collector&quot; (22222222-...) tồn tại trong recycler_profiles nhưng bảng recycler_price_list chưa có dữ liệu</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">latitude=10.7938;&#10;longitude=106.7182;&#10;categoryCode=&quot;plastic&quot;;&#10;radiusKm=10.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IEnumerable&lt;CollectionPartnerDto&gt; (Tự động seed 6 danh mục và 4 dòng giá mẫu cho collector rồi trả về kết quả)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đảm bảo dữ liệu mẫu collector luôn sẵn sàng theo BR-MTH-03</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">SearchNearbyRecyclersAsync (GeoMatchingService - U-05)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC008</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Có 2 cơ sở trong bán kính 10 km: &quot;Vựa phế liệu EcoGreen&quot; (Bình Thạnh) và &quot;Trạm Tái Chế Quận 1&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lat=10.7769; Lng=106.7009;&#10;RadiusKm=10.0;&#10;Keyword=&quot;EcoGreen&quot;;&#10;SortBy=&quot;distance&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: NearbyRecyclerSearchResponseDto { TotalFound = 1, Items[0].FacilityName = &quot;Vựa phế liệu EcoGreen&quot;, FallbackSuggestion = null }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tìm kiếm kết hợp bán kính GPS và từ khóa tên cơ sở / địa chỉ</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC009</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở A cách 2 km mua plastic giá 7,000 đ/kg; Cơ sở B cách 5 km mua plastic giá 8,500 đ/kg</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lat=10.7769; Lng=106.7009;&#10;Category=&quot;plastic&quot;;&#10;RadiusKm=10.0;&#10;SortBy=&quot;price_desc&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: NearbyRecyclerSearchResponseDto { TotalFound = 2, Items[0].FacilityName = Cơ sở B (8500đ), Items[1].FacilityName = Cơ sở A (7000đ) }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Sắp xếp ưu tiên theo đơn giá thu mua cao nhất (price_desc)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC010</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Không có cơ sở nào trong bán kính 2.0 km tại tọa độ thử nghiệm (TotalFound == 0)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lat=21.0285; Lng=105.8542;&#10;Category=&quot;plastic&quot;;&#10;RadiusKm=2.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: NearbyRecyclerSearchResponseDto { TotalFound = 0, Items = [], FallbackSuggestion = { SuggestedExpandedRadiusKm = 5.0, PublicBinSortingGuide != null, AllowCommunityPickupPost = true } }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kích hoạt phương án dự phòng 3 tầng kết nối IWasteRuleEngineService (MSG-MTH-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC011</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Không có cơ sở nào trong bán kính 30.0 km (30.0 * 2.5 = 75.0 &gt; 50.0)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lat=21.0285; Lng=105.8542;&#10;Category=&quot;paper&quot;;&#10;RadiusKm=30.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: NearbyRecyclerSearchResponseDto { TotalFound = 0, FallbackSuggestion.SuggestedExpandedRadiusKm = 50.0 } (giới hạn trần 50 km)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra trần bán kính gợi ý mở rộng tối đa 50.0 km</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">GetRecyclerPublicDetailAsync (GeoMatchingService - U-05)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC012</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở &quot;collector&quot; (22222222-...) đã Verified, User.Status = Active, có 4 dòng giá Active và 1 dòng Inactive</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-2222-2222-2222-222222222222&quot;;&#10;userLat=10.7769;&#10;userLng=106.7009</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: CollectionPartnerDto { Id = &quot;22222222-...&quot;, FacilityName = &quot;Vựa phế liệu EcoGreen&quot;, DistanceKm = 2.66, OperatingHours = &quot;07:30 - 18:30&quot;, Materials.Count = 4 (chỉ gồm dòng Active) }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Xem chi tiết hồ sơ công khai &amp; bảng giá niêm yết kèm khoảng cách (BR-MTH-05, BR-MTH-07)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC013</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở &quot;collector&quot; (22222222-...) đã Verified; người dùng không truyền userLat/userLng</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-2222-2222-2222-222222222222&quot;;&#10;userLat=null;&#10;userLng=null</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: CollectionPartnerDto { Id = &quot;22222222-...&quot;, DistanceKm = 0.0, Materials.Count = 4 }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Xem chi tiết hồ sơ công khai khi không truyền tọa độ người dùng</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC014</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId không tồn tại trong bảng recycler_profiles</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;99999999-9999-9999-9999-999999999999&quot;;&#10;userLat=10.7769;&#10;userLng=106.7009</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: NotFoundException (&quot;Không tìm thấy cơ sở thu mua hoặc cơ sở chưa được phê duyệt.&quot;)&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Báo lỗi 404 Not Found (MSG-NOT-FOUND) khi cơ sở không tồn tại</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC015</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hồ sơ của recyclerId đang ở trạng thái Pending hoặc Rejected (chưa được Staff duyệt)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=pendingRecyclerId;&#10;userLat=10.7769;&#10;userLng=106.7009</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: NotFoundException (&quot;Không tìm thấy cơ sở thu mua hoặc cơ sở chưa được phê duyệt.&quot;)&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn xem hồ sơ công khai của cơ sở chưa duyệt (BR-MTH-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">NearbyRecyclerFilterValidator (RecyclerValidators - U-05)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC016</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bộ lọc đầu vào hợp lệ</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lat=10.7769;&#10;Lng=106.7009;&#10;Category=&quot;plastic&quot;;&#10;RadiusKm=10.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ValidationResult { IsValid = true, Errors.Count = 0 }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Xác thực thành công bộ lọc tìm kiếm bản đồ</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC017</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Người dùng chưa cấp quyền vị trí GPS (Lat = 0, Lng = 0)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lat=0;&#10;Lng=0;&#10;RadiusKm=10.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ValidationResult { IsValid = false, Errors chứa &quot;Cần quyền truy cập vị trí để tìm cơ sở thu mua gần bạn. Vui lòng bật trong phần cài đặt (MSG-MTH-02).&quot; }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn tọa độ (0, 0) khi chưa bật quyền truy cập vị trí (MSG-MTH-02)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC018</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tọa độ vĩ độ/kinh độ vượt miền hợp lệ WGS84 (Lat = 95.0, Lng = 190.0)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lat=95.0;&#10;Lng=190.0;&#10;RadiusKm=10.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ValidationResult { IsValid = false, Errors chứa thông báo giới hạn [-90, 90] và [-180, 180] }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra biên tọa độ địa lý Lat [-90, 90], Lng [-180, 180]</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC019</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bán kính tìm kiếm tại đúng 2 giá trị biên RadiusKm = 0.5 và RadiusKm = 50.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lat=10.7769;&#10;Lng=106.7009;&#10;RadiusKm=0.5 (và 50.0)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ValidationResult { IsValid = true, Errors.Count = 0 }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chấp nhận giá trị biên hợp lệ của bán kính tìm kiếm [0.5, 50.0] km</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC020</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Truyền mã danh mục không thuộc 5 loại tái chế (Category = &quot;trash&quot; hoặc RadiusKm = 100.0)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lat=10.7769;&#10;Lng=106.7009;&#10;Category=&quot;trash&quot;;&#10;RadiusKm=100.0</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ValidationResult { IsValid = false, Errors.Count = 2 (ngoài khoảng bán kính [0.5, 50] và danh mục không hỗ trợ) }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-02</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn tìm kiếm cơ sở thu mua đối với rác không tái chế &quot;trash&quot; và bán kính vượt biên</Data></Cell>
    </Row>
   </Table>
  </Worksheet>
