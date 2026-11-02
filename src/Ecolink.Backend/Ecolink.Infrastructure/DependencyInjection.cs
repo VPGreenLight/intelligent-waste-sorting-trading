@@ -37,8 +37,8 @@ public static class DependencyInjection
         // Đăng ký Rule Engine
         services.AddSingleton<IWasteRuleEngineService, WasteRuleEngineService>();
 
-        // Đăng ký Geo Matching
-        services.AddSingleton<IGeoMatchingService, GeoMatchingService>();
+        // Đăng ký Geo Matching (Scoped để truy vấn trực tiếp bảng recycler_profiles & recycler_price_list - UC U-05, R-01, R-02)
+        services.AddScoped<IGeoMatchingService, GeoMatchingService>();
 
         // Đăng ký Gamification & Trade Services
         services.AddSingleton<IGamificationService, GamificationService>();

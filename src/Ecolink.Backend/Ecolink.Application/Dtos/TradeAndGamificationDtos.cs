@@ -4,11 +4,15 @@ public class CollectionPartnerDto
 {
     public Guid Id { get; set; }
     public string FacilityName { get; set; } = string.Empty;
+    public string? RepresentativeName { get; set; }
     public string Address { get; set; } = string.Empty;
     public double Latitude { get; set; }
     public double Longitude { get; set; }
     public double DistanceKm { get; set; }
     public string ContactPhone { get; set; } = string.Empty;
+    public string OperatingHours { get; set; } = string.Empty;
+    public string? Description { get; set; }
+    public string? BusinessPhotoUrl { get; set; }
     public List<AcceptedMaterialDto> Materials { get; set; } = new();
 }
 
@@ -18,6 +22,44 @@ public class AcceptedMaterialDto
     public string CategoryName { get; set; } = string.Empty;
     public decimal PricePerKg { get; set; }
     public decimal MinimumQuantityKg { get; set; }
+    public string? CollectionConditions { get; set; }
+    public DateTime? LastUpdatedAt { get; set; }
+}
+
+/// <summary>
+/// Query Request cho Use Case U-05: Tìm kiếm cơ sở thu gom gần vị trí GPS người dùng (BR-MTH-04, BR-MTH-05)
+/// </summary>
+public class NearbyRecyclerFilterRequest
+{
+    public double Lat { get; set; }
+    public double Lng { get; set; }
+    public string? Category { get; set; }            // Mã loại rác từ bước quét AI: plastic, paper, cardboard, metal, glass
+    public double RadiusKm { get; set; } = 10.0;     // Bán kính mặc định 10km (cho phép từ 0.5km đến 50km)
+    public string? Keyword { get; set; }             // Tìm theo tên cơ sở hoặc địa chỉ
+    public string SortBy { get; set; } = "distance"; // "distance" (mặc định theo BR-MTH-04) hoặc "price_desc"
+}
+
+/// <summary>
+/// Response tổng hợp kết quả tìm kiếm bản đồ (U-05) kèm phương án dự phòng khi không có người mua (MSG-MTH-01)
+/// </summary>
+public class NearbyRecyclerSearchResponseDto
+{
+    public int TotalFound { get; set; }
+    public double SearchRadiusKm { get; set; }
+    public string? FilteredCategory { get; set; }
+    public IReadOnlyList<CollectionPartnerDto> Items { get; set; } = Array.Empty<CollectionPartnerDto>();
+    public DiscoveryFallbackSuggestionDto? FallbackSuggestion { get; set; }
+}
+
+/// <summary>
+/// Gợi ý xử lý rác khi xung quanh không có cơ sở thu mua nào hoạt động (MSG-MTH-01)
+/// </summary>
+public class DiscoveryFallbackSuggestionDto
+{
+    public double SuggestedExpandedRadiusKm { get; set; } = 25.0;
+    public string GuidanceMessage { get; set; } = string.Empty;
+    public WasteSortingGuideDto? PublicBinSortingGuide { get; set; }
+    public bool AllowCommunityPickupPost { get; set; } = true;
 }
 
 public class CreateTradeOrderRequest

@@ -60,7 +60,11 @@ public class UpdateRecyclerProfileRequest
     [MaxLength(20)]
     public string ContactPhone { get; set; } = string.Empty;
 
+    [MaxLength(100)]
+    public string? OperatingHours { get; set; }
+
     public string? Description { get; set; }
+    public string? LegalPermitUrl { get; set; }
     public string? BusinessPhotoUrl { get; set; }
 }
 

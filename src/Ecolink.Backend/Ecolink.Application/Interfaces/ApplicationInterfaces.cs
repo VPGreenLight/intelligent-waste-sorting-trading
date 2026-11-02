@@ -23,6 +23,16 @@ public interface IGeoMatchingService
         string? categoryCode = null,
         double radiusKm = 10.0,
         CancellationToken cancellationToken = default);
+
+    Task<NearbyRecyclerSearchResponseDto> SearchNearbyRecyclersAsync(
+        NearbyRecyclerFilterRequest filter,
+        CancellationToken cancellationToken = default);
+
+    Task<CollectionPartnerDto> GetRecyclerPublicDetailAsync(
+        Guid recyclerId,
+        double? userLat = null,
+        double? userLng = null,
+        CancellationToken cancellationToken = default);
 }
 
 public interface ITradeTransactionService
