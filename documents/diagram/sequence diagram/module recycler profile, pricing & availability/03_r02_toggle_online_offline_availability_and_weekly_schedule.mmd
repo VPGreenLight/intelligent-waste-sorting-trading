@@ -1,0 +1,70 @@
+sequenceDiagram
+    autonumber
+    actor Recycler as Co so thu gom (Role: Recycler)
+    participant UI as React Web App (Availability & Schedule UI)
+    participant Ctrl as RecyclerController
+    participant Svc as RecyclerManagementService
+    participant DB as PostgreSQL + PostGIS (ApplicationDbContext)
+
+    Note over Recycler,UI: Use Case R-02: Bat/Tat trang thai Online/Offline & Cau hinh Lich hoat dong theo tuan
+
+    %% Buoc 1: Xem trang thai hoat dong va lich tuan hien tai
+    Recycler->>+UI: 1. Mo man hinh Quan ly Trang thai Hoat dong & Lich mo cua
+    UI->>+Ctrl: 2. GET /api/v1/recycler/availability
+    Ctrl->>+Svc: 3. GetAvailabilityAsync(recyclerId, ct)
+    Svc->>+DB: 4. SELECT profile & COUNT(*) active prices FROM recycler_price_list
+    DB-->>-Svc: 5. Return profile & activePriceCount
+    Svc-->>-Ctrl: 6. Return AvailabilityDto { IsOnline, BusyReason, OperatingHours, WeeklySchedule }
+    Ctrl-->>-UI: 7. 200 OK: ApiResponse<AvailabilityDto>
+    UI-->>-Recycler: 8. Hien thi nut gat Online/Offline va lich hoat dong 7 ngay
+
+    %% Buoc 2: Bat/Tat trang thai Online/Offline (PATCH /api/v1/recycler/availability)
+    Recycler->>+UI: 9. Gat cong tac chuyen trang thai Online hoac Offline (kem BusyReason)
+    UI->>+Ctrl: 10. PATCH /api/v1/recycler/availability (UpdateAvailabilityRequest { IsOnline, BusyReason })
+    Ctrl->>+Svc: 11. UpdateAvailabilityAsync(recyclerId, request, ct)
+    Svc->>+DB: 12. SELECT profile & COUNT(*) FROM recycler_price_list WHERE status = 'Active'
+    DB-->>-Svc: 13. Return profile & activeCount
+
+    alt Bat Online (IsOnline == true) nhung Ho so chua Verified (BR-MTH-01)
+        Svc-->>Ctrl: 14a. Throw BusinessRuleException ("BR-MTH-01", "MSG-MTH-03 / MSG-MTH-05")
+        Ctrl-->>UI: 15a. 400 Bad Request: Ho so chua duoc Staff phe duyet
+        UI-->>Recycler: 16a. Hien thi canh bao cho Staff duyet ho so
+    else Bat Online (IsOnline == true) nhung activeCount == 0 hoac Toa do GPS (0,0) (BR-MTH-03)
+        Svc-->>Ctrl: 14b. Throw BusinessRuleException ("BR-MTH-03", "MSG-MTH-06")
+        Ctrl-->>UI: 15b. 400 Bad Request: Can it nhat 1 loai phe lieu nhan mua va vi tri hop le
+        UI-->>Recycler: 16b. Yeu cau them bang gia va cap nhat vi tri truoc khi Online
+    else Bat Online hop le (IsOnline == true)
+        Note over Svc: Dat ActiveStatus = Online, xoa BusyReason = null<br/>Co so xuat hien ngay tren ban do tim kiem PostGIS (U-05)
+        Svc->>+DB: 14c. UPDATE recycler_profiles SET active_status = 'Online', busy_reason = NULL
+        DB-->>-Svc: 15c. 1 row affected
+        Svc-->>Ctrl: 16c. Return AvailabilityDto (IsOnline = true)
+        Ctrl-->>UI: 17c. 200 OK: "Co so da chuyen sang trang thai hoat dong."
+    else Chuyen sang Offline (IsOnline == false - BR-MTH-06)
+        Note over Svc: Dat ActiveStatus = Offline, luu BusyReason<br/>Chi an khoi tim kiem ban do moi, don hen dang xu ly khong bi anh huong (BR-MTH-06)
+        Svc->>+DB: 14d. UPDATE recycler_profiles SET active_status = 'Offline', busy_reason = @busyReason
+        DB-->>-Svc: 15d. 1 row affected
+        Svc-->>-Ctrl: 16d. Return AvailabilityDto (IsOnline = false, BusyReason)
+        Ctrl-->>-UI: 17d. 200 OK: "Co so da chuyen sang trang thai tam nghi."
+        UI-->>-Recycler: 18d. Cap nhat trang thai tren giao dien
+    end
+
+    %% Buoc 3: Cap nhat lich hoat dong co dinh theo tuan (PUT /api/v1/recycler/availability/schedule)
+    Recycler->>+UI: 19. Chinh sua gio mo/dong cua tung thu trong tuan (T2..CN) & Bam 'Luu lich hoat dong'
+    UI->>+Ctrl: 20. PUT /api/v1/recycler/availability/schedule (UpdateScheduleRequest { Days })
+    Ctrl->>+Svc: 21. UpdateScheduleAsync(recyclerId, request, ct)
+    Svc->>+DB: 22. SELECT * FROM recycler_profiles WHERE user_id = @recyclerId
+    DB-->>-Svc: 23. Return profile
+
+    alt Trung DayOfWeek hoac sai dinh dang HH:mm hoac CloseTime <= OpenTime (BR-MTH-03)
+        Svc-->>Ctrl: 24a. Throw BusinessRuleException ("BR-MTH-03", "MSG-GEN-01")
+        Ctrl-->>UI: 25a. 400 Bad Request: Gio dong cua phai sau gio mo cua / Khong khai bao trung ngay
+        UI-->>Recycler: 26a. Hien thi loi tren dong ngay khong hop le
+    else Lich tuan hop le
+        Note over Svc: 1. Sap xep T2 -> CN va Serialize WeeklyScheduleJson<br/>2. Tu dong gop chuoi OperatingHours (VD: "T2-T6: 08:00 - 17:30; T7: 08:00 - 12:00")
+        Svc->>+DB: 24b. UPDATE recycler_profiles SET weekly_schedule = @json, operating_hours = @summary
+        DB-->>-Svc: 25b. 1 row affected
+        Svc-->>-Ctrl: 26b. Return AvailabilityDto { OperatingHours, WeeklySchedule }
+        Ctrl-->>-UI: 27b. 200 OK: ApiResponse<AvailabilityDto> ("Da cap nhat lich hoat dong.")
+        UI-->>-Recycler: 28b. Hien thi chuoi gio mo cua moi va lich tuan
+    end
+

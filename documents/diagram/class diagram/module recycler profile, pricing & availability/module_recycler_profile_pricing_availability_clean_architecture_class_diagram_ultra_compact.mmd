@@ -1,0 +1,132 @@
+classDiagram
+    direction TB
+
+    %% Presentation Layer
+    class RecyclerController {
+        - IRecyclerManagementService _service
+        - ICurrentUserService _currentUser
+        + GetProfile(ct) Task~IActionResult~
+        + UpdateProfile(UpdateRecyclerProfileRequest, ct) Task~IActionResult~
+        + GetPrices(keyword, isActive, ct) Task~IActionResult~
+        + AddPrice(CreateRecyclerPriceRequest, ct) Task~IActionResult~
+        + UpdatePrice(priceId, UpdateRecyclerPriceRequest, ct) Task~IActionResult~
+        + BulkSavePrices(BulkSavePricesRequest, ct) Task~IActionResult~
+        + GetAvailability(ct) Task~IActionResult~
+        + UpdateAvailability(UpdateAvailabilityRequest, ct) Task~IActionResult~
+        + UpdateSchedule(UpdateScheduleRequest, ct) Task~IActionResult~
+    }
+    class WasteCategoryController {
+        - IRecyclerManagementService _service
+        + GetAll(ct) Task~IActionResult~
+    }
+
+    %% Application Layer (Inbound & Outbound Ports)
+    class IRecyclerManagementService {
+        <<interface>>
+        + GetWasteCategoriesAsync(ct) Task~IReadOnlyList_WasteCategoryDto~
+        + GetProfileAsync(recyclerId, ct) Task~RecyclerProfileDto~
+        + UpdateProfileAsync(recyclerId, request, ct) Task~RecyclerProfileDto~
+        + GetPricesAsync(recyclerId, keyword, isActive, ct) Task~IReadOnlyList_RecyclerPriceDto~
+        + AddPriceAsync(recyclerId, request, ct) Task~RecyclerPriceDto~
+        + UpdatePriceAsync(recyclerId, priceId, request, ct) Task~RecyclerPriceDto~
+        + BulkSavePricesAsync(recyclerId, request, ct) Task~IReadOnlyList_RecyclerPriceDto~
+        + GetAvailabilityAsync(recyclerId, ct) Task~AvailabilityDto~
+        + UpdateAvailabilityAsync(recyclerId, request, ct) Task~AvailabilityDto~
+        + UpdateScheduleAsync(recyclerId, request, ct) Task~AvailabilityDto~
+    }
+    class ICurrentUserService {
+        <<interface>>
+        + Guid? UserId
+        + string? Username
+        + string? Role
+        + bool IsAuthenticated
+    }
+
+    %% Infrastructure Layer (Adapters & Implementations)
+    class RecyclerManagementService {
+        - ApplicationDbContext _db
+        - ILogger~RecyclerManagementService~ _logger
+        + GetWasteCategoriesAsync(ct) Task~IReadOnlyList_WasteCategoryDto~
+        + GetProfileAsync(recyclerId, ct) Task~RecyclerProfileDto~
+        + UpdateProfileAsync(recyclerId, request, ct) Task~RecyclerProfileDto~
+        + GetPricesAsync(recyclerId, keyword, isActive, ct) Task~IReadOnlyList_RecyclerPriceDto~
+        + AddPriceAsync(recyclerId, request, ct) Task~RecyclerPriceDto~
+        + UpdatePriceAsync(recyclerId, priceId, request, ct) Task~RecyclerPriceDto~
+        + BulkSavePricesAsync(recyclerId, request, ct) Task~IReadOnlyList_RecyclerPriceDto~
+        + GetAvailabilityAsync(recyclerId, ct) Task~AvailabilityDto~
+        + UpdateAvailabilityAsync(recyclerId, request, ct) Task~AvailabilityDto~
+        + UpdateScheduleAsync(recyclerId, request, ct) Task~AvailabilityDto~
+    }
+    class CurrentUserService {
+        - IHttpContextAccessor _httpContextAccessor
+        + Guid? UserId
+        + string? Username
+        + string? Role
+    }
+    class ApplicationDbContext {
+        + DbSet~User~ Users
+        + DbSet~RecyclerProfile~ RecyclerProfiles
+        + DbSet~RecyclerPrice~ RecyclerPrices
+        + DbSet~WasteCategory~ WasteCategories
+    }
+
+    %% Domain Layer (Core Entities)
+    class User {
+        + Guid Id
+        + string Username
+        + string Email
+        + UserRole Role = Recycler
+        + UserStatus Status = Active
+    }
+    class RecyclerProfile {
+        + Guid UserId
+        + string FacilityName
+        + string? RepresentativeName
+        + string BusinessAddress
+        + decimal Latitude
+        + decimal Longitude
+        + Point Location
+        + string OperatingHours
+        + string ContactPhone
+        + VerificationStatus VerificationStatus
+        + RecyclerActiveStatus ActiveStatus
+        + string? RejectionReason
+        + string? BusyReason
+        + string? WeeklyScheduleJson
+    }
+    class RecyclerPrice {
+        + Guid Id
+        + Guid RecyclerId
+        + Guid WasteCategoryId
+        + decimal PricePerKg
+        + decimal MinQuantityKg
+        + string? CollectionConditions
+        + PriceStatus Status
+        + DateTime EffectiveFrom
+        + DateTime? EffectiveTo
+        + DateTime UpdatedAt
+    }
+    class WasteCategory {
+        + Guid Id
+        + string Code
+        + string Name
+        + string StandardBinColor
+        + bool IsRecyclable
+        + string Status
+    }
+
+    %% Core Clean Architecture Connectors
+    RecyclerController --> IRecyclerManagementService
+    RecyclerController --> ICurrentUserService
+    WasteCategoryController --> IRecyclerManagementService
+    RecyclerManagementService ..|> IRecyclerManagementService
+    CurrentUserService ..|> ICurrentUserService
+
+    %% Outbound Persistence Dependency
+    RecyclerManagementService --> ApplicationDbContext
+
+    %% Domain Model Relationships
+    User "1" *-- "1" RecyclerProfile : owns 1-1 profile (PK user_id)
+    RecyclerProfile "1" *-- "0..*" RecyclerPrice : configures price list (R-01)
+    WasteCategory "1" -- "0..*" RecyclerPrice : categorizes purchasable scrap
+

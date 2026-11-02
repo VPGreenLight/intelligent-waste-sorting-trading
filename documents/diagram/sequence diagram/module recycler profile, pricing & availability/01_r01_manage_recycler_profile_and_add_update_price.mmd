@@ -1,0 +1,66 @@
+sequenceDiagram
+    autonumber
+    actor Recycler as Co so thu gom (Role: Recycler)
+    participant UI as React Web App (SCR-RCY-01)
+    participant CatCtrl as WasteCategoryController
+    participant Ctrl as RecyclerController
+    participant Svc as RecyclerManagementService
+    participant DB as PostgreSQL + PostGIS (ApplicationDbContext)
+
+    Note over Recycler,UI: Tien dieu kien: Doi tac da dang nhap JWT (Role = Recycler) & Ho so da Verified (BR-MTH-01)
+
+    %% Buoc 1: Tai danh muc phe lieu chuan & Ho so co so
+    Recycler->>+UI: 1. Mo trang Quan ly Ho so & Bang gia Thu mua Phe lieu
+    UI->>+CatCtrl: 2. GET /api/v1/waste-categories
+    CatCtrl->>+Svc: 3. GetWasteCategoriesAsync(ct)
+    Svc->>+DB: 4. SELECT * FROM waste_categories WHERE code != 'trash' ORDER BY name
+    DB-->>-Svc: 5. Return 5 Recyclable Categories (plastic, paper, glass, metal, cardboard)
+    Svc-->>-CatCtrl: 6. Return IReadOnlyList<WasteCategoryDto>
+    CatCtrl-->>-UI: 7. 200 OK: ApiResponse<IReadOnlyList<WasteCategoryDto>>
+
+    UI->>+Ctrl: 8. GET /api/v1/recycler/profile
+    Ctrl->>+Svc: 9. GetProfileAsync(recyclerId, ct)
+    Svc->>+DB: 10. SELECT * FROM recycler_profiles JOIN users WHERE user_id = @recyclerId
+    DB-->>-Svc: 11. Return profile & activePriceCount
+    Svc-->>-Ctrl: 12. Return RecyclerProfileDto
+    Ctrl-->>-UI: 13. 200 OK: ApiResponse<RecyclerProfileDto>
+    UI-->>-Recycler: 14. Hien thi thong tin co so, vi tri GPS va dropdown loai phe lieu
+
+    %% Buoc 2: Them moi 1 loai phe lieu vao bang gia (POST /api/v1/recycler/prices)
+    Recycler->>+UI: 15. Chon loai phe lieu, nhap Don gia (VND/kg), Khoi luong toi thieu & Bam 'Them loai phe lieu'
+    UI->>+Ctrl: 16. POST /api/v1/recycler/prices (CreateRecyclerPriceRequest)
+    Ctrl->>+Svc: 17. AddPriceAsync(recyclerId, request, ct)
+    Svc->>+DB: 18. SELECT profile, category & check EXISTS in recycler_price_list
+    DB-->>-Svc: 19. Return profile, category, exists
+
+    alt Ho so chua Verified (BR-MTH-01) hoac chon 'trash' hoac da ton tai loai phe lieu hoac Gia <= 0 (BR-MTH-03)
+        Svc-->>Ctrl: 20a. Throw BusinessRuleException ("BR-MTH-01 / BR-MTH-03", "MSG-MTH-03 / MSG-GEN-01")
+        Ctrl-->>UI: 21a. 400 Bad Request: Thong bao loi vi pham quy tac nghiep vu
+        UI-->>Recycler: 22a. Hien thi canh bao loi tren form
+    else Du lieu hop le & chua ton tai trong bang gia
+        Svc->>+DB: 20b. INSERT INTO recycler_price_list (recycler_id, category_id, price_per_kg, min_quantity_kg, status = 'Active')
+        DB-->>-Svc: 21b. 1 row affected
+        Svc-->>-Ctrl: 22b. Return RecyclerPriceDto (IsActive = true)
+        Ctrl-->>-UI: 23b. 201 Created: ApiResponse<RecyclerPriceDto> ("Da them loai phe lieu vao bang gia.")
+        UI-->>-Recycler: 24b. Cap nhat dong gia moi len bang niem yet
+    end
+
+    %% Buoc 3: Cap nhat don gia hoac Tam ngung thu mua 1 loai phe lieu (PUT /api/v1/recycler/prices/{priceId})
+    Recycler->>+UI: 25. Chinh sua Don gia hoac gat Toggle Tam ngung mua (IsActive = false - BR-MTH-07)
+    UI->>+Ctrl: 26. PUT /api/v1/recycler/prices/{priceId} (UpdateRecyclerPriceRequest)
+    Ctrl->>+Svc: 27. UpdatePriceAsync(recyclerId, priceId, request, ct)
+    Svc->>+DB: 28. SELECT * FROM recycler_price_list WHERE id = @priceId AND recycler_id = @recyclerId
+    DB-->>-Svc: 29. Return entity & count other active prices
+
+    alt Co so dang Online nhung tat dong gia Active cuoi cung (otherActive == 0 - EF-03 / BR-MTH-03)
+        Svc-->>Ctrl: 30a. Throw BusinessRuleException ("BR-MTH-03", "MSG-MTH-06")
+        Ctrl-->>UI: 31a. 400 Bad Request: Phai giu it nhat 1 loai phe lieu nhan mua khi dang Online
+        UI-->>Recycler: 32a. Canh bao khong the tat loai phe lieu cuoi cung khi dang mo cua
+    else Cap nhat hop le (BR-MTH-07: Chuyen Status = Inactive thay vi xoa cung)
+        Svc->>+DB: 30b. UPDATE recycler_price_list SET price_per_kg = @price, status = @status, updated_at = NOW()
+        DB-->>-Svc: 31b. 1 row affected
+        Svc-->>-Ctrl: 32b. Return RecyclerPriceDto
+        Ctrl-->>-UI: 33b. 200 OK: ApiResponse<RecyclerPriceDto> ("Cap nhat bang gia thanh cong.")
+        UI-->>-Recycler: 34b. Hien thi thong bao cap nhat thanh cong
+    end
+
