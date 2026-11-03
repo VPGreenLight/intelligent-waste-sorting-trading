@@ -3,6 +3,7 @@ using Ecolink.Application;
 using Ecolink.Application.Common;
 using Ecolink.Application.Interfaces;
 using Ecolink.Infrastructure;
+using Ecolink.WebApi.Hubs;
 using Ecolink.WebApi.Middlewares;
 using Ecolink.WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -36,14 +37,18 @@ builder.Services.AddControllers()
 // Thêm dịch vụ tầng Application (FluentValidation Validators)
 builder.Services.AddApplicationServices();
 
-// Thêm dịch vụ tầng Infrastructure (AI Client, Rule Engine, Geo Matching, Gamification, Auth)
+// Thêm dịch vụ tầng Infrastructure (AI Client, Rule Engine, Geo Matching, Gamification, Auth, Negotiation Chat)
 builder.Services.AddInfrastructureServices(builder.Configuration);
+
+// Đăng ký SignalR Real-Time Hub & Notifier cho Module In-App Real-Time Negotiation Chatbox (U-08 & R-05)
+builder.Services.AddSignalR();
+builder.Services.AddScoped<INegotiationChatNotifier, SignalRNegotiationChatNotifier>();
 
 // Lấy thông tin người dùng hiện tại (UserId/Role) từ JWT cho Controller và Audit Interceptor
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
-// Cấu hình JWT Bearer Authentication & Authorization
+// Cấu hình JWT Bearer Authentication & Authorization (Hỗ trợ cả REST Header và SignalR WebSocket access_token)
 var jwtSecret = builder.Configuration["JwtSettings:SecretKey"] 
                 ?? "EcoLink_Super_Secure_Secret_Key_For_JWT_Signing_2026_XYZ987!";
 var jwtIssuer = builder.Configuration["JwtSettings:Issuer"] ?? "EcoLinkBackend";
@@ -68,6 +73,21 @@ builder.Services.AddAuthentication(options =>
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret)),
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
+    };
+
+    // Cho phép SignalR WebSocket truyền JWT qua query parameter ?access_token=...
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/negotiation-chat"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
     };
 });
 builder.Services.AddAuthorization();
@@ -148,5 +168,6 @@ app.MapGet("/health", () => Results.Ok(new
 }));
 
 app.MapControllers();
+app.MapHub<NegotiationChatHub>("/hubs/negotiation-chat");
 
 app.Run();

@@ -1,0 +1,53 @@
+sequenceDiagram
+    autonumber
+    actor Citizen as Citizen (User Side - U-08)
+    actor Recycler as Recycler (Recycler Side - R-05)
+    participant Ctrl as NegotiationChatController
+    participant PropVal as SendProposalRequestValidator
+    participant Svc as NegotiationChatService
+    participant Notifier as SignalRNegotiationChatNotifier
+    participant Hub as NegotiationChatHub
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Citizen, DB: 1. Citizen (U-08) gửi Đề xuất giá / khối lượng / khung giờ thu gom đầu tiên (BR-NEG-02, BR-NEG-04)
+    Citizen->>Ctrl: POST /api/v1/trade/orders/{orderId}/proposals (SendProposalRequest)
+    Ctrl->>PropVal: ValidateAsync(request)
+    alt Đơn giá <= 0, khối lượng <= 0 hoặc thiếu ProposedTimeSlot
+        PropVal-->>Ctrl: IsValid = false
+        Ctrl-->>Citizen: 400 Bad Request (MSG-GEN-01)
+    else Đề xuất đầu vào hợp lệ
+        PropVal-->>Ctrl: IsValid = true
+        Ctrl->>Svc: SendProposalAsync(orderId, citizenUserId, "Citizen", request)
+        Svc->>DB: Query TradeOrder (Include User, RecyclerProfile)
+        alt TradeOrder.Status KHÔNG phải Pending hoặc Negotiating (VD: đã Accepted - BR-NEG-02)
+            Svc-->>Ctrl: Throw BusinessRuleException ("BR-NEG-02", "MSG-NEG-PROPOSAL-LOCKED")
+            Ctrl-->>Citizen: 400 Bad Request (Tính năng đề xuất đã khóa sau khi chốt đơn)
+        else TradeOrder đang Pending hoặc Negotiating
+            Svc->>DB: Chuyển TradeOrder.Status: Pending -> Negotiating (BR-HND-02)
+            Svc->>DB: Cập nhật TradeOrder.ProposedTimeSlot = request.ProposedTimeSlot (BR-NEG-04)
+            Svc->>DB: Insert ChatMessage #1 (Type = Proposal, ProposalStatus = Pending, ProposalData = jsonb)
+            Svc->>DB: SaveChangesAsync()
+            Svc-->>Ctrl: (ProposalDto #1, SupersededIds = [], Toast = MSG-NEG-01, Notification = MSG-NEG-02)
+            Ctrl->>Notifier: NotifyProposalCreatedAsync(orderId, ProposalDto #1, [], MSG-NEG-02)
+            Notifier->>Hub: Broadcast "ProposalCreated" to Group "order:{orderId}"
+            Hub-->>Recycler: Real-time Event ProposalCreated (#1 Pending) + MSG-NEG-02
+            Ctrl-->>Citizen: 201 Created ApiResponse<ChatMessageDto> (MSG-NEG-01)
+        end
+    end
+
+    Note over Recycler, DB: 2. Recycler (R-05) gửi Phản đề xuất (Counter-Proposal) điều chỉnh khung giờ/giá -> Ghi đè đề xuất cũ (BR-NEG-03)
+    Recycler->>Ctrl: POST /api/v1/trade/orders/{orderId}/proposals (Counter SendProposalRequest)
+    Ctrl->>PropVal: ValidateAsync(counterRequest)
+    PropVal-->>Ctrl: IsValid = true
+    Ctrl->>Svc: SendProposalAsync(orderId, recyclerUserId, "Recycler", counterRequest)
+    Svc->>DB: Query ChatMessages (TradeOrderId == orderId && Type == Proposal && ProposalStatus == Pending)
+    DB-->>Svc: [ChatMessage #1]
+    Svc->>DB: Đánh dấu ChatMessage #1: ProposalStatus = Superseded (BR-NEG-03: Chỉ đề xuất mới nhất có hiệu lực)
+    Svc->>DB: Insert ChatMessage #2 (Type = Proposal, ProposalStatus = Pending, SenderRole = "Recycler")
+    Svc->>DB: SaveChangesAsync() (Atomic Transaction)
+    Svc-->>Ctrl: (ProposalDto #2, SupersededIds = [Message#1.Id], Toast, MSG-NEG-02)
+    Ctrl->>Notifier: NotifyProposalCreatedAsync(orderId, ProposalDto #2, [Message#1.Id], MSG-NEG-02)
+    Notifier->>Hub: Broadcast "ProposalCreated" (NewProposal #2 + SupersededIds) to Group "order:{orderId}"
+    Hub-->>Citizen: Real-time Event ProposalCreated (Làm mờ #1 Superseded, hiển thị nút Accept trên #2)
+    Ctrl-->>Recycler: 201 Created ApiResponse<ChatMessageDto>
+

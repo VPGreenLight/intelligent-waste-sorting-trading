@@ -1,6 +1,10 @@
 using System.Collections.Concurrent;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using Ecolink.Domain.Entities;
+using Ecolink.Domain.Enums;
+using Ecolink.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace Ecolink.Infrastructure.Services;
@@ -75,42 +79,156 @@ public class TradeTransactionService : ITradeTransactionService
 {
     private readonly ILogger<TradeTransactionService> _logger;
     private readonly IGamificationService _gamificationService;
+    private readonly ApplicationDbContext? _dbContext;
     private static readonly ConcurrentDictionary<Guid, TradeOrderDto> _orders = new();
 
-    public TradeTransactionService(ILogger<TradeTransactionService> logger, IGamificationService gamificationService)
+    public TradeTransactionService(
+        ILogger<TradeTransactionService> logger,
+        IGamificationService gamificationService,
+        ApplicationDbContext? dbContext = null)
     {
         _logger = logger;
         _gamificationService = gamificationService;
+        _dbContext = dbContext;
     }
 
-    public Task<TradeOrderDto> CreateTradeOrderAsync(CreateTradeOrderRequest request, CancellationToken cancellationToken = default)
+    public async Task<TradeOrderDto> CreateTradeOrderAsync(CreateTradeOrderRequest request, CancellationToken cancellationToken = default)
     {
         var orderId = Guid.NewGuid();
-        var order = new TradeOrderDto
+        var proposedSlot = !string.IsNullOrWhiteSpace(request.ProposedTimeSlot)
+            ? request.ProposedTimeSlot.Trim()
+            : request.ScheduledAt.ToString("yyyy-MM-dd HH:mm");
+
+        var orderDto = new TradeOrderDto
         {
             Id = orderId,
             UserId = request.UserId,
             PartnerId = request.PartnerId,
-            Status = "Pending",
+            RecyclerUserId = request.PartnerId,
+            Status = OrderStatus.Pending.ToString(),
             ScheduledAt = request.ScheduledAt,
             EstimatedWeightKg = request.EstimatedWeightKg,
+            CategoryCode = request.CategoryCode,
+            InitialPricePerKg = request.InitialPricePerKg,
+            ProposedTimeSlot = proposedSlot,
             QrCodeValue = $"ECOLINK_ORDER_{orderId:N}"
         };
 
-        _orders[orderId] = order;
-        _logger.LogInformation("Tạo đơn hẹn bàn giao rác thành công: {OrderId}, QR: {QR}", orderId, order.QrCodeValue);
+        if (_dbContext != null)
+        {
+            try
+            {
+                var recyclerProfile = await _dbContext.RecyclerProfiles
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.UserId == request.PartnerId, cancellationToken);
 
-        return Task.FromResult(order);
+                var partnerEntity = await _dbContext.CollectionPartners
+                    .FirstOrDefaultAsync(p => p.Id == request.PartnerId || p.UserId == request.PartnerId, cancellationToken);
+
+                if (partnerEntity == null && recyclerProfile != null)
+                {
+                    partnerEntity = new CollectionPartner
+                    {
+                        Id = recyclerProfile.UserId,
+                        UserId = recyclerProfile.UserId,
+                        FacilityName = recyclerProfile.FacilityName,
+                        Address = recyclerProfile.BusinessAddress,
+                        Latitude = (double)recyclerProfile.Latitude,
+                        Longitude = (double)recyclerProfile.Longitude,
+                        OperatingHours = recyclerProfile.OperatingHours,
+                        ContactPhone = recyclerProfile.ContactPhone,
+                        IsVerified = recyclerProfile.VerificationStatus == VerificationStatus.Verified
+                    };
+                    _dbContext.CollectionPartners.Add(partnerEntity);
+                }
+
+                if (partnerEntity != null)
+                {
+                    var orderEntity = new TradeOrder
+                    {
+                        Id = orderId,
+                        UserId = request.UserId,
+                        PartnerId = partnerEntity.Id,
+                        RecyclerUserId = recyclerProfile?.UserId ?? partnerEntity.UserId,
+                        Status = OrderStatus.Pending,
+                        ScheduledAt = request.ScheduledAt == default ? DateTime.UtcNow.AddHours(2) : request.ScheduledAt,
+                        EstimatedWeightKg = request.EstimatedWeightKg,
+                        Note = request.Note,
+                        CategoryCode = request.CategoryCode,
+                        InitialPricePerKg = request.InitialPricePerKg,
+                        ProposedTimeSlot = proposedSlot,
+                        PickupAddress = request.PickupAddress
+                    };
+
+                    _dbContext.TradeOrders.Add(orderEntity);
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                    orderDto.PartnerId = orderEntity.PartnerId;
+                    orderDto.RecyclerUserId = orderEntity.RecyclerUserId;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Không thể ghi đơn bàn giao {OrderId} vào PostgreSQL, sử dụng bộ nhớ đệm fallback.", orderId);
+            }
+        }
+
+        _orders[orderId] = orderDto;
+        _logger.LogInformation("Tạo đơn hẹn bàn giao rác thành công: {OrderId}, QR: {QR}", orderId, orderDto.QrCodeValue);
+
+        return orderDto;
     }
 
     public async Task<TransactionReceiptDto> ConfirmReceiptByQrAsync(ConfirmQrReceiptRequest request, CancellationToken cancellationToken = default)
     {
         if (!_orders.TryGetValue(request.TradeOrderId, out var order))
         {
+            if (_dbContext != null)
+            {
+                var dbOrder = await _dbContext.TradeOrders
+                    .FirstOrDefaultAsync(o => o.Id == request.TradeOrderId, cancellationToken);
+
+                if (dbOrder != null)
+                {
+                    dbOrder.Status = OrderStatus.Completed;
+                    dbOrder.UpdatedAt = DateTime.UtcNow;
+
+                    var unitPrice = request.UnitPrice > 0
+                        ? request.UnitPrice
+                        : dbOrder.AgreedPricePerKg ?? dbOrder.InitialPricePerKg ?? 0m;
+
+                    var dbReceipt = new TransactionReceipt
+                    {
+                        Id = Guid.NewGuid(),
+                        TradeOrderId = dbOrder.Id,
+                        ActualWeightKg = request.ActualWeightKg,
+                        UnitPrice = unitPrice,
+                        TotalAmountCash = request.ActualWeightKg * unitPrice,
+                        PointsAwarded = (int)Math.Round(request.ActualWeightKg * 10),
+                        QrSecurityCode = string.IsNullOrWhiteSpace(request.QrSecurityCode)
+                            ? Guid.NewGuid().ToString("N")
+                            : request.QrSecurityCode,
+                        CompletedAt = DateTime.UtcNow
+                    };
+
+                    _dbContext.TransactionReceipts.Add(dbReceipt);
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+
+                    return new TransactionReceiptDto
+                    {
+                        ReceiptId = dbReceipt.Id,
+                        TradeOrderId = dbOrder.Id,
+                        ActualWeightKg = dbReceipt.ActualWeightKg,
+                        TotalAmountCash = dbReceipt.TotalAmountCash,
+                        PointsAwarded = dbReceipt.PointsAwarded,
+                        CompletedAt = dbReceipt.CompletedAt
+                    };
+                }
+            }
+
             throw new KeyNotFoundException($"Không tìm thấy đơn hẹn bàn giao {request.TradeOrderId}");
         }
 
-        order.Status = "Completed";
+        order.Status = OrderStatus.Completed.ToString();
         var totalCash = request.ActualWeightKg * request.UnitPrice;
         var pointsAwarded = (int)Math.Round(request.ActualWeightKg * 10);
 
@@ -133,9 +251,46 @@ public class TradeTransactionService : ITradeTransactionService
         return receipt;
     }
 
-    public Task<IEnumerable<TradeOrderDto>> GetUserOrdersAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<TradeOrderDto>> GetUserOrdersAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var userOrders = _orders.Values.Where(o => o.UserId == userId).ToList();
-        return Task.FromResult<IEnumerable<TradeOrderDto>>(userOrders);
+        if (_dbContext != null)
+        {
+            try
+            {
+                var dbOrders = await _dbContext.TradeOrders
+                    .AsNoTracking()
+                    .Where(o => o.UserId == userId || o.RecyclerUserId == userId || o.PartnerId == userId)
+                    .OrderByDescending(o => o.CreatedAt)
+                    .Select(o => new TradeOrderDto
+                    {
+                        Id = o.Id,
+                        UserId = o.UserId,
+                        PartnerId = o.PartnerId,
+                        RecyclerUserId = o.RecyclerUserId,
+                        Status = o.Status.ToString(),
+                        ScheduledAt = o.ScheduledAt,
+                        EstimatedWeightKg = o.EstimatedWeightKg,
+                        CategoryCode = o.CategoryCode,
+                        InitialPricePerKg = o.InitialPricePerKg,
+                        AgreedPricePerKg = o.AgreedPricePerKg,
+                        ProposedTimeSlot = o.ProposedTimeSlot,
+                        ConfirmedTimeSlot = o.ConfirmedTimeSlot,
+                        QrCodeValue = $"ECOLINK_ORDER_{o.Id:N}"
+                    })
+                    .ToListAsync(cancellationToken);
+
+                if (dbOrders.Count > 0)
+                {
+                    return dbOrders;
+                }
+            }
+            catch
+            {
+                // Fallback sang bộ nhớ đệm nếu chưa kết nối PostgreSQL
+            }
+        }
+
+        var userOrders = _orders.Values.Where(o => o.UserId == userId || o.PartnerId == userId).ToList();
+        return userOrders;
     }
 }

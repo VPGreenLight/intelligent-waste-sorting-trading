@@ -42,7 +42,10 @@ public static class DependencyInjection
 
         // Đăng ký Gamification & Trade Services
         services.AddSingleton<IGamificationService, GamificationService>();
-        services.AddSingleton<ITradeTransactionService, TradeTransactionService>();
+        services.AddScoped<ITradeTransactionService, TradeTransactionService>();
+
+        // Đăng ký In-App Real-Time Negotiation Chatbox Service (Module NEG: U-08 & R-05)
+        services.AddScoped<INegotiationChatService, NegotiationChatService>();
 
         // Đăng ký Authentication & Token & Email Services (Module 1 - AUTH)
         services.AddScoped<ITokenService, JwtTokenService>();

@@ -2069,4 +2069,432 @@
    </Row>
   </Table>
  </Worksheet>
+ <!-- ==================== SHEET 6: NEGOTIATION CHATBOX MODULE (U-08 & R-05) ==================== -->
+ <Worksheet ss:Name="6_Negotiation_Chatbox">
+  <Table>
+   <Column ss:Width="85"/>
+   <Column ss:Width="180"/>
+   <Column ss:Width="210"/>
+   <Column ss:Width="290"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="130"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="180"/>
+
+   <Row ss:Index="2">
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Code Module</Data></Cell>
+    <Cell ss:MergeAcross="2" ss:StyleID="SummaryValueLeft"><Data ss:Type="String">NegotiationChatService &amp; NegotiationChatValidators (U-08 &amp; R-05)</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Number of TCs</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="SummaryValue"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Round</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Failed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Pending</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">20</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Type</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Boundary</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Count</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">9</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">8</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">3</Data></Cell>
+   </Row>
+
+   <Row ss:Index="11" ss:Height="28">
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test Case ID</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Pre-conditions</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Input parameters</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Expected Results</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Type</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test date</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Tester</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Defect IDs</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Note</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">GetOrderChatThreadAsync &amp; VerifyChatRoomAccessAsync (NegotiationChatService - U-08 &amp; R-05)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC001</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn orderId tồn tại với Status = Negotiating, chủ đơn citizenId (11111111-...), cơ sở nhận đơn recyclerId (22222222-...), có 1 đề xuất Pending và 2 tin nhắn chưa đọc từ Recycler</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=validOrderId;&#10;callerUserId=&quot;11111111-...&quot;;&#10;callerRole=&quot;Citizen&quot;;&#10;page=1; pageSize=50</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: OrderChatThreadDto { OrderStatus = &quot;Negotiating&quot;, IsProposalLocked = false, IsChatOpen = true, UnreadCount = 2, ActiveProposal != null, Messages.TotalRecords &gt;= 2 }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tải thông tin phòng chat, trạng thái khóa IsProposalLocked và đề xuất hiệu lực (BR-NEG-01, BR-NEG-02, BR-NEG-03)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC002</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn orderId đang ở trạng thái tranh chấp OrderStatus.Disputed; người gọi có vai trò Staff (33333333-...)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=disputedOrderId;&#10;callerUserId=&quot;33333333-...&quot;;&#10;callerRole=&quot;Staff&quot;;&#10;page=1; pageSize=50</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: OrderChatThreadDto { OrderStatus = &quot;Disputed&quot;, IsProposalLocked = true, Messages.Items chứa đầy đủ lịch sử tin nhắn bất biến }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cấp quyền đọc bằng chứng chat cho Staff khi đơn đang Disputed (BR-NEG-01, BR-DSP-06)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC003</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn orderId đang Negotiating; người gọi là tài khoản thứ ba otherUserId (88888888-...) không thuộc đơn bàn giao</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=validOrderId;&#10;callerUserId=&quot;88888888-...&quot;;&#10;callerRole=&quot;Citizen&quot;;&#10;page=1; pageSize=50</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: ForbiddenAccessException (&quot;BR-NEG-01&quot;, &quot;MSG-NEG-FORBIDDEN&quot;)&#10;Log Message: &quot;Tin nhắn thương lượng chỉ hiển thị cho Người dân và Cơ sở thu gom thuộc yêu cầu bàn giao này (BR-NEG-01).&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cô lập quyền riêng tư phòng chat theo đúng chủ đơn &amp; cơ sở nhận đơn (BR-NEG-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC004</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn orderId hợp lệ; truyền tham số phân trang vượt biên âm và vượt trần (page = -1, pageSize = 500)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=validOrderId;&#10;callerUserId=&quot;11111111-...&quot;;&#10;callerRole=&quot;Citizen&quot;;&#10;page=-1; pageSize=500</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: OrderChatThreadDto { Messages.PageNumber = 1, Messages.PageSize = 100 }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tự động kẹp biên phân trang Math.Max(1, page) và Math.Clamp(pageSize, 1, 100)</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">SendMessageAsync &amp; MarkMessagesAsReadAsync (NegotiationChatService - U-08 &amp; R-05)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC005</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn orderId đang ở trạng thái Pending</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=validOrderId;&#10;senderUserId=&quot;11111111-...&quot;;&#10;senderRole=&quot;Citizen&quot;;&#10;MessageType=&quot;Text&quot;;&#10;MessageContent=&quot;Mình có 12kg vỏ chai PET sạch&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: (ChatMessageDto { MessageType = &quot;Text&quot;, SenderRole = &quot;Citizen&quot;, IsRead = false }, RecipientNotification = &quot;Bạn có tin nhắn mới từ Nguyễn Văn An.&quot;)&#10;Exception: N/A&#10;Log Message: &quot;[NEG] Tin nhắn Text mới trong đơn {OrderId} từ Citizen&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Gửi tin nhắn văn bản thời gian thực và sinh thông báo MSG-NEG-02</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC006</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn orderId đã chốt điều khoản (OrderStatus.Accepted hoặc OrderStatus.Completed)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=acceptedOrderId;&#10;senderUserId=&quot;22222222-...&quot;;&#10;senderRole=&quot;Recycler&quot;;&#10;MessageType=&quot;Image&quot;;&#10;AttachmentUrl=&quot;https://r2.../map.jpg&quot;;&#10;MessageContent=&quot;Xe tải mình đang đậu đầu hẻm nhé&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: (ChatMessageDto { MessageType = &quot;Image&quot;, AttachmentUrl = &quot;https://r2.../map.jpg&quot; }, RecipientNotification != null)&#10;Exception: N/A&#10;Log Message: &quot;[NEG] Tin nhắn Image mới trong đơn {OrderId} từ Recycler&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thực thi BR-NEG-02: kênh chat thông thường (Text/Image) vẫn giữ mở sau khi đơn đã Accepted hoặc Completed</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC007</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn orderId đã bị hủy hoặc từ chối (OrderStatus.Cancelled / Rejected / Expired)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=cancelledOrderId;&#10;senderUserId=&quot;11111111-...&quot;;&#10;senderRole=&quot;Citizen&quot;;&#10;MessageType=&quot;Text&quot;;&#10;MessageContent=&quot;Alo&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-NEG-02&quot;, &quot;MSG-NEG-CHAT-CLOSED&quot;)&#10;Log Message: &quot;Đơn bàn giao đang ở trạng thái &apos;Cancelled&apos; nên không thể gửi tin nhắn mới.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn gửi tin nhắn mới vào đơn đã hủy / từ chối / hết hạn</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC008</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Trong orderId có 2 tin nhắn chưa đọc từ Citizen gửi và 1 tin nhắn chưa đọc do chính Recycler gửi</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=validOrderId;&#10;readerUserId=&quot;22222222-...&quot;;&#10;readerRole=&quot;Recycler&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: markedCount = 2 (2 tin nhắn của Citizen chuyển IsRead = true, ReadAt != null; tin nhắn của Recycler giữ IsRead = false)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đánh dấu đã đọc chỉ áp dụng lên tin nhắn của đối phương</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">SendProposalAsync (NegotiationChatService - U-08 &amp; R-05)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC009</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn orderId đang ở trạng thái Pending (ProposedTimeSlot = &quot;2026-11-05 09:00 - 11:00&quot;)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=validOrderId;&#10;senderUserId=&quot;11111111-...&quot;;&#10;senderRole=&quot;Citizen&quot;;&#10;ProposedPricePerKg=7500;&#10;ProposedWeightKg=12.5;&#10;ProposedTimeSlot=&quot;2026-11-05 14:00 - 16:00&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: (ProposalMessage { MessageType = &quot;Proposal&quot;, Proposal.ProposalStatus = &quot;Pending&quot; }, SupersededIds = [], ToastMessage = &quot;Yêu cầu trao đổi của bạn đã được gửi đến Vựa phế liệu EcoGreen.&quot;) (TradeOrder.Status chuyển sang Negotiating)&#10;Exception: N/A&#10;Log Message: &quot;[NEG] Đề xuất thương lượng mới {ProposalId} trong đơn {OrderId}&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chuyển trạng thái Pending -&gt; Negotiating (BR-HND-02), cập nhật khung giờ (BR-NEG-04) và trả về MSG-NEG-01</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC010</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn orderId đang Negotiating và đã có đề xuất proposalId_1 ở trạng thái ProposalStatus.Pending</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=validOrderId;&#10;senderUserId=&quot;22222222-...&quot;;&#10;senderRole=&quot;Recycler&quot;;&#10;ProposedPricePerKg=7200;&#10;ProposedWeightKg=12.5;&#10;ProposedTimeSlot=&quot;2026-11-05 15:00 - 17:00&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: (ProposalMessage #2 { ProposalStatus = &quot;Pending&quot; }, SupersededIds = [proposalId_1]) (proposalId_1 trong DB chuyển thành ProposalStatus.Superseded)&#10;Exception: N/A&#10;Log Message: &quot;[NEG] Đề xuất thương lượng mới {ProposalId} trong đơn {OrderId} (Ghi đè 1 đề xuất cũ).&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thực thi BR-NEG-03: phản đề xuất mới tự động ghi đè (Superseded) đề xuất trước đó</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC011</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn orderId đã được chốt (OrderStatus.Accepted hoặc OrderStatus.Scheduled)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=acceptedOrderId;&#10;senderUserId=&quot;11111111-...&quot;;&#10;senderRole=&quot;Citizen&quot;;&#10;ProposedPricePerKg=8000;&#10;ProposedWeightKg=12.5;&#10;ProposedTimeSlot=&quot;2026-11-06 09:00 - 11:00&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-NEG-02&quot;, &quot;MSG-NEG-PROPOSAL-LOCKED&quot;)&#10;Log Message: &quot;Việc đưa ra hoặc sửa đổi đề xuất giá/khung giờ chỉ được phép khi đơn đang &apos;Pending&apos; hoặc &apos;Negotiating&apos; (BR-NEG-02).&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thực thi BR-NEG-02: khóa hoàn toàn tính năng gửi đề xuất mới sau khi đơn chuyển sang Accepted</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC012</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId không tồn tại trong bảng trade_orders</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=&quot;99999999-9999-9999-9999-999999999999&quot;;&#10;senderUserId=&quot;11111111-...&quot;;&#10;request=SendProposalRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: NotFoundException (&quot;Không tìm thấy yêu cầu bàn giao...&quot;)&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra tồn tại của đơn bàn giao trước khi thương lượng</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">RespondToProposalAsync &amp; AcceptOrderInitialTermsAsync (NegotiationChatService - U-08 &amp; R-05)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC013</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn orderId đang Negotiating; proposalId_2 do Recycler gửi đang ở trạng thái ProposalStatus.Pending (7,200 đ/kg, 12.5 kg, &quot;2026-11-05 15:00 - 17:00&quot;)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=validOrderId;&#10;proposalMessageId=proposalId_2;&#10;responderUserId=&quot;11111111-...&quot; (Citizen);&#10;IsAccepted=true</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: (ProposalAcceptanceResultDto { OrderStatus = &quot;Accepted&quot;, AgreedPricePerKg = 7200, ConfirmedWeightKg = 12.5, ConfirmedTimeSlot = &quot;2026-11-05 15:00 - 17:00&quot;, IsProposalLocked = true, SystemMessage.MessageType = &quot;System&quot; }, ToastMessage = &quot;Nguyễn Văn An đã chấp nhận đề nghị của bạn.&quot;)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lưu cứng điều khoản vào TradeOrder, khóa khung giờ thu gom (BR-NEG-03, BR-NEG-05) và trả về MSG-NEG-03</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC014</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn orderId đang Pending kèm InitialPricePerKg = 7000, ProposedTimeSlot = &quot;2026-11-05 09:00 - 11:00&quot;; chưa có phản đề xuất trung gian</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=validOrderId;&#10;recyclerUserId=&quot;22222222-...&quot;;&#10;recyclerRole=&quot;Recycler&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: (ProposalAcceptanceResultDto { OrderStatus = &quot;Accepted&quot;, AgreedPricePerKg = 7000, ConfirmedTimeSlot = &quot;2026-11-05 09:00 - 11:00&quot;, IsProposalLocked = true }, ToastMessage = &quot;Vựa phế liệu EcoGreen đã chấp nhận đề nghị của bạn.&quot;)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Recycler (R-05) bấm chấp nhận trực tiếp yêu cầu bàn giao để chốt khung giờ chính thức (BR-NEG-05)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC015</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">proposalId_2 được gửi bởi Recycler (22222222-...); chính Recycler gọi RespondToProposalAsync để tự chấp nhận</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=validOrderId;&#10;proposalMessageId=proposalId_2;&#10;responderUserId=&quot;22222222-...&quot;;&#10;IsAccepted=true</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-NEG-03&quot;, &quot;MSG-NEG-SELF-RESPONSE&quot;)&#10;Log Message: &quot;Bạn không thể tự phản hồi đề xuất do chính mình tạo ra. Chỉ đối phương mới có quyền chấp nhận hoặc từ chối.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn người tạo đề xuất tự bấm chấp nhận đề xuất của chính mình (BR-NEG-03)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC016</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">proposalId_1 đã bị ghi đè sang trạng thái ProposalStatus.Superseded bởi proposalId_2</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=validOrderId;&#10;proposalMessageId=proposalId_1;&#10;responderUserId=&quot;11111111-...&quot;;&#10;IsAccepted=true</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: BusinessRuleException (&quot;BR-NEG-03&quot;, &quot;MSG-NEG-SUPERSEDED&quot;)&#10;Log Message: &quot;Đề xuất này đã bị ghi đè bởi một đề xuất mới hơn. Chỉ đề xuất mới nhất đang hiệu lực mới có thể chấp nhận (BR-NEG-03).&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn chấp nhận đề xuất cũ đã hết hiệu lực (BR-NEG-03)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC017</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Citizen (11111111-...) cố tình gọi AcceptOrderInitialTermsAsync của phía Recycler</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">orderId=validOrderId;&#10;recyclerUserId=&quot;11111111-...&quot;;&#10;recyclerRole=&quot;Citizen&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null&#10;Exception: ForbiddenAccessException (&quot;BR-NEG-05&quot;, &quot;MSG-NEG-ONLY-RECYCLER&quot;)&#10;Log Message: &quot;Chỉ cơ sở thu gom (Recycler) nhận đơn mới có quyền bấm chấp nhận yêu cầu bàn giao ban đầu (BR-NEG-05).&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bảo vệ quyền chốt đơn ban đầu dành riêng cho Recycler nhận đơn (BR-NEG-05)</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">SendChatMessageRequestValidator &amp; SendProposalRequestValidator (NegotiationChatValidators)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC018</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra độ dài biên của nội dung tin nhắn văn bản (2000 ký tự vs 2001 ký tự)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">MessageType=&quot;Text&quot;;&#10;MessageContent=new string(&apos;a&apos;, 2000) (và 2001 ký tự)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: IsValid = true với 2000 ký tự; IsValid = false với 2001 ký tự (&quot;Nội dung tin nhắn không được vượt quá 2000 ký tự.&quot;)&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra biên trên độ dài tin nhắn văn bản MaxLength = 2000</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC019</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra giá trị biên trên của đơn giá và khối lượng trong bản đề xuất</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">ProposedPricePerKg=10_000_000;&#10;ProposedWeightKg=100_000;&#10;ProposedTimeSlot=&quot;2026-11-05 08:00 - 10:00&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ValidationResult { IsValid = true, Errors.Count = 0 }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chấp nhận giá trị biên hợp lệ tối đa 10.000.000 VNĐ/kg và 100.000 kg</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC020</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Gửi tin nhắn Image thiếu AttachmentUrl hoặc gửi đề xuất có ProposedPricePerKg = 0 và bỏ trống ProposedTimeSlot</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">ProposedPricePerKg=0;&#10;ProposedWeightKg=-5;&#10;ProposedTimeSlot=&quot;&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ValidationResult { IsValid = false, Errors.Count = 3 (đơn giá &gt; 0, khối lượng &gt; 0, khung giờ không được để trống) }&#10;Exception: N/A&#10;Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-03</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bắt lỗi đầu vào khi thiếu khung giờ đề xuất hoặc giá/khối lượng âm (BR-NEG-04)</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
 </Workbook>

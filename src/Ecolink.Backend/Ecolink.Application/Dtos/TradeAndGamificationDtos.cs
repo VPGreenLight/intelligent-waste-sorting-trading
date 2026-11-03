@@ -69,6 +69,10 @@ public class CreateTradeOrderRequest
     public DateTime ScheduledAt { get; set; }
     public decimal EstimatedWeightKg { get; set; }
     public string? Note { get; set; }
+    public string? CategoryCode { get; set; }
+    public decimal? InitialPricePerKg { get; set; }
+    public string? ProposedTimeSlot { get; set; }
+    public string? PickupAddress { get; set; }
 }
 
 public class TradeOrderDto
@@ -76,9 +80,15 @@ public class TradeOrderDto
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
     public Guid PartnerId { get; set; }
+    public Guid? RecyclerUserId { get; set; }
     public string Status { get; set; } = string.Empty;
     public DateTime ScheduledAt { get; set; }
     public decimal EstimatedWeightKg { get; set; }
+    public string? CategoryCode { get; set; }
+    public decimal? InitialPricePerKg { get; set; }
+    public decimal? AgreedPricePerKg { get; set; }
+    public string? ProposedTimeSlot { get; set; }
+    public string? ConfirmedTimeSlot { get; set; }
     public string QrCodeValue { get; set; } = string.Empty;
 }
 

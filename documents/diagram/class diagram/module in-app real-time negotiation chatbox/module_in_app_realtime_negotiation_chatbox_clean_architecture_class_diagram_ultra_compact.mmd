@@ -1,0 +1,171 @@
+classDiagram
+    direction TB
+
+    %% Presentation Layer (Ecolink.WebApi)
+    class NegotiationChatController {
+        - INegotiationChatService _chatService
+        - INegotiationChatNotifier _chatNotifier
+        - IFileStorageService _fileStorageService
+        - ICurrentUserService _currentUser
+        - IValidator~SendChatMessageRequest~ _messageValidator
+        - IValidator~SendProposalRequest~ _proposalValidator
+        - IValidator~RespondProposalRequest~ _respondValidator
+        + GetChatThread(orderId, page, pageSize, ct) Task~IActionResult~
+        + SendMessage(orderId, SendChatMessageRequest, ct) Task~IActionResult~
+        + UploadChatAttachment(orderId, IFormFile, ct) Task~IActionResult~
+        + SendProposal(orderId, SendProposalRequest, ct) Task~IActionResult~
+        + RespondToProposal(orderId, messageId, RespondProposalRequest, ct) Task~IActionResult~
+        + AcceptOrderInitialTerms(orderId, ct) Task~IActionResult~
+        + MarkMessagesAsRead(orderId, ct) Task~IActionResult~
+    }
+    class NegotiationChatHub {
+        - INegotiationChatService _chatService
+        + JoinOrderChatRoom(orderId) Task
+        + LeaveOrderChatRoom(orderId) Task
+        + SendTypingIndicator(orderId, isTyping) Task
+    }
+    class SignalRNegotiationChatNotifier {
+        - IHubContext~NegotiationChatHub~ _hubContext
+        + NotifyMessageReceivedAsync(orderId, ChatMessageDto, notification, ct) Task
+        + NotifyProposalCreatedAsync(orderId, ChatMessageDto, supersededIds, notification, ct) Task
+        + NotifyProposalRespondedAsync(orderId, ProposalAcceptanceResultDto, notification, ct) Task
+        + NotifyMessagesReadAsync(orderId, readerUserId, markedCount, readAtUtc, ct) Task
+    }
+
+    %% Application Layer (Inbound & Outbound Ports + Validators + DTOs)
+    class INegotiationChatService {
+        <<interface>>
+        + GetOrderChatThreadAsync(orderId, callerUserId, callerRole, page, pageSize, ct) Task~OrderChatThreadDto~
+        + SendMessageAsync(orderId, senderUserId, senderRole, SendChatMessageRequest, ct) Task~Tuple~
+        + SendProposalAsync(orderId, senderUserId, senderRole, SendProposalRequest, ct) Task~Tuple~
+        + RespondToProposalAsync(orderId, proposalMessageId, responderUserId, responderRole, RespondProposalRequest, ct) Task~Tuple~
+        + AcceptOrderInitialTermsAsync(orderId, recyclerUserId, recyclerRole, ct) Task~Tuple~
+        + MarkMessagesAsReadAsync(orderId, readerUserId, readerRole, ct) Task~int~
+        + VerifyChatRoomAccessAsync(orderId, callerUserId, callerRole, ct) Task~bool~
+    }
+    class INegotiationChatNotifier {
+        <<interface>>
+        + NotifyMessageReceivedAsync(orderId, ChatMessageDto, notification, ct) Task
+        + NotifyProposalCreatedAsync(orderId, ChatMessageDto, supersededIds, notification, ct) Task
+        + NotifyProposalRespondedAsync(orderId, ProposalAcceptanceResultDto, notification, ct) Task
+        + NotifyMessagesReadAsync(orderId, readerUserId, markedCount, readAtUtc, ct) Task
+    }
+    class IFileStorageService {
+        <<interface>>
+        + UploadRecyclerDocumentAsync(stream, fileName, contentType, folderPrefix, ct) Task~RecyclerDocumentUploadResponseDto~
+    }
+    class SendChatMessageRequestValidator {
+        + ValidateAsync(SendChatMessageRequest, ct) Task~ValidationResult~
+    }
+    class SendProposalRequestValidator {
+        + ValidateAsync(SendProposalRequest, ct) Task~ValidationResult~
+    }
+    class OrderChatThreadDto {
+        + Guid OrderId
+        + string OrderStatus
+        + decimal? AgreedPricePerKg
+        + string? ProposedTimeSlot
+        + string? ConfirmedTimeSlot
+        + bool IsProposalLocked
+        + bool IsChatOpen
+        + ChatMessageDto? ActiveProposal
+        + PagedResult~ChatMessageDto~ Messages
+    }
+    class ChatMessageDto {
+        + Guid Id
+        + Guid OrderId
+        + Guid SenderUserId
+        + string SenderRole
+        + string MessageType
+        + string? MessageContent
+        + string? AttachmentUrl
+        + NegotiationProposalPayloadDto? Proposal
+        + bool IsRead
+        + DateTime SentAt
+    }
+
+    %% Infrastructure Layer (Adapters & Implementations)
+    class NegotiationChatService {
+        - ApplicationDbContext _db
+        - ILogger~NegotiationChatService~ _logger
+        + GetOrderChatThreadAsync(orderId, callerUserId, callerRole, page, pageSize, ct) Task~OrderChatThreadDto~
+        + SendMessageAsync(orderId, senderUserId, senderRole, SendChatMessageRequest, ct) Task~Tuple~
+        + SendProposalAsync(orderId, senderUserId, senderRole, SendProposalRequest, ct) Task~Tuple~
+        + RespondToProposalAsync(orderId, proposalMessageId, responderUserId, responderRole, RespondProposalRequest, ct) Task~Tuple~
+        + AcceptOrderInitialTermsAsync(orderId, recyclerUserId, recyclerRole, ct) Task~Tuple~
+        + MarkMessagesAsReadAsync(orderId, readerUserId, readerRole, ct) Task~int~
+        + VerifyChatRoomAccessAsync(orderId, callerUserId, callerRole, ct) Task~bool~
+    }
+    class CloudflareR2StorageService {
+        + UploadRecyclerDocumentAsync(stream, fileName, contentType, folderPrefix, ct) Task~RecyclerDocumentUploadResponseDto~
+    }
+    class ApplicationDbContext {
+        + DbSet~User~ Users
+        + DbSet~RecyclerProfile~ RecyclerProfiles
+        + DbSet~TradeOrder~ TradeOrders
+        + DbSet~ChatMessage~ ChatMessages
+    }
+
+    %% Domain Layer (Core Entities & Enums)
+    class TradeOrder {
+        + Guid Id
+        + Guid UserId
+        + Guid PartnerId
+        + Guid? RecyclerUserId
+        + OrderStatus Status
+        + decimal EstimatedWeightKg
+        + decimal? InitialPricePerKg
+        + decimal? AgreedPricePerKg
+        + string? ProposedTimeSlot
+        + string? ConfirmedTimeSlot
+        + DateTime? AcceptedAt
+    }
+    class ChatMessage {
+        + Guid Id
+        + Guid TradeOrderId
+        + Guid SenderUserId
+        + string SenderRole
+        + ChatMessageType MessageType
+        + string? MessageContent
+        + string? AttachmentUrl
+        + ProposalStatus? ProposalStatus
+        + decimal? ProposedPricePerKg
+        + decimal? ProposedWeightKg
+        + string? ProposedTimeSlot
+        + string? ProposalDataJson
+        + bool IsRead
+        + DateTime SentAt
+        + DateTime? ReadAt
+    }
+    class User {
+        + Guid Id
+        + string FullName
+        + UserRole Role
+        + UserStatus Status
+    }
+    class RecyclerProfile {
+        + Guid UserId
+        + string FacilityName
+        + VerificationStatus VerificationStatus
+    }
+
+    %% Clean Architecture Connectors
+    NegotiationChatController --> INegotiationChatService
+    NegotiationChatController --> INegotiationChatNotifier
+    NegotiationChatController --> IFileStorageService
+    NegotiationChatController --> SendChatMessageRequestValidator
+    NegotiationChatController --> SendProposalRequestValidator
+    NegotiationChatHub --> INegotiationChatService
+    SignalRNegotiationChatNotifier ..|> INegotiationChatNotifier
+    SignalRNegotiationChatNotifier --> NegotiationChatHub
+    NegotiationChatService ..|> INegotiationChatService
+    CloudflareR2StorageService ..|> IFileStorageService
+    NegotiationChatService --> ApplicationDbContext
+    OrderChatThreadDto *-- ChatMessageDto
+
+    %% Domain Relationships
+    User "1" -- "0..*" TradeOrder : creates handover request (U-08)
+    RecyclerProfile "1" -- "0..*" TradeOrder : receives handover request (R-05)
+    TradeOrder "1" *-- "0..*" ChatMessage : owns immutable chat thread (BR-NEG-01)
+    User "1" -- "0..*" ChatMessage : sends message / proposal
+

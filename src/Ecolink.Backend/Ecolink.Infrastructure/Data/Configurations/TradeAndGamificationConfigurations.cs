@@ -104,6 +104,7 @@ public class AcceptedMaterialConfiguration : IEntityTypeConfiguration<AcceptedMa
 
 /// <summary>
 /// Cấu hình bảng trade_orders theo chuẩn snake_case tại database_design_and_audit_guidelines.md.
+/// Hỗ trợ đầy đủ các trường Thương lượng &amp; Khung giờ thu gom (Module NEG: U-08 &amp; R-05).
 /// </summary>
 public class TradeOrderConfiguration : IEntityTypeConfiguration<TradeOrder>
 {
@@ -115,15 +116,26 @@ public class TradeOrderConfiguration : IEntityTypeConfiguration<TradeOrder>
         builder.Property(o => o.Id).HasColumnName("id");
         builder.Property(o => o.UserId).HasColumnName("user_id").IsRequired();
         builder.Property(o => o.PartnerId).HasColumnName("partner_id").IsRequired();
+        builder.Property(o => o.RecyclerUserId).HasColumnName("recycler_user_id");
         builder.Property(o => o.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(30).IsRequired();
         builder.Property(o => o.ScheduledAt).HasColumnName("scheduled_at").IsRequired();
         builder.Property(o => o.EstimatedWeightKg).HasColumnName("estimated_weight_kg").HasPrecision(12, 3).IsRequired();
         builder.Property(o => o.Note).HasColumnName("note");
+
+        builder.Property(o => o.CategoryCode).HasColumnName("category_code").HasMaxLength(50);
+        builder.Property(o => o.InitialPricePerKg).HasColumnName("initial_price_per_kg").HasPrecision(12, 2);
+        builder.Property(o => o.AgreedPricePerKg).HasColumnName("agreed_price_per_kg").HasPrecision(12, 2);
+        builder.Property(o => o.ProposedTimeSlot).HasColumnName("proposed_time_slot").HasMaxLength(150);
+        builder.Property(o => o.ConfirmedTimeSlot).HasColumnName("confirmed_time_slot").HasMaxLength(150);
+        builder.Property(o => o.PickupAddress).HasColumnName("pickup_address");
+        builder.Property(o => o.AcceptedAt).HasColumnName("accepted_at");
+
         builder.Property(o => o.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()").IsRequired();
         builder.Property(o => o.UpdatedAt).HasColumnName("updated_at");
 
         builder.HasIndex(o => o.UserId).HasDatabaseName("idx_trade_orders_user_id");
         builder.HasIndex(o => o.PartnerId).HasDatabaseName("idx_trade_orders_partner_id");
+        builder.HasIndex(o => o.RecyclerUserId).HasDatabaseName("idx_trade_orders_recycler_user_id");
 
         builder.HasOne(o => o.User)
             .WithMany(u => u.TradeOrders)
@@ -136,6 +148,63 @@ public class TradeOrderConfiguration : IEntityTypeConfiguration<TradeOrder>
             .HasForeignKey(o => o.PartnerId)
             .HasConstraintName("fk_trade_orders_collection_partners")
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(o => o.RecyclerProfile)
+            .WithMany()
+            .HasForeignKey(o => o.RecyclerUserId)
+            .HasPrincipalKey(r => r.UserId)
+            .HasConstraintName("fk_trade_orders_recycler_profiles")
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+/// <summary>
+/// Cấu hình bảng chat_messages lưu trữ bất biến lịch sử thương lượng theo 03_collection_trading_module.dbml (U-08 &amp; R-05, BR-NEG-01..05).
+/// </summary>
+public class ChatMessageConfiguration : IEntityTypeConfiguration<ChatMessage>
+{
+    public void Configure(EntityTypeBuilder<ChatMessage> builder)
+    {
+        builder.ToTable("chat_messages");
+        builder.HasKey(m => m.Id).HasName("pk_chat_messages");
+
+        builder.Property(m => m.Id).HasColumnName("id");
+        builder.Property(m => m.TradeOrderId).HasColumnName("trade_order_id").IsRequired();
+        builder.Property(m => m.SenderUserId).HasColumnName("sender_user_id").IsRequired();
+        builder.Property(m => m.SenderRole).HasColumnName("sender_role").HasMaxLength(30).IsRequired();
+        builder.Property(m => m.MessageType).HasColumnName("message_type").HasConversion<string>().HasMaxLength(20).IsRequired();
+        builder.Property(m => m.MessageContent).HasColumnName("message_content").HasMaxLength(2000);
+        builder.Property(m => m.AttachmentUrl).HasColumnName("attachment_url").HasMaxLength(1000);
+
+        builder.Property(m => m.ProposalStatus).HasColumnName("proposal_status").HasConversion<string>().HasMaxLength(20);
+        builder.Property(m => m.ProposedPricePerKg).HasColumnName("proposed_price_per_kg").HasPrecision(12, 2);
+        builder.Property(m => m.ProposedWeightKg).HasColumnName("proposed_weight_kg").HasPrecision(12, 3);
+        builder.Property(m => m.ProposedTimeSlot).HasColumnName("proposed_time_slot").HasMaxLength(150);
+        builder.Property(m => m.ProposalDataJson).HasColumnName("proposal_data").HasColumnType("jsonb");
+
+        builder.Property(m => m.IsRead).HasColumnName("is_read").HasDefaultValue(false).IsRequired();
+        builder.Property(m => m.SentAt).HasColumnName("sent_at").HasDefaultValueSql("NOW()").IsRequired();
+        builder.Property(m => m.ReadAt).HasColumnName("read_at");
+        builder.Property(m => m.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()").IsRequired();
+        builder.Property(m => m.UpdatedAt).HasColumnName("updated_at");
+
+        builder.HasIndex(m => new { m.TradeOrderId, m.SentAt })
+            .HasDatabaseName("ix_chat_messages_order_id_sent_at");
+
+        builder.HasIndex(m => new { m.TradeOrderId, m.ProposalStatus })
+            .HasDatabaseName("ix_chat_messages_order_id_proposal_status");
+
+        builder.HasOne(m => m.TradeOrder)
+            .WithMany(o => o.Messages)
+            .HasForeignKey(m => m.TradeOrderId)
+            .HasConstraintName("fk_chat_messages_trade_orders")
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(m => m.SenderUser)
+            .WithMany()
+            .HasForeignKey(m => m.SenderUserId)
+            .HasConstraintName("fk_chat_messages_users")
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 
@@ -169,4 +238,3 @@ public class TransactionReceiptConfiguration : IEntityTypeConfiguration<Transact
             .OnDelete(DeleteBehavior.Cascade);
     }
 }
-

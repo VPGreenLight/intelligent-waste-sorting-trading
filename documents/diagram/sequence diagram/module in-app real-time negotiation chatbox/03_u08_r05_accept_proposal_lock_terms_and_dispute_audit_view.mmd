@@ -1,0 +1,50 @@
+sequenceDiagram
+    autonumber
+    actor Citizen as Citizen (User Side - U-08)
+    actor Recycler as Recycler (Recycler Side - R-05)
+    actor Staff as Eco-Staff (Dispute Reviewer - S-05)
+    participant Ctrl as NegotiationChatController
+    participant Svc as NegotiationChatService
+    participant Notifier as SignalRNegotiationChatNotifier
+    participant Hub as NegotiationChatHub
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Citizen, DB: 1. Đối phương bấm Chấp nhận Đề xuất mới nhất -> Khóa điều khoản & Chốt khung giờ thu gom (BR-NEG-02, BR-NEG-03, BR-NEG-05)
+    Citizen->>Ctrl: POST /api/v1/trade/orders/{orderId}/proposals/{messageId}/respond (IsAccepted = true)
+    Ctrl->>Svc: RespondToProposalAsync(orderId, messageId, citizenUserId, "Citizen", request)
+    Svc->>DB: Load TradeOrder & Target Proposal ChatMessage
+
+    alt Người gọi chính là người tạo đề xuất HOẶC ProposalStatus == Superseded (BR-NEG-03)
+        Svc-->>Ctrl: Throw BusinessRuleException ("BR-NEG-03", "MSG-NEG-SELF-RESPONSE" / "MSG-NEG-SUPERSEDED")
+        Ctrl-->>Citizen: 400 Bad Request
+    else Đề xuất hợp lệ & đang ở trạng thái Pending mới nhất
+        Svc->>DB: Cập nhật ChatMessage: ProposalStatus = Accepted, IsRead = true, ReadAt = UtcNow
+        Svc->>DB: Snapshot vào TradeOrder: AgreedPricePerKg, EstimatedWeightKg, ConfirmedTimeSlot (BR-NEG-03, BR-NEG-05)
+        Svc->>DB: Chuyển TradeOrder.Status = Accepted, AcceptedAt = UtcNow (Khóa gửi Proposal mới - BR-NEG-02)
+        Svc->>DB: Insert ChatMessage (Type = System, Content = "{party_name} đã chấp nhận đề nghị của bạn...")
+        Svc->>DB: SaveChangesAsync() (Atomic Transaction)
+        Svc-->>Ctrl: (ProposalAcceptanceResultDto { IsProposalLocked = true }, Toast = MSG-NEG-03)
+        Ctrl->>Notifier: NotifyProposalRespondedAsync(orderId, resultDto, MSG-NEG-03)
+        Notifier->>Hub: Broadcast "ProposalResponded" to Group "order:{orderId}"
+        Hub-->>Recycler: Real-time Event ProposalResponded (Status = Accepted, IsProposalLocked = true) + Toast MSG-NEG-03
+        Hub-->>Citizen: Real-time Event ProposalResponded
+        Ctrl-->>Citizen: 200 OK ApiResponse<ProposalAcceptanceResultDto> (MSG-NEG-03)
+    end
+
+    Note over Citizen, Recycler: 2. Sau khi đơn đã Accepted, kênh chat TEXT/IMAGE vẫn mở để chỉ đường (BR-NEG-02)
+    Recycler->>Ctrl: POST /api/v1/trade/orders/{orderId}/messages (Type = "Text", Content = "Mình đang tới đầu hẻm 125 nhé")
+    Ctrl->>Svc: SendMessageAsync(...) [IsGeneralChatAllowed(Accepted) == true]
+    Svc->>DB: Insert ChatMessage (Type = Text) & SaveChangesAsync()
+    Ctrl-->>Recycler: 201 Created (Vẫn cho phép nhắn tin điều phối điểm hẹn)
+
+    Note over Staff, DB: 3. Truy xuất Lịch sử Chat Bất biến làm Bằng chứng khi phát sinh Khiếu nại (BR-NEG-01, BR-DSP-06)
+    opt Khi đơn bàn giao chuyển sang trạng thái tranh chấp (TradeOrder.Status == Disputed)
+        Staff->>Ctrl: GET /api/v1/trade/orders/{orderId}/messages?page=1&pageSize=50
+        Ctrl->>Svc: GetOrderChatThreadAsync(orderId, staffUserId, "Staff", 1, 50)
+        Svc->>DB: Kiểm tra Role == Staff && TradeOrder.Status == Disputed -> Cho phép quyền Read-only (BR-DSP-06)
+        Svc->>DB: Query toàn bộ lịch sử ChatMessages bất biến (Text, Image, Proposal, System)
+        DB-->>Svc: PagedResult<ChatMessageDto>
+        Svc-->>Ctrl: OrderChatThreadDto
+        Ctrl-->>Staff: 200 OK ApiResponse<OrderChatThreadDto> (Bằng chứng đối soát tranh chấp)
+    end
+

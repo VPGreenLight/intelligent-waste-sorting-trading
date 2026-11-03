@@ -32,6 +32,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<CollectionPartner> CollectionPartners => Set<CollectionPartner>();
     public DbSet<AcceptedMaterial> AcceptedMaterials => Set<AcceptedMaterial>();
     public DbSet<TradeOrder> TradeOrders => Set<TradeOrder>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<TransactionReceipt> TransactionReceipts => Set<TransactionReceipt>();
     public DbSet<WasteCategory> WasteCategories => Set<WasteCategory>();
     public DbSet<AIFeedbackLog> AIFeedbackLogs => Set<AIFeedbackLog>();

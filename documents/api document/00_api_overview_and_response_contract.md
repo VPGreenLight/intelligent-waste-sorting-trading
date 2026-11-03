@@ -1,7 +1,7 @@
 # TỔNG QUAN KIẾN TRÚC API, KHUNG PHẢN HỒI CHUẨN & HỆ THỐNG MÃ THÔNG BÁO
 **Dự án:** EcoLink – Intelligent Waste Sorting & Trading Platform  
 **Phiên bản API:** `v1` (`/api/v1/...`)  
-**Chuẩn thiết kế:** RESTful API + Clean Architecture (`ApiResponse<T>`, `PagedResult<T>`)  
+**Chuẩn thiết kế:** RESTful API + SignalR WebSocket + Clean Architecture (`ApiResponse<T>`, `PagedResult<T>`)  
 
 ---
 
@@ -18,6 +18,7 @@ Tài liệu đặc tả API của hệ thống EcoLink được chia thành các
 | **04** | [`04_module_trading_gamification_payment_api.md`](./04_module_trading_gamification_payment_api.md) | **Module 4: Geo-Matching, Trading, Gamification & Payment (`MTH`, `HND`, `GAM`, `PAY`)** | `/api/v1/trade`<br>`/api/v1/gamification` | Tìm kiếm điểm thu mua gần nhất theo GPS, tạo đơn hẹn bàn giao rác, quét QR chốt biên nhận, tích điểm xanh & Cây ảo, bảng xếp hạng và thanh toán VietQR / PayOS. |
 | **05** | [`05_module_recycler_profile_pricing_availability_api.md`](./05_module_recycler_profile_pricing_availability_api.md) | **Module 5: Recycler Profile, Pricing & Availability (`MTH` / `R-01` & `R-02`)** | `/api/v1/recycler`<br>`/api/v1/waste-categories` | Quản lý hồ sơ cơ sở thu gom, danh mục phế liệu chuẩn, cấu hình bảng giá thu mua (`VND/kg`, khối lượng tối thiểu, lưu hàng loạt), bật/tắt trạng thái `Online`/`Offline` và lịch hoạt động theo tuần. |
 | **06** | [`06_module_location_based_recycler_discovery_api.md`](./06_module_location_based_recycler_discovery_api.md) | **Module 6: Location-Based Recycler Discovery (`MTH` / `U-05`)** | `/api/v1/recyclers`<br>`/api/v1/trade/partners` | Tìm kiếm cơ sở thu gom đã xác minh (`Verified`) và đang mở cửa (`Online`) theo bán kính GPS, lọc theo loại phế liệu & từ khóa, xem chi tiết bảng giá công khai và gợi ý dự phòng từ Rule Engine khi không có người mua (`MSG-MTH-01`). |
+| **07** | [`07_module_in_app_realtime_negotiation_chatbox_api.md`](./07_module_in_app_realtime_negotiation_chatbox_api.md) | **Module 7: In-App Real-Time Negotiation Chatbox (`NEG` / `U-08` & `R-05`)** | `/api/v1/trade/orders/{orderId}`<br>`/hubs/negotiation-chat` | Phòng chat thương lượng thời gian thực SignalR theo đơn bàn giao (`BR-NEG-01`), gửi tin nhắn `Text`/`Image` (Cloudflare R2), gửi phản đề xuất giá/khối lượng/khung giờ (`Superseded` – `BR-NEG-03`), chốt điều khoản & khóa lịch hẹn (`BR-NEG-02`, `BR-NEG-05`). |
 
 ---
 
@@ -26,27 +27,30 @@ Tài liệu đặc tả API của hệ thống EcoLink được chia thành các
 | Dịch vụ | Môi trường Local | Swagger / OpenAPI UI | Health Check |
 |:---|:---|:---|:---|
 | **Core Business Web API (.NET 10)** | `http://localhost:5000` | `http://localhost:5000/swagger` | `GET /health` |
+| **SignalR Negotiation Hub (WebSocket)** | `ws://localhost:5000/hubs/negotiation-chat` | — | — |
 | **Dedicated AI Vision Service (FastAPI)** | `http://127.0.0.1:8000` | `http://127.0.0.1:8000/docs` | `GET /health` |
 
 ---
 
 ## 3. CƠ CHẾ XÁC THỰC & PHÂN QUYỀN (AUTHENTICATION & RBAC)
 
-### 3.1. Truyền Access Token qua Header
+### 3.1. Truyền Access Token qua Header (REST) hoặc Query String (SignalR WebSocket)
 Các API yêu cầu xác thực (`[Authorize]`) bắt buộc đính kèm JWT Access Token trong HTTP Header:
 
 ```http
 Authorization: Bearer <eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...>
 ```
 
+Đối với kết nối thời gian thực **SignalR WebSocket** tại `/hubs/negotiation-chat`, client có thể truyền JWT qua Header hoặc qua Query Parameter `?access_token=<jwt_token>`.
+
 * **Thời hạn Access Token:** `30 phút` (cấu hình tại `JwtSettings:AccessTokenExpirationMinutes`).
 * **Thời hạn Refresh Token:** `7 ngày` (lưu tự động trong `HttpOnly Cookie` tên `refreshToken` hoặc truyền qua body).
 
 ### 3.2. Các Vai trò Hệ thống (User Roles)
 * `Guest`: Khách vãng lai chưa đăng nhập (chỉ gọi được các API công khai như đăng ký, đăng nhập, tra cứu quy tắc tĩnh).
-* `Citizen` (`User`): Người dân đã đăng ký tài khoản (quét rác AI, tìm điểm thu gom, tạo đơn bàn giao, tích điểm xanh, nộp hồ sơ xin nâng cấp lên `Recycler`).
-* `Recycler`: Đối tác / Cơ sở thu mua phế liệu đã được `Staff` phê duyệt hồ sơ qua Module 2 (quản lý hồ sơ & bảng giá thu mua `R-01`, bật/tắt trạng thái mở cửa `R-02`, nhận đơn bàn giao, quét QR xác nhận khối lượng).
-* `Staff`: Nhân viên vận hành hệ thống (thẩm định hồ sơ `Recycler`, duyệt phản hồi ảnh AI sai, xử lý khiếu nại).
+* `Citizen` (`User`): Người dân đã đăng ký tài khoản (quét rác AI, tìm điểm thu gom, tạo đơn bàn giao, thương lượng qua Chatbox `U-08`, tích điểm xanh, nộp hồ sơ xin nâng cấp lên `Recycler`).
+* `Recycler`: Đối tác / Cơ sở thu mua phế liệu đã được `Staff` phê duyệt hồ sơ qua Module 2 (quản lý hồ sơ & bảng giá thu mua `R-01`, bật/tắt trạng thái mở cửa `R-02`, thương lượng & chốt khung giờ thu gom `R-05`, quét QR xác nhận khối lượng).
+* `Staff`: Nhân viên vận hành hệ thống (thẩm định hồ sơ `Recycler`, duyệt phản hồi ảnh AI sai, xem lịch sử chat bất biến để xử lý khiếu nại `BR-DSP-06`).
 * `Admin`: Quản trị viên toàn quyền (quản lý chính sách Rule Engine, danh mục rác, tài khoản nhân viên, báo cáo).
 
 > [!IMPORTANT]
@@ -66,7 +70,7 @@ Toàn bộ API của Core Backend đều trả về dữ liệu JSON theo địn
 | Tên trường | Kiểu dữ liệu | Bắt buộc | Mô tả |
 |:---|:---|:---:|:---|
 | `success` | `boolean` | Có | `true` nếu yêu cầu xử lý thành công (`2xx`), `false` nếu thất bại (`4xx`, `5xx`). |
-| `messageCode` | `string?` | Không | Mã thông báo chuẩn hóa theo từng phân hệ (VD: `MSG-AUTH-08`, `MSG-MTH-03`, `MSG-CLS-01`, `MSG-GEN-01`). |
+| `messageCode` | `string?` | Không | Mã thông báo chuẩn hóa theo từng phân hệ (VD: `MSG-AUTH-08`, `MSG-MTH-03`, `MSG-NEG-03`, `MSG-GEN-01`). |
 | `message` | `string?` | Không | Thông báo tiếng Việt thân thiện để hiển thị trực tiếp lên giao diện (Toast / Inline message). |
 | `data` | `T?` | Không | Dữ liệu nghiệp vụ trả về (Object, Array, hoặc `PagedResult<T>`). Trả về `null` khi gặp lỗi. |
 | `errors` | `string[]?` | Không | Danh sách chi tiết các lỗi xác thực đầu vào (FluentValidation / ModelState). Trả về `null` khi thành công. |
@@ -137,12 +141,12 @@ Các API truy vấn danh sách có phân trang trả về đối tượng `Paged
 
 | HTTP Status | Loại Exception trong Backend | Mã `messageCode` mặc định | Ý nghĩa & Trường hợp xảy ra |
 |:---:|:---|:---|:---|
-| **`200 OK`** | — | `MSG-GEN-01` / `MSG-[MOD]-XX` | Truy vấn (`GET`), cập nhật (`PUT`/`PATCH`) hoặc thực thi tác vụ (`POST` login, scan AI) thành công. |
-| **`201 Created`** | — | `MSG-AUTH-08` / `MSG-MTH-03` | Khởi tạo tài nguyên mới thành công (`POST` đăng ký tài khoản, nộp hồ sơ nâng cấp Recycler, thêm dòng giá phế liệu). |
+| **`200 OK`** | — | `MSG-GEN-01` / `MSG-[MOD]-XX` | Truy vấn (`GET`), cập nhật (`PUT`/`PATCH`) hoặc thực thi tác vụ (`POST` login, scan AI, chốt đề xuất) thành công. |
+| **`201 Created`** | — | `MSG-AUTH-08` / `MSG-MTH-03` / `MSG-NEG-01` | Khởi tạo tài nguyên mới thành công (`POST` đăng ký tài khoản, nộp hồ sơ nâng cấp Recycler, thêm dòng giá, gửi tin nhắn / đề xuất thương lượng). |
 | **`400 Bad Request`** | `BusinessRuleException`<br>`ValidationException` | `MSG-[MOD]-XX`<br>`MSG-GEN-01` | Dữ liệu đầu vào sai định dạng (FluentValidation) hoặc vi phạm quy tắc nghiệp vụ (`BR-*`). |
 | **`401 Unauthorized`** | `UnauthorizedAccessException` | `MSG-UNAUTHORIZED`<br>`MSG-NTF-01` | Thiếu JWT Bearer Token, Token hết hạn, sai chữ ký, hoặc Refresh Token không hợp lệ. |
-| **`403 Forbidden`** | ASP.NET Authorization | — | Đã đăng nhập nhưng vai trò (`Role`) không có quyền truy cập endpoint (VD: `Citizen` gọi API của `Recycler` hoặc `Staff`). |
-| **`404 Not Found`** | `NotFoundException` | `MSG-NOT-FOUND` | Không tìm thấy bản ghi theo ID yêu cầu (VD: chưa nộp hồ sơ Recycler, không tìm thấy dòng giá). |
+| **`403 Forbidden`** | `ForbiddenAccessException`<br>ASP.NET Authorization | `MSG-NEG-FORBIDDEN` | Đã đăng nhập nhưng vai trò (`Role`) không có quyền hoặc người dùng không phải chủ sở hữu tài nguyên (VD: truy cập phòng chat của đơn người khác – `BR-NEG-01`). |
+| **`404 Not Found`** | `NotFoundException` | `MSG-NOT-FOUND` | Không tìm thấy bản ghi theo ID yêu cầu (VD: không tìm thấy đơn bàn giao, không tìm thấy bản đề xuất). |
 | **`500 Internal Server Error`** | `Exception` (Unhandled) | `MSG-SYS-500` | Lỗi hệ thống hoặc kết nối dịch vụ ngoài. Hệ thống ẩn chi tiết kỹ thuật và trả về thông báo an toàn. |
 
 ---
@@ -159,3 +163,7 @@ Các API truy vấn danh sách có phân trang trả về đối tượng `Paged
 | **`MSG-MTH-03`** | Hồ sơ & Bản đồ (`MTH`) | Inline / Banner | Hồ sơ cơ sở của bạn đang được xem xét và sẽ xuất hiện trong tìm kiếm sau khi được duyệt. |
 | **`MSG-MTH-05`** | Hồ sơ & Bản đồ (`MTH`) | Inline / Banner | Hồ sơ cơ sở của bạn chưa được duyệt kèm lý do từ chối. Vui lòng cập nhật và gửi lại. |
 | **`MSG-MTH-06`** | Hồ sơ & Bản đồ (`MTH`) | Toast / Inline | Vui lòng thêm ít nhất một loại phế liệu nhận mua và một vị trí hợp lệ trước khi hoạt động. |
+| **`MSG-NEG-01`** | Thương lượng (`NEG`) | Toast | Yêu cầu trao đổi của bạn đã được gửi đến `{facility_name}`. |
+| **`MSG-NEG-02`** | Thương lượng (`NEG`) | In-app Notification | Bạn có tin nhắn mới từ `{sender_name}`. |
+| **`MSG-NEG-03`** | Thương lượng (`NEG`) | Toast | `{party_name}` đã chấp nhận đề nghị của bạn. |
+| **`MSG-NEG-04`** | Thương lượng (`NEG`) | Toast | Bạn có yêu cầu bàn giao mới kèm khung giờ đề xuất từ `{user_name}`. |
