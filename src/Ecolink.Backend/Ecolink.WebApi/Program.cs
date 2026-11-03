@@ -42,6 +42,7 @@ builder.Services.AddInfrastructureServices(builder.Configuration);
 // Lấy thông tin người dùng hiện tại (UserId/Role) từ JWT cho Controller và Audit Interceptor
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddHostedService<Ecolink.WebApi.Services.HandoverExpirationJob>(); // JOB-03
 
 // Cấu hình JWT Bearer Authentication & Authorization
 var jwtSecret = builder.Configuration["JwtSettings:SecretKey"] 

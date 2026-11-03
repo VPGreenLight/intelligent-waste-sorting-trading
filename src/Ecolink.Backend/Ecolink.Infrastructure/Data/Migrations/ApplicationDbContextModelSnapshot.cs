@@ -206,6 +206,176 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("collection_partners", (string)null);
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.HandoverRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_id");
+
+                    b.Property<DateTime?>("ActualHandoverAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("actual_handover_at");
+
+                    b.Property<string>("CancelReason")
+                        .HasColumnType("text")
+                        .HasColumnName("cancel_reason");
+
+                    b.Property<Guid?>("CancelledBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("cancelled_by");
+
+                    b.Property<DateTime?>("ConfirmedTimeSlot")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmed_time_slot");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<bool>("IsLateCancellation")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_late_cancellation");
+
+                    b.Property<decimal?>("Latitude")
+                        .HasPrecision(10, 7)
+                        .HasColumnType("numeric(10,7)")
+                        .HasColumnName("latitude");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasPrecision(11, 7)
+                        .HasColumnType("numeric(11,7)")
+                        .HasColumnName("longitude");
+
+                    b.Property<string>("PickupAddress")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("pickup_address");
+
+                    b.Property<DateTime>("ProposedTimeSlot")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("proposed_time_slot");
+
+                    b.Property<Guid>("RecyclerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recycler_id");
+
+                    b.Property<string>("RecyclerNote")
+                        .HasColumnType("text")
+                        .HasColumnName("recycler_note");
+
+                    b.Property<string>("RequestCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("request_code");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Pending")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("UserNote")
+                        .HasColumnType("text")
+                        .HasColumnName("user_note");
+
+                    b.Property<string>("WastePhotoUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("waste_photo_url");
+
+                    b.HasKey("Id")
+                        .HasName("pk_handover_requests");
+
+                    b.HasIndex("CancelledBy");
+
+                    b.HasIndex("RequestCode")
+                        .IsUnique()
+                        .HasDatabaseName("ux_handover_requests_request_code");
+
+                    b.HasIndex("RecyclerId", "Status")
+                        .HasDatabaseName("ix_handover_requests_recycler_status");
+
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("ix_handover_requests_status_created");
+
+                    b.HasIndex("UserId", "Status")
+                        .HasDatabaseName("ix_handover_requests_user_status");
+
+                    b.ToTable("handover_requests", (string)null);
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.HandoverRequestItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("item_id");
+
+                    b.Property<decimal?>("ActualWeightKg")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)")
+                        .HasColumnName("actual_weight_kg");
+
+                    b.Property<decimal?>("AgreedPricePerKg")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("agreed_price_per_kg");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<decimal>("EstimatedWeightKg")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("estimated_weight_kg");
+
+                    b.Property<string>("ItemNote")
+                        .HasColumnType("text")
+                        .HasColumnName("item_note");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_id");
+
+                    b.Property<Guid>("WasteCategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("category_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_handover_request_items");
+
+                    b.HasIndex("RequestId");
+
+                    b.HasIndex("WasteCategoryId");
+
+                    b.ToTable("handover_request_items", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_handover_request_items_estimated_positive", "estimated_weight_kg > 0");
+                        });
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.PasswordResetToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -379,6 +549,9 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)")
                         .HasColumnName("facility_name");
+
+                    b.Property<Guid>("Id")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
@@ -1104,6 +1277,52 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.HandoverRequest", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CancelledBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_handover_requests_cancelled_by");
+
+                    b.HasOne("Ecolink.Domain.Entities.RecyclerProfile", "Recycler")
+                        .WithMany()
+                        .HasForeignKey("RecyclerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_handover_requests_recycler_profiles");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_handover_requests_users");
+
+                    b.Navigation("Recycler");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.HandoverRequestItem", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.HandoverRequest", "Request")
+                        .WithMany("Items")
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_handover_request_items_requests");
+
+                    b.HasOne("Ecolink.Domain.Entities.WasteCategory", "WasteCategory")
+                        .WithMany()
+                        .HasForeignKey("WasteCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_handover_request_items_waste_categories");
+
+                    b.Navigation("Request");
+
+                    b.Navigation("WasteCategory");
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.PasswordResetToken", b =>
                 {
                     b.HasOne("Ecolink.Domain.Entities.User", "User")
@@ -1247,6 +1466,11 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("AcceptedMaterials");
 
                     b.Navigation("ReceivedOrders");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.HandoverRequest", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.RecyclerProfile", b =>

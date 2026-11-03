@@ -9,21 +9,21 @@ namespace Ecolink.Domain.Entities;
 /// </summary>
 public class RecyclerPrice
 {
-    public Guid Id { get; set; } = Guid.NewGuid();   
+    public Guid Id { get; set; } = Guid.NewGuid();   // price_id
 
-    public Guid RecyclerId { get; set; }             
+    public Guid RecyclerId { get; set; }             // recycler_id
     public RecyclerProfile? Recycler { get; set; }
 
-    public Guid WasteCategoryId { get; set; }       
+    public Guid WasteCategoryId { get; set; }        // category_id
     public WasteCategory? WasteCategory { get; set; }
 
-    /// <summary>Giá thu mua VND/kg.</summary>
+    /// <summary>Giá thu mua VND/kg (số nguyên dương).</summary>
     public decimal PricePerKg { get; set; }
 
     /// <summary>Khối lượng tối thiểu để thu gom (kg), mặc định 1.0.</summary>
     public decimal MinQuantityKg { get; set; } = 1.0m;
 
-    /// <summary>[Cột bổ sung] Điều kiện thu gom đặc biệt .</summary>
+    /// <summary>[Cột bổ sung] Điều kiện thu gom đặc biệt (tối đa 200 ký tự, SCR-RCY-01).</summary>
     public string? CollectionConditions { get; set; }
 
     public PriceStatus Status { get; set; } = PriceStatus.Active;

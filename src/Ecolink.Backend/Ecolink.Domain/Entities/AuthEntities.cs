@@ -31,7 +31,7 @@ public class RecyclerProfile : BaseAuditableEntity
     public RecyclerActiveStatus ActiveStatus { get; set; } = RecyclerActiveStatus.Offline;
     public string? RejectionReason { get; set; }
 
-    /// <summary>Ghi chú bận tạm thời hiển thị cho người dân .</summary>
+    /// <summary>Ghi chú bận tạm thời hiển thị cho người dân (tối đa 100 ký tự, SCR-RCY-02).</summary>
     public string? BusyReason { get; set; }
 
     /// <summary>Lịch hoạt động cố định theo tuần, lưu dạng JSON (xem ScheduleDayDto).</summary>
