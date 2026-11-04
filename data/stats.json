@@ -1,15 +1,47 @@
 {
-  "total_scans": 133,
+  "total_scans": 137,
   "categories": {
-    "cardboard": 31,
+    "cardboard": 32,
     "metal": 3,
     "glass": 10,
-    "plastic": 7,
+    "plastic": 9,
     "paper": 37,
     "trash": 3
   },
-  "ood_count": 42,
+  "ood_count": 43,
   "recent": [
+    {
+      "category": "plastic",
+      "confidence": 91.4,
+      "is_ood": false,
+      "model": "yolov8n",
+      "latency_ms": 610.31,
+      "timestamp": "2026-11-04 08:29:47"
+    },
+    {
+      "category": "plastic",
+      "confidence": 94.7,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 527.04,
+      "timestamp": "2026-11-04 08:29:22"
+    },
+    {
+      "category": "plastic",
+      "confidence": 58.2,
+      "is_ood": true,
+      "model": "yolov8_detect",
+      "latency_ms": 602.18,
+      "timestamp": "2026-11-04 08:29:02"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 81.0,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 1014.04,
+      "timestamp": "2026-11-04 08:28:03"
+    },
     {
       "category": "plastic",
       "confidence": 98.4,
@@ -177,39 +209,7 @@
       "model": "yolov8_detect",
       "latency_ms": 21.66,
       "timestamp": "2026-10-28 09:29:43"
-    },
-    {
-      "category": "paper",
-      "confidence": 63.5,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 23.34,
-      "timestamp": "2026-10-28 09:29:43"
-    },
-    {
-      "category": "paper",
-      "confidence": 63.5,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 23.36,
-      "timestamp": "2026-10-28 09:29:43"
-    },
-    {
-      "category": "paper",
-      "confidence": 63.5,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 27.69,
-      "timestamp": "2026-10-28 09:29:43"
-    },
-    {
-      "category": "paper",
-      "confidence": 63.5,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 21.97,
-      "timestamp": "2026-10-28 09:29:43"
     }
   ],
-  "avg_latency_ms": 296.83
+  "avg_latency_ms": 308.26
 }

@@ -7,13 +7,30 @@ echo        ECOLINK PLATFORM - DUNG TAT CA DICH VU DEV
 echo ==============================================================================
 echo.
 
-echo [*] Dang dung tien trinh ngrok...
+echo [*] Dang dung tien trinh Cloudflare Frontend Tunnel (cloudflared)...
+taskkill /F /IM cloudflared.exe 2>nul
+taskkill /F /FI "WINDOWTITLE eq EcoLink Cloudflare Frontend Tunnel*" 2>nul
+if %ERRORLEVEL% equ 0 (
+    echo   [+] Da dong Cloudflare Tunnel.
+) else (
+    echo   [-] Cloudflare Tunnel khong hoat dong hoac da dong.
+)
+
+echo [*] Dang dung tien trinh ngrok Backend Tunnel...
 taskkill /F /IM ngrok.exe 2>nul
+taskkill /F /FI "WINDOWTITLE eq EcoLink ngrok Tunnel*" 2>nul
 if %ERRORLEVEL% equ 0 (
     echo   [+] Da dong ngrok.
 ) else (
     echo   [-] ngrok khong hoat dong hoac da dong.
 )
+
+echo [*] Dang dung EcoLink Frontend Web (Port 5173)...
+taskkill /F /FI "WINDOWTITLE eq EcoLink Frontend Web*" 2>nul
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr :5173 ^| findstr LISTENING 2^>nul') do (
+    taskkill /F /PID %%a 2>nul
+)
+echo   [+] Da giai phong cong 5173.
 
 echo [*] Dang dung ASP.NET Core Web API (Port 5000)...
 taskkill /F /IM Ecolink.WebApi.exe 2>nul
