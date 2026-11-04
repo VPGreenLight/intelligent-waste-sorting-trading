@@ -1,4 +1,5 @@
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text.Json;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
@@ -26,7 +27,15 @@ public class AiVisionHttpClient : IAiVisionClient
         {
             using var content = new MultipartFormDataContent();
             var streamContent = new StreamContent(imageStream);
-            streamContent.Headers.ContentType = new MediaTypeHeaderValue("image/jpeg");
+            var ext = Path.GetExtension(fileName)?.ToLowerInvariant();
+            var mediaType = ext switch
+            {
+                ".png" => "image/png",
+                ".webp" => "image/webp",
+                ".bmp" => "image/bmp",
+                _ => "image/jpeg"
+            };
+            streamContent.Headers.ContentType = new MediaTypeHeaderValue(mediaType);
             content.Add(streamContent, "file", fileName);
 
             if (!string.IsNullOrWhiteSpace(model))
@@ -52,8 +61,8 @@ public class AiVisionHttpClient : IAiVisionClient
             }
 
             var jsonString = await response.Content.ReadAsStringAsync(cancellationToken);
-            var options = new JsonSerializerOptions 
-            { 
+            var options = new JsonSerializerOptions
+            {
                 PropertyNameCaseInsensitive = true,
                 PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
             };
@@ -98,6 +107,30 @@ public class AiVisionHttpClient : IAiVisionClient
         {
             _logger.LogError(ex, "Lỗi lấy danh sách mô hình từ AI Vision Service");
             return null;
+        }
+    }
+
+    public async Task<bool> SubmitFeedbackAsync(SubmitFeedbackDto feedback, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var endpoint = $"{_aiServiceBaseUrl.TrimEnd('/')}/api/v1/feedback";
+            var payload = new
+            {
+                predicted_label = string.IsNullOrWhiteSpace(feedback.PredictedLabel) ? "unknown" : feedback.PredictedLabel,
+                user_reported_label = feedback.UserReportedLabel,
+                confidence_score = feedback.ConfidenceScore,
+                note = feedback.Note ?? string.Empty,
+                image_url = feedback.ImageUrl ?? string.Empty
+            };
+
+            var response = await _httpClient.PostAsJsonAsync(endpoint, payload, cancellationToken);
+            return response.IsSuccessStatusCode;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Không thể đồng bộ phản hồi báo sai sang AI Vision Service (sẽ lưu tại Core API log)");
+            return false;
         }
     }
 }

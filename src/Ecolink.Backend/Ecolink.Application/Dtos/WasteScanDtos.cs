@@ -12,8 +12,14 @@ public class AiScanResultDto
     public bool Success { get; set; }
     public bool IsOutOfDistribution { get; set; }
     public double ConfidenceThreshold { get; set; } = 0.60;
+    public string? ModelUsed { get; set; }
+    public string? ModelName { get; set; }
+    public string? ModelFamily { get; set; }
     public WastePredictionDto? TopPrediction { get; set; }
     public List<WastePredictionDto> Predictions { get; set; } = new();
+    public List<WastePredictionDto> AllProbabilities { get; set; } = new();
+    public string? Pipeline { get; set; }
+    public List<double>? CroppedBbox { get; set; }
     public double InferenceTimeMs { get; set; }
     public string? ErrorMessage { get; set; }
 }

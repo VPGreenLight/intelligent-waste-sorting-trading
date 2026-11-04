@@ -33,8 +33,8 @@ public class WasteScanController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<WasteScanResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ClassifyImage(
-        IFormFile? file, 
-        [FromForm] string? model = "yolov8_detect", 
+        IFormFile? file,
+        [FromForm] string? model = "yolov8_detect",
         CancellationToken ct = default)
     {
         if (file == null || file.Length == 0)
@@ -55,7 +55,7 @@ public class WasteScanController : ControllerBase
             return BadRequest(ApiResponse<object>.Fail($"Mô hình '{model}' không tồn tại. Danh sách mô hình hỗ trợ: {string.Join(", ", validModels)}.", "MSG-CLS-06"));
         }
 
-        _logger.LogInformation("Tiếp nhận yêu cầu phân loại ảnh: {FileName} ({Length} bytes) với mô hình: {Model}", 
+        _logger.LogInformation("Tiếp nhận yêu cầu phân loại ảnh: {FileName} ({Length} bytes) với mô hình: {Model}",
             file.FileName, file.Length, model);
 
         using var stream = file.OpenReadStream();
@@ -63,8 +63,8 @@ public class WasteScanController : ControllerBase
 
         if (!aiResult.Success)
         {
-            var errorMsg = !string.IsNullOrWhiteSpace(aiResult.ErrorMessage) 
-                ? aiResult.ErrorMessage 
+            var errorMsg = !string.IsNullOrWhiteSpace(aiResult.ErrorMessage)
+                ? aiResult.ErrorMessage
                 : "Không thể phân tích hình ảnh từ AI Vision Service.";
             return BadRequest(ApiResponse<object>.Fail(errorMsg, "MSG-CLS-03"));
         }
@@ -126,15 +126,22 @@ public class WasteScanController : ControllerBase
     /// Báo cáo AI nhận diện sai để quản trị viên kiểm chứng và retrain (UC4, UC17)
     /// </summary>
     [HttpPost("feedback")]
-    public IActionResult SubmitFeedback([FromBody] SubmitFeedbackDto feedback)
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SubmitFeedback([FromBody] SubmitFeedbackDto feedback, CancellationToken ct = default)
     {
+        if (string.IsNullOrWhiteSpace(feedback.UserReportedLabel))
+        {
+            return BadRequest(ApiResponse<object>.Fail("Vui lòng chọn nhãn loại rác đúng.", "MSG-GEN-01"));
+        }
+
         _logger.LogInformation("Tiếp nhận phản hồi báo sai: Dự đoán [{Pred}] -> Người dùng chọn [{UserLabel}]",
             feedback.PredictedLabel, feedback.UserReportedLabel);
 
-        return Ok(new
-        {
-            success = true,
-            message = "Cảm ơn bạn đã phản hồi! Dữ liệu đã được chuyển tới Admin để kiểm chứng và cải thiện mô hình AI."
-        });
+        var syncedToAi = await _aiClient.SubmitFeedbackAsync(feedback, ct);
+
+        return Ok(ApiResponse<object>.Ok(
+            new { syncedToAi },
+            message: "Cảm ơn bạn đã phản hồi! Dữ liệu đã được chuyển tới Nhân viên vận hành để kiểm chứng và cải thiện mô hình AI.",
+            messageCode: "MSG-CLS-06"));
     }
 }

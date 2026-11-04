@@ -6,6 +6,7 @@ public interface IAiVisionClient
 {
     Task<AiScanResultDto> ClassifyWasteImageAsync(Stream imageStream, string fileName, string? model = "yolov8_detect", CancellationToken cancellationToken = default);
     Task<object?> GetAvailableModelsAsync(CancellationToken cancellationToken = default);
+    Task<bool> SubmitFeedbackAsync(SubmitFeedbackDto feedback, CancellationToken cancellationToken = default);
 }
 
 public interface IWasteRuleEngineService
