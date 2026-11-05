@@ -1,4 +1,6 @@
+using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Text.Json;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
@@ -19,6 +21,11 @@ namespace Ecolink.Infrastructure.Services;
 /// </summary>
 public class AuthService : IAuthService
 {
+    private static readonly HttpClient GoogleHttpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(10)
+    };
+
     private readonly ApplicationDbContext _dbContext;
     private readonly ITokenService _tokenService;
     private readonly IEmailService _emailService;
@@ -178,6 +185,13 @@ public class AuthService : IAuthService
             throw new BusinessRuleException("BR-AUTH-03", "MSG-AUTH-01", "Tên đăng nhập, email hoặc mật khẩu không chính xác.");
         }
 
+        // BR-AUTH-05: Chặn tài khoản đang bị đình chỉ hoạt động (Suspended)
+        if (user.Status == UserStatus.Suspended)
+        {
+            throw new BusinessRuleException("BR-AUTH-05", "MSG-AUTH-04",
+                "Tài khoản của bạn đã bị tạm đình chỉ hoạt động do vi phạm quy chuẩn nền tảng. Vui lòng liên hệ bộ phận hỗ trợ.");
+        }
+
         // BR-AUTH-04: Kiểm tra trạng thái khóa tạm thời (Lockout)
         if (user.Status == UserStatus.Locked && user.LockoutUntil.HasValue)
         {
@@ -192,6 +206,12 @@ public class AuthService : IAuthService
             user.Status = UserStatus.Active;
             user.FailedLoginAttempts = 0;
             user.LockoutUntil = null;
+        }
+
+        if (user.IsGoogleAuth && string.IsNullOrEmpty(user.PasswordHash))
+        {
+            throw new BusinessRuleException("BR-AUTH-03", "MSG-AUTH-01",
+                "Tài khoản này được liên kết qua Google và chưa thiết lập mật khẩu riêng. Vui lòng chọn 'Tiếp tục với Google' hoặc đặt mật khẩu mới qua 'Quên mật khẩu'.");
         }
 
         // Kiểm tra mật khẩu (hỗ trợ BCrypt hoặc đăng nhập mật khẩu trống nếu là tài khoản Google)
@@ -253,13 +273,25 @@ public class AuthService : IAuthService
             else
             {
                 var clientId = _configuration["GoogleAuth:ClientId"];
-                var settings = new GoogleJsonWebSignature.ValidationSettings
+                var hasRealClientId = !string.IsNullOrWhiteSpace(clientId)
+                                      && !clientId.Contains("mock", StringComparison.OrdinalIgnoreCase)
+                                      && !clientId.StartsWith('{');
+
+                // Hỗ trợ cả 2 chuẩn từ Google Identity Services:
+                // (1) JWT ID Token (3 đoạn phân tách bởi dấu chấm)
+                // (2) OAuth 2.0 Access Token (trả về từ cửa sổ Google Account Chooser - prompt: select_account)
+                if (idToken.Count(c => c == '.') == 2)
                 {
-                    Audience = !string.IsNullOrEmpty(clientId) && !clientId.Contains("mock")
-                        ? new[] { clientId }
-                        : null
-                };
-                payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
+                    var settings = new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = hasRealClientId ? new[] { clientId! } : null
+                    };
+                    payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
+                }
+                else
+                {
+                    payload = await ValidateGoogleOAuthAccessTokenAsync(idToken, hasRealClientId ? clientId : null, ct);
+                }
             }
         }
         catch (Exception ex)
@@ -300,6 +332,12 @@ public class AuthService : IAuthService
         }
         else
         {
+            if (user.Status == UserStatus.Suspended)
+            {
+                throw new BusinessRuleException("BR-AUTH-05", "MSG-AUTH-04",
+                    "Tài khoản của bạn đã bị tạm đình chỉ hoạt động do vi phạm quy chuẩn nền tảng.");
+            }
+
             user.IsGoogleAuth = true;
             if (!string.IsNullOrEmpty(payload.Picture) && string.IsNullOrEmpty(user.AvatarUrl))
             {
@@ -477,6 +515,119 @@ public class AuthService : IAuthService
         _logger.LogInformation("Người dùng {Username} ({Email}) đã đặt lại mật khẩu mới thành công", user.Username, user.Email);
     }
 
+    /// <summary>
+    /// 8. Cập nhật thông tin hồ sơ cá nhân của người dùng đang đăng nhập (SU-01)
+    /// </summary>
+    public async Task<UserInfoDto> UpdateProfileAsync(Guid userId, UpdateUserProfileRequestDto request, CancellationToken ct = default)
+    {
+        var user = await _dbContext.Users
+            .Include(u => u.EcoProfile)
+            .FirstOrDefaultAsync(u => u.Id == userId, ct);
+
+        if (user == null)
+        {
+            throw new BusinessRuleException("BR-AUTH-05", "MSG-NTF-01", "Không tìm thấy tài khoản người dùng.");
+        }
+
+        user.FullName = request.FullName.Trim();
+        if (request.PhoneNumber != null)
+        {
+            var normalizedPhone = request.PhoneNumber.Trim();
+            user.PhoneNumber = string.IsNullOrEmpty(normalizedPhone) ? null : normalizedPhone;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.AvatarUrl))
+        {
+            user.AvatarUrl = request.AvatarUrl.Trim();
+        }
+
+        await _dbContext.SaveChangesAsync(ct);
+        _logger.LogInformation("Người dùng {Username} ({UserId}) đã cập nhật hồ sơ cá nhân", user.Username, user.Id);
+
+        return MapToUserInfoDto(user);
+    }
+
+    /// <summary>
+    /// 9. Đổi mật khẩu tài khoản đang đăng nhập và thu hồi các phiên thiết bị khác (SU-02)
+    /// </summary>
+    public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequestDto request, string? currentRefreshToken = null, CancellationToken ct = default)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+        if (user == null)
+        {
+            throw new BusinessRuleException("BR-AUTH-05", "MSG-NTF-01", "Không tìm thấy tài khoản người dùng.");
+        }
+
+        if (string.IsNullOrEmpty(user.PasswordHash) || !BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+        {
+            throw new BusinessRuleException("BR-AUTH-03", "MSG-AUTH-01", "Mật khẩu hiện tại không chính xác.");
+        }
+
+        if (request.NewPassword.Length < 6)
+        {
+            throw new BusinessRuleException("BR-AUTH-06", "MSG-AUTH-01", "Mật khẩu mới tối thiểu phải có 6 ký tự.");
+        }
+
+        if (request.NewPassword == request.CurrentPassword)
+        {
+            throw new BusinessRuleException("BR-AUTH-06", "MSG-AUTH-01", "Mật khẩu mới phải khác mật khẩu hiện tại.");
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        user.FailedLoginAttempts = 0;
+        user.LockoutUntil = null;
+
+        var currentHash = !string.IsNullOrWhiteSpace(currentRefreshToken)
+            ? _tokenService.HashToken(currentRefreshToken)
+            : null;
+
+        var otherActiveTokens = await _dbContext.RefreshTokens
+            .Where(r => r.UserId == user.Id && !r.IsRevoked && (currentHash == null || r.TokenHash != currentHash))
+            .ToListAsync(ct);
+
+        foreach (var token in otherActiveTokens)
+        {
+            token.IsRevoked = true;
+        }
+
+        await _dbContext.SaveChangesAsync(ct);
+        _logger.LogInformation("Người dùng {Username} đã đổi mật khẩu và thu hồi {Count} phiên thiết bị khác", user.Username, otherActiveTokens.Count);
+    }
+
+    /// <summary>
+    /// 10. Đăng xuất và thu hồi Refresh Token hiện tại
+    /// </summary>
+    public async Task LogoutAsync(string? refreshToken, Guid? userId = null, CancellationToken ct = default)
+    {
+        if (!string.IsNullOrWhiteSpace(refreshToken))
+        {
+            var tokenHash = _tokenService.HashToken(refreshToken.Trim());
+            var record = await _dbContext.RefreshTokens
+                .FirstOrDefaultAsync(r => r.TokenHash == tokenHash && !r.IsRevoked, ct);
+
+            if (record != null)
+            {
+                record.IsRevoked = true;
+                await _dbContext.SaveChangesAsync(ct);
+                return;
+            }
+        }
+
+        if (userId.HasValue)
+        {
+            var latestToken = await _dbContext.RefreshTokens
+                .Where(r => r.UserId == userId.Value && !r.IsRevoked)
+                .OrderByDescending(r => r.CreatedAt)
+                .FirstOrDefaultAsync(ct);
+
+            if (latestToken != null)
+            {
+                latestToken.IsRevoked = true;
+                await _dbContext.SaveChangesAsync(ct);
+            }
+        }
+    }
+
     // ================= HELPER & BACKWARD COMPATIBILITY METHODS =================
 
     public Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default)
@@ -585,6 +736,72 @@ public class AuthService : IAuthService
             CurrentGreenPoints = user.EcoProfile?.CurrentGreenPoints ?? 0,
             TreeLevel = user.EcoProfile?.TreeLevel ?? 1,
             TotalRecycledKg = user.EcoProfile?.TotalRecycledKg ?? 0m
+        };
+    }
+
+    /// <summary>
+    /// Xác thực OAuth 2.0 Access Token trả về từ cửa sổ Google Account Chooser (prompt: select_account)
+    /// trực tiếp với máy chủ Google OAuth2 (tokeninfo + userinfo).
+    /// </summary>
+    private static async Task<GoogleJsonWebSignature.Payload> ValidateGoogleOAuthAccessTokenAsync(
+        string accessToken,
+        string? expectedClientId,
+        CancellationToken ct)
+    {
+        var tokenInfoUrl = $"https://oauth2.googleapis.com/tokeninfo?access_token={Uri.EscapeDataString(accessToken)}";
+        using var tokenInfoRes = await GoogleHttpClient.GetAsync(tokenInfoUrl, ct);
+        if (!tokenInfoRes.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException("Google OAuth2 Access Token không hợp lệ hoặc đã hết hạn.");
+        }
+
+        await using var tokenInfoStream = await tokenInfoRes.Content.ReadAsStreamAsync(ct);
+        using var tokenInfoDoc = await JsonDocument.ParseAsync(tokenInfoStream, cancellationToken: ct);
+        var tokenRoot = tokenInfoDoc.RootElement;
+
+        if (!string.IsNullOrWhiteSpace(expectedClientId))
+        {
+            var aud = tokenRoot.TryGetProperty("aud", out var audProp) ? audProp.GetString() : null;
+            var azp = tokenRoot.TryGetProperty("azp", out var azpProp) ? azpProp.GetString() : null;
+            if (!string.Equals(aud, expectedClientId, StringComparison.Ordinal) &&
+                !string.Equals(azp, expectedClientId, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Google OAuth2 Token không thuộc Client ID của EcoLink.");
+            }
+        }
+
+        using var userReq = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v3/userinfo");
+        userReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        using var userRes = await GoogleHttpClient.SendAsync(userReq, ct);
+        if (!userRes.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException("Không thể truy xuất hồ sơ tài khoản từ Google UserInfo.");
+        }
+
+        await using var userStream = await userRes.Content.ReadAsStreamAsync(ct);
+        using var userDoc = await JsonDocument.ParseAsync(userStream, cancellationToken: ct);
+        var root = userDoc.RootElement;
+
+        var email = root.TryGetProperty("email", out var emailProp) ? emailProp.GetString() : null;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new InvalidOperationException("Tài khoản Google không cung cấp địa chỉ email hợp lệ.");
+        }
+
+        var name = root.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
+        var picture = root.TryGetProperty("picture", out var picProp) ? picProp.GetString() : null;
+        var emailVerified = !root.TryGetProperty("email_verified", out var verProp) ||
+                            (verProp.ValueKind == JsonValueKind.True) ||
+                            (verProp.ValueKind == JsonValueKind.String &&
+                             string.Equals(verProp.GetString(), "true", StringComparison.OrdinalIgnoreCase));
+
+        return new GoogleJsonWebSignature.Payload
+        {
+            Email = email,
+            Name = name ?? email.Split('@')[0],
+            Picture = picture,
+            EmailVerified = emailVerified
         };
     }
 

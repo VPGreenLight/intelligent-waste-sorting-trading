@@ -145,6 +145,45 @@ public class ResetPasswordRequestDto
 }
 
 /// <summary>
+/// DTO Cập nhật thông tin hồ sơ cá nhân (SU-01)
+/// </summary>
+public class UpdateUserProfileRequestDto
+{
+    [Required(ErrorMessage = "Tên hiển thị không được để trống")]
+    [StringLength(100, MinimumLength = 2, ErrorMessage = "Tên hiển thị phải từ 2 đến 100 ký tự")]
+    public string FullName { get; set; } = string.Empty;
+
+    [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
+    public string? PhoneNumber { get; set; }
+
+    [StringLength(500)]
+    public string? AvatarUrl { get; set; }
+}
+
+/// <summary>
+/// DTO Đổi mật khẩu khi đang đăng nhập (SU-02)
+/// </summary>
+public class ChangePasswordRequestDto
+{
+    [Required(ErrorMessage = "Mật khẩu hiện tại không được để trống")]
+    public string CurrentPassword { get; set; } = string.Empty;
+
+    [Required(ErrorMessage = "Mật khẩu mới không được để trống")]
+    [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu mới tối thiểu 6 ký tự")]
+    public string NewPassword { get; set; } = string.Empty;
+
+    public string? ConfirmPassword { get; set; }
+}
+
+/// <summary>
+/// DTO Đăng xuất và thu hồi Refresh Token hiện tại
+/// </summary>
+public class LogoutRequestDto
+{
+    public string? RefreshToken { get; set; }
+}
+
+/// <summary>
 /// DTO Kết quả xác thực trả về cho Client
 /// </summary>
 public class AuthResponseDto

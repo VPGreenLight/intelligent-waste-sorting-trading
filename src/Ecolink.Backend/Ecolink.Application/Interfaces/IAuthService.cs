@@ -40,6 +40,21 @@ public interface IAuthService
     /// </summary>
     Task ResetPasswordAsync(ResetPasswordRequestDto request, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// 8. Cập nhật thông tin hồ sơ cá nhân của người dùng đang đăng nhập (SU-01)
+    /// </summary>
+    Task<UserInfoDto> UpdateProfileAsync(Guid userId, UpdateUserProfileRequestDto request, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 9. Đổi mật khẩu tài khoản đang đăng nhập và thu hồi các phiên thiết bị khác (SU-02)
+    /// </summary>
+    Task ChangePasswordAsync(Guid userId, ChangePasswordRequestDto request, string? currentRefreshToken = null, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// 10. Đăng xuất và thu hồi Refresh Token hiện tại
+    /// </summary>
+    Task LogoutAsync(string? refreshToken, Guid? userId = null, CancellationToken cancellationToken = default);
+
     // ================= PHƯƠNG THỨC BỔ TRỢ & TƯƠNG THÍCH =================
     Task<AuthResponseDto> RegisterAsync(RegisterRequestDto request, CancellationToken cancellationToken = default);
     Task<UserInfoDto?> GetUserByIdAsync(Guid userId, CancellationToken cancellationToken = default);

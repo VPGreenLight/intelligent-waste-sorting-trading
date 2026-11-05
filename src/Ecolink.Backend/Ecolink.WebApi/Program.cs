@@ -49,7 +49,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 // Cấu hình JWT Bearer Authentication & Authorization (Hỗ trợ cả REST Header và SignalR WebSocket access_token)
-var jwtSecret = builder.Configuration["JwtSettings:SecretKey"] 
+var jwtSecret = builder.Configuration["JwtSettings:SecretKey"]
                 ?? "EcoLink_Super_Secure_Secret_Key_For_JWT_Signing_2026_XYZ987!";
 var jwtIssuer = builder.Configuration["JwtSettings:Issuer"] ?? "EcoLinkBackend";
 var jwtAudience = builder.Configuration["JwtSettings:Audience"] ?? "EcoLinkApp";
@@ -104,6 +104,7 @@ builder.Services.AddSwaggerGen(c =>
                       "- **Tài khoản Demo có sẵn:**\n" +
                       "  - Người dân: `citizen` / `citizen123`\n" +
                       "  - Cơ sở thu gom: `collector` / `collector123`\n" +
+                      "  - Nhân viên vận hành: `staff` / `staff123`\n" +
                       "  - Quản trị viên: `admin` / `admin123`\n" +
                       "- **Hướng dẫn xác thực:** Đăng nhập tại `POST /api/v1/auth/login`, copy trường `token`, bấm nút **Authorize** ở góc trên bên phải, nhập `Bearer <token>` rồi bấm Authorize."
     });
@@ -128,14 +129,15 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Cấu hình CORS
+// Cấu hình CORS (hỗ trợ cả Bearer Header lẫn HttpOnly RefreshToken Cookie qua Proxy/Tunnel)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.SetIsOriginAllowed(_ => true)
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
