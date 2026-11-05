@@ -381,6 +381,20 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
             )[]
             {
                 (
+                    Guid.Parse("99999999-3333-4444-8888-333333333333"),
+                    "applicant_hoalacxanh",
+                    "hoalacxanh@thugom.vn",
+                    "Vựa Phế Liệu Hòa Lạc Xanh",
+                    "Lê Văn Hòa",
+                    "Thôn 2, Xã Thạch Hòa (Cạnh Khu CNC Hòa Lạc), Huyện Thạch Thất, Hà Nội",
+                    21.0089m,
+                    105.5298m,
+                    "0962889911",
+                    "Thu mua: Nhựa, Giấy và bìa carton, Kim loại, Thủy tinh",
+                    "https://mock-r2.ecolink.vn/recycler-kyb/legal-permits/giay-dkkd-hoa-lac-xanh.pdf",
+                    "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/kho-bai-hoa-lac-xanh.jpg"
+                ),
+                (
                     Guid.Parse("99999999-1111-4444-8888-111111111111"),
                     "applicant_minhkhai",
                     "minhkhai@thugom.vn",

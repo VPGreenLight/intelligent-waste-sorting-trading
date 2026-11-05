@@ -25,9 +25,81 @@ public class GeoMatchingService : IGeoMatchingService
     private readonly ApplicationDbContext? _db;
     private readonly IWasteRuleEngineService? _ruleEngine;
 
-    // Danh sách dự phòng khi chạy ở chế độ không kết nối CSDL
+    // Danh sách dự phòng khi chạy ở chế độ không kết nối CSDL (ưu tiên khu vực Hòa Lạc & Hà Nội)
     private static readonly List<CollectionPartnerDto> _mockPartners = new()
     {
+        new()
+        {
+            Id = Guid.Parse("99999991-9999-9999-9999-999999999991"),
+            FacilityName = "Trạm Thu Gom Tái Chế Xanh Hòa Lạc",
+            RepresentativeName = "Đỗ Văn Hùng",
+            Address = "Thôn 3, Xã Tân Xã (Gần Khu CNC Hòa Lạc & ĐH FPT), Thạch Thất, Hà Nội",
+            Latitude = 21.0182,
+            Longitude = 105.5345,
+            ContactPhone = "0968112233",
+            OperatingHours = "07:30 - 19:00",
+            Materials = new List<AcceptedMaterialDto>
+            {
+                new() { CategoryCode = "plastic", CategoryName = "Nhựa tái chế (Plastic)", PricePerKg = 7200m, MinimumQuantityKg = 1m },
+                new() { CategoryCode = "paper", CategoryName = "Giấy báo & Tài liệu (Paper)", PricePerKg = 4800m, MinimumQuantityKg = 1.5m },
+                new() { CategoryCode = "cardboard", CategoryName = "Bìa Carton (Cardboard)", PricePerKg = 4100m, MinimumQuantityKg = 2m },
+                new() { CategoryCode = "metal", CategoryName = "Kim loại & Vỏ lon (Metal)", PricePerKg = 26000m, MinimumQuantityKg = 0.5m }
+            }
+        },
+        new()
+        {
+            Id = Guid.Parse("99999992-9999-9999-9999-999999999992"),
+            FacilityName = "Cơ Sở Phế Liệu Minh Tâm — Ngã Tư Hòa Lạc",
+            RepresentativeName = "Nguyễn Thị Tâm",
+            Address = "Km28 Quốc lộ 21A, Xã Thạch Hòa, Huyện Thạch Thất, Hà Nội",
+            Latitude = 20.9986,
+            Longitude = 105.5184,
+            ContactPhone = "0973445566",
+            OperatingHours = "07:00 - 18:30",
+            Materials = new List<AcceptedMaterialDto>
+            {
+                new() { CategoryCode = "plastic", CategoryName = "Nhựa tái chế (Plastic)", PricePerKg = 7000m, MinimumQuantityKg = 1m },
+                new() { CategoryCode = "glass", CategoryName = "Thủy tinh (Glass)", PricePerKg = 2400m, MinimumQuantityKg = 4m },
+                new() { CategoryCode = "metal", CategoryName = "Kim loại & Vỏ lon (Metal)", PricePerKg = 25500m, MinimumQuantityKg = 1m },
+                new() { CategoryCode = "cardboard", CategoryName = "Bìa Carton (Cardboard)", PricePerKg = 3900m, MinimumQuantityKg = 2.5m }
+            }
+        },
+        new()
+        {
+            Id = Guid.Parse("99999993-9999-9999-9999-999999999993"),
+            FacilityName = "Vựa Tái Chế Bình Yên — Hòa Lạc",
+            RepresentativeName = "Chu Văn Khánh",
+            Address = "Đường Tỉnh lộ 420, Xã Bình Yên, Huyện Thạch Thất, Hà Nội",
+            Latitude = 21.0345,
+            Longitude = 105.5468,
+            ContactPhone = "0915889900",
+            OperatingHours = "07:30 - 18:00",
+            Materials = new List<AcceptedMaterialDto>
+            {
+                new() { CategoryCode = "metal", CategoryName = "Kim loại & Vỏ lon (Metal)", PricePerKg = 27000m, MinimumQuantityKg = 1m },
+                new() { CategoryCode = "paper", CategoryName = "Giấy báo & Tài liệu (Paper)", PricePerKg = 4900m, MinimumQuantityKg = 2m },
+                new() { CategoryCode = "cardboard", CategoryName = "Bìa Carton (Cardboard)", PricePerKg = 4200m, MinimumQuantityKg = 3m },
+                new() { CategoryCode = "plastic", CategoryName = "Nhựa tái chế (Plastic)", PricePerKg = 6800m, MinimumQuantityKg = 1.5m }
+            }
+        },
+        new()
+        {
+            Id = Guid.Parse("77777777-7777-7777-7777-777777777777"),
+            FacilityName = "Trạm Tái Chế Xanh Cầu Giấy",
+            RepresentativeName = "Hoàng Minh Tuấn",
+            Address = "68 Xuân Thủy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội",
+            Latitude = 21.0368,
+            Longitude = 105.7825,
+            ContactPhone = "0944556677",
+            OperatingHours = "08:00 - 18:30",
+            Materials = new List<AcceptedMaterialDto>
+            {
+                new() { CategoryCode = "plastic", CategoryName = "Nhựa tái chế (Plastic)", PricePerKg = 6900m, MinimumQuantityKg = 1m },
+                new() { CategoryCode = "paper", CategoryName = "Giấy báo & Tài liệu (Paper)", PricePerKg = 4700m, MinimumQuantityKg = 2m },
+                new() { CategoryCode = "metal", CategoryName = "Kim loại & Vỏ lon (Metal)", PricePerKg = 25500m, MinimumQuantityKg = 0.5m },
+                new() { CategoryCode = "cardboard", CategoryName = "Bìa Carton (Cardboard)", PricePerKg = 3900m, MinimumQuantityKg = 2m }
+            }
+        },
         new()
         {
             Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
@@ -478,6 +550,127 @@ public class GeoMatchingService : IGeoMatchingService
                         ("paper", 4700m, 2.0m, "Giấy báo, vở học sinh cũ khô ráo"),
                         ("metal", 25500m, 0.5m, "Vỏ lon bia, nước ngọt nhôm"),
                         ("cardboard", 3900m, 2.0m, "Bìa carton khô, không rách mục")
+                    }
+                ),
+                (
+                    Guid.Parse("99999991-9999-9999-9999-999999999991"),
+                    "collector_hl1",
+                    "collector_hl1@ecolink.vn",
+                    "Trạm Thu Gom Tái Chế Xanh Hòa Lạc",
+                    "Đỗ Văn Hùng",
+                    "Thôn 3, Xã Tân Xã (Gần Khu CNC Hòa Lạc & ĐH FPT), Huyện Thạch Thất, Hà Nội",
+                    21.0182m,
+                    105.5345m,
+                    "0968112233",
+                    "07:30 - 19:00",
+                    "Chuyên thu mua chai nhựa, vỏ lon, bìa carton và giáo trình cũ tại khu KTX sinh viên, nhà trọ Tân Xã - Khu CNC Hòa Lạc.",
+                    new[]
+                    {
+                        ("plastic", 7200m, 1.0m, "Chai nhựa PET/HDPE đã tráng sạch, bẹp chai"),
+                        ("paper", 4800m, 1.5m, "Giấy vở, tài liệu in ấn, sách báo khô ráo"),
+                        ("cardboard", 4100m, 2.0m, "Thùng carton chuyển trọ gập phẳng"),
+                        ("metal", 26000m, 0.5m, "Vỏ lon nước ngọt, lon nhôm sinh hoạt đã dốc sạch")
+                    }
+                ),
+                (
+                    Guid.Parse("99999992-9999-9999-9999-999999999992"),
+                    "collector_hl2",
+                    "collector_hl2@ecolink.vn",
+                    "Cơ Sở Phế Liệu Minh Tâm — Ngã Tư Hòa Lạc",
+                    "Nguyễn Thị Tâm",
+                    "Km28 Quốc lộ 21A, Xã Thạch Hòa, Huyện Thạch Thất, Hà Nội",
+                    20.9986m,
+                    105.5184m,
+                    "0973445566",
+                    "07:00 - 18:30",
+                    "Điểm cân điện tử minh bạch ngay trục Quốc lộ 21A - Ngã tư Hòa Lạc, hỗ trợ thu gom tận sảnh tòa nhà & khu trọ sinh viên.",
+                    new[]
+                    {
+                        ("plastic", 7000m, 1.0m, "Bóc nhãn rời nếu có, không lẫn rác thực phẩm"),
+                        ("glass", 2400m, 4.0m, "Chai lọ thủy tinh nguyên vẹn, không vỡ vụn"),
+                        ("metal", 25500m, 1.0m, "Nhôm lon, sắt vụn, thiết bị gia dụng kim loại"),
+                        ("cardboard", 3900m, 2.5m, "Bìa carton khô, buộc gọn")
+                    }
+                ),
+                (
+                    Guid.Parse("99999993-9999-9999-9999-999999999993"),
+                    "collector_hl3",
+                    "collector_hl3@ecolink.vn",
+                    "Vựa Tái Chế Bình Yên — Hòa Lạc",
+                    "Chu Văn Khánh",
+                    "Đường Tỉnh lộ 420, Xã Bình Yên, Huyện Thạch Thất, Hà Nội",
+                    21.0345m,
+                    105.5468m,
+                    "0915889900",
+                    "07:30 - 18:00",
+                    "Cơ sở thu mua kim loại màu, sắt vụn, giấy báo và thùng carton khu vực Bình Yên - Khu CNC Hòa Lạc - Liên Quan.",
+                    new[]
+                    {
+                        ("metal", 27000m, 1.0m, "Đồng, nhôm lon, sắt thép phân loại riêng"),
+                        ("paper", 4900m, 2.0m, "Hồ sơ văn phòng, báo chí, sách vở khô sạch"),
+                        ("cardboard", 4200m, 3.0m, "Thùng carton số lượng từ hộ gia đình & cửa hàng"),
+                        ("plastic", 6800m, 1.5m, "Can nhựa HDPE, vỏ chai PET sạch"),
+                        ("glass", 2200m, 5.0m, "Chai thủy tinh trắng và nâu không lẫn sành sứ")
+                    }
+                ),
+                (
+                    Guid.Parse("99999994-9999-9999-9999-999999999994"),
+                    "collector_hl4",
+                    "collector_hl4@ecolink.vn",
+                    "Điểm Thu Mua Phế Liệu Phú Cát — Hòa Lạc",
+                    "Bùi Văn Thành",
+                    "Khu Công nghiệp Phú Cát - Nam Hòa Lạc, Huyện Quốc Oai, Hà Nội",
+                    20.9765m,
+                    105.5192m,
+                    "0984667788",
+                    "07:30 - 18:00",
+                    "Nhận thu mua phế liệu tái chế định kỳ cho văn phòng công nghệ, xưởng sản xuất và khu dân cư Nam Hòa Lạc - Phú Cát.",
+                    new[]
+                    {
+                        ("cardboard", 4300m, 3.0m, "Bìa carton kiện phẳng, khô ráo"),
+                        ("plastic", 7100m, 1.5m, "Nhựa PET, màng bọc PE sạch"),
+                        ("metal", 26500m, 1.0m, "Nhôm định hình, vỏ lon, sắt thép"),
+                        ("paper", 4700m, 2.0m, "Giấy in văn phòng, tài liệu hủy")
+                    }
+                ),
+                (
+                    Guid.Parse("99999995-9999-9999-9999-999999999995"),
+                    "collector_hndd",
+                    "collector_hndd@ecolink.vn",
+                    "Vựa Phế Liệu Sạch Đống Đa",
+                    "Vũ Quang Huy",
+                    "142 Tây Sơn, Phường Quang Trung, Quận Đống Đa, Hà Nội",
+                    21.0085m,
+                    105.8248m,
+                    "0982334455",
+                    "08:00 - 18:30",
+                    "Thu gom tận ngõ khu vực Đống Đa - Thanh Xuân, cân điện tử chính xác và thanh toán ngay.",
+                    new[]
+                    {
+                        ("plastic", 7100m, 1.0m, "Chai PET trong suốt đã tráng sạch"),
+                        ("paper", 4700m, 2.0m, "Sách báo, giấy văn phòng buộc gọn"),
+                        ("cardboard", 4000m, 2.0m, "Bìa carton gập phẳng"),
+                        ("glass", 2300m, 5.0m, "Chai lọ thủy tinh sạch")
+                    }
+                ),
+                (
+                    Guid.Parse("99999996-9999-9999-9999-999999999996"),
+                    "collector_hnhbt",
+                    "collector_hnhbt@ecolink.vn",
+                    "Điểm Thu Mua Tái Chế Bách Khoa",
+                    "Phạm Thu Hương",
+                    "55 Trần Đại Nghĩa, Phường Bách Khoa, Quận Hai Bà Trưng, Hà Nội",
+                    21.0028m,
+                    105.8442m,
+                    "0936778899",
+                    "07:30 - 18:00",
+                    "Chuyên thu mua giấy tài liệu, vỏ lon và nhựa tái chế khu vực Bách Khoa - Kinh Tế - Xây Dựng.",
+                    new[]
+                    {
+                        ("paper", 5000m, 1.5m, "Giấy photo, giáo trình, báo cũ khô sạch"),
+                        ("cardboard", 4100m, 2.0m, "Thùng giấy gập gọn"),
+                        ("metal", 26000m, 0.5m, "Lon nhôm, hộp thiếc sạch"),
+                        ("plastic", 6900m, 1.0m, "Chai nhựa sạch không dính dầu mỡ")
                     }
                 )
             };
