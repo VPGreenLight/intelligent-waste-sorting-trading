@@ -6,16 +6,21 @@ using Ecolink.Domain.Exceptions;
 using Ecolink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using NetTopologySuite.Geometries;
 
 namespace Ecolink.Infrastructure.Services;
 
 /// <summary>
 /// Dịch vụ tìm kiếm cơ sở thu gom theo bán kính địa lý GPS (UC U-05).
-/// Kết nối trực tiếp với dữ liệu bảng recycler_profiles và recycler_price_list từ Module R-01 &amp; R-02
+/// Kết nối trực tiếp với bảng recycler_profiles (cột không gian PostGIS geom SRID 4326 + GiST index)
+/// và recycler_price_list từ Module R-01 &amp; R-02
 /// (BR-MTH-01, BR-MTH-03, BR-MTH-04, BR-MTH-05, BR-MTH-06, BR-MTH-07).
 /// </summary>
 public class GeoMatchingService : IGeoMatchingService
 {
+    private static readonly SemaphoreSlim SeedLock = new(1, 1);
+    private static bool _demoSeedChecked;
+
     private readonly ILogger<GeoMatchingService> _logger;
     private readonly ApplicationDbContext? _db;
     private readonly IWasteRuleEngineService? _ruleEngine;
@@ -25,8 +30,9 @@ public class GeoMatchingService : IGeoMatchingService
     {
         new()
         {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
+            Id = Guid.Parse("44444444-4444-4444-4444-444444444444"),
             FacilityName = "Vựa Phế Liệu Xanh Quận 1",
+            RepresentativeName = "Nguyễn Văn Minh",
             Address = "123 Nguyễn Thị Minh Khai, Phường Bến Thành, Quận 1, TP.HCM",
             Latitude = 10.7725,
             Longitude = 106.6920,
@@ -34,31 +40,35 @@ public class GeoMatchingService : IGeoMatchingService
             OperatingHours = "08:00 - 18:00",
             Materials = new List<AcceptedMaterialDto>
             {
-                new() { CategoryCode = "plastic", CategoryName = "Nhựa tái chế", PricePerKg = 7000m, MinimumQuantityKg = 1m },
-                new() { CategoryCode = "paper", CategoryName = "Giấy báo & Carton", PricePerKg = 4500m, MinimumQuantityKg = 2m },
-                new() { CategoryCode = "metal", CategoryName = "Kim loại / Vỏ lon", PricePerKg = 25000m, MinimumQuantityKg = 0.5m }
+                new() { CategoryCode = "plastic", CategoryName = "Nhựa tái chế (Plastic)", PricePerKg = 6800m, MinimumQuantityKg = 1.5m },
+                new() { CategoryCode = "paper", CategoryName = "Giấy báo & Tài liệu (Paper)", PricePerKg = 4500m, MinimumQuantityKg = 2m },
+                new() { CategoryCode = "glass", CategoryName = "Thủy tinh (Glass)", PricePerKg = 2200m, MinimumQuantityKg = 5m },
+                new() { CategoryCode = "metal", CategoryName = "Kim loại & Vỏ lon (Metal)", PricePerKg = 24500m, MinimumQuantityKg = 0.5m }
             }
         },
         new()
         {
             Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            FacilityName = "Cơ Sở Thu Mua Tái Chế Bình Thạnh",
-            Address = "45 Điện Biên Phủ, Phường 15, Quận Bình Thạnh, TP.HCM",
-            Latitude = 10.7960,
-            Longitude = 106.7080,
-            ContactPhone = "0912345678",
+            FacilityName = "Vựa phế liệu EcoGreen",
+            RepresentativeName = "Trần Thu Gom",
+            Address = "123 Đường Nguyễn Hữu Cảnh, P. 22, Bình Thạnh, TP.HCM",
+            Latitude = 10.7938,
+            Longitude = 106.7182,
+            ContactPhone = "0988776655",
             OperatingHours = "07:30 - 18:30",
             Materials = new List<AcceptedMaterialDto>
             {
-                new() { CategoryCode = "plastic", CategoryName = "Nhựa tái chế", PricePerKg = 7500m, MinimumQuantityKg = 1.5m },
-                new() { CategoryCode = "glass", CategoryName = "Chai lọ thủy tinh", PricePerKg = 2000m, MinimumQuantityKg = 5m },
-                new() { CategoryCode = "cardboard", CategoryName = "Bìa Carton", PricePerKg = 3800m, MinimumQuantityKg = 3m }
+                new() { CategoryCode = "plastic", CategoryName = "Nhựa tái chế (Plastic)", PricePerKg = 7000m, MinimumQuantityKg = 1m },
+                new() { CategoryCode = "paper", CategoryName = "Giấy báo & Tài liệu (Paper)", PricePerKg = 4500m, MinimumQuantityKg = 2m },
+                new() { CategoryCode = "metal", CategoryName = "Kim loại & Vỏ lon (Metal)", PricePerKg = 25000m, MinimumQuantityKg = 0.5m },
+                new() { CategoryCode = "cardboard", CategoryName = "Bìa Carton (Cardboard)", PricePerKg = 3800m, MinimumQuantityKg = 3m }
             }
         },
         new()
         {
-            Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-            FacilityName = "Trạm Thu Gom Phế Liệu Tân Bình",
+            Id = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+            FacilityName = "Trạm Thu Gom Tái Chế Tân Bình",
+            RepresentativeName = "Lê Hoàng Phúc",
             Address = "88 Cộng Hòa, Phường 4, Quận Tân Bình, TP.HCM",
             Latitude = 10.7995,
             Longitude = 106.6570,
@@ -66,8 +76,9 @@ public class GeoMatchingService : IGeoMatchingService
             OperatingHours = "08:00 - 17:30",
             Materials = new List<AcceptedMaterialDto>
             {
-                new() { CategoryCode = "metal", CategoryName = "Kim loại & Đồng, Nhôm", PricePerKg = 28000m, MinimumQuantityKg = 1m },
-                new() { CategoryCode = "paper", CategoryName = "Giấy vụn, Hồ sơ", PricePerKg = 5000m, MinimumQuantityKg = 2m }
+                new() { CategoryCode = "metal", CategoryName = "Kim loại & Vỏ lon (Metal)", PricePerKg = 26500m, MinimumQuantityKg = 1m },
+                new() { CategoryCode = "paper", CategoryName = "Giấy báo & Tài liệu (Paper)", PricePerKg = 4800m, MinimumQuantityKg = 2m },
+                new() { CategoryCode = "cardboard", CategoryName = "Bìa Carton (Cardboard)", PricePerKg = 4000m, MinimumQuantityKg = 2.5m }
             }
         }
     };
@@ -93,9 +104,11 @@ public class GeoMatchingService : IGeoMatchingService
             ? null
             : categoryCode.Trim().ToLowerInvariant();
 
+        var safeRadiusKm = Math.Clamp(radiusKm, 0.5, 50.0);
+
         _logger.LogInformation(
-            "Tìm cơ sở thu mua đã xác minh (Verified + Online) gần tọa độ trong bán kính {Radius}km, loại rác: {Cat}",
-            radiusKm, normalizedCategory ?? "Tất cả");
+            "Tìm cơ sở thu mua đã xác minh (Verified + Online) qua PostGIS ST_DWithin trong bán kính {Radius}km, loại rác: {Cat}",
+            safeRadiusKm, normalizedCategory ?? "Tất cả");
 
         var results = new List<CollectionPartnerDto>();
 
@@ -103,7 +116,21 @@ public class GeoMatchingService : IGeoMatchingService
         {
             await EnsureDemoCollectorPricesSeededAsync(cancellationToken);
 
-            // Truy vấn trực tiếp bảng recycler_profiles + recycler_price_list (R-01, R-02)
+            // Cột geom trong recycler_profiles có kiểu geometry(Point, 4326) kèm GiST index (gix_recycler_profiles_geom).
+            // Quy đổi bán kính km sang ngưỡng độ (degrees) bao phủ an toàn theo vĩ độ hiện tại để PostgreSQL lọc trước
+            // bằng chỉ mục không gian ST_DWithin(geom, searchPoint, maxDegreeRadius), sau đó tinh chỉnh chính xác bằng Haversine.
+            var searchPoint = new Point(longitude, latitude) { SRID = 4326 };
+            var cosLat = Math.Max(0.1, Math.Cos(DegreesToRadians(latitude)));
+            var latDeltaDeg = safeRadiusKm / 110.574;
+            var lngDeltaDeg = safeRadiusKm / (111.320 * cosLat);
+            var maxDegreeRadius = Math.Max(latDeltaDeg, lngDeltaDeg) * 1.05;
+
+            var minLat = (decimal)(latitude - latDeltaDeg * 1.05);
+            var maxLat = (decimal)(latitude + latDeltaDeg * 1.05);
+            var minLng = (decimal)(longitude - lngDeltaDeg * 1.05);
+            var maxLng = (decimal)(longitude + lngDeltaDeg * 1.05);
+
+            // Truy vấn không gian trực tiếp trên PostgreSQL + PostGIS (ST_DWithin trên gix_recycler_profiles_geom)
             // Tuân thủ BR-MTH-01 (Verified), BR-MTH-03 & BR-MTH-07 (Prices Active), BR-MTH-06 (Online & User Active)
             var dbProfiles = await _db.RecyclerProfiles
                 .AsNoTracking()
@@ -114,6 +141,10 @@ public class GeoMatchingService : IGeoMatchingService
                             && r.ActiveStatus == RecyclerActiveStatus.Online
                             && r.User != null
                             && r.User.Status == UserStatus.Active
+                            && ((r.Location != null && r.Location.IsWithinDistance(searchPoint, maxDegreeRadius))
+                                || (r.Location == null
+                                    && r.Latitude >= minLat && r.Latitude <= maxLat
+                                    && r.Longitude >= minLng && r.Longitude <= maxLng))
                             && r.Prices.Any(p => p.Status == PriceStatus.Active
                                 && p.WasteCategory != null
                                 && (normalizedCategory == null || p.WasteCategory.Code.ToLower() == normalizedCategory)))
@@ -127,7 +158,7 @@ public class GeoMatchingService : IGeoMatchingService
                     (double)profile.Latitude,
                     (double)profile.Longitude);
 
-                if (distance <= radiusKm)
+                if (distance <= safeRadiusKm)
                 {
                     results.Add(MapProfileToPartnerDto(profile, Math.Round(distance, 2)));
                 }
@@ -146,12 +177,13 @@ public class GeoMatchingService : IGeoMatchingService
             }
 
             var distance = CalculateDistanceKm(latitude, longitude, partner.Latitude, partner.Longitude);
-            if (distance <= radiusKm)
+            if (distance <= safeRadiusKm)
             {
                 results.Add(new CollectionPartnerDto
                 {
                     Id = partner.Id,
                     FacilityName = partner.FacilityName,
+                    RepresentativeName = partner.RepresentativeName,
                     Address = partner.Address,
                     Latitude = partner.Latitude,
                     Longitude = partner.Longitude,
@@ -235,6 +267,8 @@ public class GeoMatchingService : IGeoMatchingService
     {
         if (_db != null)
         {
+            await EnsureDemoCollectorPricesSeededAsync(cancellationToken);
+
             var profile = await _db.RecyclerProfiles
                 .AsNoTracking()
                 .Include(r => r.User)
@@ -295,76 +329,284 @@ public class GeoMatchingService : IGeoMatchingService
 
     private async Task EnsureDemoCollectorPricesSeededAsync(CancellationToken ct)
     {
-        if (_db == null) return;
+        if (_db == null || _demoSeedChecked) return;
 
-        var demoCollectorId = Guid.Parse("22222222-2222-2222-2222-222222222222");
-        if (!await _db.RecyclerProfiles.AnyAsync(r => r.UserId == demoCollectorId, ct))
+        await SeedLock.WaitAsync(ct);
+        try
         {
-            return;
-        }
+            if (_demoSeedChecked) return;
 
-        if (await _db.RecyclerPrices.AnyAsync(p => p.RecyclerId == demoCollectorId, ct))
-        {
-            return;
-        }
-
-        var defaultCategories = new (string Code, string Name, string BinColor, bool IsRecyclable)[]
-        {
-            ("plastic", "Nhựa tái chế (Plastic)", "Cam", true),
-            ("paper", "Giấy báo & Tài liệu (Paper)", "Xanh Dương", true),
-            ("glass", "Thủy tinh (Glass)", "Trắng", true),
-            ("metal", "Kim loại & Vỏ lon (Metal)", "Xám Kim Loại", true),
-            ("cardboard", "Bìa Carton (Cardboard)", "Nâu Vàng", true),
-            ("trash", "Rác thải thông thường / Không thể tái chế", "Đen", false)
-        };
-
-        var existingCodes = await _db.WasteCategories.Select(c => c.Code).ToListAsync(ct);
-        var missingCategories = defaultCategories.Where(d => !existingCodes.Contains(d.Code)).ToList();
-        if (missingCategories.Count > 0)
-        {
-            foreach (var (code, name, binColor, isRecyclable) in missingCategories)
+            // 1. Đảm bảo 6 danh mục phế liệu chuẩn luôn tồn tại
+            var defaultCategories = new (string Code, string Name, string BinColor, bool IsRecyclable)[]
             {
-                _db.WasteCategories.Add(new WasteCategory
-                {
-                    Code = code,
-                    Name = name,
-                    StandardBinColor = binColor,
-                    IsRecyclable = isRecyclable,
-                    Status = "Active"
-                });
-            }
-            await _db.SaveChangesAsync(ct);
-        }
+                ("plastic", "Nhựa tái chế (Plastic)", "Cam", true),
+                ("paper", "Giấy báo & Tài liệu (Paper)", "Xanh Dương", true),
+                ("glass", "Thủy tinh (Glass)", "Trắng", true),
+                ("metal", "Kim loại & Vỏ lon (Metal)", "Xám Kim Loại", true),
+                ("cardboard", "Bìa Carton (Cardboard)", "Nâu Vàng", true),
+                ("trash", "Rác thải thông thường / Không thể tái chế", "Đen", false)
+            };
 
-        var categoriesByCode = await _db.WasteCategories
-            .Where(c => c.IsRecyclable)
-            .ToDictionaryAsync(c => c.Code, ct);
-
-        var demoPrices = new (string Code, decimal PricePerKg, decimal MinKg, string Conditions)[]
-        {
-            ("plastic", 7000m, 1.0m, "Chai nhựa PET/HDPE đã tráng sạch, bẹp chai"),
-            ("paper", 4500m, 2.0m, "Giấy báo, tài liệu khô ráo, không dính dầu mỡ"),
-            ("metal", 25000m, 0.5m, "Vỏ lon nhôm, sắt vụn đã dốc sạch nước"),
-            ("cardboard", 3800m, 3.0m, "Thùng carton gập phẳng, khô ráo")
-        };
-
-        foreach (var (code, price, minKg, cond) in demoPrices)
-        {
-            if (categoriesByCode.TryGetValue(code, out var cat))
+            var existingCodes = await _db.WasteCategories.Select(c => c.Code).ToListAsync(ct);
+            var missingCategories = defaultCategories.Where(d => !existingCodes.Contains(d.Code)).ToList();
+            if (missingCategories.Count > 0)
             {
-                _db.RecyclerPrices.Add(new RecyclerPrice
+                foreach (var (code, name, binColor, isRecyclable) in missingCategories)
                 {
-                    RecyclerId = demoCollectorId,
-                    WasteCategoryId = cat.Id,
-                    PricePerKg = price,
-                    MinQuantityKg = minKg,
-                    CollectionConditions = cond,
-                    Status = PriceStatus.Active
-                });
+                    _db.WasteCategories.Add(new WasteCategory
+                    {
+                        Code = code,
+                        Name = name,
+                        StandardBinColor = binColor,
+                        IsRecyclable = isRecyclable,
+                        Status = "Active"
+                    });
+                }
+                await _db.SaveChangesAsync(ct);
             }
-        }
 
-        await _db.SaveChangesAsync(ct);
+            // 2. Đảm bảo các cơ sở thu gom mẫu đã xác minh (Verified + Online) sẵn sàng ngay lần đầu mở /map
+            var demoFacilities = new (
+                Guid UserId,
+                string Username,
+                string Email,
+                string FacilityName,
+                string RepresentativeName,
+                string Address,
+                decimal Lat,
+                decimal Lng,
+                string Phone,
+                string Hours,
+                string Description,
+                (string Code, decimal Price, decimal MinKg, string Cond)[] Prices
+            )[]
+            {
+                (
+                    Guid.Parse("22222222-2222-2222-2222-222222222222"),
+                    "collector",
+                    "collector@ecolink.vn",
+                    "Vựa phế liệu EcoGreen",
+                    "Trần Thu Gom",
+                    "123 Đường Nguyễn Hữu Cảnh, P. 22, Bình Thạnh, TP.HCM",
+                    10.7938m,
+                    106.7182m,
+                    "0988776655",
+                    "07:30 - 18:30",
+                    "Chuyên thu mua nhựa sạch, bìa carton và vỏ lon nhôm tận nơi khu vực Bình Thạnh - Quận 1.",
+                    new[]
+                    {
+                        ("plastic", 7000m, 1.0m, "Chai nhựa PET/HDPE đã tráng sạch, bẹp chai"),
+                        ("paper", 4500m, 2.0m, "Giấy báo, tài liệu khô ráo, không dính dầu mỡ"),
+                        ("metal", 25000m, 0.5m, "Vỏ lon nhôm, sắt vụn đã dốc sạch nước"),
+                        ("cardboard", 3800m, 3.0m, "Thùng carton gập phẳng, khô ráo")
+                    }
+                ),
+                (
+                    Guid.Parse("44444444-4444-4444-4444-444444444444"),
+                    "collector_q1",
+                    "collector_q1@ecolink.vn",
+                    "Vựa Phế Liệu Xanh Quận 1",
+                    "Nguyễn Văn Minh",
+                    "123 Nguyễn Thị Minh Khai, P. Bến Thành, Quận 1, TP.HCM",
+                    10.7725m,
+                    106.6920m,
+                    "0901234567",
+                    "08:00 - 18:00",
+                    "Điểm tiếp nhận phế liệu tái chế trung tâm Quận 1, cân điện tử minh bạch tại chỗ.",
+                    new[]
+                    {
+                        ("plastic", 6800m, 1.5m, "Bóc nhãn rời, súc sạch cặn đồ uống"),
+                        ("paper", 4600m, 2.0m, "Giấy văn phòng, sách báo cũ cột gọn"),
+                        ("glass", 2200m, 5.0m, "Chai lọ nguyên vẹn, không lẫn kính cường lực"),
+                        ("metal", 24500m, 0.5m, "Lon nước ngọt nhôm, hộp thiếc sạch")
+                    }
+                ),
+                (
+                    Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                    "collector_tb",
+                    "collector_tb@ecolink.vn",
+                    "Trạm Thu Gom Tái Chế Tân Bình",
+                    "Lê Hoàng Phúc",
+                    "88 Cộng Hòa, Phường 4, Quận Tân Bình, TP.HCM",
+                    10.7995m,
+                    106.6570m,
+                    "0934567890",
+                    "08:00 - 17:30",
+                    "Thu mua kim loại màu, lon nhôm, bìa carton số lượng từ hộ gia đình và văn phòng.",
+                    new[]
+                    {
+                        ("metal", 26500m, 1.0m, "Nhôm lon, đồng, sắt vụn phân loại riêng"),
+                        ("paper", 4800m, 2.0m, "Hồ sơ giấy, tạp chí khô sạch"),
+                        ("cardboard", 4000m, 2.5m, "Thùng giấy gập gọn, tháo băng keo dày"),
+                        ("plastic", 6600m, 2.0m, "Nhựa cứng, can nhựa HDPE/PET sạch")
+                    }
+                ),
+                (
+                    Guid.Parse("66666666-6666-6666-6666-666666666666"),
+                    "collector_q7",
+                    "collector_q7@ecolink.vn",
+                    "Cơ Sở Phế Liệu Nam Sài Gòn",
+                    "Phạm Thị Lan",
+                    "45 Nguyễn Thị Thập, P. Tân Phú, Quận 7, TP.HCM",
+                    10.7324m,
+                    106.7215m,
+                    "0977112233",
+                    "07:00 - 18:00",
+                    "Hỗ trợ thu gom tận sảnh chung cư khu vực Quận 7, Nhà Bè và Quận 4.",
+                    new[]
+                    {
+                        ("plastic", 7200m, 1.0m, "Chai PET trong suốt đã tráng sạch"),
+                        ("cardboard", 3900m, 3.0m, "Bìa carton đóng kiện phẳng"),
+                        ("glass", 2100m, 5.0m, "Chai thuỷ tinh trắng và nâu không vỡ")
+                    }
+                ),
+                (
+                    Guid.Parse("77777777-7777-7777-7777-777777777777"),
+                    "collector_hn",
+                    "collector_hn@ecolink.vn",
+                    "Trạm Tái Chế Xanh Cầu Giấy",
+                    "Hoàng Minh Tuấn",
+                    "68 Xuân Thủy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội",
+                    21.0368m,
+                    105.7825m,
+                    "0944556677",
+                    "08:00 - 18:30",
+                    "Trạm thu mua phế liệu sinh hoạt khu vực Cầu Giấy - Mỹ Đình - Đống Đa.",
+                    new[]
+                    {
+                        ("plastic", 6900m, 1.0m, "Chai nhựa sạch, đã tháo nắp"),
+                        ("paper", 4700m, 2.0m, "Giấy báo, vở học sinh cũ khô ráo"),
+                        ("metal", 25500m, 0.5m, "Vỏ lon bia, nước ngọt nhôm"),
+                        ("cardboard", 3900m, 2.0m, "Bìa carton khô, không rách mục")
+                    }
+                )
+            };
+
+            string? sharedCollectorPasswordHash = null;
+
+            foreach (var f in demoFacilities)
+            {
+                var existingUser = await _db.Users
+                    .IgnoreQueryFilters()
+                    .FirstOrDefaultAsync(u => u.Id == f.UserId || u.Username == f.Username, ct);
+
+                Guid targetUserId;
+                if (existingUser == null)
+                {
+                    sharedCollectorPasswordHash ??= BCrypt.Net.BCrypt.HashPassword("collector123");
+                    targetUserId = f.UserId;
+
+                    var newUser = new User
+                    {
+                        Id = targetUserId,
+                        Username = f.Username,
+                        Email = f.Email,
+                        PasswordHash = sharedCollectorPasswordHash,
+                        FullName = $"{f.RepresentativeName} ({f.FacilityName})",
+                        PhoneNumber = f.Phone,
+                        Role = UserRole.Recycler,
+                        Status = UserStatus.Active,
+                        RecyclerProfile = new RecyclerProfile
+                        {
+                            UserId = targetUserId,
+                            FacilityName = f.FacilityName,
+                            RepresentativeName = f.RepresentativeName,
+                            BusinessAddress = f.Address,
+                            Latitude = f.Lat,
+                            Longitude = f.Lng,
+                            Location = new Point((double)f.Lng, (double)f.Lat) { SRID = 4326 },
+                            OperatingHours = f.Hours,
+                            ContactPhone = f.Phone,
+                            Description = f.Description,
+                            VerificationStatus = VerificationStatus.Verified,
+                            ActiveStatus = RecyclerActiveStatus.Online
+                        }
+                    };
+
+                    _db.Users.Add(newUser);
+                    await _db.SaveChangesAsync(ct);
+                }
+                else
+                {
+                    targetUserId = existingUser.Id;
+                    var existingProfile = await _db.RecyclerProfiles
+                        .IgnoreQueryFilters()
+                        .FirstOrDefaultAsync(r => r.UserId == targetUserId, ct);
+
+                    if (existingProfile == null && existingUser.Role == UserRole.Recycler)
+                    {
+                        _db.RecyclerProfiles.Add(new RecyclerProfile
+                        {
+                            UserId = targetUserId,
+                            FacilityName = f.FacilityName,
+                            RepresentativeName = f.RepresentativeName,
+                            BusinessAddress = f.Address,
+                            Latitude = f.Lat,
+                            Longitude = f.Lng,
+                            Location = new Point((double)f.Lng, (double)f.Lat) { SRID = 4326 },
+                            OperatingHours = f.Hours,
+                            ContactPhone = f.Phone,
+                            Description = f.Description,
+                            VerificationStatus = VerificationStatus.Verified,
+                            ActiveStatus = RecyclerActiveStatus.Online
+                        });
+                        await _db.SaveChangesAsync(ct);
+                    }
+                    else if (existingProfile != null && existingProfile.Location == null)
+                    {
+                        existingProfile.Location = new Point((double)existingProfile.Longitude, (double)existingProfile.Latitude)
+                        {
+                            SRID = 4326
+                        };
+                        await _db.SaveChangesAsync(ct);
+                    }
+                }
+            }
+
+            // 3. Seed bảng giá Active cho các cơ sở mẫu nếu chưa có
+            var categoriesByCode = await _db.WasteCategories
+                .Where(c => c.IsRecyclable)
+                .ToDictionaryAsync(c => c.Code, ct);
+
+            var addedAnyPrice = false;
+            foreach (var f in demoFacilities)
+            {
+                var profileExists = await _db.RecyclerProfiles.AnyAsync(r => r.UserId == f.UserId, ct);
+                if (!profileExists) continue;
+
+                var hasPrices = await _db.RecyclerPrices.AnyAsync(p => p.RecyclerId == f.UserId, ct);
+                if (hasPrices) continue;
+
+                foreach (var (code, price, minKg, cond) in f.Prices)
+                {
+                    if (categoriesByCode.TryGetValue(code, out var cat))
+                    {
+                        _db.RecyclerPrices.Add(new RecyclerPrice
+                        {
+                            RecyclerId = f.UserId,
+                            WasteCategoryId = cat.Id,
+                            PricePerKg = price,
+                            MinQuantityKg = minKg,
+                            CollectionConditions = cond,
+                            Status = PriceStatus.Active
+                        });
+                        addedAnyPrice = true;
+                    }
+                }
+            }
+
+            if (addedAnyPrice)
+            {
+                await _db.SaveChangesAsync(ct);
+                _logger.LogInformation("Đã khởi tạo dữ liệu cơ sở thu mua mẫu đã xác minh (Verified + Online) trên bản đồ.");
+            }
+
+            _demoSeedChecked = true;
+        }
+        finally
+        {
+            SeedLock.Release();
+        }
     }
 
     private static double CalculateDistanceKm(double lat1, double lon1, double lat2, double lon2)

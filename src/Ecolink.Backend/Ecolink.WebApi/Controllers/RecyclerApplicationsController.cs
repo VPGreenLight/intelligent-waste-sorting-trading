@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace Ecolink.WebApi.Controllers;
 
 /// <summary>
-/// Phân hệ Đăng ký Nâng cấp & Thẩm định Hồ sơ Cơ sở thu gom (Module: Recycler Onboarding & Verification)
+/// Phân hệ Đăng ký Nâng cấp &amp; Thẩm định Hồ sơ Cơ sở thu gom (Module: Recycler Onboarding &amp; Verification)
 /// Hiện thực hóa Use Case U-17 (Apply for Recycler Upgrade) và S-04 (Verify Recycler Application)
 /// Tích hợp lưu trữ chứng từ/ảnh cơ sở trên Cloudflare R2 Object Storage.
 /// </summary>
@@ -36,13 +36,14 @@ public class RecyclerApplicationsController : ControllerBase
     }
 
     /// <summary>
-    /// [U-17] Tải tệp Giấy phép kinh doanh hoặc Ảnh chụp mặt tiền kho bãi lên Cloudflare R2 Object Storage
+    /// [U-17] Tải tệp Giấy phép kinh doanh hoặc Ảnh chụp mặt tiền kho bãi lên Cloudflare R2 Object Storage.
+    /// Cho phép cả đối tác đang điền form đăng ký công khai (/join-recycler) lẫn người dân nâng cấp tài khoản.
     /// </summary>
     /// <param name="file">Tệp hình ảnh (.jpg, .png, .webp) hoặc .pdf (tối đa 10 MB)</param>
     /// <param name="documentType">Loại tài liệu: permit (Giấy phép pháp lý) hoặc facility-photo (Ảnh mặt tiền kho bãi)</param>
     /// <param name="ct">CancellationToken</param>
     [HttpPost("upload-document")]
-    [Authorize]
+    [AllowAnonymous]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ApiResponse<RecyclerDocumentUploadResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -190,4 +191,3 @@ public class RecyclerApplicationsController : ControllerBase
         return userId;
     }
 }
-

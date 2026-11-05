@@ -31,8 +31,17 @@ public static class DependencyInjection
             });
         }
 
+        // Đăng ký bộ nhớ đệm IMemoryCache phục vụ lưu kết quả Geocoding Proxy & tối ưu truy vấn
+        services.AddMemoryCache();
+
         // Đăng ký HttpClient gọi AI Vision Service
         services.AddHttpClient<IAiVisionClient, AiVisionHttpClient>();
+
+        // Đăng ký HttpClient cho Backend Geocoding Proxy (Nominatim / LocationIQ)
+        services.AddHttpClient<IGeocodingProxyService, GeocodingProxyService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(8);
+        });
 
         // Đăng ký Rule Engine
         services.AddSingleton<IWasteRuleEngineService, WasteRuleEngineService>();

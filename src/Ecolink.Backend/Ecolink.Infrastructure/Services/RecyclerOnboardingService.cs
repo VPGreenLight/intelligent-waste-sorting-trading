@@ -11,11 +11,23 @@ using NetTopologySuite.Geometries;
 namespace Ecolink.Infrastructure.Services;
 
 /// <summary>
-/// Hiện thực hóa nghiệp vụ Đăng ký Nâng cấp & Thẩm định Cơ sở thu gom (Module: Recycler Onboarding & Verification)
+/// Hiện thực hóa nghiệp vụ Đăng ký Nâng cấp &amp; Thẩm định Cơ sở thu gom (Module: Recycler Onboarding &amp; Verification)
 /// Bao gồm Use Case U-17 (Apply for Recycler Upgrade) và S-04 (Verify Recycler Application).
 /// </summary>
 public class RecyclerOnboardingService : IRecyclerOnboardingService
 {
+    private static readonly SemaphoreSlim SampleSeedLock = new(1, 1);
+    private static bool _sampleApplicationsChecked;
+
+    private static readonly (string Code, decimal DefaultPrice, decimal MinKg, string Cond)[] ReferencePrices =
+    {
+        ("plastic", 6900m, 1.0m, "Chai nhựa PET/HDPE đã tráng sạch, bẹp chai"),
+        ("paper", 4600m, 2.0m, "Giấy báo, tài liệu khô ráo, cột gọn"),
+        ("cardboard", 3900m, 2.5m, "Bìa carton gập phẳng, không ướt"),
+        ("metal", 25000m, 0.5m, "Vỏ lon nhôm, sắt thép sạch"),
+        ("glass", 2200m, 5.0m, "Chai lọ thủy tinh nguyên vẹn")
+    };
+
     private readonly ApplicationDbContext _dbContext;
     private readonly IEmailService _emailService;
     private readonly ILogger<RecyclerOnboardingService> _logger;
@@ -139,6 +151,8 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
         RecyclerApplicationFilterRequest filter,
         CancellationToken ct = default)
     {
+        await EnsureSamplePendingApplicationsAsync(ct);
+
         var query = _dbContext.RecyclerProfiles
             .Include(r => r.User)
             .AsNoTracking()
@@ -234,6 +248,11 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
             profile.UpdatedAt = DateTime.UtcNow;
             profile.UpdatedBy = staffUserId.ToString();
 
+            if (profile.Location == null && (profile.Latitude != 0 || profile.Longitude != 0))
+            {
+                profile.Location = new Point((double)profile.Longitude, (double)profile.Latitude) { SRID = 4326 };
+            }
+
             profile.User.Role = UserRole.Recycler;
             if (profile.User.Status == UserStatus.PendingVerification)
             {
@@ -241,6 +260,11 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
             }
             profile.User.UpdatedAt = DateTime.UtcNow;
             profile.User.UpdatedBy = staffUserId.ToString();
+
+            // Khởi tạo bảng giá ban đầu theo các nhóm phế liệu đối tác đã đăng ký để đáp ứng BR-MTH-03
+            // và bật trạng thái Online để ghim cơ sở xuất hiện ngay trên bản đồ /map.
+            await EnsureInitialPricesOnApprovalAsync(profile, ct);
+            profile.ActiveStatus = RecyclerActiveStatus.Online;
         }
         else
         {
@@ -261,6 +285,187 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
         await SendVerificationNotificationEmailAsync(profile.User, profile, request.IsApproved, ct);
 
         return MapToDetailDto(profile.User, profile);
+    }
+
+    private async Task EnsureInitialPricesOnApprovalAsync(RecyclerProfile profile, CancellationToken ct)
+    {
+        var hasPrices = await _dbContext.RecyclerPrices.AnyAsync(p => p.RecyclerId == profile.UserId, ct);
+        if (hasPrices) return;
+
+        var defaultCategories = new (string Code, string Name, string BinColor, bool IsRecyclable)[]
+        {
+            ("plastic", "Nhựa tái chế (Plastic)", "Cam", true),
+            ("paper", "Giấy báo & Tài liệu (Paper)", "Xanh Dương", true),
+            ("glass", "Thủy tinh (Glass)", "Trắng", true),
+            ("metal", "Kim loại & Vỏ lon (Metal)", "Xám Kim Loại", true),
+            ("cardboard", "Bìa Carton (Cardboard)", "Nâu Vàng", true)
+        };
+
+        var existingCodes = await _dbContext.WasteCategories.Select(c => c.Code).ToListAsync(ct);
+        var missing = defaultCategories.Where(d => !existingCodes.Contains(d.Code)).ToList();
+        if (missing.Count > 0)
+        {
+            foreach (var (code, name, binColor, isRecyclable) in missing)
+            {
+                _dbContext.WasteCategories.Add(new WasteCategory
+                {
+                    Code = code,
+                    Name = name,
+                    StandardBinColor = binColor,
+                    IsRecyclable = isRecyclable,
+                    Status = "Active"
+                });
+            }
+            await _dbContext.SaveChangesAsync(ct);
+        }
+
+        var categoriesByCode = await _dbContext.WasteCategories
+            .Where(c => c.IsRecyclable)
+            .ToDictionaryAsync(c => c.Code, ct);
+
+        var desc = (profile.Description ?? string.Empty).ToLowerInvariant();
+        var selectedCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        if (desc.Contains("nhựa") || desc.Contains("plastic")) selectedCodes.Add("plastic");
+        if (desc.Contains("giấy") || desc.Contains("paper")) selectedCodes.Add("paper");
+        if (desc.Contains("bìa") || desc.Contains("carton") || desc.Contains("cardboard")) selectedCodes.Add("cardboard");
+        if (desc.Contains("kim loại") || desc.Contains("nhôm") || desc.Contains("sắt") || desc.Contains("metal")) selectedCodes.Add("metal");
+        if (desc.Contains("thủy tinh") || desc.Contains("glass")) selectedCodes.Add("glass");
+
+        if (selectedCodes.Count == 0)
+        {
+            selectedCodes.Add("plastic");
+            selectedCodes.Add("paper");
+            selectedCodes.Add("metal");
+        }
+
+        foreach (var (code, defaultPrice, minKg, cond) in ReferencePrices)
+        {
+            if (selectedCodes.Contains(code) && categoriesByCode.TryGetValue(code, out var category))
+            {
+                _dbContext.RecyclerPrices.Add(new RecyclerPrice
+                {
+                    RecyclerId = profile.UserId,
+                    WasteCategoryId = category.Id,
+                    PricePerKg = defaultPrice,
+                    MinQuantityKg = minKg,
+                    CollectionConditions = cond,
+                    Status = PriceStatus.Active
+                });
+            }
+        }
+    }
+
+    private async Task EnsureSamplePendingApplicationsAsync(CancellationToken ct)
+    {
+        if (_sampleApplicationsChecked) return;
+
+        await SampleSeedLock.WaitAsync(ct);
+        try
+        {
+            if (_sampleApplicationsChecked) return;
+
+            var sampleApplicants = new (
+                Guid UserId,
+                string Username,
+                string Email,
+                string FacilityName,
+                string RepresentativeName,
+                string Address,
+                decimal Lat,
+                decimal Lng,
+                string Phone,
+                string Description,
+                string PermitUrl,
+                string PhotoUrl
+            )[]
+            {
+                (
+                    Guid.Parse("99999999-1111-4444-8888-111111111111"),
+                    "applicant_minhkhai",
+                    "minhkhai@thugom.vn",
+                    "Vựa Minh Khai",
+                    "Trần Minh Khai",
+                    "215 Nguyễn Trãi, Phường Nguyễn Cư Trinh, Quận 5, TP.HCM",
+                    10.7578m,
+                    106.6785m,
+                    "0908112233",
+                    "Thu mua: Kim loại, Nhựa, Giấy và bìa carton",
+                    "https://mock-r2.ecolink.vn/recycler-kyb/legal-permits/giay-dkdn-minh-khai.pdf",
+                    "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/kho-bai-minh-khai.jpg"
+                ),
+                (
+                    Guid.Parse("99999999-2222-4444-8888-222222222222"),
+                    "applicant_anhtuan",
+                    "tuan.thugom@ecolink.vn",
+                    "Anh Tuấn - Thu gom tận nhà",
+                    "Đỗ Anh Tuấn",
+                    "78 Nguyễn Thái Bình, Phường Nguyễn Thái Bình, Quận 1, TP.HCM",
+                    10.7692m,
+                    106.6986m,
+                    "0903445566",
+                    "Thu mua: Nhựa, Giấy và bìa carton, Thủy tinh",
+                    "https://mock-r2.ecolink.vn/recycler-kyb/legal-permits/giay-dkkd-anh-tuan.pdf",
+                    "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/mat-tien-anh-tuan.jpg"
+                )
+            };
+
+            string? hash = null;
+            var changed = false;
+
+            foreach (var s in sampleApplicants)
+            {
+                var exists = await _dbContext.Users
+                    .IgnoreQueryFilters()
+                    .AnyAsync(u => u.Id == s.UserId || u.Username == s.Username, ct);
+
+                if (exists) continue;
+
+                hash ??= BCrypt.Net.BCrypt.HashPassword("collector123");
+                var user = new User
+                {
+                    Id = s.UserId,
+                    Username = s.Username,
+                    Email = s.Email,
+                    PasswordHash = hash,
+                    FullName = s.RepresentativeName,
+                    PhoneNumber = s.Phone,
+                    Role = UserRole.Recycler,
+                    Status = UserStatus.PendingVerification,
+                    RecyclerProfile = new RecyclerProfile
+                    {
+                        UserId = s.UserId,
+                        FacilityName = s.FacilityName,
+                        RepresentativeName = s.RepresentativeName,
+                        BusinessAddress = s.Address,
+                        Latitude = s.Lat,
+                        Longitude = s.Lng,
+                        Location = new Point((double)s.Lng, (double)s.Lat) { SRID = 4326 },
+                        OperatingHours = "08:00 - 18:00",
+                        ContactPhone = s.Phone,
+                        Description = s.Description,
+                        LegalPermitUrl = s.PermitUrl,
+                        BusinessPhotoUrl = s.PhotoUrl,
+                        VerificationStatus = VerificationStatus.Pending,
+                        ActiveStatus = RecyclerActiveStatus.Offline
+                    }
+                };
+
+                _dbContext.Users.Add(user);
+                changed = true;
+            }
+
+            if (changed)
+            {
+                await _dbContext.SaveChangesAsync(ct);
+            }
+
+            _sampleApplicationsChecked = true;
+        }
+        finally
+        {
+            SampleSeedLock.Release();
+        }
     }
 
     private async Task SendVerificationNotificationEmailAsync(
@@ -316,4 +521,3 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
             ReviewedBy = profile.UpdatedBy
         };
 }
-

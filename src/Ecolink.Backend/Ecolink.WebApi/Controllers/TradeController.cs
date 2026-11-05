@@ -1,3 +1,4 @@
+using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
@@ -10,15 +11,18 @@ public class TradeController : ControllerBase
 {
     private readonly IGeoMatchingService _geoMatchingService;
     private readonly ITradeTransactionService _tradeService;
+    private readonly ICurrentUserService _currentUser;
     private readonly ILogger<TradeController> _logger;
 
     public TradeController(
         IGeoMatchingService geoMatchingService,
         ITradeTransactionService tradeService,
+        ICurrentUserService currentUser,
         ILogger<TradeController> logger)
     {
         _geoMatchingService = geoMatchingService;
         _tradeService = tradeService;
+        _currentUser = currentUser;
         _logger = logger;
     }
 
@@ -38,15 +42,32 @@ public class TradeController : ControllerBase
     }
 
     /// <summary>
-    /// Tạo yêu cầu bàn giao rác đến cơ sở thu gom (UC7)
+    /// Lấy danh sách yêu cầu bàn giao rác của người dân hoặc cơ sở thu gom (UC U-07, R-03)
+    /// </summary>
+    [HttpGet("orders")]
+    public async Task<IActionResult> GetOrders([FromQuery] Guid? userId, CancellationToken ct = default)
+    {
+        var effectiveUserId = userId ?? _currentUser.UserId ?? Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var orders = await _tradeService.GetUserOrdersAsync(effectiveUserId, ct);
+        return Ok(ApiResponse<IEnumerable<TradeOrderDto>>.Ok(orders));
+    }
+
+    /// <summary>
+    /// Tạo yêu cầu bàn giao rác đến cơ sở thu gom kèm tọa độ điểm hẹn đầu ngõ (UC U-07, BR-MTH-05)
     /// </summary>
     [HttpPost("orders")]
     public async Task<IActionResult> CreateOrder([FromBody] CreateTradeOrderRequest request, CancellationToken ct)
     {
+        if (request.UserId == Guid.Empty && _currentUser.UserId.HasValue)
+        {
+            request.UserId = _currentUser.UserId.Value;
+        }
+
         var order = await _tradeService.CreateTradeOrderAsync(request, ct);
         return Ok(new
         {
             success = true,
+            data = order,
             order,
             message = "Tạo đơn hẹn bàn giao rác thành công. Vui lòng đưa mã QR cho bên thu gom quét khi mang rác tới."
         });
