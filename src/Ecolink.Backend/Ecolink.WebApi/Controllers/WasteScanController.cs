@@ -69,6 +69,22 @@ public class WasteScanController : ControllerBase
             return BadRequest(ApiResponse<object>.Fail(errorMsg, "MSG-CLS-03"));
         }
 
+        // Gắn hướng dẫn phân loại (Rule Engine) cho từng vật thể đóng khung để FE chọn xem tức thì
+        var guideCache = new Dictionary<string, WasteSortingGuideDto?>(StringComparer.OrdinalIgnoreCase);
+        if (aiResult.DetectedObjects is { Count: > 0 })
+        {
+            foreach (var obj in aiResult.DetectedObjects)
+            {
+                if (string.IsNullOrWhiteSpace(obj.Label)) continue;
+                if (!guideCache.TryGetValue(obj.Label, out var objGuide))
+                {
+                    objGuide = await _ruleEngine.GetSortingGuideAsync(obj.Label, ct);
+                    guideCache[obj.Label] = objGuide;
+                }
+                obj.SortingGuide = objGuide;
+            }
+        }
+
         var response = new WasteScanResponseDto
         {
             AiResult = aiResult
@@ -81,12 +97,17 @@ public class WasteScanController : ControllerBase
             return Ok(ApiResponse<WasteScanResponseDto>.Ok(response, response.Message, "MSG-CLS-02"));
         }
 
-        // Mapping với cơ sở dữ liệu quy tắc tĩnh (Rule Engine)
+        // Mapping với cơ sở dữ liệu quy tắc tĩnh (Rule Engine) cho vật thể chính (#1)
         var categoryCode = aiResult.TopPrediction.Label;
-        var ruleGuide = await _ruleEngine.GetSortingGuideAsync(categoryCode, ct);
+        if (!guideCache.TryGetValue(categoryCode, out var ruleGuide))
+        {
+            ruleGuide = await _ruleEngine.GetSortingGuideAsync(categoryCode, ct);
+        }
 
         response.SortingGuide = ruleGuide;
-        response.Message = $"Nhận diện thành công loại rác: {aiResult.TopPrediction.DisplayName} với độ tin cậy {Math.Round(aiResult.TopPrediction.Confidence * 100, 1)}% (Mô hình: {model}).";
+        response.Message = aiResult.DetectedCount > 1
+            ? $"Phát hiện {aiResult.DetectedCount} vật thể — Ưu tiên #1: {aiResult.TopPrediction.DisplayName} ({Math.Round(aiResult.TopPrediction.Confidence * 100, 1)}%, Mô hình: {model})."
+            : $"Nhận diện thành công loại rác: {aiResult.TopPrediction.DisplayName} với độ tin cậy {Math.Round(aiResult.TopPrediction.Confidence * 100, 1)}% (Mô hình: {model}).";
 
         return Ok(ApiResponse<WasteScanResponseDto>.Ok(response, response.Message, "MSG-CLS-01"));
     }
