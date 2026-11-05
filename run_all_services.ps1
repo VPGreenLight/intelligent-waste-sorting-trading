@@ -37,27 +37,35 @@ try {
 }
 
 # 1. Python AI Service
-Write-Host "`n[1/5] Khoi chay AI Vision Service (Port 8000)..." -ForegroundColor Yellow
-$PythonExec = "python"
-if (Test-Path "$RootPath\venv\Scripts\python.exe") {
-    $PythonExec = "$RootPath\venv\Scripts\python.exe"
-    Write-Host "  [+] Su dung venv: .\venv\Scripts\python.exe" -ForegroundColor Green
+Write-Host "`n[1/5] Kiem tra / Khoi chay AI Vision Service (Port 8000)..." -ForegroundColor Yellow
+$aiListening = Get-NetTCPConnection -LocalPort 8000 -State Listen -ErrorAction SilentlyContinue
+if ($aiListening) {
+    Write-Host "  [+] AI Vision Service dang chay san tai cong 8000." -ForegroundColor Green
+} else {
+    $PythonExec = "python"
+    if (Test-Path "$RootPath\venv\Scripts\python.exe") {
+        $PythonExec = "$RootPath\venv\Scripts\python.exe"
+        Write-Host "  [+] Su dung venv: .\venv\Scripts\python.exe" -ForegroundColor Green
+    }
+
+    $aiCmd = "cd '$RootPath'; `$env:PYTHONPATH='$RootPath\src\Ecolink.AiService;' + `$env:PYTHONPATH; & '$PythonExec' -m uvicorn app:app --app-dir src/Ecolink.AiService --host 0.0.0.0 --port 8000 --reload"
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$Host.UI.RawUI.WindowTitle='EcoLink AI Vision Service (8000)'; $aiCmd"
+    Start-Sleep -Seconds 3
 }
 
-$aiCmd = "cd '$RootPath'; `$env:PYTHONPATH='$RootPath\src\Ecolink.AiService;' + `$env:PYTHONPATH; & '$PythonExec' -m uvicorn app:app --app-dir src/Ecolink.AiService --host 0.0.0.0 --port 8000 --reload"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$Host.UI.RawUI.WindowTitle='EcoLink AI Vision Service (8000)'; $aiCmd"
-
-Start-Sleep -Seconds 3
-
 # 2. ASP.NET Core Web API
-Write-Host "`n[2/5] Khoi chay ASP.NET Core Web API (Port 5000)..." -ForegroundColor Yellow
-$webCmd = "cd '$RootPath'; dotnet run --project src/Ecolink.Backend/Ecolink.WebApi --urls 'http://0.0.0.0:5000'"
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$Host.UI.RawUI.WindowTitle='EcoLink Core Web API (5000)'; $webCmd"
-
-Start-Sleep -Seconds 4
+Write-Host "`n[2/5] Kiem tra / Khoi chay ASP.NET Core Web API (Port 5000)..." -ForegroundColor Yellow
+$webListening = Get-NetTCPConnection -LocalPort 5000 -State Listen -ErrorAction SilentlyContinue
+if ($webListening) {
+    Write-Host "  [+] ASP.NET Core Web API dang chay san tai cong 5000." -ForegroundColor Green
+} else {
+    $webCmd = "cd '$RootPath'; dotnet run --project src/Ecolink.Backend/Ecolink.WebApi --urls 'http://0.0.0.0:5000'"
+    Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$Host.UI.RawUI.WindowTitle='EcoLink Core Web API (5000)'; $webCmd"
+    Start-Sleep -Seconds 4
+}
 
 # 3. EcoLink Frontend Web (Port 5173)
-Write-Host "`n[3/5] Kiem tra EcoLink Frontend Web (Port 5173)..." -ForegroundColor Yellow
+Write-Host "`n[3/5] Kiem tra / Khoi chay EcoLink Frontend Web (Port 5173)..." -ForegroundColor Yellow
 $feListening = Get-NetTCPConnection -LocalPort 5173 -State Listen -ErrorAction SilentlyContinue
 if ($feListening) {
     Write-Host "  [+] Frontend Vite dang chay san tai cong 5173." -ForegroundColor Green
@@ -72,8 +80,10 @@ if ($feListening) {
 }
 
 # 4. ngrok Tunneling (Backend 5000)
-Write-Host "`n[4/5] Mo ngrok Tunneling cho Backend (Port 5000)..." -ForegroundColor Yellow
-if (Get-Command ngrok -ErrorAction SilentlyContinue) {
+Write-Host "`n[4/5] Kiem tra / Mo ngrok Tunneling cho Backend (Port 5000)..." -ForegroundColor Yellow
+if (Get-Process -Name "ngrok" -ErrorAction SilentlyContinue) {
+    Write-Host "  [+] ngrok Backend Tunnel dang chay san." -ForegroundColor Green
+} elseif (Get-Command ngrok -ErrorAction SilentlyContinue) {
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$Host.UI.RawUI.WindowTitle='EcoLink ngrok Tunnel (5000)'; ngrok http 5000"
     Write-Host "  [+] Da mo tien trinh ngrok Backend Tunnel!" -ForegroundColor Green
 } else {
@@ -81,8 +91,10 @@ if (Get-Command ngrok -ErrorAction SilentlyContinue) {
 }
 
 # 5. Cloudflare Quick Tunnel (Frontend 5173)
-Write-Host "`n[5/5] Mo Cloudflare Quick Tunnel cho Frontend (Port 5173)..." -ForegroundColor Yellow
-if (Get-Command cloudflared -ErrorAction SilentlyContinue) {
+Write-Host "`n[5/5] Kiem tra / Mo Cloudflare Quick Tunnel cho Frontend (Port 5173)..." -ForegroundColor Yellow
+if (Get-Process -Name "cloudflared" -ErrorAction SilentlyContinue) {
+    Write-Host "  [+] Cloudflare Frontend Tunnel dang chay san." -ForegroundColor Green
+} elseif (Get-Command cloudflared -ErrorAction SilentlyContinue) {
     $cfCmd = "`$env:Path = '$env:Path'; cloudflared tunnel --url http://localhost:5173"
     Start-Process powershell -ArgumentList "-NoExit", "-Command", "`$Host.UI.RawUI.WindowTitle='EcoLink Cloudflare Frontend Tunnel (5173)'; $cfCmd"
     Write-Host "  [+] Da mo tien trinh Cloudflare Frontend Tunnel (*.trycloudflare.com)!" -ForegroundColor Green
