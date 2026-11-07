@@ -23,6 +23,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<RecyclerPrice> RecyclerPrices => Set<RecyclerPrice>();
     public DbSet<HandoverRequest> HandoverRequests => Set<HandoverRequest>();
     public DbSet<HandoverRequestItem> HandoverRequestItems => Set<HandoverRequestItem>();
+    public DbSet<HandoverReceipt> HandoverReceipts => Set<HandoverReceipt>();
     public DbSet<StaffPermissionAssignment> StaffPermissionAssignments => Set<StaffPermissionAssignment>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();

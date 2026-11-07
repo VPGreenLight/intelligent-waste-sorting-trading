@@ -29,13 +29,15 @@ public class HandoverRequestService : IHandoverRequestService
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     private static readonly HandoverStatus[] ActiveStatuses =
-        { HandoverStatus.Pending, HandoverStatus.Negotiating, HandoverStatus.Accepted, HandoverStatus.Scheduled };
+        { HandoverStatus.Pending, HandoverStatus.Negotiating, HandoverStatus.Accepted, HandoverStatus.Scheduled,
+          HandoverStatus.AwaitingConfirmation };
 
     private static readonly HandoverStatus[] UserCancellable =
         { HandoverStatus.Pending, HandoverStatus.Negotiating, HandoverStatus.Accepted, HandoverStatus.Scheduled };
 
     private static readonly HandoverStatus[] ContactVisible =
-        { HandoverStatus.Accepted, HandoverStatus.Scheduled, HandoverStatus.Completed, HandoverStatus.Disputed };
+        { HandoverStatus.Accepted, HandoverStatus.Scheduled, HandoverStatus.AwaitingConfirmation,
+          HandoverStatus.Completed, HandoverStatus.Disputed };
 
     private readonly ApplicationDbContext _db;
     private readonly ILogger<HandoverRequestService> _logger;
@@ -400,7 +402,9 @@ public class HandoverRequestService : IHandoverRequestService
         var users = await _db.Users.AsNoTracking().Where(u => userIds.Contains(u.Id))
             .Select(u => new { u.Id, u.FullName, u.PhoneNumber }).ToDictionaryAsync(u => u.Id, ct);
         var recyclerUserIds = entities.Select(e => e.RecyclerId).Distinct().ToList();
-        var cancellers = entities.Where(e => e.CancelledBy.HasValue).Select(e => e.CancelledBy!.Value).Distinct().ToList();
+        var requestIds = entities.Select(e => e.Id).ToList();
+        var withReceipt = (await _db.HandoverReceipts.AsNoTracking().Where(r => requestIds.Contains(r.RequestId))
+            .Select(r => r.RequestId).ToListAsync(ct)).ToHashSet();
 
         return entities.Select(e =>
         {
@@ -434,6 +438,7 @@ public class HandoverRequestService : IHandoverRequestService
                 CancelledByRole = e.CancelledBy == null ? null : (e.CancelledBy == e.RecyclerId ? "Recycler" : "User"),
                 IsLateCancellation = e.IsLateCancellation,
                 IsContactRevealed = revealed,
+                HasReceipt = withReceipt.Contains(e.Id),
                 CanEdit = e.Status == HandoverStatus.Pending,
                 CanCancel = UserCancellable.Contains(e.Status),
                 CreatedAt = DateTime.SpecifyKind(e.CreatedAt, DateTimeKind.Utc),

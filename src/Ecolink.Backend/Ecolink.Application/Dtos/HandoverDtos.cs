@@ -129,6 +129,8 @@ public class HandoverRequestDto
     public string? CancelledByRole { get; set; }
     public bool IsLateCancellation { get; set; }
     public bool IsContactRevealed { get; set; }
+    /// <summary>Recycler đã lập biên nhận cho yêu cầu này (R-06).</summary>
+    public bool HasReceipt { get; set; }
     public bool CanEdit { get; set; }
     public bool CanCancel { get; set; }
     public HandoverPartyDto? Recycler { get; set; }

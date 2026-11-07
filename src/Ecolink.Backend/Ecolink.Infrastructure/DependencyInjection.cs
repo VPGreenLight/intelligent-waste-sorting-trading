@@ -55,6 +55,8 @@ public static class DependencyInjection
         // Handover Request Management (U-06, U-07, R-03, R-04)
         services.AddScoped<IHandoverRequestService, HandoverRequestService>();
 
+        services.AddScoped<IHandoverReceiptService, HandoverReceiptService>();
+
         // Đăng ký Payment Service (VietQR & Webhook)
         services.AddSingleton<IPaymentService, PaymentService>();
 
