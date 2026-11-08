@@ -1,0 +1,71 @@
+sequenceDiagram
+    autonumber
+    actor Actor as Actor (Citizen / Recycler)
+    participant Ctrl as Transaction Controller (User / Recycler)
+    participant Svc as HandoverReceiptService
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Actor,DB: UC U-12: XEM LICH SU GIAO DICH THU GOM DA HOAN TAT (BR-HND-07, BR-GAM-01, PHAN TRANG VA TONG CONG)
+
+    %% ==========================================
+    %% YEU CAU TRA CUU LICH SU GIAO DICH
+    %% ==========================================
+    rect rgb(240, 248, 255)
+        Note over Actor,Ctrl: YEU CAU TRUY VAN CO BO LOC THOI GIAN VA PHAN TRANG
+        alt Nguoi dan truy van (Citizen View)
+            Actor->>Ctrl: GET /api/v1/transactions?from=2026-11-01&to=2026-11-08&page=1&pageSize=20 (Bearer Token)
+            Ctrl->>Ctrl: Trich xuat UserId tu JWT (Role: User/Citizen)
+            Ctrl->>Svc: GetUserHistoryAsync(userId, from, to, page, pageSize, ct)
+        else Co so thu gom truy van (Recycler View)
+            Actor->>Ctrl: GET /api/v1/recycler/transactions?from=2026-11-01&to=2026-11-08&page=1&pageSize=20 (Bearer Token)
+            Ctrl->>Ctrl: Trich xuat RecyclerId tu JWT (Role: Recycler/Collector)
+            Ctrl->>Svc: GetRecyclerHistoryAsync(recyclerId, from, to, page, pageSize, ct)
+        end
+    end
+
+    %% ==========================================
+    %% LOC DU LIEU VA TINH TOAN CHI SO TONG CONG
+    %% ==========================================
+    rect rgb(255, 250, 240)
+        Note over Svc,DB: XU LY TAI TANG HA TANG SERVICE (HandoverReceiptService.HistoryAsync)
+        Svc->>Svc: Chuan hoa tham so: page = Max(1, page), pageSize = Clamp(pageSize, 1, 50)
+        Svc->>Svc: Chuan hoa moc thoi gian from/to sang UTC (neu to chi co ngay -> lay het 23:59:59)
+
+        Note over Svc,DB: 1. TRUY VAN TINH TOAN TONG SO LIEU (AGGREGATIONS TREN TOAN BO TAP LOC)
+        Svc->>DB: SELECT COUNT(*), SUM(total_weight_kg), SUM(total_amount_cash), SUM(points_awarded)<br/>FROM handover_receipts<br/>WHERE confirmed_by_user_at IS NOT NULL<br/>  AND (user_id = ownerId HOAC recycler_id = ownerId)<br/>  AND confirmed_by_user_at >= fromUtc AND confirmed_by_user_at < toUtc
+        DB-->>Svc: totalCount, sumWeight, sumAmount, sumPoints
+
+        Note over Svc,DB: 2. PHAN TRANG DU LIEU THEO THOI GIAN HOAN TAT MOI NHAT
+        Svc->>DB: SELECT * FROM handover_receipts<br/>WHERE [dieu kien loc nhu tren]<br/>ORDER BY confirmed_by_user_at DESC<br/>OFFSET (page - 1) * pageSize LIMIT pageSize
+        DB-->>Svc: rows (Danh sach bien nhan trang hien tai)
+    end
+
+    %% ==========================================
+    %% BATCH LOAD THONG TIN DOI TAC VA DANH MUC PHE LIEU
+    %% ==========================================
+    rect rgb(240, 255, 240)
+        Note over Svc,DB: BATCH LOAD DỮ LIỆU ĐỐI TÁC VÀ LOẠI PHẾ LIỆU (TRANH N+1 QUERY)
+        Svc->>DB: SELECT Id, RequestCode FROM handover_requests WHERE Id IN (requestIds)
+        DB-->>Svc: Dict<Guid, string> requestCodes
+
+        Svc->>DB: SELECT RequestId, c.Name FROM handover_request_items i<br/>JOIN waste_categories c ON i.waste_category_id = c.id<br/>WHERE RequestId IN (requestIds) AND ActualWeightKg IS NOT NULL
+        DB-->>Svc: Danh muc phế liệu của từng đơn
+
+        alt Viewer == User (Nguoi dan xem)
+            Svc->>DB: SELECT UserId, FacilityName FROM recycler_profiles WHERE UserId IN (recyclerIds)
+            DB-->>Svc: Map ten co so thu gom (CounterpartName = FacilityName)
+        else Viewer == Recycler (Co so thu gom xem)
+            Svc->>DB: SELECT Id, FullName FROM users WHERE Id IN (userIds)
+            DB-->>Svc: Map ho ten nguoi dan (CounterpartName = FullName)
+        end
+    end
+
+    %% ==========================================
+    %% DONG GOI DTO VA TRA KET QUA
+    %% ==========================================
+    rect rgb(240, 248, 255)
+        Svc->>Svc: Map rows sang List~TransactionHistoryItemDto~ (ReceiptCode, CompletedAt, CounterpartName, Categories, TotalWeightKg, TotalAmountCash, PointsAwarded)
+        Svc-->>Ctrl: TransactionHistoryDto (Items, Page, PageSize, TotalCount, TotalWeightKg, TotalAmountCash, TotalPoints)
+        Ctrl-->>Actor: 200 OK (ApiResponse~TransactionHistoryDto~.Ok)
+    end
+
