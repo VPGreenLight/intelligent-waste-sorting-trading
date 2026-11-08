@@ -1,0 +1,61 @@
+sequenceDiagram
+    autonumber
+    actor Citizen as Citizen (User)
+    participant Ctrl as HandoverRequestController
+    participant Svc as HandoverRequestService
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Citizen,DB: UC U-06: TAO YEU CAU BAN GIAO PHE LIEU CHO CO SO THU GOM (BR-HND-01, BR-NEG-04, SCR-USR-06)
+
+    Citizen->>Ctrl: POST /api/v1/handover-requests (Bearer Token)<br/>{ RecyclerId, Items, PhotoUrls, ProposedTimeSlot, PickupAddress, UserNote }
+    Ctrl->>Ctrl: Trich xuat UserId tu JWT Claims (Role: Citizen/User)
+    Ctrl->>Svc: CreateAsync(userId, request, ct)
+
+    alt RecyclerId == UserId (Tu gui cho chinh minh)
+        Svc-->>Ctrl: Throw BusinessRuleException (BR-HND-01: MSG-GEN-01 - Khong the tu gui cho co so cua minh)
+        Ctrl-->>Citizen: 400 Bad Request
+    end
+
+    Svc->>DB: COUNT HandoverRequests WHERE UserId = userId AND Status IN (Pending, Negotiating, Accepted, Scheduled)
+    DB-->>Svc: activeCount
+
+    alt activeCount >= 3 (Vuot qua han muc don dang xu ly)
+        Svc-->>Ctrl: Throw BusinessRuleException (BR-HND-LIMIT: MSG-GEN-01 - Toi da 3 yeu cau cung luc)
+        Ctrl-->>Citizen: 400 Bad Request
+    end
+
+    Svc->>DB: SELECT RecyclerProfile WHERE UserId = RecyclerId
+    DB-->>Svc: RecyclerProfile (VerificationStatus, ActiveStatus, WeeklyScheduleJson)
+
+    alt Co so chua duyet (VerificationStatus != Verified) hoac dang Offline (ActiveStatus != Online)
+        Svc-->>Ctrl: Throw BusinessRuleException (BR-HND-01: MSG-GEN-01 - Co so hien khong nhan yeu cau)
+        Ctrl-->>Citizen: 400 Bad Request
+    end
+
+    Svc->>DB: SELECT RecyclerPrices WHERE RecyclerId = recyclerId AND WasteCategoryId IN (request.ItemCategoryIds) AND Status = Active
+    DB-->>Svc: Danh sach dong gia dang ap dung
+
+    alt Co loai phe lieu co so khong nhan hoac EstimatedWeightKg < MinQuantityKg hoac trung danh muc
+        Svc-->>Ctrl: Throw BusinessRuleException (BR-HND-01: MSG-GEN-01 - Khoi luong toi thieu hoac loai khong hop le)
+        Ctrl-->>Citizen: 400 Bad Request
+    end
+
+    Svc->>Svc: ValidateTimeSlot: ProposedTimeSlot trong khoang [UtcNow + 2h .. UtcNow + 7d] (BR-NEG-04)<br/>Doi chieu WeeklyScheduleJson: khong roi vao ngay nghi va nam trong gio mo cua (ICT GMT+7)
+    alt Khung gio hen ngoai khoang hoac co so dong cua
+        Svc-->>Ctrl: Throw BusinessRuleException (BR-NEG-04: MSG-GEN-01)
+        Ctrl-->>Citizen: 400 Bad Request
+    end
+
+    Svc->>Svc: ValidatePhotos: Kiem tra so luong anh trong khoang [1 .. 5] URL hop le (SCR-USR-06)
+    alt So luong anh < 1 hoac > 5 hoac URL khong hop le
+        Svc-->>Ctrl: Throw BusinessRuleException (BR-HND-01: MSG-GEN-01 - Dinh kem tu 1 den 5 anh)
+        Ctrl-->>Citizen: 400 Bad Request
+    end
+
+    Svc->>Svc: GenerateCodeAsync: Sinh ma HND-yyyyMMdd-NNNN
+    Svc->>DB: INSERT INTO handover_requests (Id, RequestCode, UserId, RecyclerId, ProposedTimeSlot, Status='Pending', ...)<br/>INSERT INTO handover_request_items (RequestId, CategoryId, EstimatedWeightKg, ...)
+    DB-->>Svc: Luu thanh cong (Commit Transaction)
+
+    Svc-->>Ctrl: HandoverRequestDto (Id, RequestCode, Status='Pending', Items, CanEdit=true, CanCancel=true, IsContactRevealed=false)
+    Ctrl-->>Citizen: 201 Created (ApiResponse.Ok: MSG-HND-01 - Yeu cau ban giao cua ban da duoc gui)
+
