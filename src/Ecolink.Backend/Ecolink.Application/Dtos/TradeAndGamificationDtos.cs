@@ -62,6 +62,12 @@ public class DiscoveryFallbackSuggestionDto
     public bool AllowCommunityPickupPost { get; set; } = true;
 }
 
+public class TradeOrderLineDto
+{
+    public string WasteId { get; set; } = string.Empty;
+    public decimal Kg { get; set; }
+}
+
 public class CreateTradeOrderRequest
 {
     public Guid UserId { get; set; }
@@ -75,12 +81,25 @@ public class CreateTradeOrderRequest
     public string? PickupAddress { get; set; }
     public double? PickupLatitude { get; set; }
     public double? PickupLongitude { get; set; }
+    public List<TradeOrderLineDto>? Lines { get; set; }
+}
+
+public class UpdateTradeOrderStatusRequest
+{
+    public string Status { get; set; } = string.Empty;
+    public string? Reason { get; set; }
+}
+
+public class UpdateTradeOrderTimeSlotRequest
+{
+    public string ProposedTimeSlot { get; set; } = string.Empty;
 }
 
 public class TradeOrderDto
 {
     public Guid Id { get; set; }
     public Guid UserId { get; set; }
+    public string? CitizenName { get; set; }
     public Guid PartnerId { get; set; }
     public Guid? RecyclerUserId { get; set; }
     public string? PartnerName { get; set; }
@@ -96,6 +115,8 @@ public class TradeOrderDto
     public double? PickupLatitude { get; set; }
     public double? PickupLongitude { get; set; }
     public string? Note { get; set; }
+    public string? CancelReason { get; set; }
+    public List<TradeOrderLineDto>? Lines { get; set; }
     public string QrCodeValue { get; set; } = string.Empty;
 }
 

@@ -95,6 +95,7 @@ public class NegotiationChatService : INegotiationChatService
             AgreedPricePerKg = context.Order.AgreedPricePerKg,
             ProposedTimeSlot = context.Order.ProposedTimeSlot,
             ConfirmedTimeSlot = context.Order.ConfirmedTimeSlot,
+            PickupAddress = context.Order.PickupAddress,
             ScheduledAt = context.Order.ScheduledAt,
             AcceptedAt = context.Order.AcceptedAt,
             IsProposalLocked = !IsProposalAllowed(context.Order.Status),

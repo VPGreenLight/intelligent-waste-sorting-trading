@@ -1,4 +1,4 @@
-using Ecolink.Application.Dtos;
+=using Ecolink.Application.Dtos;
 
 namespace Ecolink.Application.Interfaces;
 
@@ -41,6 +41,8 @@ public interface ITradeTransactionService
     Task<TradeOrderDto> CreateTradeOrderAsync(CreateTradeOrderRequest request, CancellationToken cancellationToken = default);
     Task<TransactionReceiptDto> ConfirmReceiptByQrAsync(ConfirmQrReceiptRequest request, CancellationToken cancellationToken = default);
     Task<IEnumerable<TradeOrderDto>> GetUserOrdersAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<TradeOrderDto> UpdateOrderStatusAsync(Guid orderId, Guid callerUserId, UpdateTradeOrderStatusRequest request, CancellationToken cancellationToken = default);
+    Task<TradeOrderDto> UpdateOrderTimeSlotAsync(Guid orderId, Guid callerUserId, string proposedTimeSlot, CancellationToken cancellationToken = default);
 }
 
 public interface IGamificationService

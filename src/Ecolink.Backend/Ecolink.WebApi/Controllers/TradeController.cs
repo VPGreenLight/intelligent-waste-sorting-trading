@@ -42,12 +42,12 @@ public class TradeController : ControllerBase
     }
 
     /// <summary>
-    /// Lấy danh sách yêu cầu bàn giao rác của người dân hoặc cơ sở thu gom (UC U-07, R-03)
+    /// Lấy danh sách yêu cầu bàn giao rác của người dân hoặc cơ sở thu gom đang đăng nhập (UC U-07, R-03)
     /// </summary>
     [HttpGet("orders")]
     public async Task<IActionResult> GetOrders([FromQuery] Guid? userId, CancellationToken ct = default)
     {
-        var effectiveUserId = userId ?? _currentUser.UserId ?? Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var effectiveUserId = _currentUser.UserId ?? userId ?? Guid.Parse("11111111-1111-1111-1111-111111111111");
         var orders = await _tradeService.GetUserOrdersAsync(effectiveUserId, ct);
         return Ok(ApiResponse<IEnumerable<TradeOrderDto>>.Ok(orders));
     }
@@ -58,7 +58,7 @@ public class TradeController : ControllerBase
     [HttpPost("orders")]
     public async Task<IActionResult> CreateOrder([FromBody] CreateTradeOrderRequest request, CancellationToken ct)
     {
-        if (request.UserId == Guid.Empty && _currentUser.UserId.HasValue)
+        if (_currentUser.UserId.HasValue)
         {
             request.UserId = _currentUser.UserId.Value;
         }
@@ -71,6 +71,34 @@ public class TradeController : ControllerBase
             order,
             message = "Tạo đơn hẹn bàn giao rác thành công. Vui lòng đưa mã QR cho bên thu gom quét khi mang rác tới."
         });
+    }
+
+    /// <summary>
+    /// Cập nhật trạng thái yêu cầu bàn giao: Nhận đơn, Từ chối hoặc Huỷ kèm lý do (UC U-08, R-03, R-04)
+    /// </summary>
+    [HttpPatch("orders/{orderId:guid}/status")]
+    public async Task<IActionResult> UpdateOrderStatus(
+        Guid orderId,
+        [FromBody] UpdateTradeOrderStatusRequest request,
+        CancellationToken ct = default)
+    {
+        var callerId = _currentUser.UserId ?? Guid.Empty;
+        var updated = await _tradeService.UpdateOrderStatusAsync(orderId, callerId, request, ct);
+        return Ok(ApiResponse<TradeOrderDto>.Ok(updated, "Cập nhật trạng thái đơn bàn giao thành công."));
+    }
+
+    /// <summary>
+    /// Đổi khung giờ thu gom đề xuất khi đơn đang chờ xác nhận (UC U-08)
+    /// </summary>
+    [HttpPatch("orders/{orderId:guid}/time-slot")]
+    public async Task<IActionResult> UpdateOrderTimeSlot(
+        Guid orderId,
+        [FromBody] UpdateTradeOrderTimeSlotRequest request,
+        CancellationToken ct = default)
+    {
+        var callerId = _currentUser.UserId ?? Guid.Empty;
+        var updated = await _tradeService.UpdateOrderTimeSlotAsync(orderId, callerId, request.ProposedTimeSlot, ct);
+        return Ok(ApiResponse<TradeOrderDto>.Ok(updated, "Đã cập nhật khung giờ thu gom đề xuất."));
     }
 
     /// <summary>

@@ -82,6 +82,14 @@ public class TradeTransactionService : ITradeTransactionService
         @"\[GPS:(?<lat>-?\d+(?:\.\d+)?),(?<lng>-?\d+(?:\.\d+)?)\]",
         RegexOptions.Compiled | RegexOptions.CultureInvariant);
 
+    private static readonly Regex LinesTagRegex = new(
+        @"\[LINES:(?<items>[^\]]+)\]",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+    private static readonly Regex ReasonTagRegex = new(
+        @"\[REASON:(?<reason>[^\]]+)\]",
+        RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
     private readonly ILogger<TradeTransactionService> _logger;
     private readonly IGamificationService _gamificationService;
     private readonly ApplicationDbContext? _dbContext;
@@ -111,7 +119,20 @@ public class TradeTransactionService : ITradeTransactionService
             ? request.ProposedTimeSlot.Trim()
             : request.ScheduledAt.ToString("yyyy-MM-dd HH:mm");
 
-        var noteWithGps = BuildStoredNote(request.Note, request.PickupLatitude, request.PickupLongitude);
+        var sanitizedLines = request.Lines?
+            .Where(l => !string.IsNullOrWhiteSpace(l.WasteId) && l.Kg > 0)
+            .Select(l => new TradeOrderLineDto { WasteId = l.WasteId.Trim(), Kg = l.Kg })
+            .ToList();
+
+        var noteWithMeta = BuildStoredNote(
+            request.Note,
+            request.PickupLatitude,
+            request.PickupLongitude,
+            sanitizedLines,
+            null);
+
+        var scheduledUtc = NormalizeUtc(
+            request.ScheduledAt == default ? DateTime.UtcNow.AddHours(2) : request.ScheduledAt);
 
         var orderDto = new TradeOrderDto
         {
@@ -120,7 +141,7 @@ public class TradeTransactionService : ITradeTransactionService
             PartnerId = effectivePartnerId,
             RecyclerUserId = effectivePartnerId,
             Status = OrderStatus.Pending.ToString(),
-            ScheduledAt = request.ScheduledAt == default ? DateTime.UtcNow.AddHours(2) : request.ScheduledAt,
+            ScheduledAt = scheduledUtc,
             EstimatedWeightKg = request.EstimatedWeightKg,
             CategoryCode = request.CategoryCode,
             InitialPricePerKg = request.InitialPricePerKg,
@@ -129,6 +150,7 @@ public class TradeTransactionService : ITradeTransactionService
             PickupLatitude = request.PickupLatitude,
             PickupLongitude = request.PickupLongitude,
             Note = request.Note,
+            Lines = sanitizedLines,
             QrCodeValue = $"ECOLINK_ORDER_{orderId:N}"
         };
 
@@ -136,42 +158,104 @@ public class TradeTransactionService : ITradeTransactionService
         {
             try
             {
-                var recyclerProfile = await _dbContext.RecyclerProfiles
+                var citizenUser = await _dbContext.Users
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(r => r.UserId == effectivePartnerId, cancellationToken);
+                    .FirstOrDefaultAsync(u => u.Id == effectiveUserId, cancellationToken)
+                    ?? await _dbContext.Users
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(u => u.Role == UserRole.Citizen || u.Role == UserRole.User, cancellationToken);
+
+                if (citizenUser != null)
+                {
+                    effectiveUserId = citizenUser.Id;
+                    orderDto.UserId = citizenUser.Id;
+                    orderDto.CitizenName = !string.IsNullOrWhiteSpace(citizenUser.FullName)
+                        ? citizenUser.FullName
+                        : citizenUser.Username;
+                }
 
                 var partnerEntity = await _dbContext.CollectionPartners
                     .FirstOrDefaultAsync(p => p.Id == effectivePartnerId || p.UserId == effectivePartnerId, cancellationToken);
 
+                var targetRecyclerUserId = partnerEntity?.UserId ?? effectivePartnerId;
+                var recyclerProfile = await _dbContext.RecyclerProfiles
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(r => r.UserId == targetRecyclerUserId || r.Id == effectivePartnerId, cancellationToken);
+
                 if (partnerEntity == null && recyclerProfile != null)
                 {
-                    partnerEntity = new CollectionPartner
+                    partnerEntity = await _dbContext.CollectionPartners
+                        .FirstOrDefaultAsync(p => p.UserId == recyclerProfile.UserId, cancellationToken);
+
+                    if (partnerEntity == null)
                     {
-                        Id = recyclerProfile.UserId,
-                        UserId = recyclerProfile.UserId,
-                        FacilityName = recyclerProfile.FacilityName,
-                        Address = recyclerProfile.BusinessAddress,
-                        Latitude = (double)recyclerProfile.Latitude,
-                        Longitude = (double)recyclerProfile.Longitude,
-                        OperatingHours = recyclerProfile.OperatingHours,
-                        ContactPhone = recyclerProfile.ContactPhone,
-                        IsVerified = recyclerProfile.VerificationStatus == VerificationStatus.Verified
-                    };
-                    _dbContext.CollectionPartners.Add(partnerEntity);
+                        partnerEntity = new CollectionPartner
+                        {
+                            Id = recyclerProfile.UserId,
+                            UserId = recyclerProfile.UserId,
+                            FacilityName = recyclerProfile.FacilityName,
+                            Address = recyclerProfile.BusinessAddress,
+                            Latitude = (double)recyclerProfile.Latitude,
+                            Longitude = (double)recyclerProfile.Longitude,
+                            OperatingHours = recyclerProfile.OperatingHours,
+                            ContactPhone = recyclerProfile.ContactPhone,
+                            IsVerified = recyclerProfile.VerificationStatus == VerificationStatus.Verified
+                        };
+                        _dbContext.CollectionPartners.Add(partnerEntity);
+                    }
                 }
 
-                if (partnerEntity != null)
+                if (partnerEntity == null)
+                {
+                    var recyclerUser = await _dbContext.Users
+                        .AsNoTracking()
+                        .FirstOrDefaultAsync(u => u.Id == effectivePartnerId, cancellationToken);
+
+                    if (recyclerUser != null)
+                    {
+                        partnerEntity = new CollectionPartner
+                        {
+                            Id = recyclerUser.Id,
+                            UserId = recyclerUser.Id,
+                            FacilityName = !string.IsNullOrWhiteSpace(recyclerUser.FullName)
+                                ? recyclerUser.FullName
+                                : recyclerUser.Username,
+                            Address = request.PickupAddress ?? "Cơ sở thu mua EcoLink",
+                            Latitude = request.PickupLatitude ?? 10.7769,
+                            Longitude = request.PickupLongitude ?? 106.7009,
+                            OperatingHours = "08:00 - 18:00",
+                            ContactPhone = recyclerUser.PhoneNumber ?? "0901234567",
+                            IsVerified = true
+                        };
+                        _dbContext.CollectionPartners.Add(partnerEntity);
+                    }
+                    else
+                    {
+                        partnerEntity = await _dbContext.CollectionPartners
+                            .FirstOrDefaultAsync(cancellationToken);
+
+                        if (partnerEntity != null && recyclerProfile == null)
+                        {
+                            recyclerProfile = await _dbContext.RecyclerProfiles
+                                .AsNoTracking()
+                                .FirstOrDefaultAsync(r => r.UserId == partnerEntity.UserId, cancellationToken);
+                        }
+                    }
+                }
+
+                if (partnerEntity != null && citizenUser != null)
                 {
                     var orderEntity = new TradeOrder
                     {
                         Id = orderId,
-                        UserId = effectiveUserId,
+                        UserId = citizenUser.Id,
                         PartnerId = partnerEntity.Id,
-                        RecyclerUserId = recyclerProfile?.UserId ?? partnerEntity.UserId,
+                        // Chỉ gắn RecyclerUserId khi bản ghi tồn tại trong recycler_profiles (tuân thủ FK fk_trade_orders_recycler_profiles)
+                        RecyclerUserId = recyclerProfile?.UserId,
                         Status = OrderStatus.Pending,
-                        ScheduledAt = orderDto.ScheduledAt,
+                        ScheduledAt = scheduledUtc,
                         EstimatedWeightKg = request.EstimatedWeightKg,
-                        Note = noteWithGps,
+                        Note = noteWithMeta,
                         CategoryCode = request.CategoryCode,
                         InitialPricePerKg = request.InitialPricePerKg,
                         ProposedTimeSlot = proposedSlot,
@@ -180,8 +264,9 @@ public class TradeTransactionService : ITradeTransactionService
 
                     _dbContext.TradeOrders.Add(orderEntity);
                     await _dbContext.SaveChangesAsync(cancellationToken);
+
                     orderDto.PartnerId = orderEntity.PartnerId;
-                    orderDto.RecyclerUserId = orderEntity.RecyclerUserId;
+                    orderDto.RecyclerUserId = recyclerProfile?.UserId ?? partnerEntity.UserId;
                     orderDto.PartnerName = recyclerProfile?.FacilityName ?? partnerEntity.FacilityName;
                 }
             }
@@ -277,44 +362,22 @@ public class TradeTransactionService : ITradeTransactionService
             {
                 var rawOrders = await _dbContext.TradeOrders
                     .AsNoTracking()
+                    .Include(o => o.User)
                     .Include(o => o.Partner)
                     .Include(o => o.RecyclerProfile)
-                    .Where(o => o.UserId == userId || o.RecyclerUserId == userId || o.PartnerId == userId)
+                    .Where(o =>
+                        o.UserId == userId ||
+                        o.RecyclerUserId == userId ||
+                        o.PartnerId == userId ||
+                        (o.Partner != null && o.Partner.UserId == userId))
                     .OrderByDescending(o => o.CreatedAt)
                     .ToListAsync(cancellationToken);
 
-                if (rawOrders.Count > 0)
-                {
-                    return rawOrders.Select(o =>
-                    {
-                        var (cleanNote, lat, lng) = ParseStoredNote(o.Note);
-                        return new TradeOrderDto
-                        {
-                            Id = o.Id,
-                            UserId = o.UserId,
-                            PartnerId = o.PartnerId,
-                            RecyclerUserId = o.RecyclerUserId,
-                            PartnerName = o.RecyclerProfile?.FacilityName ?? o.Partner?.FacilityName,
-                            Status = o.Status.ToString(),
-                            ScheduledAt = o.ScheduledAt,
-                            EstimatedWeightKg = o.EstimatedWeightKg,
-                            CategoryCode = o.CategoryCode,
-                            InitialPricePerKg = o.InitialPricePerKg,
-                            AgreedPricePerKg = o.AgreedPricePerKg,
-                            ProposedTimeSlot = o.ProposedTimeSlot,
-                            ConfirmedTimeSlot = o.ConfirmedTimeSlot,
-                            PickupAddress = o.PickupAddress,
-                            PickupLatitude = lat,
-                            PickupLongitude = lng,
-                            Note = cleanNote,
-                            QrCodeValue = $"ECOLINK_ORDER_{o.Id:N}"
-                        };
-                    }).ToList();
-                }
+                return rawOrders.Select(MapEntityToDto).ToList();
             }
-            catch
+            catch (Exception ex)
             {
-                // Fallback sang bộ nhớ đệm nếu chưa kết nối PostgreSQL
+                _logger.LogWarning(ex, "Không thể truy vấn đơn bàn giao từ PostgreSQL cho User {UserId}, dùng bộ đệm tạm.", userId);
             }
         }
 
@@ -325,41 +388,315 @@ public class TradeTransactionService : ITradeTransactionService
         return userOrders;
     }
 
-    private static string? BuildStoredNote(string? note, double? lat, double? lng)
+    public async Task<TradeOrderDto> UpdateOrderStatusAsync(
+        Guid orderId,
+        Guid callerUserId,
+        UpdateTradeOrderStatusRequest request,
+        CancellationToken cancellationToken = default)
     {
-        var clean = string.IsNullOrWhiteSpace(note) ? string.Empty : note.Trim();
-        if (!lat.HasValue || !lng.HasValue || (lat.Value == 0 && lng.Value == 0))
+        var normalized = (request.Status ?? string.Empty).Trim().ToLowerInvariant();
+        var nextStatus = normalized switch
         {
-            return string.IsNullOrEmpty(clean) ? null : clean;
+            "accepted" => OrderStatus.Accepted,
+            "rejected" or "declined" => OrderStatus.Rejected,
+            "cancelled" or "canceled" or "broken" => OrderStatus.Cancelled,
+            "completed" or "done" => OrderStatus.Completed,
+            "scheduled" => OrderStatus.Scheduled,
+            _ => throw new ArgumentException($"Trạng thái đơn '{request.Status}' không hợp lệ.")
+        };
+
+        var trimmedReason = string.IsNullOrWhiteSpace(request.Reason) ? null : request.Reason.Trim();
+
+        if (_dbContext != null)
+        {
+            var dbOrder = await _dbContext.TradeOrders
+                .Include(o => o.User)
+                .Include(o => o.Partner)
+                .Include(o => o.RecyclerProfile)
+                .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+
+            if (dbOrder != null)
+            {
+                var (cleanNote, lat, lng, lines, existingReason) = ParseStoredNote(dbOrder.Note);
+                var now = DateTime.UtcNow;
+
+                dbOrder.Status = nextStatus;
+                dbOrder.UpdatedAt = now;
+
+                if (nextStatus == OrderStatus.Accepted)
+                {
+                    dbOrder.AcceptedAt ??= now;
+                    dbOrder.AgreedPricePerKg ??= dbOrder.InitialPricePerKg;
+                    dbOrder.ConfirmedTimeSlot ??= dbOrder.ProposedTimeSlot;
+                }
+
+                dbOrder.Note = BuildStoredNote(
+                    cleanNote,
+                    lat,
+                    lng,
+                    lines,
+                    trimmedReason ?? existingReason);
+
+                var effectiveActorId = callerUserId != Guid.Empty ? callerUserId : dbOrder.UserId;
+                var sysText = nextStatus switch
+                {
+                    OrderStatus.Accepted => $"Đơn bàn giao đã được xác nhận nhận thu gom. Khung giờ chốt: {dbOrder.ConfirmedTimeSlot ?? dbOrder.ProposedTimeSlot}.",
+                    OrderStatus.Rejected => string.IsNullOrEmpty(trimmedReason)
+                        ? "Cơ sở thu gom đã từ chối yêu cầu bàn giao này."
+                        : $"Cơ sở thu gom đã từ chối yêu cầu. Lý do: {trimmedReason}",
+                    OrderStatus.Cancelled => string.IsNullOrEmpty(trimmedReason)
+                        ? "Lịch hẹn bàn giao đã được huỷ."
+                        : $"Lịch hẹn bàn giao đã huỷ. Lý do: {trimmedReason}",
+                    _ => $"Trạng thái đơn bàn giao chuyển sang {nextStatus}."
+                };
+
+                _dbContext.ChatMessages.Add(new ChatMessage
+                {
+                    Id = Guid.NewGuid(),
+                    TradeOrderId = dbOrder.Id,
+                    SenderUserId = effectiveActorId,
+                    SenderRole = "System",
+                    MessageType = ChatMessageType.System,
+                    MessageContent = sysText,
+                    IsRead = false,
+                    SentAt = now,
+                    CreatedAt = now
+                });
+
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                var updatedDto = MapEntityToDto(dbOrder);
+                _orders[orderId] = updatedDto;
+                return updatedDto;
+            }
         }
 
-        var tag = string.Format(
-            CultureInfo.InvariantCulture,
-            "[GPS:{0:F6},{1:F6}]",
-            lat.Value,
-            lng.Value);
+        if (_orders.TryGetValue(orderId, out var cached))
+        {
+            cached.Status = nextStatus.ToString();
+            if (nextStatus == OrderStatus.Accepted)
+            {
+                cached.ConfirmedTimeSlot ??= cached.ProposedTimeSlot;
+                cached.AgreedPricePerKg ??= cached.InitialPricePerKg;
+            }
+            if (!string.IsNullOrEmpty(trimmedReason))
+            {
+                cached.CancelReason = trimmedReason;
+            }
+            return cached;
+        }
 
-        return string.IsNullOrEmpty(clean) ? tag : $"{clean} {tag}";
+        throw new KeyNotFoundException($"Không tìm thấy đơn bàn giao {orderId}");
     }
 
-    private static (string? CleanNote, double? Lat, double? Lng) ParseStoredNote(string? storedNote)
+    public async Task<TradeOrderDto> UpdateOrderTimeSlotAsync(
+        Guid orderId,
+        Guid callerUserId,
+        string proposedTimeSlot,
+        CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(storedNote)) return (null, null, null);
-
-        var match = GpsTagRegex.Match(storedNote);
-        if (!match.Success)
+        if (string.IsNullOrWhiteSpace(proposedTimeSlot))
         {
-            return (storedNote.Trim(), null, null);
+            throw new ArgumentException("Khung giờ thu gom không được để trống.");
         }
 
-        double? lat = double.TryParse(match.Groups["lat"].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLat)
-            ? parsedLat
-            : null;
-        double? lng = double.TryParse(match.Groups["lng"].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLng)
-            ? parsedLng
-            : null;
+        var slot = proposedTimeSlot.Trim();
 
-        var stripped = GpsTagRegex.Replace(storedNote, string.Empty).Trim();
-        return (string.IsNullOrEmpty(stripped) ? null : stripped, lat, lng);
+        if (_dbContext != null)
+        {
+            var dbOrder = await _dbContext.TradeOrders
+                .Include(o => o.User)
+                .Include(o => o.Partner)
+                .Include(o => o.RecyclerProfile)
+                .FirstOrDefaultAsync(o => o.Id == orderId, cancellationToken);
+
+            if (dbOrder != null)
+            {
+                var now = DateTime.UtcNow;
+                dbOrder.ProposedTimeSlot = slot;
+                dbOrder.UpdatedAt = now;
+
+                var effectiveActorId = callerUserId != Guid.Empty ? callerUserId : dbOrder.UserId;
+                _dbContext.ChatMessages.Add(new ChatMessage
+                {
+                    Id = Guid.NewGuid(),
+                    TradeOrderId = dbOrder.Id,
+                    SenderUserId = effectiveActorId,
+                    SenderRole = "System",
+                    MessageType = ChatMessageType.System,
+                    MessageContent = $"Khung giờ thu gom đề xuất đã được cập nhật sang: {slot}.",
+                    IsRead = false,
+                    SentAt = now,
+                    CreatedAt = now
+                });
+
+                await _dbContext.SaveChangesAsync(cancellationToken);
+
+                var updatedDto = MapEntityToDto(dbOrder);
+                _orders[orderId] = updatedDto;
+                return updatedDto;
+            }
+        }
+
+        if (_orders.TryGetValue(orderId, out var cached))
+        {
+            cached.ProposedTimeSlot = slot;
+            return cached;
+        }
+
+        throw new KeyNotFoundException($"Không tìm thấy đơn bàn giao {orderId}");
+    }
+
+    private static DateTime NormalizeUtc(DateTime dt) =>
+        dt.Kind switch
+        {
+            DateTimeKind.Utc => dt,
+            DateTimeKind.Local => dt.ToUniversalTime(),
+            _ => DateTime.SpecifyKind(dt, DateTimeKind.Utc)
+        };
+
+    private static TradeOrderDto MapEntityToDto(TradeOrder o)
+    {
+        var (cleanNote, lat, lng, lines, cancelReason) = ParseStoredNote(o.Note);
+        var citizenName = !string.IsNullOrWhiteSpace(o.User?.FullName)
+            ? o.User.FullName
+            : o.User?.Username;
+        var resolvedRecyclerUserId = o.RecyclerUserId ?? o.Partner?.UserId;
+
+        return new TradeOrderDto
+        {
+            Id = o.Id,
+            UserId = o.UserId,
+            CitizenName = citizenName,
+            PartnerId = o.PartnerId,
+            RecyclerUserId = resolvedRecyclerUserId,
+            PartnerName = o.RecyclerProfile?.FacilityName ?? o.Partner?.FacilityName,
+            Status = o.Status.ToString(),
+            ScheduledAt = o.ScheduledAt,
+            EstimatedWeightKg = o.EstimatedWeightKg,
+            CategoryCode = o.CategoryCode,
+            InitialPricePerKg = o.InitialPricePerKg,
+            AgreedPricePerKg = o.AgreedPricePerKg,
+            ProposedTimeSlot = o.ProposedTimeSlot,
+            ConfirmedTimeSlot = o.ConfirmedTimeSlot,
+            PickupAddress = o.PickupAddress,
+            PickupLatitude = lat,
+            PickupLongitude = lng,
+            Note = cleanNote,
+            CancelReason = cancelReason,
+            Lines = lines,
+            QrCodeValue = $"ECOLINK_ORDER_{o.Id:N}"
+        };
+    }
+
+    private static string? BuildStoredNote(
+        string? note,
+        double? lat,
+        double? lng,
+        IReadOnlyCollection<TradeOrderLineDto>? lines,
+        string? cancelReason)
+    {
+        var parts = new List<string>();
+        var clean = string.IsNullOrWhiteSpace(note) ? string.Empty : note.Trim();
+        if (!string.IsNullOrEmpty(clean))
+        {
+            parts.Add(clean);
+        }
+
+        if (lat.HasValue && lng.HasValue && !(lat.Value == 0 && lng.Value == 0))
+        {
+            parts.Add(string.Format(
+                CultureInfo.InvariantCulture,
+                "[GPS:{0:F6},{1:F6}]",
+                lat.Value,
+                lng.Value));
+        }
+
+        if (lines != null && lines.Count > 0)
+        {
+            var encodedLines = string.Join(
+                ",",
+                lines.Select(l => string.Format(
+                    CultureInfo.InvariantCulture,
+                    "{0}:{1:0.##}",
+                    l.WasteId.Replace(":", string.Empty).Replace(",", string.Empty).Replace("]", string.Empty),
+                    l.Kg)));
+            if (!string.IsNullOrEmpty(encodedLines))
+            {
+                parts.Add($"[LINES:{encodedLines}]");
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(cancelReason))
+        {
+            var safeReason = cancelReason.Trim().Replace("]", ")");
+            parts.Add($"[REASON:{safeReason}]");
+        }
+
+        return parts.Count == 0 ? null : string.Join(" ", parts);
+    }
+
+    private static (
+        string? CleanNote,
+        double? Lat,
+        double? Lng,
+        List<TradeOrderLineDto>? Lines,
+        string? CancelReason) ParseStoredNote(string? storedNote)
+    {
+        if (string.IsNullOrWhiteSpace(storedNote))
+        {
+            return (null, null, null, null, null);
+        }
+
+        double? lat = null;
+        double? lng = null;
+        var gpsMatch = GpsTagRegex.Match(storedNote);
+        if (gpsMatch.Success)
+        {
+            if (double.TryParse(gpsMatch.Groups["lat"].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLat))
+            {
+                lat = parsedLat;
+            }
+            if (double.TryParse(gpsMatch.Groups["lng"].Value, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedLng))
+            {
+                lng = parsedLng;
+            }
+        }
+
+        List<TradeOrderLineDto>? lines = null;
+        var linesMatch = LinesTagRegex.Match(storedNote);
+        if (linesMatch.Success)
+        {
+            var parsedList = new List<TradeOrderLineDto>();
+            var pairs = linesMatch.Groups["items"].Value.Split(',', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var pair in pairs)
+            {
+                var kv = pair.Split(':', 2);
+                if (kv.Length == 2 &&
+                    !string.IsNullOrWhiteSpace(kv[0]) &&
+                    decimal.TryParse(kv[1], NumberStyles.Float, CultureInfo.InvariantCulture, out var kg) &&
+                    kg > 0)
+                {
+                    parsedList.Add(new TradeOrderLineDto { WasteId = kv[0].Trim(), Kg = kg });
+                }
+            }
+            if (parsedList.Count > 0)
+            {
+                lines = parsedList;
+            }
+        }
+
+        string? cancelReason = null;
+        var reasonMatch = ReasonTagRegex.Match(storedNote);
+        if (reasonMatch.Success)
+        {
+            cancelReason = reasonMatch.Groups["reason"].Value.Trim();
+        }
+
+        var stripped = GpsTagRegex.Replace(storedNote, string.Empty);
+        stripped = LinesTagRegex.Replace(stripped, string.Empty);
+        stripped = ReasonTagRegex.Replace(stripped, string.Empty).Trim();
+
+        return (string.IsNullOrEmpty(stripped) ? null : stripped, lat, lng, lines, cancelReason);
     }
 }

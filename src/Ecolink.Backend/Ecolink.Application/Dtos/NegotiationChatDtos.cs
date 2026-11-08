@@ -18,6 +18,7 @@ public class OrderChatThreadDto
     public decimal? AgreedPricePerKg { get; set; }
     public string? ProposedTimeSlot { get; set; }
     public string? ConfirmedTimeSlot { get; set; }
+    public string? PickupAddress { get; set; }
     public DateTime ScheduledAt { get; set; }
     public DateTime? AcceptedAt { get; set; }
 
