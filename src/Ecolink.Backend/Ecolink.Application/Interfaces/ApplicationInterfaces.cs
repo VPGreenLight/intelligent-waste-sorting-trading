@@ -1,4 +1,4 @@
-=using Ecolink.Application.Dtos;
+using Ecolink.Application.Dtos;
 
 namespace Ecolink.Application.Interfaces;
 
