@@ -8,7 +8,7 @@ namespace Ecolink.WebApi.Controllers;
 
 /// <summary>
 /// Recycler Profile, Pricing &amp; Availability dành cho đối tác thu gom (UC R-01, R-02).
-/// Mọi endpoint chỉ thao tác trên hồ sơ của chính người dùng đang đăng nhập (UserId lấy từ JWT).
+/// Mọi endpoint chỉ thao tác trên hồ sơ của chính Recycler đang đăng nhập (UserId lấy từ JWT).
 /// </summary>
 [ApiController]
 [Route("api/v1/recycler")]
@@ -29,12 +29,11 @@ public class RecyclerController : ControllerBase
         _currentUser.UserId ?? throw new UnauthorizedAccessException("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
     // ============================================================
-    // Recycler Profile (Hỗ trợ cả Citizen đang có hồ sơ Pending/Rejected từ U-17 và Recycler đã duyệt - BR-MTH-02)
+    // Recycler Profile
     // ============================================================
 
     /// <summary>Xem hồ sơ cơ sở của chính mình (kèm trạng thái duyệt và lý do từ chối nếu có).</summary>
     [HttpGet("profile")]
-    [Authorize(Roles = "Citizen,User,Recycler,Collector")]
     [ProducesResponseType(typeof(ApiResponse<RecyclerProfileDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetProfile(CancellationToken ct)
     {
@@ -43,11 +42,10 @@ public class RecyclerController : ControllerBase
     }
 
     /// <summary>
-    /// Cập nhật hồ sơ cơ sở (tên, địa chỉ, tọa độ GPS, liên hệ, ảnh, giấy phép, mô tả).
+    /// Cập nhật hồ sơ cơ sở (tên, địa chỉ, tọa độ GPS, liên hệ, ảnh, mô tả).
     /// Hồ sơ đang bị Rejected sẽ chuyển về Pending để Staff duyệt lại (BR-MTH-02).
     /// </summary>
     [HttpPut("profile")]
-    [Authorize(Roles = "Citizen,User,Recycler,Collector")]
     [ProducesResponseType(typeof(ApiResponse<RecyclerProfileDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateRecyclerProfileRequest request, CancellationToken ct)
     {

@@ -1,0 +1,68 @@
+sequenceDiagram
+    autonumber
+    actor Citizen as Citizen (User)
+    participant Ctrl as HandoverRequestController
+    participant Svc as HandoverRequestService
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Citizen,DB: UC U-07: CHINH SUA & HUY YEU CAU BAN GIAO PHIA NGUOI DAN (BR-HND-02, BR-HND-06, BR-NEG-04)
+
+    %% ==========================================
+    %% LUONG 1: CHINH SUA YEU CAU (PUT)
+    %% ==========================================
+    rect rgb(240, 248, 255)
+        Note over Citizen,DB: LUONG 1: CHINH SUA YEU CAU KHI CON PENDING
+        Citizen->>Ctrl: PUT /api/v1/handover-requests/{id} (Bearer Token)<br/>{ Items, PhotoUrls, ProposedTimeSlot, PickupAddress, UserNote }
+        Ctrl->>Ctrl: Trich xuat UserId tu JWT
+        Ctrl->>Svc: UpdateAsync(userId, requestId, request, ct)
+
+        Svc->>DB: SELECT HandoverRequest + Items + Recycler WHERE Id = requestId AND UserId = userId
+        DB-->>Svc: entity
+
+        alt entity == null
+            Svc-->>Ctrl: Throw NotFoundException ("Khong tim thay yeu cau ban giao.")
+            Ctrl-->>Citizen: 404 Not Found
+        else entity.Status != HandoverStatus.Pending
+            Svc-->>Ctrl: Throw BusinessRuleException (BR-HND-02: MSG-GEN-01 - Chi chinh sua khi dang Pending)
+            Ctrl-->>Citizen: 400 Bad Request
+        end
+
+        Svc->>Svc: Kiem tra Items (gia, minQuantity), gio hen theo WeeklyScheduleJson, anh (1-5) va dia chi
+        Svc->>DB: DELETE HandoverRequestItems WHERE RequestId = requestId<br/>INSERT INTO HandoverRequestItems (Dung moi)<br/>UPDATE handover_requests SET pickup_address, proposed_time_slot, user_note, updated_at = NOW()
+        DB-->>Svc: Cap nhat thanh cong
+        Svc-->>Ctrl: HandoverRequestDto (Thong tin moi cap nhat)
+        Ctrl-->>Citizen: 200 OK (ApiResponse.Ok: Cap nhat yeu cau ban giao thanh cong)
+    end
+
+    %% ==========================================
+    %% LUONG 2: HUY YEU CAU (POST /cancel)
+    %% ==========================================
+    rect rgb(255, 245, 245)
+        Note over Citizen,DB: LUONG 2: NGUOI DAN HUY YEU CAU KEM LY DO (BR-HND-06)
+        Citizen->>Ctrl: POST /api/v1/handover-requests/{id}/cancel (Bearer Token)<br/>{ Reason: "Ban viec dot xuat" }
+        Ctrl->>Svc: CancelByUserAsync(userId, requestId, reason, ct)
+
+        Svc->>DB: SELECT HandoverRequest WHERE Id = requestId AND UserId = userId
+        DB-->>Svc: entity
+
+        alt entity.Status NOT IN (Pending, Negotiating, Accepted, Scheduled)
+            Svc-->>Ctrl: Throw BusinessRuleException (BR-HND-02: Khong the huy don o trang thai nay)
+            Ctrl-->>Citizen: 400 Bad Request
+        end
+
+        Svc->>Svc: RequireReason: Kiem tra ly do khong rong, toi da 500 ky tu
+        Svc->>Svc: Kiem tra Huy muon (BR-HND-06):<br/>ConfirmedTimeSlot co gia tri VA (ConfirmedTimeSlot - UtcNow <= 4 gio)?
+
+        alt Huy truoc gio hen tren 4h hoac chua chot lich (Pending/Negotiating)
+            Svc->>DB: UPDATE handover_requests SET status = 'Cancelled', cancel_reason = reason, cancelled_by = userId, is_late_cancellation = false, updated_at = NOW()
+            DB-->>Svc: Da huy
+            Svc-->>Ctrl: HandoverRequestDto (IsLateCancellation = false)
+            Ctrl-->>Citizen: 200 OK (MSG-HND-05: Yeu cau ban giao da duoc huy)
+        else Huy sat gio hen trong vong 4h (Late Cancellation - BR-HND-06)
+            Svc->>DB: UPDATE handover_requests SET status = 'Cancelled', cancel_reason = reason, cancelled_by = userId, is_late_cancellation = true, updated_at = NOW()
+            DB-->>Svc: Da huy kem co huy muon
+            Svc-->>Ctrl: HandoverRequestDto (IsLateCancellation = true)
+            Ctrl-->>Citizen: 200 OK (MSG-HND-06: Da huy. Viec huy trong vong 4 gio duoc ghi nhan la huy muon)
+        end
+    end
+

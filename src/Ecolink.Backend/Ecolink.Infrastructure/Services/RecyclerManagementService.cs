@@ -105,17 +105,6 @@ public class RecyclerManagementService : IRecyclerManagementService
         profile.ContactPhone = request.ContactPhone.Trim();
         profile.Description = Normalize(request.Description);
         profile.BusinessPhotoUrl = Normalize(request.BusinessPhotoUrl);
-
-        if (!string.IsNullOrWhiteSpace(request.LegalPermitUrl))
-        {
-            profile.LegalPermitUrl = request.LegalPermitUrl.Trim();
-        }
-
-        if (!string.IsNullOrWhiteSpace(request.OperatingHours))
-        {
-            profile.OperatingHours = request.OperatingHours.Trim();
-        }
-
         profile.Latitude = (decimal)request.Latitude;
         profile.Longitude = (decimal)request.Longitude;
         profile.Location = new Point(request.Longitude, request.Latitude) { SRID = 4326 };
@@ -401,10 +390,10 @@ public class RecyclerManagementService : IRecyclerManagementService
 
     private static void EnsureNotSuspended(RecyclerProfile profile)
     {
-        if (profile.User != null && (profile.User.Status == UserStatus.Suspended || profile.User.Status == UserStatus.Locked))
+        if (profile.User != null && profile.User.Status == UserStatus.Suspended)
         {
             throw new BusinessRuleException("BR-AUTH-05", "MSG-AUTH-04",
-                "Tài khoản đã bị khóa hoặc đình chỉ. Vui lòng liên hệ bộ phận hỗ trợ.");
+                "Tài khoản đã bị đình chỉ hoặc vô hiệu hóa. Vui lòng liên hệ bộ phận hỗ trợ.");
         }
     }
 

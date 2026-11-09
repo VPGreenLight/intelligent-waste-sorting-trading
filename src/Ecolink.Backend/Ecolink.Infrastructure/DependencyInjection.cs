@@ -46,7 +46,7 @@ public static class DependencyInjection
         // Đăng ký Rule Engine
         services.AddSingleton<IWasteRuleEngineService, WasteRuleEngineService>();
 
-        // Đăng ký Geo Matching (Scoped để truy vấn trực tiếp bảng recycler_profiles & recycler_price_list - UC U-05, R-01, R-02)
+        // Đăng ký Geo Matching
         services.AddScoped<IGeoMatchingService, GeoMatchingService>();
 
         // Đăng ký Gamification & Trade Services
@@ -64,9 +64,8 @@ public static class DependencyInjection
         // Đăng ký Recycler Profile, Pricing & Availability Service (R-01, R-02)
         services.AddScoped<IRecyclerManagementService, RecyclerManagementService>();
 
-        // Đăng ký Recycler Onboarding & Verification + Cloudflare R2 Storage (U-17 & S-04)
-        services.AddHttpClient<IFileStorageService, CloudflareR2StorageService>();
-        services.AddScoped<IRecyclerOnboardingService, RecyclerOnboardingService>();
+        // Handover Request Management (U-06, U-07, R-03, R-04)
+        services.AddScoped<IHandoverRequestService, HandoverRequestService>();
 
         // Đăng ký Payment Service (VietQR & Webhook)
         services.AddSingleton<IPaymentService, PaymentService>();
