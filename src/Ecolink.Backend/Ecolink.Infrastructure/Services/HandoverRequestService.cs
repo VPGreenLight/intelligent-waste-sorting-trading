@@ -346,9 +346,11 @@ public class HandoverRequestService : IHandoverRequestService
 
     private async Task<string> GenerateCodeAsync(CancellationToken ct)
     {
-        var prefix = $"HND-{(DateTime.UtcNow + LocalOffset):yyyyMMdd}-";
-        var count = await _db.HandoverRequests.CountAsync(h => h.RequestCode.StartsWith(prefix), ct);
-        return $"{prefix}{count + 1:D4}";
+        // Số thứ tự lấy từ sequence PostgreSQL (nguyên tử, không trùng khi tạo đồng thời)
+        var n = await _db.Database
+            .SqlQuery<long>($"SELECT nextval('seq_handover_request_code') AS \"Value\"")
+            .SingleAsync(ct);
+        return $"HND-{(DateTime.UtcNow + LocalOffset):yyyyMMdd}-{n:D4}";
     }
 
     private static bool Contains(HandoverStatus[] arr, HandoverStatus s) => arr.Contains(s);

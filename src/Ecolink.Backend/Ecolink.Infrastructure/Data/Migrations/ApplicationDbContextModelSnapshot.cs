@@ -24,6 +24,10 @@ namespace Ecolink.Infrastructure.Data.Migrations
             NpgsqlModelBuilderExtensions.HasPostgresExtension(modelBuilder, "postgis");
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.HasSequence("seq_handover_receipt_code");
+
+            modelBuilder.HasSequence("seq_handover_request_code");
+
             modelBuilder.Entity("Ecolink.Domain.Entities.AIFeedbackLog", b =>
                 {
                     b.Property<Guid>("Id")
