@@ -15,5 +15,8 @@ public enum HandoverStatus
     Rejected = 6,
     Cancelled = 7,
     Expired = 8,
-    Disputed = 9
+    Disputed = 9,
+
+    /// <summary>[Bổ sung] Recycler đã lập biên nhận, chờ người dân xác nhận (U-09, JOB-01). Báo cáo gọi là Awaiting/Pending_User_Confirmation.</summary>
+    AwaitingConfirmation = 10
 }

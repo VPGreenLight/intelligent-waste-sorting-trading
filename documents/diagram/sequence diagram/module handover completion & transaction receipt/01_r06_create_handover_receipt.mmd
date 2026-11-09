@@ -1,0 +1,66 @@
+sequenceDiagram
+    autonumber
+    actor Recycler as Recycler (Collector)
+    participant Ctrl as RecyclerReceiptController
+    participant Svc as HandoverReceiptService
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Recycler,DB: UC R-06: LAP BIEN NHAN BAN GIAO SO SAU KHI CAN THUC TE (BR-HND-04, BR-HND-05, AF-01, MSG-HND-04)
+
+    %% ==========================================
+    %% LUONG 1: XEM TRUOC BIEN NHAN (PREVIEW)
+    %% ==========================================
+    rect rgb(240, 248, 255)
+        Note over Recycler,DB: LUONG 1: XEM TRUOC BIEN NHAN (KHONG LUU DATABASE)
+        Recycler->>Ctrl: POST /api/v1/recycler/handover-requests/{id}/receipt/preview (Bearer Token)<br/>{ Items: [{ ItemId, ActualWeightKg }], ScaleProofPhotoUrls }
+        Ctrl->>Ctrl: Trich xuat RecyclerId tu JWT (Role: Recycler/Collector)
+        Ctrl->>Svc: PreviewAsync(recyclerId, requestId, request, ct)
+
+        Svc->>DB: SELECT HandoverRequest + Items + Recycler WHERE Id = requestId AND RecyclerId = recyclerId
+        DB-->>Svc: entity
+
+        Svc->>Svc: Tinh toan thanh tien, tong khoi luong va do lech % (DeviationPercent)
+        Svc-->>Ctrl: ReceiptDto (ReceiptId = null, TotalWeightKg, TotalAmountCash, HasDeviationWarning, Points)
+        Ctrl-->>Recycler: 200 OK (ApiResponse.Ok: Ket qua tinh toan xem truoc)
+    end
+
+    %% ==========================================
+    %% LUONG 2: PHAT HANH BIEN NHAN CHINH THUC
+    %% ==========================================
+    rect rgb(240, 255, 240)
+        Note over Recycler,DB: LUONG 2: PHAT HANH BIEN NHAN SO CHINH THUC VA KHOA DON GIA
+        Recycler->>Ctrl: POST /api/v1/recycler/handover-requests/{id}/receipt (Bearer Token)<br/>{ Items, ScaleProofPhotoUrls, ReceiptImageUrl }
+        Ctrl->>Svc: CreateAsync(recyclerId, requestId, request, ct)
+
+        Svc->>DB: SELECT HandoverRequest + Items WHERE Id = requestId AND RecyclerId = recyclerId (BR-HND-03)
+        DB-->>Svc: entity
+
+        alt entity.Status NOT IN (Accepted, Scheduled) (BR-HND-02)
+            Svc-->>Ctrl: Throw BusinessRuleException ("BR-HND-02", "MSG-GEN-01" - Chi lap bien nhan cho don da chap nhan)
+            Ctrl-->>Recycler: 400 Bad Request
+        else Da ton tai bien nhan trong handover_receipts (BR-HND-04)
+            Svc-->>Ctrl: Throw BusinessRuleException ("BR-HND-04", "MSG-GEN-01" - Yeu cau nay da co bien nhan)
+            Ctrl-->>Recycler: 400 Bad Request
+        end
+
+        Svc->>Svc: ValidatePhotos: Kiem tra it nhat 1 anh can dong ho, toi da 5 anh (BR-HND-04)
+        alt Thieu anh can hoac URL khong hop le
+            Svc-->>Ctrl: Throw BusinessRuleException ("BR-HND-04", "MSG-AUTH-02" - Vui long tai len it nhat 1 anh can)
+            Ctrl-->>Recycler: 400 Bad Request
+        end
+
+        Svc->>Svc: Kiem tra danh sach Items (BR-HND-05):<br/>- Khoi luong > 0 va toi da 2 chu so thap phan.<br/>- Nhap du tat ca cac dong phe lieu trong don hen goc (EF-02).<br/>- Xu ly dong phat sinh (AF-01): phai thuoc danh muc Active cua co so.
+
+        Svc->>DB: SELECT RecyclerPrices WHERE RecyclerId = recyclerId AND WasteCategoryId IN (categories)
+        DB-->>Svc: Bnag gia ap dung
+
+        Svc->>Svc: Transaction Price Locking: Khoa don gia AgreedPricePerKg cho tung dong item<br/>Tinh do lech % khoi luong (|DeviationPercent| > 20% -> HasDeviationWarning = true - MSG-HND-04)
+        Svc->>Svc: GenerateCodeAsync: Sinh ma bien nhan RCP-yyyy-NNNN
+
+        Svc->>DB: INSERT INTO handover_receipts (ReceiptId, RequestId, ReceiptCode, UserId, RecyclerId, TotalWeightKg, TotalAmountCash, ScaleProofPhotoUrl, CreatedAt, ...)<br/>UPDATE handover_requests SET status = 'AwaitingConfirmation', actual_handover_at = NOW(), updated_at = NOW()<br/>UPDATE / INSERT handover_request_items (ActualWeightKg, AgreedPricePerKg)
+        DB-->>Svc: Luu thanh cong (Commit Transaction)
+
+        Svc-->>Ctrl: ReceiptDto (ReceiptCode = "RCP-2026-0001", Status = "AwaitingConfirmation", Lines, HasDeviationWarning)
+        Ctrl-->>Recycler: 201 Created (ApiResponse.Ok: MSG-HND-04 neu lech > 20% hoac Bien nhan da duoc gui cho nguoi dan)
+    end
+

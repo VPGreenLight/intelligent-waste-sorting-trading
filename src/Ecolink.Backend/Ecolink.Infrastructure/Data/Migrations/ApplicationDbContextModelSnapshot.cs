@@ -206,6 +206,93 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("collection_partners", (string)null);
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.HandoverReceipt", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("receipt_id");
+
+                    b.Property<DateTime?>("ConfirmedByUserAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("confirmed_by_user_at");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<long>("PointsAwarded")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("points_awarded");
+
+                    b.Property<string>("ReceiptCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("receipt_code");
+
+                    b.Property<string>("ReceiptImageUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("receipt_image_url");
+
+                    b.Property<Guid>("RecyclerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recycler_id");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_id");
+
+                    b.Property<string>("ScaleProofPhotoUrl")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("scale_proof_photo_url");
+
+                    b.Property<decimal>("TotalAmountCash")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("total_amount_cash");
+
+                    b.Property<decimal>("TotalWeightKg")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)")
+                        .HasColumnName("total_weight_kg");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_handover_receipts");
+
+                    b.HasIndex("ReceiptCode")
+                        .IsUnique()
+                        .HasDatabaseName("ux_handover_receipts_receipt_code");
+
+                    b.HasIndex("RequestId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_handover_receipts_request");
+
+                    b.HasIndex("RecyclerId", "ConfirmedByUserAt")
+                        .HasDatabaseName("ix_handover_receipts_recycler_confirmed");
+
+                    b.HasIndex("UserId", "ConfirmedByUserAt")
+                        .HasDatabaseName("ix_handover_receipts_user_confirmed");
+
+                    b.ToTable("handover_receipts", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_handover_receipts_amount_non_negative", "total_amount_cash >= 0");
+
+                            t.HasCheckConstraint("ck_handover_receipts_points_non_negative", "points_awarded >= 0");
+
+                            t.HasCheckConstraint("ck_handover_receipts_weight_positive", "total_weight_kg > 0");
+                        });
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.HandoverRequest", b =>
                 {
                     b.Property<Guid>("Id")
@@ -372,7 +459,7 @@ namespace Ecolink.Infrastructure.Data.Migrations
 
                     b.ToTable("handover_request_items", null, t =>
                         {
-                            t.HasCheckConstraint("ck_handover_request_items_estimated_positive", "estimated_weight_kg > 0");
+                            t.HasCheckConstraint("ck_handover_request_items_estimated_non_negative", "estimated_weight_kg >= 0");
                         });
                 });
 
@@ -1275,6 +1362,32 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasConstraintName("fk_collection_partners_users");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.HandoverReceipt", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.RecyclerProfile", null)
+                        .WithMany()
+                        .HasForeignKey("RecyclerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_handover_receipts_recycler_profiles");
+
+                    b.HasOne("Ecolink.Domain.Entities.HandoverRequest", "Request")
+                        .WithOne()
+                        .HasForeignKey("Ecolink.Domain.Entities.HandoverReceipt", "RequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_handover_receipts_requests");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_handover_receipts_users");
+
+                    b.Navigation("Request");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.HandoverRequest", b =>
