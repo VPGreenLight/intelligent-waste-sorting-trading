@@ -11,6 +11,9 @@ public class RecyclerProfileConfiguration : IEntityTypeConfiguration<RecyclerPro
         builder.ToTable("recycler_profiles");
         builder.HasKey(r => r.UserId).HasName("pk_recycler_profiles");
 
+        // Bỏ cột Id thừa kế từ BaseEntity vì khóa chính là UserId (Shared PK 1-1 với users)
+        builder.Ignore(r => r.Id);
+
         builder.Property(r => r.UserId).HasColumnName("user_id");
         builder.Property(r => r.FacilityName).HasColumnName("facility_name").HasMaxLength(150).IsRequired();
         builder.Property(r => r.RepresentativeName).HasColumnName("representative_name").HasMaxLength(100);
@@ -22,7 +25,7 @@ public class RecyclerProfileConfiguration : IEntityTypeConfiguration<RecyclerPro
         builder.Property(r => r.Location)
             .HasColumnName("geom")
             .HasColumnType("geometry(Point, 4326)")
-            .IsRequired();
+            .IsRequired(false);
 
         builder.Property(r => r.OperatingHours).HasColumnName("operating_hours").HasMaxLength(100).HasDefaultValue("08:00 - 18:00");
         builder.Property(r => r.ContactPhone).HasColumnName("contact_phone").HasMaxLength(20).IsRequired();
@@ -33,6 +36,8 @@ public class RecyclerProfileConfiguration : IEntityTypeConfiguration<RecyclerPro
         builder.Property(r => r.VerificationStatus).HasColumnName("verification_status").HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(r => r.ActiveStatus).HasColumnName("active_status").HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(r => r.RejectionReason).HasColumnName("rejection_reason");
+        builder.Property(r => r.BusyReason).HasColumnName("busy_reason").HasMaxLength(100);
+        builder.Property(r => r.WeeklyScheduleJson).HasColumnName("weekly_schedule").HasColumnType("jsonb");
 
         // Audit fields
         builder.Property(r => r.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()").IsRequired();

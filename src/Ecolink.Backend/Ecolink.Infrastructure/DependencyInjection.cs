@@ -27,27 +27,48 @@ public static class DependencyInjection
                     npgsqlOptions.UseNetTopologySuite();
                     npgsqlOptions.MigrationsAssembly(typeof(Data.ApplicationDbContext).Assembly.FullName);
                 })
+                .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning))
                 .AddInterceptors(interceptor);
             });
         }
 
+        // Đăng ký bộ nhớ đệm IMemoryCache phục vụ lưu kết quả Geocoding Proxy & tối ưu truy vấn
+        services.AddMemoryCache();
+
         // Đăng ký HttpClient gọi AI Vision Service
         services.AddHttpClient<IAiVisionClient, AiVisionHttpClient>();
+
+        // Đăng ký HttpClient cho Backend Geocoding Proxy (Nominatim / LocationIQ)
+        services.AddHttpClient<IGeocodingProxyService, GeocodingProxyService>(client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(8);
+        });
 
         // Đăng ký Rule Engine
         services.AddSingleton<IWasteRuleEngineService, WasteRuleEngineService>();
 
         // Đăng ký Geo Matching
-        services.AddSingleton<IGeoMatchingService, GeoMatchingService>();
+        services.AddScoped<IGeoMatchingService, GeoMatchingService>();
 
         // Đăng ký Gamification & Trade Services
         services.AddSingleton<IGamificationService, GamificationService>();
-        services.AddSingleton<ITradeTransactionService, TradeTransactionService>();
+        services.AddScoped<ITradeTransactionService, TradeTransactionService>();
+
+        // Đăng ký In-App Real-Time Negotiation Chatbox Service (Module NEG: U-08 & R-05)
+        services.AddScoped<INegotiationChatService, NegotiationChatService>();
 
         // Đăng ký Authentication & Token & Email Services (Module 1 - AUTH)
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IEmailService, GmailSmtpEmailService>();
         services.AddScoped<IAuthService, AuthService>();
+
+        // Đăng ký Recycler Profile, Pricing & Availability Service (R-01, R-02)
+        services.AddScoped<IRecyclerManagementService, RecyclerManagementService>();
+
+        // Handover Request Management (U-06, U-07, R-03, R-04)
+        services.AddScoped<IHandoverRequestService, HandoverRequestService>();
+
+        services.AddScoped<IHandoverReceiptService, HandoverReceiptService>();
 
         // Đăng ký Payment Service (VietQR & Webhook)
         services.AddSingleton<IPaymentService, PaymentService>();

@@ -21,7 +21,8 @@ app = FastAPI(
     description="""
     Microservice Thị giác Máy tính Phân loại Rác thải Tái chế Đa Mô hình (EcoLink AI Vision Service).
     
-    Hỗ trợ 3 mô hình học sâu đã tối ưu hóa:
+    Hỗ trợ 4 mô hình học sâu & pipeline đa vật thể 2 giai đoạn:
+    - **YOLOv8 Waste Object Detection (SOTA)**: Khoanh vùng đa vật thể + ưu tiên tâm khung ngắm + hậu kiểm 2 giai đoạn.
     - **YOLOv8 Nano**: Tốc độ siêu nhanh (~2.5ms), phù hợp cho video và camera thời gian thực.
     - **MobileNetV3-Small**: Rất nhẹ (2.54M params, Val Acc 91.14%), tối ưu cho thiết bị di động/nhúng.
     - **EfficientNet-B0**: Độ chính xác cao nhất (Val Acc 92.32%), xử lý ảnh rác biến dạng và góc chụp khó.
@@ -30,7 +31,7 @@ app = FastAPI(
     - **Out-of-Distribution (OOD)**: Tự động phát hiện và cảnh báo ảnh có độ tin cậy < 60% hoặc không thuộc 6 nhóm rác.
     - **Knowledge Base Integration**: Tự động liên kết nhãn nhận diện với Quy tắc phân loại rác tĩnh (thùng rác, các bước xử lý).
     """,
-    version="2.0.0",
+    version="2.1.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -113,7 +114,6 @@ def record_scan_stat(category: str, confidence: float, is_ood: bool, latency_ms:
     else:
         stats["categories"][category] = stats["categories"].get(category, 0) + 1
 
-    # Tính độ trễ trung bình trượt
     prev_avg = stats.get("avg_latency_ms", 0.0)
     total = stats["total_scans"]
     stats["avg_latency_ms"] = round(((prev_avg * (total - 1)) + latency_ms) / total, 2)
@@ -142,20 +142,36 @@ class WastePrediction(BaseModel):
     confidence: float = Field(..., example=0.945, description="Độ tin cậy từ 0.0 đến 1.0")
     display_name: str = Field(..., example="Nhựa tái chế (Plastic)", description="Tên hiển thị tiếng Việt")
 
+class DetectedObjectItem(BaseModel):
+    id: int = Field(1, example=1, description="Thứ tự ưu tiên từ #1 (theo Center-Weighted Score)")
+    raw_class: str = Field(..., example="plastic", description="Nhãn gốc từ mô hình dò vật thể")
+    label: str = Field(..., example="plastic", description="Mã danh mục rác chuẩn EcoLink")
+    display_name: str = Field(..., example="Nhựa tái chế (Plastic)", description="Tên hiển thị tiếng Việt")
+    confidence: float = Field(..., example=0.924, description="Độ tin cậy kết hợp 2 giai đoạn (0.0..1.0)")
+    center_score: float = Field(0.0, example=0.812, description="Điểm ưu tiên trọng số tâm ảnh & diện tích")
+    is_primary: bool = Field(False, example=True, description="Vật thể chính đang được ưu tiên hiển thị")
+    source: Optional[str] = Field("two_stage_ensemble", description="Nguồn pipeline tạo khung")
+    bbox: List[float] = Field(..., example=[120.5, 85.0, 450.2, 680.0], description="Tọa độ khung [x1, y1, x2, y2] trên ảnh gốc")
+
 class AiScanResponse(BaseModel):
     success: bool = Field(True, description="Trạng thái thực thi yêu cầu")
     is_out_of_distribution: bool = Field(False, description="Cờ cảnh báo vật thể ngoại lai hoặc độ tin cậy thấp")
     confidence_threshold: float = Field(0.60, description="Ngưỡng tin cậy áp dụng")
-    model_used: str = Field(..., example="yolov8n", description="Mã định danh mô hình đã sử dụng")
-    model_name: str = Field(..., example="YOLOv8 Nano (Default)", description="Tên mô hình")
-    model_family: str = Field(..., example="CNN (Ultralytics)", description="Kiến trúc mạng")
+    model_used: str = Field(..., example="yolov8_detect", description="Mã định danh mô hình đã sử dụng")
+    model_name: str = Field(..., example="YOLOv8 Waste Object Detection (SOTA)", description="Tên mô hình")
+    model_family: str = Field(..., example="Two-Stage Object Detection & Ensemble", description="Kiến trúc mạng")
+    image_width: int = Field(0, example=1280, description="Chiều rộng pixel của ảnh gốc")
+    image_height: int = Field(0, example=720, description="Chiều cao pixel của ảnh gốc")
     top_prediction: Optional[WastePrediction] = None
     predictions: List[WastePrediction] = Field(default=[], description="Top-3 kết quả có độ tin cậy cao nhất")
     all_probabilities: List[WastePrediction] = Field(default=[], description="Phân phối xác suất toàn bộ 6 lớp rác")
+    detected_count: int = Field(0, example=2, description="Tổng số vật thể được đóng khung trong ảnh")
+    category_summary: Dict[str, int] = Field(default={}, example={"plastic": 2}, description="Thống kê số lượng theo từng danh mục")
+    detected_objects: List[DetectedObjectItem] = Field(default=[], description="Danh sách tọa độ Bounding Box và nhãn của từng vật thể")
     sorting_rule: Optional[Dict[str, Any]] = Field(None, description="Quy tắc phân loại và hướng dẫn xử lý tĩnh")
-    pipeline: Optional[str] = Field("two_stage", description="Phương thức suy luận (two_stage_crop_classified, object_detection hoặc single_stage)")
-    cropped_bbox: Optional[List[float]] = Field(None, description="Tọa độ khung chữ nhật được crop loại bỏ phông nền [x1, y1, x2, y2]")
-    inference_time_ms: float = Field(..., example=12.4, description="Thời gian suy luận mô hình (mili-giây)")
+    pipeline: Optional[str] = Field("multi_object_two_stage_ensemble", description="Phương thức suy luận")
+    cropped_bbox: Optional[List[float]] = Field(None, description="Tọa độ khung chữ nhật vật thể chính [x1, y1, x2, y2]")
+    inference_time_ms: float = Field(..., example=18.4, description="Thời gian suy luận mô hình (mili-giây)")
 
 class BatchScanItem(BaseModel):
     filename: str
@@ -173,14 +189,19 @@ class BatchScanResponse(BaseModel):
     results: List[BatchScanItem]
 
 class DetectedItem(BaseModel):
+    id: int = Field(1, example=1, description="Thứ tự vật thể")
     raw_class: str = Field(..., example="plastic", description="Nhãn nhận diện từ mô hình Object Detection")
     category: str = Field(..., example="plastic", description="Nhóm phân loại rác EcoLink")
     display_name: str = Field(..., example="Nhựa tái chế (Plastic)", description="Tên tiếng Việt")
     confidence: float = Field(..., example=0.942, description="Độ tự tin phát hiện")
+    center_score: float = Field(0.0, example=0.812, description="Điểm ưu tiên tâm ảnh")
+    is_primary: bool = Field(False, example=True, description="Vật thể chính")
     bbox: List[float] = Field(..., example=[120.5, 450.2, 640.0, 2400.0], description="Tọa độ khung [x1, y1, x2, y2]")
 
 class WasteDetectionResponse(BaseModel):
     success: bool = Field(True, description="Trạng thái thực thi")
+    image_width: int = Field(0, example=1280)
+    image_height: int = Field(0, example=720)
     total_items: int = Field(..., example=4, description="Tổng số lượng món rác được phát hiện trong ảnh")
     category_summary: Dict[str, int] = Field(..., example={"plastic": 4}, description="Thống kê số lượng theo từng loại rác")
     detected_objects: List[DetectedItem] = Field(..., description="Chi tiết tọa độ và loại của từng món rác")
@@ -198,7 +219,7 @@ class RuleUpdateRequest(BaseModel):
     category: Optional[str] = Field(None, example="plastic")
     bin_color_name: Optional[str] = Field(None, example="Thùng Màu Vàng")
     instructions: Optional[List[str]] = Field(None, example=["Tráng sạch", "Bóp dẹp chai"])
-    confidence_threshold: Optional[float] = Field(None, example=0.65)
+    confidence_threshold: Optional[float] = Field(None, description="Ngưỡng tin cậy OOD", example=0.65)
 
 
 # --- API Routes ---
@@ -216,12 +237,12 @@ def health_check():
     return {
         "status": "healthy",
         "service": "EcoLink.AiService",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "uptime_seconds": round(time.time() - START_TIME, 1),
         "hardware_device": str(DEVICE),
         "cuda_available": DEVICE.type == "cuda",
         "models_available": [m["id"] for m in model_manager.list_available_models() if m["is_ready"]],
-        "default_model": "yolov8n",
+        "default_model": "yolov8_detect",
         "confidence_threshold": rules.get("confidence_threshold", DEFAULT_THRESHOLD)
     }
 
@@ -231,7 +252,7 @@ def list_models():
     """Lấy danh sách các mô hình AI có sẵn và trạng thái file trọng số"""
     return {
         "models": model_manager.list_available_models(),
-        "default_model": "yolov8n",
+        "default_model": "yolov8_detect",
         "supported_classes": CLASS_NAMES,
         "classes_count": len(CLASS_NAMES)
     }
@@ -254,10 +275,10 @@ async def classify_waste_image(
     confidence_threshold: Optional[float] = Form(None, description="Ngưỡng tin cậy OOD (Mặc định 0.60)")
 ):
     """
-    Nhận diện và phân loại rác thải qua ảnh (Single Image Classification):
-    - Thực hiện suy luận bằng mô hình được chỉ định (`yolov8n`, `mobilenet_v3`, `efficientnet_b0`).
+    Nhận diện và phân loại rác thải đa vật thể qua ảnh:
+    - Tự động khoanh vùng Bounding Box từng món rác, ưu tiên vật thể gần tâm khung hình.
+    - Chạy hậu kiểm 2 giai đoạn trên từng vùng vật thể đã cắt.
     - Kiểm tra ngoại lai (OOD): Nếu độ tin cậy < ngưỡng (0.60) thì đánh dấu `is_out_of_distribution = true`.
-    - Tự động liên kết bảng quy tắc xử lý rác tĩnh (thùng rác, các bước chuẩn bị).
     """
     if model not in model_manager.registry:
         raise HTTPException(
@@ -287,11 +308,9 @@ async def classify_waste_image(
             detail=f"Không thể đọc file hình ảnh: {str(e)}"
         )
 
-    # Đọc quy tắc & ngưỡng tin cậy
     rules_data = load_rules_data()
     threshold = confidence_threshold if confidence_threshold is not None else rules_data.get("confidence_threshold", DEFAULT_THRESHOLD)
 
-    # Thực hiện suy luận (Hỗ trợ Two-Stage Crop)
     try:
         pred_result = model_manager.predict(pil_image, model_id=model, use_detection_crop=use_detection_crop)
     except ValueError as ve:
@@ -308,12 +327,10 @@ async def classify_waste_image(
     top_pred_data = pred_result.get("top_prediction")
     top_pred = WastePrediction(**top_pred_data) if top_pred_data else None
 
-    # Kiểm tra OOD
     is_ood = False
     if top_pred is None or top_pred.confidence < threshold:
         is_ood = True
 
-    # Lấy quy tắc tương ứng với nhãn
     rule_info = None
     if top_pred and not is_ood:
         rule_info = rules_data.get("rules", {}).get(top_pred.label.lower())
@@ -321,11 +338,11 @@ async def classify_waste_image(
     top_label = top_pred.label if top_pred else "unknown"
     top_conf = top_pred.confidence if top_pred else 0.0
 
-    # Ghi nhận thống kê
     record_scan_stat(top_label, top_conf, is_ood, pred_result["inference_time_ms"], model)
 
     predictions_dto = [WastePrediction(**p) for p in pred_result["predictions"]]
     all_probs_dto = [WastePrediction(**p) for p in pred_result["all_probabilities"]]
+    detected_objs_dto = [DetectedObjectItem(**o) for o in pred_result.get("detected_objects", [])]
 
     return AiScanResponse(
         success=True,
@@ -334,11 +351,16 @@ async def classify_waste_image(
         model_used=pred_result["model_id"],
         model_name=pred_result["model_name"],
         model_family=pred_result["model_family"],
+        image_width=pred_result.get("image_width", pil_image.width),
+        image_height=pred_result.get("image_height", pil_image.height),
         top_prediction=top_pred,
         predictions=predictions_dto,
         all_probabilities=all_probs_dto,
+        detected_count=pred_result.get("detected_count", len(detected_objs_dto)),
+        category_summary=pred_result.get("category_summary", {}),
+        detected_objects=detected_objs_dto,
         sorting_rule=rule_info,
-        pipeline=pred_result.get("pipeline", "two_stage"),
+        pipeline=pred_result.get("pipeline", "multi_object_two_stage_ensemble"),
         cropped_bbox=pred_result.get("cropped_bbox"),
         inference_time_ms=pred_result["inference_time_ms"]
     )
@@ -347,14 +369,12 @@ async def classify_waste_image(
 @app.post("/api/v1/detect", response_model=WasteDetectionResponse, tags=["3. Waste Classification"])
 async def detect_waste_objects(
     file: UploadFile = File(..., description="Tập tin hình ảnh rác cần khoanh vùng và nhận diện (jpg, png, webp)"),
-    confidence_threshold: float = Form(0.25, description="Ngưỡng tin cậy phát hiện vật thể (Mặc định 0.25)")
+    confidence_threshold: float = Form(0.20, description="Ngưỡng tin cậy phát hiện vật thể (Mặc định 0.20)")
 ):
     """
-    Nhận diện và định vị từng món rác thải bằng YOLOv8 Object Detection (Cách 2):
+    Nhận diện và định vị từng món rác thải bằng YOLOv8 Object Detection + Two-Stage Ensemble:
     - Tự động vẽ Bounding Box ôm sát từng chai, lon, hộp, giấy.
-    - Loại bỏ 100% phông nền gây nhiễu (màn hình, bàn phím, bàn làm việc).
-    - Đếm số lượng từng loại rác trong ảnh.
-    - Trả về hình ảnh đã vẽ khung chữ nhật (Base64 JPEG) để hiển thị giao diện.
+    - Loại bỏ phông nền gây nhiễu và đếm số lượng từng loại rác trong ảnh.
     """
     if not file.content_type or not file.content_type.startswith("image/"):
         raise HTTPException(
@@ -452,7 +472,7 @@ def get_sample_images_list():
                 cat_name = cat_dir.name
                 imgs = sorted(list(cat_dir.glob("*.jpg")) + list(cat_dir.glob("*.png")))
                 samples_by_category[cat_name] = []
-                for img in imgs[:5]:  # Lấy 5 ảnh mẫu mỗi loại
+                for img in imgs[:5]:
                     samples_by_category[cat_name].append({
                         "category": cat_name,
                         "filename": img.name,
@@ -566,4 +586,3 @@ def get_inference_stats():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("app:app", host="0.0.0.0", port=8000, reload=False)
-

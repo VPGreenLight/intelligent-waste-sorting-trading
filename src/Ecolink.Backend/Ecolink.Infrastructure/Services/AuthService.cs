@@ -1,4 +1,6 @@
+using System.Net.Http.Headers;
 using System.Security.Claims;
+using System.Text.Json;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
@@ -14,11 +16,16 @@ using NetTopologySuite.Geometries;
 namespace Ecolink.Infrastructure.Services;
 
 /// <summary>
-/// Hiện thực hóa toàn bộ 7 nghiệp vụ xác thực & tài khoản phân hệ Auth (Module 1).
+/// Hiện thực hóa toàn bộ 7 nghiệp vụ xác thực &amp; tài khoản phân hệ Auth (Module 1).
 /// Kết nối trực tiếp PostgreSQL 16 + PostGIS 3.4 qua ApplicationDbContext.
 /// </summary>
 public class AuthService : IAuthService
 {
+    private static readonly HttpClient GoogleHttpClient = new()
+    {
+        Timeout = TimeSpan.FromSeconds(10)
+    };
+
     private readonly ApplicationDbContext _dbContext;
     private readonly ITokenService _tokenService;
     private readonly IEmailService _emailService;
@@ -178,6 +185,13 @@ public class AuthService : IAuthService
             throw new BusinessRuleException("BR-AUTH-03", "MSG-AUTH-01", "Tên đăng nhập, email hoặc mật khẩu không chính xác.");
         }
 
+        // BR-AUTH-05: Chặn tài khoản đang bị đình chỉ hoạt động (Suspended)
+        if (user.Status == UserStatus.Suspended)
+        {
+            throw new BusinessRuleException("BR-AUTH-05", "MSG-AUTH-04",
+                "Tài khoản của bạn đã bị tạm đình chỉ hoạt động do vi phạm quy chuẩn nền tảng. Vui lòng liên hệ bộ phận hỗ trợ.");
+        }
+
         // BR-AUTH-04: Kiểm tra trạng thái khóa tạm thời (Lockout)
         if (user.Status == UserStatus.Locked && user.LockoutUntil.HasValue)
         {
@@ -192,6 +206,12 @@ public class AuthService : IAuthService
             user.Status = UserStatus.Active;
             user.FailedLoginAttempts = 0;
             user.LockoutUntil = null;
+        }
+
+        if (user.IsGoogleAuth && string.IsNullOrEmpty(user.PasswordHash))
+        {
+            throw new BusinessRuleException("BR-AUTH-03", "MSG-AUTH-01",
+                "Tài khoản này được liên kết qua Google và chưa thiết lập mật khẩu riêng. Vui lòng chọn 'Tiếp tục với Google' hoặc đặt mật khẩu mới qua 'Quên mật khẩu'.");
         }
 
         // Kiểm tra mật khẩu (hỗ trợ BCrypt hoặc đăng nhập mật khẩu trống nếu là tài khoản Google)
@@ -239,7 +259,6 @@ public class AuthService : IAuthService
         GoogleJsonWebSignature.Payload payload;
         try
         {
-            // Hỗ trợ mock token cho môi trường dev / swagger test nhanh
             if (idToken.StartsWith("mock-", StringComparison.OrdinalIgnoreCase))
             {
                 var email = idToken.Contains("@") ? idToken.Replace("mock-", "") : "googleuser@gmail.com";
@@ -254,13 +273,25 @@ public class AuthService : IAuthService
             else
             {
                 var clientId = _configuration["GoogleAuth:ClientId"];
-                var settings = new GoogleJsonWebSignature.ValidationSettings
+                var hasRealClientId = !string.IsNullOrWhiteSpace(clientId)
+                                      && !clientId.Contains("mock", StringComparison.OrdinalIgnoreCase)
+                                      && !clientId.StartsWith('{');
+
+                // Hỗ trợ cả 2 chuẩn từ Google Identity Services:
+                // (1) JWT ID Token (3 đoạn phân tách bởi dấu chấm)
+                // (2) OAuth 2.0 Access Token (trả về từ cửa sổ Google Account Chooser - prompt: select_account)
+                if (idToken.Count(c => c == '.') == 2)
                 {
-                    Audience = !string.IsNullOrEmpty(clientId) && !clientId.Contains("mock") 
-                        ? new[] { clientId } 
-                        : null
-                };
-                payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
+                    var settings = new GoogleJsonWebSignature.ValidationSettings
+                    {
+                        Audience = hasRealClientId ? new[] { clientId! } : null
+                    };
+                    payload = await GoogleJsonWebSignature.ValidateAsync(idToken, settings);
+                }
+                else
+                {
+                    payload = await ValidateGoogleOAuthAccessTokenAsync(idToken, hasRealClientId ? clientId : null, ct);
+                }
             }
         }
         catch (Exception ex)
@@ -276,7 +307,6 @@ public class AuthService : IAuthService
 
         if (user == null)
         {
-            // Tự động tạo tài khoản mới nếu chưa tồn tại
             var username = normalizedEmail.Split('@')[0] + "_" + Guid.NewGuid().ToString("N")[..4];
             user = new User
             {
@@ -302,6 +332,12 @@ public class AuthService : IAuthService
         }
         else
         {
+            if (user.Status == UserStatus.Suspended)
+            {
+                throw new BusinessRuleException("BR-AUTH-05", "MSG-AUTH-04",
+                    "Tài khoản của bạn đã bị tạm đình chỉ hoạt động do vi phạm quy chuẩn nền tảng.");
+            }
+
             user.IsGoogleAuth = true;
             if (!string.IsNullOrEmpty(payload.Picture) && string.IsNullOrEmpty(user.AvatarUrl))
             {
@@ -314,7 +350,7 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
-    /// 5. Làm mới Access Token (Token Rotation & Replay Attack Detection)
+    /// 5. Làm mới Access Token (Token Rotation &amp; Replay Attack Detection)
     /// </summary>
     public async Task<AuthResponseDto> RefreshTokenAsync(string refreshToken, string? clientIp = null, CancellationToken ct = default)
     {
@@ -330,7 +366,6 @@ public class AuthService : IAuthService
             throw new BusinessRuleException("BR-AUTH-05", "MSG-NTF-01", "Phiên làm việc không tồn tại hoặc đã hết hạn. Vui lòng đăng nhập lại.");
         }
 
-        // Phát hiện Replay Attack: Token đã bị thu hồi nhưng vẫn được dùng lại
         if (existingToken.IsRevoked)
         {
             _logger.LogWarning("Phát hiện Token Replay Attack! Thu hồi toàn bộ RefreshToken của UserId {UserId}", existingToken.UserId);
@@ -354,7 +389,6 @@ public class AuthService : IAuthService
             throw new BusinessRuleException("BR-AUTH-05", "MSG-NTF-01", "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
         }
 
-        // Token Rotation: Hủy token cũ, tạo token mới
         var (newRawToken, newTokenHash) = _tokenService.GenerateRefreshToken();
         existingToken.IsRevoked = true;
         existingToken.ReplacedByTokenHash = newTokenHash;
@@ -395,14 +429,12 @@ public class AuthService : IAuthService
         var normalizedEmail = email.Trim().ToLowerInvariant();
         var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email.ToLower() == normalizedEmail, ct);
 
-        // BR-AUTH-06: Luôn phản hồi thành công âm thầm dù email có tồn tại hay không để chống quét email
         if (user == null)
         {
             _logger.LogInformation("Yêu cầu quên mật khẩu cho email không tồn tại: {Email}", normalizedEmail);
             return;
         }
 
-        // BR-AUTH-09: Giới hạn tần suất gửi email (1 lần mỗi 60 giây)
         var recentToken = await _dbContext.PasswordResetTokens
             .Where(t => t.UserId == user.Id && t.CreatedAt >= DateTime.UtcNow.AddMinutes(-1))
             .OrderByDescending(t => t.CreatedAt)
@@ -411,11 +443,9 @@ public class AuthService : IAuthService
         if (recentToken != null)
         {
             _logger.LogWarning("Email {Email} bị rate limit yêu cầu quên mật khẩu trong 1 phút", normalizedEmail);
-            // Tuân thủ BR-AUTH-09: Chặn âm thầm, không gửi mail liên tục
             return;
         }
 
-        // Sinh token an toàn 32 ký tự URL-friendly
         var rawToken = Guid.NewGuid().ToString("N") + Guid.NewGuid().ToString("N")[..8];
         var tokenHash = _tokenService.HashToken(rawToken);
 
@@ -424,14 +454,13 @@ public class AuthService : IAuthService
             Id = Guid.NewGuid(),
             UserId = user.Id,
             TokenHash = tokenHash,
-            ExpiresAt = DateTime.UtcNow.AddMinutes(15), // BR-AUTH-06: 15 phút
+            ExpiresAt = DateTime.UtcNow.AddMinutes(15),
             CreatedAt = DateTime.UtcNow
         };
 
         _dbContext.PasswordResetTokens.Add(resetTokenRecord);
         await _dbContext.SaveChangesAsync(ct);
 
-        // Gửi email qua SMTP
         await _emailService.SendPasswordResetEmailAsync(user.Email, user.FullName, rawToken, ct);
     }
 
@@ -464,10 +493,7 @@ public class AuthService : IAuthService
             throw new BusinessRuleException("BR-AUTH-06", "MSG-AUTH-06", "Liên kết hoặc mã xác nhận không hợp lệ hoặc đã hết hạn.");
         }
 
-        // Đánh dấu token đã sử dụng
         tokenRecord.UsedAt = DateTime.UtcNow;
-
-        // Cập nhật mật khẩu mới
         user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
         user.FailedLoginAttempts = 0;
         user.LockoutUntil = null;
@@ -476,7 +502,6 @@ public class AuthService : IAuthService
             user.Status = UserStatus.Active;
         }
 
-        // BR-AUTH-06: Hủy toàn bộ Refresh Tokens để kick tất cả các phiên làm việc cũ
         var activeTokens = await _dbContext.RefreshTokens
             .Where(r => r.UserId == user.Id && !r.IsRevoked)
             .ToListAsync(ct);
@@ -488,6 +513,119 @@ public class AuthService : IAuthService
 
         await _dbContext.SaveChangesAsync(ct);
         _logger.LogInformation("Người dùng {Username} ({Email}) đã đặt lại mật khẩu mới thành công", user.Username, user.Email);
+    }
+
+    /// <summary>
+    /// 8. Cập nhật thông tin hồ sơ cá nhân của người dùng đang đăng nhập (SU-01)
+    /// </summary>
+    public async Task<UserInfoDto> UpdateProfileAsync(Guid userId, UpdateUserProfileRequestDto request, CancellationToken ct = default)
+    {
+        var user = await _dbContext.Users
+            .Include(u => u.EcoProfile)
+            .FirstOrDefaultAsync(u => u.Id == userId, ct);
+
+        if (user == null)
+        {
+            throw new BusinessRuleException("BR-AUTH-05", "MSG-NTF-01", "Không tìm thấy tài khoản người dùng.");
+        }
+
+        user.FullName = request.FullName.Trim();
+        if (request.PhoneNumber != null)
+        {
+            var normalizedPhone = request.PhoneNumber.Trim();
+            user.PhoneNumber = string.IsNullOrEmpty(normalizedPhone) ? null : normalizedPhone;
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.AvatarUrl))
+        {
+            user.AvatarUrl = request.AvatarUrl.Trim();
+        }
+
+        await _dbContext.SaveChangesAsync(ct);
+        _logger.LogInformation("Người dùng {Username} ({UserId}) đã cập nhật hồ sơ cá nhân", user.Username, user.Id);
+
+        return MapToUserInfoDto(user);
+    }
+
+    /// <summary>
+    /// 9. Đổi mật khẩu tài khoản đang đăng nhập và thu hồi các phiên thiết bị khác (SU-02)
+    /// </summary>
+    public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequestDto request, string? currentRefreshToken = null, CancellationToken ct = default)
+    {
+        var user = await _dbContext.Users.FirstOrDefaultAsync(u => u.Id == userId, ct);
+        if (user == null)
+        {
+            throw new BusinessRuleException("BR-AUTH-05", "MSG-NTF-01", "Không tìm thấy tài khoản người dùng.");
+        }
+
+        if (string.IsNullOrEmpty(user.PasswordHash) || !BCrypt.Net.BCrypt.Verify(request.CurrentPassword, user.PasswordHash))
+        {
+            throw new BusinessRuleException("BR-AUTH-03", "MSG-AUTH-01", "Mật khẩu hiện tại không chính xác.");
+        }
+
+        if (request.NewPassword.Length < 6)
+        {
+            throw new BusinessRuleException("BR-AUTH-06", "MSG-AUTH-01", "Mật khẩu mới tối thiểu phải có 6 ký tự.");
+        }
+
+        if (request.NewPassword == request.CurrentPassword)
+        {
+            throw new BusinessRuleException("BR-AUTH-06", "MSG-AUTH-01", "Mật khẩu mới phải khác mật khẩu hiện tại.");
+        }
+
+        user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+        user.FailedLoginAttempts = 0;
+        user.LockoutUntil = null;
+
+        var currentHash = !string.IsNullOrWhiteSpace(currentRefreshToken)
+            ? _tokenService.HashToken(currentRefreshToken)
+            : null;
+
+        var otherActiveTokens = await _dbContext.RefreshTokens
+            .Where(r => r.UserId == user.Id && !r.IsRevoked && (currentHash == null || r.TokenHash != currentHash))
+            .ToListAsync(ct);
+
+        foreach (var token in otherActiveTokens)
+        {
+            token.IsRevoked = true;
+        }
+
+        await _dbContext.SaveChangesAsync(ct);
+        _logger.LogInformation("Người dùng {Username} đã đổi mật khẩu và thu hồi {Count} phiên thiết bị khác", user.Username, otherActiveTokens.Count);
+    }
+
+    /// <summary>
+    /// 10. Đăng xuất và thu hồi Refresh Token hiện tại
+    /// </summary>
+    public async Task LogoutAsync(string? refreshToken, Guid? userId = null, CancellationToken ct = default)
+    {
+        if (!string.IsNullOrWhiteSpace(refreshToken))
+        {
+            var tokenHash = _tokenService.HashToken(refreshToken.Trim());
+            var record = await _dbContext.RefreshTokens
+                .FirstOrDefaultAsync(r => r.TokenHash == tokenHash && !r.IsRevoked, ct);
+
+            if (record != null)
+            {
+                record.IsRevoked = true;
+                await _dbContext.SaveChangesAsync(ct);
+                return;
+            }
+        }
+
+        if (userId.HasValue)
+        {
+            var latestToken = await _dbContext.RefreshTokens
+                .Where(r => r.UserId == userId.Value && !r.IsRevoked)
+                .OrderByDescending(r => r.CreatedAt)
+                .FirstOrDefaultAsync(ct);
+
+            if (latestToken != null)
+            {
+                latestToken.IsRevoked = true;
+                await _dbContext.SaveChangesAsync(ct);
+            }
+        }
     }
 
     // ================= HELPER & BACKWARD COMPATIBILITY METHODS =================
@@ -576,7 +714,7 @@ public class AuthService : IAuthService
             TokenType = "Bearer",
             ExpiresAt = _tokenService.GetAccessTokenExpiration(),
             User = MapToUserInfoDto(user),
-            Message = messageCode == "MSG-MTH-03" 
+            Message = messageCode == "MSG-MTH-03"
                 ? "Hồ sơ cơ sở của bạn đang được xem xét và sẽ xuất hiện sau khi duyệt."
                 : "Thao tác xác thực thành công."
         };
@@ -602,81 +740,243 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Đảm bảo luôn có các tài khoản Demo chuẩn sẵn sàng trong PostgreSQL
+    /// Xác thực OAuth 2.0 Access Token trả về từ cửa sổ Google Account Chooser (prompt: select_account)
+    /// trực tiếp với máy chủ Google OAuth2 (tokeninfo + userinfo).
+    /// </summary>
+    private static async Task<GoogleJsonWebSignature.Payload> ValidateGoogleOAuthAccessTokenAsync(
+        string accessToken,
+        string? expectedClientId,
+        CancellationToken ct)
+    {
+        var tokenInfoUrl = $"https://oauth2.googleapis.com/tokeninfo?access_token={Uri.EscapeDataString(accessToken)}";
+        using var tokenInfoRes = await GoogleHttpClient.GetAsync(tokenInfoUrl, ct);
+        if (!tokenInfoRes.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException("Google OAuth2 Access Token không hợp lệ hoặc đã hết hạn.");
+        }
+
+        await using var tokenInfoStream = await tokenInfoRes.Content.ReadAsStreamAsync(ct);
+        using var tokenInfoDoc = await JsonDocument.ParseAsync(tokenInfoStream, cancellationToken: ct);
+        var tokenRoot = tokenInfoDoc.RootElement;
+
+        if (!string.IsNullOrWhiteSpace(expectedClientId))
+        {
+            var aud = tokenRoot.TryGetProperty("aud", out var audProp) ? audProp.GetString() : null;
+            var azp = tokenRoot.TryGetProperty("azp", out var azpProp) ? azpProp.GetString() : null;
+            if (!string.Equals(aud, expectedClientId, StringComparison.Ordinal) &&
+                !string.Equals(azp, expectedClientId, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException("Google OAuth2 Token không thuộc Client ID của EcoLink.");
+            }
+        }
+
+        using var userReq = new HttpRequestMessage(HttpMethod.Get, "https://www.googleapis.com/oauth2/v3/userinfo");
+        userReq.Headers.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+
+        using var userRes = await GoogleHttpClient.SendAsync(userReq, ct);
+        if (!userRes.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException("Không thể truy xuất hồ sơ tài khoản từ Google UserInfo.");
+        }
+
+        await using var userStream = await userRes.Content.ReadAsStreamAsync(ct);
+        using var userDoc = await JsonDocument.ParseAsync(userStream, cancellationToken: ct);
+        var root = userDoc.RootElement;
+
+        var email = root.TryGetProperty("email", out var emailProp) ? emailProp.GetString() : null;
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new InvalidOperationException("Tài khoản Google không cung cấp địa chỉ email hợp lệ.");
+        }
+
+        var name = root.TryGetProperty("name", out var nameProp) ? nameProp.GetString() : null;
+        var picture = root.TryGetProperty("picture", out var picProp) ? picProp.GetString() : null;
+        var emailVerified = !root.TryGetProperty("email_verified", out var verProp) ||
+                            (verProp.ValueKind == JsonValueKind.True) ||
+                            (verProp.ValueKind == JsonValueKind.String &&
+                             string.Equals(verProp.GetString(), "true", StringComparison.OrdinalIgnoreCase));
+
+        return new GoogleJsonWebSignature.Payload
+        {
+            Email = email,
+            Name = name ?? email.Split('@')[0],
+            Picture = picture,
+            EmailVerified = emailVerified
+        };
+    }
+
+    /// <summary>
+    /// Đảm bảo luôn có các tài khoản Demo cho cả 4 vai trò (citizen, collector, staff, admin),
+    /// Danh mục phế liệu chuẩn và Bảng giá mẫu (BR-MTH-03) sẵn sàng trong PostgreSQL.
     /// </summary>
     private async Task EnsureDemoUsersAsync(CancellationToken ct)
     {
-        if (await _dbContext.Users.AnyAsync(ct))
+        var demoCitizenId = Guid.Parse("11111111-1111-1111-1111-111111111111");
+        var demoCollectorId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        var demoAdminId = Guid.Parse("33333333-3333-3333-3333-333333333333");
+        var demoStaffId = Guid.Parse("88888888-8888-8888-8888-888888888888");
+
+        var hasCitizen = await _dbContext.Users.IgnoreQueryFilters()
+            .AnyAsync(u => u.Id == demoCitizenId || u.Username == "citizen", ct);
+        var hasCollector = await _dbContext.Users.IgnoreQueryFilters()
+            .AnyAsync(u => u.Id == demoCollectorId || u.Username == "collector", ct);
+        var hasAdmin = await _dbContext.Users.IgnoreQueryFilters()
+            .AnyAsync(u => u.Id == demoAdminId || u.Username == "admin", ct);
+        var hasStaff = await _dbContext.Users.IgnoreQueryFilters()
+            .AnyAsync(u => u.Id == demoStaffId || u.Username == "staff", ct);
+
+        if (!hasCitizen || !hasCollector || !hasAdmin || !hasStaff)
         {
-            return;
+            if (!hasCitizen)
+            {
+                _dbContext.Users.Add(new User
+                {
+                    Id = demoCitizenId,
+                    Username = "citizen",
+                    Email = "citizen@ecolink.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("citizen123"),
+                    FullName = "Nguyễn Văn Dân",
+                    PhoneNumber = "0901234567",
+                    Role = UserRole.Citizen,
+                    Status = UserStatus.Active,
+                    EcoProfile = new UserEcoProfile
+                    {
+                        CurrentGreenPoints = 150,
+                        TotalLifetimePoints = 300,
+                        TreeLevel = 2,
+                        TreeExperience = 45,
+                        TotalRecycledKg = 12.5m,
+                        TotalWasteScanned = 18
+                    }
+                });
+            }
+
+            if (!hasCollector)
+            {
+                _dbContext.Users.Add(new User
+                {
+                    Id = demoCollectorId,
+                    Username = "collector",
+                    Email = "collector@ecolink.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("collector123"),
+                    FullName = "Trần Thu Gom (Vựa phế liệu EcoGreen)",
+                    PhoneNumber = "0988776655",
+                    Role = UserRole.Recycler,
+                    Status = UserStatus.Active,
+                    RecyclerProfile = new RecyclerProfile
+                    {
+                        UserId = demoCollectorId,
+                        FacilityName = "Vựa phế liệu EcoGreen",
+                        RepresentativeName = "Trần Thu Gom",
+                        BusinessAddress = "123 Đường Nguyễn Hữu Cảnh, P. 22, Bình Thạnh, TP.HCM",
+                        Latitude = 10.7938m,
+                        Longitude = 106.7182m,
+                        Location = new Point(106.7182, 10.7938) { SRID = 4326 },
+                        OperatingHours = "07:30 - 18:30",
+                        ContactPhone = "0988776655",
+                        VerificationStatus = VerificationStatus.Verified,
+                        ActiveStatus = RecyclerActiveStatus.Online
+                    }
+                });
+            }
+
+            if (!hasStaff)
+            {
+                _dbContext.Users.Add(new User
+                {
+                    Id = demoStaffId,
+                    Username = "staff",
+                    Email = "staff@ecolink.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("staff123"),
+                    FullName = "Lê Thu Hà",
+                    PhoneNumber = "0909887766",
+                    Role = UserRole.Staff,
+                    Status = UserStatus.Active
+                });
+            }
+
+            if (!hasAdmin)
+            {
+                _dbContext.Users.Add(new User
+                {
+                    Id = demoAdminId,
+                    Username = "admin",
+                    Email = "admin@ecolink.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123"),
+                    FullName = "Quản trị viên EcoLink",
+                    PhoneNumber = "0912345678",
+                    Role = UserRole.Admin,
+                    Status = UserStatus.Active
+                });
+            }
+
+            await _dbContext.SaveChangesAsync(ct);
+            _logger.LogInformation("Đảm bảo đầy đủ tài khoản Demo (citizen, collector, staff, admin) trong PostgreSQL");
         }
 
-        var defaultPasswordHash = BCrypt.Net.BCrypt.HashPassword("citizen123");
-        var collectorPasswordHash = BCrypt.Net.BCrypt.HashPassword("collector123");
-        var adminPasswordHash = BCrypt.Net.BCrypt.HashPassword("admin123");
-
-        var demoCitizen = new User
+        // Seed 6 danh mục rác chuẩn (waste_categories) nếu chưa có
+        var defaultCategories = new (string Code, string Name, string BinColor, bool IsRecyclable)[]
         {
-            Id = Guid.Parse("11111111-1111-1111-1111-111111111111"),
-            Username = "citizen",
-            Email = "citizen@ecolink.vn",
-            PasswordHash = defaultPasswordHash,
-            FullName = "Nguyễn Văn Dân",
-            PhoneNumber = "0901234567",
-            Role = UserRole.Citizen,
-            Status = UserStatus.Active,
-            EcoProfile = new UserEcoProfile
+            ("plastic", "Nhựa tái chế (Plastic)", "Cam", true),
+            ("paper", "Giấy báo & Tài liệu (Paper)", "Xanh Dương", true),
+            ("glass", "Thủy tinh (Glass)", "Trắng", true),
+            ("metal", "Kim loại & Vỏ lon (Metal)", "Xám Kim Loại", true),
+            ("cardboard", "Bìa Carton (Cardboard)", "Nâu Vàng", true),
+            ("trash", "Rác thải thông thường / Không thể tái chế", "Đen", false)
+        };
+
+        var existingCodes = await _dbContext.WasteCategories.Select(c => c.Code).ToListAsync(ct);
+        var missingCategories = defaultCategories.Where(d => !existingCodes.Contains(d.Code)).ToList();
+        if (missingCategories.Count > 0)
+        {
+            foreach (var (code, name, binColor, isRecyclable) in missingCategories)
             {
-                CurrentGreenPoints = 150,
-                TotalLifetimePoints = 300,
-                TreeLevel = 2,
-                TreeExperience = 45,
-                TotalRecycledKg = 12.5m,
-                TotalWasteScanned = 18
+                _dbContext.WasteCategories.Add(new WasteCategory
+                {
+                    Code = code,
+                    Name = name,
+                    StandardBinColor = binColor,
+                    IsRecyclable = isRecyclable,
+                    Status = "Active"
+                });
             }
-        };
+            await _dbContext.SaveChangesAsync(ct);
+        }
 
-        var demoCollector = new User
+        // Đảm bảo tài khoản demoCollector (đang Online) luôn có bảng giá niêm yết hợp lệ theo BR-MTH-03
+        var hasCollectorPrices = await _dbContext.RecyclerPrices.AnyAsync(p => p.RecyclerId == demoCollectorId, ct);
+        if (!hasCollectorPrices && await _dbContext.RecyclerProfiles.AnyAsync(r => r.UserId == demoCollectorId, ct))
         {
-            Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            Username = "collector",
-            Email = "collector@ecolink.vn",
-            PasswordHash = collectorPasswordHash,
-            FullName = "Trần Thu Gom (Vựa phế liệu EcoGreen)",
-            PhoneNumber = "0988776655",
-            Role = UserRole.Recycler,
-            Status = UserStatus.Active,
-            RecyclerProfile = new RecyclerProfile
+            var categoriesByCode = await _dbContext.WasteCategories
+                .Where(c => c.IsRecyclable)
+                .ToDictionaryAsync(c => c.Code, ct);
+
+            var demoPrices = new (string Code, decimal PricePerKg, decimal MinKg, string Conditions)[]
             {
-                UserId = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-                FacilityName = "Vựa phế liệu EcoGreen",
-                RepresentativeName = "Trần Thu Gom",
-                BusinessAddress = "123 Đường Nguyễn Hữu Cảnh, P. 22, Bình Thạnh, TP.HCM",
-                Latitude = 10.7938m,
-                Longitude = 106.7182m,
-                Location = new Point(106.7182, 10.7938) { SRID = 4326 },
-                OperatingHours = "07:30 - 18:30",
-                ContactPhone = "0988776655",
-                VerificationStatus = VerificationStatus.Verified,
-                ActiveStatus = RecyclerActiveStatus.Online
+                ("plastic", 7000m, 1.0m, "Chai nhựa PET/HDPE đã tráng sạch, bẹp chai"),
+                ("paper", 4500m, 2.0m, "Giấy báo, tài liệu khô ráo, không dính dầu mỡ"),
+                ("metal", 25000m, 0.5m, "Vỏ lon nhôm, sắt vụn đã dốc sạch nước"),
+                ("cardboard", 3800m, 3.0m, "Thùng carton gập phẳng, khô ráo")
+            };
+
+            foreach (var (code, price, minKg, cond) in demoPrices)
+            {
+                if (categoriesByCode.TryGetValue(code, out var cat))
+                {
+                    _dbContext.RecyclerPrices.Add(new RecyclerPrice
+                    {
+                        RecyclerId = demoCollectorId,
+                        WasteCategoryId = cat.Id,
+                        PricePerKg = price,
+                        MinQuantityKg = minKg,
+                        CollectionConditions = cond,
+                        Status = PriceStatus.Active
+                    });
+                }
             }
-        };
 
-        var demoAdmin = new User
-        {
-            Id = Guid.Parse("33333333-3333-3333-3333-333333333333"),
-            Username = "admin",
-            Email = "admin@ecolink.vn",
-            PasswordHash = adminPasswordHash,
-            FullName = "Quản trị viên EcoLink",
-            PhoneNumber = "0912345678",
-            Role = UserRole.Admin,
-            Status = UserStatus.Active
-        };
-
-        _dbContext.Users.AddRange(demoCitizen, demoCollector, demoAdmin);
-        await _dbContext.SaveChangesAsync(ct);
-
-        _logger.LogInformation("Khởi tạo thành công 3 tài khoản Demo (citizen, collector, admin) trong PostgreSQL");
+            await _dbContext.SaveChangesAsync(ct);
+            _logger.LogInformation("Đã khởi tạo bảng giá mẫu (recycler_price_list) cho Vựa phế liệu EcoGreen (BR-MTH-03).");
+        }
     }
 }

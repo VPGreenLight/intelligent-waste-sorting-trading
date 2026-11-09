@@ -1,0 +1,42 @@
+sequenceDiagram
+    autonumber
+    actor Citizen as Nguoi dan da dang nhap (Role: Citizen)
+    participant UI as React Web App
+    participant Ctrl as RecyclerApplicationsController
+    participant R2 as CloudflareR2StorageService
+    participant Svc as RecyclerOnboardingService
+    participant DB as PostgreSQL + PostGIS (ApplicationDbContext)
+
+    Note over Citizen,UI: Tien dieu kien: Nguoi dung da dang ky tai khoan (Role = Citizen) & Dang nhap JWT
+    Citizen->>+UI: 1. Chon file Giay phep kinh doanh (permit) & Anh chup co so (facility) (<= 5MB)
+    UI->>+Ctrl: 2. POST /api/v1/recycler-applications/upload-document (multipart/form-data)
+    Ctrl->>+R2: 3. UploadFileAsync(stream, fileName, contentType, size, folder)
+    
+    alt File > 5MB hoac sai dinh dang (.jpg, .png, .webp, .pdf)
+        R2-->>Ctrl: 4a. Throw BusinessRuleException ("BR-MTH-01", "MSG-GEN-01")
+        Ctrl-->>UI: 5a. 400 Bad Request: Dung luong hoac dinh dang tep khong hop le
+        UI-->>Citizen: 6a. Hien thi canh bao chon lai tep chung tu
+    else Tep hop le
+        Note over R2: Ky so AWS Signature V4 (HMAC-SHA256)<br/>PUT https://{accountId}.r2.cloudflarestorage.com/ecolink/...
+        R2-->>-Ctrl: 4b. Return Public R2 URL (https://pub-...r2.dev/recycler-onboarding/...)
+        Ctrl-->>-UI: 5b. 200 OK: ApiResponse<RecyclerDocumentUploadResponseDto> { fileUrl }
+    end
+
+    Citizen->>+UI: 7. Nhap thong tin Co so, ghim Toa do GPS tren ban do & Bam 'Gui Ho So Nang Cap'
+    UI->>+Ctrl: 8. POST /api/v1/recycler-applications (ApplyRecyclerUpgradeRequest)
+    Ctrl->>+Svc: 9. SubmitUpgradeApplicationAsync(userId, request, ct)
+    Svc->>+DB: 10. SELECT * FROM users LEFT JOIN recycler_profiles WHERE id = @userId
+    DB-->>-Svc: 11. Return User & existingProfile (neu co)
+
+    alt Ho so dang o trang thai Pending hoac da Verified (BR-MTH-01)
+        Svc-->>Ctrl: 12a. Throw BusinessRuleException ("BR-MTH-01", "MSG-MTH-03 / MSG-MTH-04")
+        Ctrl-->>UI: 13a. 400 Bad Request: Ho so dang cho duyet hoac da duoc duyet
+    else Nop moi lan dau (existingProfile == null) hoac Nop lai sau khi bi Rejected (BR-MTH-02)
+        Note over Svc: 1. Khoi tao Point(Longitude, Latitude) { SRID = 4326 }<br/>2. Dat VerificationStatus = Pending, ActiveStatus = Offline<br/>3. Xoa RejectionReason cu = null (neu Re-apply)
+        Svc->>+DB: 12b. INSERT / UPDATE INTO recycler_profiles (geom, legal_permit_url, business_photo_url)
+        DB-->>-Svc: 13b. 1 row affected
+        Svc-->>-Ctrl: 14b. Return RecyclerApplicationDetailDto (VerificationStatus = "Pending")
+        Ctrl-->>-UI: 15b. 201 Created: ApiResponse<RecyclerApplicationDetailDto> (MSG-MTH-03)
+        UI-->>-Citizen: 16b. Hien thi trang thai 'Pending Verification' (Cho Nhan vien tham dinh)
+    end
+

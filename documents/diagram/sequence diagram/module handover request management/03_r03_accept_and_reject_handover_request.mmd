@@ -1,0 +1,67 @@
+sequenceDiagram
+    autonumber
+    actor Recycler as Recycler (Collector)
+    participant Ctrl as RecyclerHandoverController
+    participant Svc as HandoverRequestService
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Recycler,DB: UC R-03: CO SO THU GOM TIEP NHAN / TU CHOI YEU CAU BAN GIAO (BR-HND-02, BR-HND-03, BR-HND-08, BR-NEG-04)
+
+    %% ==========================================
+    %% LUONG 1: CHAP NHAN YEU CAU (POST /accept)
+    %% ==========================================
+    rect rgb(240, 255, 240)
+        Note over Recycler,DB: LUONG 1: RECYCLER CHAP NHAN DON VA CHOT KHUNG GIO HEN
+        Recycler->>Ctrl: POST /api/v1/recycler/handover-requests/{id}/accept (Bearer Token)<br/>{ Note: "Co so se dieu xe den luc 09:30" }
+        Ctrl->>Ctrl: Trich xuat RecyclerId tu JWT (Role: Recycler/Collector)
+        Ctrl->>Svc: AcceptAsync(recyclerId, requestId, note, ct)
+
+        Svc->>DB: SELECT HandoverRequest WHERE Id = requestId AND RecyclerId = recyclerId (BR-HND-03)
+        DB-->>Svc: entity
+
+        alt entity == null
+            Svc-->>Ctrl: Throw NotFoundException ("Khong tim thay yeu cau ban giao.")
+            Ctrl-->>Recycler: 404 Not Found
+        else entity.Status NOT IN (Pending, Negotiating)
+            Svc-->>Ctrl: Throw BusinessRuleException (BR-HND-02: Khong the chap nhan don o trang thai nay)
+            Ctrl-->>Recycler: 400 Bad Request
+        else entity.ProposedTimeSlot <= UtcNow (Khung gio de xuat da troi qua - BR-NEG-04)
+            Svc-->>Ctrl: Throw BusinessRuleException (BR-NEG-04: Khung gio de xuat da qua, khong the chap nhan)
+            Ctrl-->>Recycler: 400 Bad Request
+        end
+
+        Svc->>DB: UPDATE handover_requests<br/>SET status = 'Accepted', confirmed_time_slot = proposed_time_slot, recycler_note = note, updated_at = NOW()<br/>WHERE id = requestId
+        DB-->>Svc: Cap nhat thanh cong
+
+        Svc->>DB: SELECT u.FullName, u.PhoneNumber FROM users u WHERE u.id = entity.UserId
+        DB-->>Svc: User contact info
+
+        Svc->>Svc: MapAsync (viewerIsRecycler = true):<br/>Vi Status = Accepted -> isContactRevealed = true (BR-HND-08)<br/>Tra ve SĐT, Ho ten va Dia chi thu gom chi tiet (khong tra ve GPS)
+        Svc-->>Ctrl: HandoverRequestDto (Status = "Accepted", ConfirmedTimeSlot, Requester: { Name, Phone, Address })
+        Ctrl-->>Recycler: 200 OK (ApiResponse.Ok: MSG-HND-02 - Yeu cau ban giao da duoc chap nhan)
+    end
+
+    %% ==========================================
+    %% LUONG 2: TU CHOI YEU CAU (POST /reject)
+    %% ==========================================
+    rect rgb(255, 245, 245)
+        Note over Recycler,DB: LUONG 2: RECYCLER TU CHOI YEU CAU KEM LY DO
+        Recycler->>Ctrl: POST /api/v1/recycler/handover-requests/{id}/reject (Bearer Token)<br/>{ Reason: "Kho bai da day cong suat thu gom hom nay" }
+        Ctrl->>Svc: RejectAsync(recyclerId, requestId, reason, ct)
+
+        Svc->>DB: SELECT HandoverRequest WHERE Id = requestId AND RecyclerId = recyclerId
+        DB-->>Svc: entity
+
+        alt entity.Status NOT IN (Pending, Negotiating)
+            Svc-->>Ctrl: Throw BusinessRuleException (BR-HND-02: Khong the tu choi don o trang thai nay)
+            Ctrl-->>Recycler: 400 Bad Request
+        end
+
+        Svc->>Svc: RequireReason: Kiem tra ly do khong rong, toi da 500 ky tu
+        Svc->>DB: UPDATE handover_requests<br/>SET status = 'Rejected', cancel_reason = reason, cancelled_by = recyclerId, updated_at = NOW()<br/>WHERE id = requestId
+        DB-->>Svc: Cap nhat thanh cong
+
+        Svc-->>Ctrl: HandoverRequestDto (Status = "Rejected", CancelReason, CancelledByRole = "Recycler")
+        Ctrl-->>Recycler: 200 OK (ApiResponse.Ok: Da tu choi yeu cau ban giao)
+    end
+

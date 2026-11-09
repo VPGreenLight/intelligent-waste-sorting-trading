@@ -7,13 +7,38 @@ public class WastePredictionDto
     public string DisplayName { get; set; } = string.Empty;
 }
 
+public class DetectedWasteObjectDto
+{
+    public int Id { get; set; }
+    public string RawClass { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public string DisplayName { get; set; } = string.Empty;
+    public double Confidence { get; set; }
+    public double CenterScore { get; set; }
+    public bool IsPrimary { get; set; }
+    public string? Source { get; set; }
+    public List<double> Bbox { get; set; } = new();
+    public WasteSortingGuideDto? SortingGuide { get; set; }
+}
+
 public class AiScanResultDto
 {
     public bool Success { get; set; }
     public bool IsOutOfDistribution { get; set; }
     public double ConfidenceThreshold { get; set; } = 0.60;
+    public string? ModelUsed { get; set; }
+    public string? ModelName { get; set; }
+    public string? ModelFamily { get; set; }
+    public int ImageWidth { get; set; }
+    public int ImageHeight { get; set; }
     public WastePredictionDto? TopPrediction { get; set; }
     public List<WastePredictionDto> Predictions { get; set; } = new();
+    public List<WastePredictionDto> AllProbabilities { get; set; } = new();
+    public int DetectedCount { get; set; }
+    public Dictionary<string, int> CategorySummary { get; set; } = new();
+    public List<DetectedWasteObjectDto> DetectedObjects { get; set; } = new();
+    public string? Pipeline { get; set; }
+    public List<double>? CroppedBbox { get; set; }
     public double InferenceTimeMs { get; set; }
     public string? ErrorMessage { get; set; }
 }

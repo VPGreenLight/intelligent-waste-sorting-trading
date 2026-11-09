@@ -1,0 +1,19 @@
+sequenceDiagram
+    autonumber
+    actor User as Nguoi dan (Citizen)
+    participant UI as React Web App (Citizen Portal)
+    participant Ctrl as WasteScanController
+    participant Svc as WasteScanService
+    participant Repo as MisclassifiedReportRepository
+    participant DB as PostgreSQL (ApplicationDbContext)
+
+    User->>+UI: 1. Bam 'Bao cao nhan dien sai', chon danh muc dung & ghi chu
+    UI->>+Ctrl: 2. POST /api/v1/waste-scans/{scanId}/reports (Body: CreateReportRequestDto)
+    Ctrl->>+Svc: 3. ReportMisclassificationAsync(scanId, userId, dto, ct)
+    Svc->>+Repo: 4. AddAsync(MisclassifiedReport { status: 'Pending' })
+    Repo->>+DB: 5. INSERT INTO misclassified_reports (scan_id, user_id, predicted_cat_id, user_suggested_cat_id, status='Pending')
+    DB-->>-Repo: 6. 1 row affected (report_id)
+    Repo-->>-Svc: 7. Return reportId
+    Svc-->>-Ctrl: 8. Return reportId
+    Ctrl-->>-UI: 9. 201 Created: ApiResponse<object> (MSG-CUR-01: Cam on ban da phan hoi!)
+    UI-->>-User: 10. Hien thi thong bao cam on da dong gop du lieu cai thien AI

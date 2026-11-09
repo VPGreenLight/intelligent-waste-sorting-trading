@@ -1,0 +1,83 @@
+sequenceDiagram
+    autonumber
+    participant Job as ReceiptAutoCompleteJob (BackgroundService)
+    participant Scope as IServiceScopeFactory (DI Container)
+    participant Svc as HandoverReceiptService
+    participant DB as ApplicationDbContext (PostgreSQL)
+    participant Game as IGamificationService
+    participant Log as ILogger~ReceiptAutoCompleteJob~
+
+    Note over Job,Log: TIEN TRINH TU DONG JOB-01: TU DONG HOAN TAT BIEN NHAN QUA HAN 48 GIO (BR-HND-07, BR-GAM-01)
+
+    %% ==========================================
+    %% CHU KY QUET DINH KY
+    %% ==========================================
+    rect rgb(240, 248, 255)
+        Note over Job,Log: CHU KY LAP LAI MOI 60 PHUT (Interval = 60m, ConfirmationTimeout = 48h)
+        Job->>Job: Cho den thoi diem thuc thi tiep theo (Task.Delay 60 minutes)
+        Job->>Scope: CreateScope(): Tao DI scope doc lap cho moi luot chay
+        Scope-->>Job: scope
+        Job->>Scope: scope.ServiceProvider.GetRequiredService~IHandoverReceiptService~()
+        Scope-->>Job: Svc (HandoverReceiptService)
+
+        Job->>Svc: AutoCompleteExpiredAsync(timeout = 48h, ct)
+    end
+
+    %% ==========================================
+    %% QUET CAC BIEN NHAN QUA HAN TRONG DATABASE
+    %% ==========================================
+    rect rgb(255, 250, 240)
+        Note over Svc,DB: QUET CAC BIEN NHAN CHO XAC NHAN DA QUA 48H KE TU LUC PHAT HANH
+        Svc->>Svc: cutoff = DateTime.UtcNow - 48h
+        Svc->>DB: SELECT r.RequestId FROM handover_receipts r<br/>JOIN handover_requests h ON r.RequestId = h.Id<br/>WHERE h.Status = 'AwaitingConfirmation' AND r.CreatedAt < cutoff
+        DB-->>Svc: Danh sach requestIds het han [id_1, id_2, ...]
+    end
+
+    %% ==========================================
+    %% XU LY HOAN TAT NGUYEN TU CHO TUNG BIEN NHAN
+    %% ==========================================
+    rect rgb(240, 255, 240)
+        Note over Svc,Game: VONG LAP HOAN TAT CHO TUNG DON (TRANH LOCK TOAN BO BANG)
+        loop Voi moi requestId trong danh sach
+            Svc->>DB: SELECT * FROM handover_receipts WHERE RequestId = requestId
+            DB-->>Svc: receipt
+
+            Svc->>Svc: CalculatePoints(receipt.TotalWeightKg): Quy doi diem xanh (10 diem/kg - BR-GAM-01)
+
+            Svc->>DB: BEGIN TRANSACTION
+            Svc->>DB: UPDATE handover_requests<br/>SET status = 'Completed', updated_at = NOW()<br/>WHERE id = requestId AND status = 'AwaitingConfirmation'
+            DB-->>Svc: changed (1 hoac 0)
+
+            alt changed == 0 (Nguoi dan vua bam xac nhan cung luc)
+                Svc->>DB: ROLLBACK TRANSACTION
+                Note over Svc: Bo qua don nay vi da duoc xu ly
+            else changed == 1 (Chuyen trang thai thanh cong)
+                Svc->>DB: UPDATE handover_receipts<br/>SET confirmed_by_user_at = NOW(), points_awarded = points<br/>WHERE request_id = requestId
+                Svc->>DB: COMMIT TRANSACTION
+                DB-->>Svc: Committed
+
+                %% Cong diem Gamification
+                rect rgb(245, 245, 255)
+                    Note over Svc,Game: TICH HOP GAMIFICATION: CONG DIEM TUDONG CHO NGUOI DAN VA CO SO
+                    Svc->)Game: AwardPointsForRecyclingAsync(receipt.UserId, receipt.TotalWeightKg, ct)
+                    Svc->)Game: AwardPointsForRecyclingAsync(receipt.RecyclerId, receipt.TotalWeightKg, ct)
+                end
+                Svc->>Svc: count++
+            end
+
+            Svc->>DB: ChangeTracker.Clear(): Giai phong bo nho DbContext
+        end
+    end
+
+    %% ==========================================
+    %% GHI LOG VA HOAN TAT LUOT CHAY
+    %% ==========================================
+    rect rgb(240, 248, 255)
+        Svc-->>Job: count (So luong don da tu dong hoan tat)
+        alt count > 0
+            Job->>Log: LogInformation("JOB-01: da tu dong hoan tat {count} giao dich.")
+        end
+        Job->>Scope: Dispose Scope
+        Note over Job: Tiep tuc cho den chu ky 60 phut tiep theo
+    end
+

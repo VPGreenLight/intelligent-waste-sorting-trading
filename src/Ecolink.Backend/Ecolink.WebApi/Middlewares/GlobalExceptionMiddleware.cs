@@ -39,6 +39,7 @@ public class GlobalExceptionMiddleware
         var (statusCode, messageCode, message) = exception switch
         {
             BusinessRuleException brEx => (HttpStatusCode.BadRequest, brEx.MessageCode, brEx.Message),
+            ForbiddenAccessException fbEx => (HttpStatusCode.Forbidden, fbEx.MessageCode, fbEx.Message),
             NotFoundException nfEx => (HttpStatusCode.NotFound, "MSG-NOT-FOUND", nfEx.Message),
             UnauthorizedAccessException unAuthEx => (HttpStatusCode.Unauthorized, "MSG-UNAUTHORIZED", unAuthEx.Message),
             _ => (HttpStatusCode.InternalServerError, "MSG-SYS-500", "Đã xảy ra sự cố trong quá trình xử lý hệ thống. Vui lòng thử lại sau.")

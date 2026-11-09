@@ -1,215 +1,215 @@
 {
-  "total_scans": 107,
+  "total_scans": 166,
   "categories": {
-    "cardboard": 30,
+    "cardboard": 31,
     "metal": 3,
     "glass": 10,
-    "plastic": 6,
-    "paper": 13,
+    "plastic": 8,
+    "paper": 69,
     "trash": 3
   },
-  "ood_count": 42,
+  "ood_count": 59,
   "recent": [
     {
-      "category": "paper",
-      "confidence": 63.5,
+      "category": "plastic",
+      "confidence": 90.0,
       "is_ood": false,
-      "model": "nonexistent_model",
-      "latency_ms": 524.85,
-      "timestamp": "2026-10-21 22:21:17"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
       "model": "yolov8_detect",
-      "latency_ms": 420.21,
-      "timestamp": "2026-10-21 22:21:16"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 513.15,
-      "timestamp": "2026-10-21 22:21:15"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 502.98,
-      "timestamp": "2026-10-21 22:21:14"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 521.6,
-      "timestamp": "2026-10-21 22:21:13"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 512.78,
-      "timestamp": "2026-10-21 22:21:12"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 534.26,
-      "timestamp": "2026-10-21 22:21:11"
+      "latency_ms": 1476.61,
+      "timestamp": "2026-11-09 21:59:14"
     },
     {
       "category": "paper",
       "confidence": 63.5,
       "is_ood": false,
-      "model": "nonexistent_model",
-      "latency_ms": 547.62,
-      "timestamp": "2026-10-21 21:55:51"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
       "model": "yolov8_detect",
-      "latency_ms": 506.82,
-      "timestamp": "2026-10-21 21:55:49"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 509.99,
-      "timestamp": "2026-10-21 21:55:48"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 490.16,
-      "timestamp": "2026-10-21 21:55:47"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 561.44,
-      "timestamp": "2026-10-21 21:55:46"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 512.89,
-      "timestamp": "2026-10-21 21:55:45"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 459.54,
-      "timestamp": "2026-10-21 21:55:44"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 536.03,
-      "timestamp": "2026-10-21 21:47:06"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 522.01,
-      "timestamp": "2026-10-21 21:47:04"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 545.0,
-      "timestamp": "2026-10-21 21:43:16"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 528.66,
-      "timestamp": "2026-10-21 21:43:14"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 256.14,
-      "timestamp": "2026-10-21 21:40:10"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 211.08,
-      "timestamp": "2026-10-21 21:40:09"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 240.83,
-      "timestamp": "2026-10-21 21:39:51"
-    },
-    {
-      "category": "unknown",
-      "confidence": 0.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 467.81,
-      "timestamp": "2026-10-21 21:39:49"
-    },
-    {
-      "category": "trash",
-      "confidence": 76.2,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 584.22,
-      "timestamp": "2026-10-20 22:53:01"
-    },
-    {
-      "category": "trash",
-      "confidence": 32.0,
-      "is_ood": true,
-      "model": "yolov8_detect",
-      "latency_ms": 952.42,
-      "timestamp": "2026-10-20 22:49:52"
+      "latency_ms": 35.62,
+      "timestamp": "2026-11-07 22:40:41"
     },
     {
       "category": "paper",
-      "confidence": 82.1,
+      "confidence": 63.5,
       "is_ood": false,
-      "model": "yolov8n",
-      "latency_ms": 694.59,
-      "timestamp": "2026-10-09 21:34:32"
+      "model": "yolov8_detect",
+      "latency_ms": 31.69,
+      "timestamp": "2026-11-07 22:40:41"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 32.22,
+      "timestamp": "2026-11-07 22:40:41"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 34.87,
+      "timestamp": "2026-11-07 22:40:41"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 34.27,
+      "timestamp": "2026-11-07 22:40:41"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 226.94,
+      "timestamp": "2026-11-07 22:40:41"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 31.38,
+      "timestamp": "2026-11-07 22:34:16"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 31.87,
+      "timestamp": "2026-11-07 22:34:16"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 29.62,
+      "timestamp": "2026-11-07 22:34:16"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 33.36,
+      "timestamp": "2026-11-07 22:34:15"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 34.75,
+      "timestamp": "2026-11-07 22:34:15"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 161.08,
+      "timestamp": "2026-11-07 22:34:15"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 23.47,
+      "timestamp": "2026-11-07 22:27:39"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 23.88,
+      "timestamp": "2026-11-07 22:27:39"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 10.75,
+      "timestamp": "2026-11-07 22:27:39"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 24.94,
+      "timestamp": "2026-11-07 22:27:39"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 23.58,
+      "timestamp": "2026-11-07 22:27:39"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 1495.97,
+      "timestamp": "2026-11-07 22:27:39"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 31.88,
+      "timestamp": "2026-11-03 17:32:34"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 31.72,
+      "timestamp": "2026-11-03 17:32:34"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 34.29,
+      "timestamp": "2026-11-03 17:32:34"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 32.06,
+      "timestamp": "2026-11-03 17:32:34"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 32.44,
+      "timestamp": "2026-11-03 17:32:34"
+    },
+    {
+      "category": "paper",
+      "confidence": 63.5,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 33.43,
+      "timestamp": "2026-11-03 17:32:34"
     }
   ],
-  "avg_latency_ms": 270.0
+  "avg_latency_ms": 277.13
 }

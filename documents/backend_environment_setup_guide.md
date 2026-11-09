@@ -249,6 +249,26 @@ info: Microsoft.Hosting.Lifetime[0]
   }
   ```
 
+### Bước 3.8: Khởi chạy Nhanh Tự động (One-Click All-in-One Dev Runner)
+Để tiết kiệm thời gian mở thủ công từng cửa sổ console, dự án cung cấp sẵn script chạy song song cả 3 tiến trình (.NET Web API, AI Service, và ngrok Tunnel):
+
+```cmd
+# Nhấp đúp chuột hoặc chạy từ Terminal:
+.\run_all_services.bat
+```
+Hoặc trên PowerShell:
+```powershell
+.\run_all_services.ps1
+```
+* **Tiến trình 1:** Khởi động AI Vision Service tại `http://localhost:8000` (FastAPI + YOLOv8).
+* **Tiến trình 2:** Khởi động Core Web API tại `http://localhost:5000` (ASP .NET Core).
+* **Tiến trình 3:** Mở ngrok Tunneling public cổng `http://localhost:5000` ra Internet (kèm Web Inspector tại `http://localhost:4040`).
+
+Khi cần dừng toàn bộ các dịch vụ và giải phóng cổng, chạy:
+```cmd
+.\stop_all_services.bat
+```
+
 ---
 
 ## 6. PHẦN 4: KHỞI CHẠY TRỌN GÓI ALL-IN-ONE BẰNG DOCKER COMPOSE

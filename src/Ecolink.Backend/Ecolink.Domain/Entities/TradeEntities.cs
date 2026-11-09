@@ -41,13 +41,58 @@ public class TradeOrder : BaseEntity
     public Guid PartnerId { get; set; }
     public CollectionPartner? Partner { get; set; }
 
+    /// <summary>
+    /// Định danh UserId của Cơ sở thu gom (RecyclerProfile.UserId) phục vụ kết nối trực tiếp U-05, U-08, R-05.
+    /// </summary>
+    public Guid? RecyclerUserId { get; set; }
+    public RecyclerProfile? RecyclerProfile { get; set; }
+
     public OrderStatus Status { get; set; } = OrderStatus.Pending;
     public DateTime ScheduledAt { get; set; }
     public decimal EstimatedWeightKg { get; set; }
     public string? Note { get; set; }
 
+    // Các thuộc tính phục vụ Thương lượng & Khung giờ thu gom (Module NEG: U-08 & R-05)
+    public string? CategoryCode { get; set; }
+    public decimal? InitialPricePerKg { get; set; }
+    public decimal? AgreedPricePerKg { get; set; }
+    public string? ProposedTimeSlot { get; set; }
+    public string? ConfirmedTimeSlot { get; set; }
+    public string? PickupAddress { get; set; }
+    public DateTime? AcceptedAt { get; set; }
+
     // Navigation
     public TransactionReceipt? Receipt { get; set; }
+    public ICollection<ChatMessage> Messages { get; set; } = new List<ChatMessage>();
+}
+
+/// <summary>
+/// Tin nhắn thương lượng thời gian thực trong phạm vi một yêu cầu bàn giao (U-08 &amp; R-05).
+/// Toàn bộ lịch sử tin nhắn được lưu trữ bất biến (Immutable Audit Trail) phục vụ đối soát tranh chấp (BR-NEG-01, BR-DSP-06).
+/// </summary>
+public class ChatMessage : BaseEntity
+{
+    public Guid TradeOrderId { get; set; }
+    public TradeOrder? TradeOrder { get; set; }
+
+    public Guid SenderUserId { get; set; }
+    public User? SenderUser { get; set; }
+
+    public string SenderRole { get; set; } = string.Empty;
+    public ChatMessageType MessageType { get; set; } = ChatMessageType.Text;
+    public string? MessageContent { get; set; }
+    public string? AttachmentUrl { get; set; }
+
+    // Các thuộc tính dành riêng cho bản tin Đề xuất thương lượng (MessageType == ChatMessageType.Proposal)
+    public ProposalStatus? ProposalStatus { get; set; }
+    public decimal? ProposedPricePerKg { get; set; }
+    public decimal? ProposedWeightKg { get; set; }
+    public string? ProposedTimeSlot { get; set; }
+    public string? ProposalDataJson { get; set; }
+
+    public bool IsRead { get; set; } = false;
+    public DateTime SentAt { get; set; } = DateTime.UtcNow;
+    public DateTime? ReadAt { get; set; }
 }
 
 public class TransactionReceipt : BaseEntity

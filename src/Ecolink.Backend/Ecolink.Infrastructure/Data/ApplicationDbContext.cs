@@ -20,6 +20,10 @@ public class ApplicationDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<RecyclerProfile> RecyclerProfiles => Set<RecyclerProfile>();
     public DbSet<StaffProfile> StaffProfiles => Set<StaffProfile>();
+    public DbSet<RecyclerPrice> RecyclerPrices => Set<RecyclerPrice>();
+    public DbSet<HandoverRequest> HandoverRequests => Set<HandoverRequest>();
+    public DbSet<HandoverRequestItem> HandoverRequestItems => Set<HandoverRequestItem>();
+    public DbSet<HandoverReceipt> HandoverReceipts => Set<HandoverReceipt>();
     public DbSet<StaffPermissionAssignment> StaffPermissionAssignments => Set<StaffPermissionAssignment>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -31,9 +35,16 @@ public class ApplicationDbContext : DbContext
     public DbSet<CollectionPartner> CollectionPartners => Set<CollectionPartner>();
     public DbSet<AcceptedMaterial> AcceptedMaterials => Set<AcceptedMaterial>();
     public DbSet<TradeOrder> TradeOrders => Set<TradeOrder>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<TransactionReceipt> TransactionReceipts => Set<TransactionReceipt>();
     public DbSet<WasteCategory> WasteCategories => Set<WasteCategory>();
     public DbSet<AIFeedbackLog> AIFeedbackLogs => Set<AIFeedbackLog>();
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    {
+        base.OnConfiguring(optionsBuilder);
+        optionsBuilder.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

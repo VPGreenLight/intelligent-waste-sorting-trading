@@ -11,6 +11,9 @@ public class StaffProfileConfiguration : IEntityTypeConfiguration<StaffProfile>
         builder.ToTable("staff_profiles");
         builder.HasKey(s => s.UserId).HasName("pk_staff_profiles");
 
+        // Bỏ cột Id thừa kế từ BaseEntity vì khóa chính là UserId (Shared PK 1-1 với users)
+        builder.Ignore(s => s.Id);
+
         builder.Property(s => s.UserId).HasColumnName("user_id");
         builder.Property(s => s.StaffCode).HasColumnName("staff_code").HasMaxLength(30).IsRequired();
         builder.Property(s => s.Department).HasColumnName("department").HasMaxLength(100);

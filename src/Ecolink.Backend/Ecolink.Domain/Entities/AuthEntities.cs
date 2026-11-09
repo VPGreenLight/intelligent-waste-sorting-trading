@@ -19,7 +19,7 @@ public class RecyclerProfile : BaseAuditableEntity
 
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
-    public Point Location { get; set; } = null!; // NetTopologySuite Point (SRID 4326)
+    public Point? Location { get; set; } // NetTopologySuite Point (SRID 4326)
 
     public string OperatingHours { get; set; } = "08:00 - 18:00";
     public string ContactPhone { get; set; } = string.Empty;
@@ -30,6 +30,15 @@ public class RecyclerProfile : BaseAuditableEntity
     public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Pending;
     public RecyclerActiveStatus ActiveStatus { get; set; } = RecyclerActiveStatus.Offline;
     public string? RejectionReason { get; set; }
+
+    /// <summary>Ghi chú bận tạm thời hiển thị cho người dân (tối đa 100 ký tự, SCR-RCY-02).</summary>
+    public string? BusyReason { get; set; }
+
+    /// <summary>Lịch hoạt động cố định theo tuần, lưu dạng JSON (xem ScheduleDayDto).</summary>
+    public string? WeeklyScheduleJson { get; set; }
+
+    /// <summary>Bảng giá thu mua phế liệu của cơ sở (R-01).</summary>
+    public ICollection<RecyclerPrice> Prices { get; set; } = new List<RecyclerPrice>();
 }
 
 /// <summary>

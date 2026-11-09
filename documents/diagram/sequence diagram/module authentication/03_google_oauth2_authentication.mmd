@@ -1,0 +1,49 @@
+sequenceDiagram
+    autonumber
+    actor User as Nguoi dung
+    participant UI as React Web App (Google Identity SDK)
+    participant Google as Google OAuth 2.0 Server
+    participant Ctrl as AuthController
+    participant Svc as AuthService
+    participant Token as JwtTokenService
+    participant DB as PostgreSQL (ApplicationDbContext)
+
+    User->>+UI: 1. Bam nut 'Dang nhap bang Google'
+    UI->>+Google: 2. Yeu cau xac thuc tai khoan Google
+    Google-->>-UI: 3. Cap Google ID Token (JWT ky boi Google RSA)
+    
+    UI->>+Ctrl: 4. POST /api/v1/auth/google { idToken }
+    Ctrl->>+Svc: 5. AuthenticateGoogleAsync(idToken, ct)
+    Svc->>+Google: 6. GoogleJsonWebSignature.ValidateAsync(idToken, ClientId)
+    
+    alt ID Token khong hop le hoac het han (BR-AUTH-07)
+        Google-->>Svc: 7a. Throw InvalidJwtException
+        Svc-->>Ctrl: 8a. Throw BusinessRuleException ("BR-AUTH-07", "MSG-AUTH-01")
+        Ctrl-->>UI: 9a. 400 Bad Request: Token Google khong hop le
+        UI-->>User: 10a. Hien thi thong bao loi xac thuc Google
+    else ID Token hop le
+        Google-->>-Svc: 7b. Return Payload { Email, Name, Picture, EmailVerified }
+        Svc->>+DB: 8b. SELECT * FROM users WHERE LOWER(email) = @email
+        
+        alt Nguoi dung lan dau dang nhap Google (Chua co trong DB - BR-AUTH-02)
+            DB-->>Svc: 9c. Return null
+            Note over Svc: Tu dong tao User moi (Role = Citizen, IsGoogleAuth = true)<br/>Khoi tao UserEcoProfile (TreeLevel = 1, Points = 0)
+            Svc->>DB: 10c. INSERT INTO users & INSERT INTO UserEcoProfiles
+            DB-->>Svc: 11c. 2 rows affected
+        else Email da ton tai trong he thong
+            DB-->>-Svc: 9d. Return existing User
+            Note over Svc: Cap nhat IsGoogleAuth = true & AvatarUrl (neu chua co)
+            Svc->>+DB: 10d. UPDATE users SET is_google_auth = true, avatar_url = @pic
+            DB-->>-Svc: 11d. 1 row affected
+        end
+        
+        Svc->>+Token: 12. GenerateAccessToken(user) & GenerateRefreshToken()
+        Token-->>-Svc: 13. Return AccessToken + RefreshToken
+        Svc->>+DB: 14. INSERT INTO refresh_tokens
+        DB-->>-Svc: 15. 1 row affected
+        Svc-->>-Ctrl: 16. Return AuthResponseDto (MSG-AUTH-09)
+        Note over Ctrl: SetRefreshTokenCookie(HttpOnly, SameSite=Strict)
+        Ctrl-->>-UI: 17. 200 OK: ApiResponse<AuthResponseDto> (MSG-AUTH-09)
+        UI-->>-User: 18. Dang nhap thanh cong vao he thong EcoLink
+    end
+

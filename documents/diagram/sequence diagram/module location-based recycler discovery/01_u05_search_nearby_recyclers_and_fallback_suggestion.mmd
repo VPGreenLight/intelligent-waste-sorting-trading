@@ -1,0 +1,40 @@
+sequenceDiagram
+    autonumber
+    actor Citizen as Citizen (User)
+    participant Ctrl as RecyclersDiscoveryController
+    participant Val as NearbyRecyclerFilterValidator
+    participant Svc as GeoMatchingService
+    participant DB as ApplicationDbContext (PostgreSQL)
+    participant Rule as WasteRuleEngineService
+
+    Note over Citizen,Rule: UC U-05: TIM KIEM CO SO THU GOM PHE LIEU TRONG BAN KINH GPS (BR-MTH-01, BR-MTH-04, BR-MTH-05, BR-MTH-06, BR-MTH-07)
+
+    Citizen->>Ctrl: GET /api/v1/recyclers/nearby?lat=10.7769&lng=106.7009&category=plastic&radiusKm=10&sortBy=distance
+    Ctrl->>Val: ValidateAsync(filter, ct)
+
+    alt Thieu quyen GPS (lat = 0 hoac lng = 0), toa do vuot bien [-90..90]/[-180..180], radiusKm ngoai [0.5..50] hoac category khong hop le
+        Val-->>Ctrl: IsValid = false (Errors)
+        Ctrl-->>Citizen: 400 Bad Request (ApiResponse.Fail: MSG-MTH-02 - Can quyen truy cap vi tri...)
+    else Tham so truy van hop le
+        Val-->>Ctrl: IsValid = true
+        Ctrl->>Svc: SearchNearbyRecyclersAsync(filter, ct)
+        Svc->>Svc: FindNearestPartnersAsync(lat, lng, category, radiusKm, ct)
+
+        Svc->>DB: SELECT RecyclerProfiles + User + Prices(Active) + WasteCategory<br/>WHERE VerificationStatus = Verified (BR-MTH-01)<br/>AND ActiveStatus = Online AND User.Status = Active (BR-MTH-06)<br/>AND Prices.Any(Status = Active AND Code = category) (BR-MTH-03, BR-MTH-07)
+        DB-->>Svc: Danh sach RecyclerProfile thoa dieu kien nghiep vu
+
+        Svc->>Svc: Tinh khoang cach Haversine DistanceKm <= radiusKm<br/>(Toa do Citizen chi xu ly trong RAM, khong luu DB - BR-MTH-05)
+        Svc->>Svc: Loc theo Keyword (neu co) & Sap xep theo DistanceKm ASC (BR-MTH-04) hoac PriceDesc
+
+        alt Tim thay >= 1 co so thu gom trong ban kinh (TotalFound > 0)
+            Svc-->>Ctrl: NearbyRecyclerSearchResponseDto (TotalFound > 0, Items, FallbackSuggestion = null)
+            Ctrl-->>Citizen: 200 OK (ApiResponse.Ok: MSG-GEN-01 - Tim thay N co so thu mua trong ban kinh R km)
+        else Khong tim thay co so nao trong ban kinh (TotalFound == 0)
+            Svc->>Rule: GetSortingGuideAsync(category ?? "plastic", ct)
+            Rule-->>Svc: WasteSortingGuideDto (Mau thung rac cong cong & cac buoc xu ly sach)
+            Svc->>Svc: Khoi tao DiscoveryFallbackSuggestionDto (SuggestedExpandedRadiusKm = min(50, radiusKm * 2.5), PublicBinSortingGuide)
+            Svc-->>Ctrl: NearbyRecyclerSearchResponseDto (TotalFound = 0, Items = [], FallbackSuggestion)
+            Ctrl-->>Citizen: 200 OK (ApiResponse.Ok: MSG-MTH-01 - Khong tim thay co so thu mua rac gan ban)
+        end
+    end
+

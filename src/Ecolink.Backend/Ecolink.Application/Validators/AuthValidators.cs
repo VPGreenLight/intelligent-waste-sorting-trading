@@ -28,9 +28,9 @@ public class RegisterUserRequestDtoValidator : AbstractValidator<RegisterUserReq
             .MaximumLength(100).WithMessage("Họ và tên tối đa 100 ký tự.");
 
         RuleFor(x => x.PhoneNumber)
-            .Matches(@"^(0|\+84)[0-9]{9}$")
+            .Matches(@"^(0|\+84)[0-9]{9,10}$")
             .When(x => !string.IsNullOrEmpty(x.PhoneNumber))
-            .WithMessage("Số điện thoại không hợp lệ (định dạng 10 chữ số).");
+            .WithMessage("Số điện thoại không hợp lệ (định dạng Việt Nam 10-11 chữ số).");
     }
 }
 
@@ -133,6 +133,46 @@ public class ResetPasswordRequestDtoValidator : AbstractValidator<ResetPasswordR
         RuleFor(x => x.NewPassword)
             .NotEmpty().WithMessage("Mật khẩu mới không được để trống.")
             .MinimumLength(6).WithMessage("Mật khẩu tối thiểu 6 ký tự.");
+
+        RuleFor(x => x.ConfirmPassword)
+            .Equal(x => x.NewPassword)
+            .When(x => !string.IsNullOrEmpty(x.ConfirmPassword))
+            .WithMessage("Mật khẩu xác nhận không khớp với mật khẩu mới.");
+    }
+}
+
+/// <summary>
+/// Validator cho DTO cập nhật hồ sơ cá nhân (SU-01)
+/// </summary>
+public class UpdateUserProfileRequestDtoValidator : AbstractValidator<UpdateUserProfileRequestDto>
+{
+    public UpdateUserProfileRequestDtoValidator()
+    {
+        RuleFor(x => x.FullName)
+            .NotEmpty().WithMessage("Tên hiển thị không được để trống.")
+            .Length(2, 100).WithMessage("Tên hiển thị phải từ 2 đến 100 ký tự.");
+
+        RuleFor(x => x.PhoneNumber)
+            .Matches(@"^(0|\+84)[0-9]{9,10}$")
+            .When(x => !string.IsNullOrEmpty(x.PhoneNumber))
+            .WithMessage("Số điện thoại chưa đúng định dạng Việt Nam.");
+    }
+}
+
+/// <summary>
+/// Validator cho DTO đổi mật khẩu khi đang đăng nhập (SU-02)
+/// </summary>
+public class ChangePasswordRequestDtoValidator : AbstractValidator<ChangePasswordRequestDto>
+{
+    public ChangePasswordRequestDtoValidator()
+    {
+        RuleFor(x => x.CurrentPassword)
+            .NotEmpty().WithMessage("Vui lòng nhập mật khẩu hiện tại.");
+
+        RuleFor(x => x.NewPassword)
+            .NotEmpty().WithMessage("Vui lòng nhập mật khẩu mới.")
+            .MinimumLength(6).WithMessage("Mật khẩu mới tối thiểu 6 ký tự.")
+            .NotEqual(x => x.CurrentPassword).WithMessage("Mật khẩu mới phải khác mật khẩu hiện tại.");
 
         RuleFor(x => x.ConfirmPassword)
             .Equal(x => x.NewPassword)

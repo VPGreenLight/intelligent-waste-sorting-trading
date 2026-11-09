@@ -1,0 +1,35 @@
+sequenceDiagram
+    autonumber
+    actor Guest as Khach vang lai (Guest)
+    participant UI as React Web App
+    participant Ctrl as AuthController
+    participant Svc as AuthService
+    participant Token as JwtTokenService
+    participant DB as PostgreSQL (ApplicationDbContext)
+
+    Guest->>+UI: 1. Nhap thong tin dang ky (Username, Email, Password, FullName, PhoneNumber)
+    UI->>+Ctrl: 2. POST /api/v1/auth/register (RegisterUserRequestDto)
+    Ctrl->>+Svc: 3. RegisterUserAsync(request, ct)
+    Svc->>+DB: 4. SELECT EXISTS (SELECT 1 FROM users WHERE LOWER(email) = @email OR LOWER(username) = @user)
+    
+    alt Trung Email hoac Username (Vi pham BR-AUTH-01)
+        DB-->>Svc: 5a. Return true (Da ton tai)
+        Svc-->>Ctrl: 6a. Throw BusinessRuleException ("BR-AUTH-01", "MSG-AUTH-01")
+        Ctrl-->>UI: 7a. 400 Bad Request: ApiResponse (MSG-AUTH-01)
+        UI-->>Guest: 8a. Hien thi canh bao Email hoac Username da duoc su dung
+    else Thong tin hop le & duy nhat
+        DB-->>-Svc: 5b. Return false
+        Note over Svc: 1. Bam mat khau BCrypt.HashPassword()<br/>2. Khoi tao User (Role = Citizen, Status = Active - BR-AUTH-02)<br/>3. Khoi tao UserEcoProfile (TreeLevel = 1, CurrentGreenPoints = 0)
+        Svc->>+DB: 6b. INSERT INTO users & INSERT INTO UserEcoProfiles
+        DB-->>-Svc: 7b. 2 rows affected
+        
+        Svc->>+Token: 8b. GenerateAccessToken(user) & GenerateRefreshToken()
+        Token-->>-Svc: 9b. Return JWT AccessToken (30m) + (rawRefreshToken, refreshTokenHash)
+        
+        Svc->>+DB: 10b. INSERT INTO refresh_tokens (user_id, token_hash, expires_at)
+        DB-->>-Svc: 11b. 1 row affected
+        
+        Svc-->>-Ctrl: 12b. Return AuthResponseDto (User.Role = "Citizen")
+        Ctrl-->>-UI: 13b. 201 Created: ApiResponse<AuthResponseDto> (MSG-AUTH-08)
+        UI-->>-Guest: 14b. Chuyen tu Guest -> User (Citizen) & Dieu huong vao Trang chu
+    end

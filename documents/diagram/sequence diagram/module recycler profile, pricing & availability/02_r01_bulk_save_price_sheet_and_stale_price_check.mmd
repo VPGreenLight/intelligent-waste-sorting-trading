@@ -1,0 +1,45 @@
+sequenceDiagram
+    autonumber
+    actor Recycler as Co so thu gom (Role: Recycler)
+    participant UI as React Web App (SCR-RCY-01)
+    participant Ctrl as RecyclerController
+    participant Svc as RecyclerManagementService
+    participant DB as PostgreSQL (ApplicationDbContext)
+
+    Note over Recycler,UI: Luong tra cuu Bang gia (kiem tra gia cu > 30 ngay JOB-04) & Luu hang loat (Save price sheet)
+
+    %% Buoc 1: Xem bang gia hien tai va kiem tra co IsOutdated (> 30 ngay)
+    Recycler->>+UI: 1. Mo bang gia niem yet & nhap tu khoa loc (keyword, isActive)
+    UI->>+Ctrl: 2. GET /api/v1/recycler/prices?keyword=plastic&isActive=true
+    Ctrl->>+Svc: 3. GetPricesAsync(recyclerId, keyword, isActive, ct)
+    Svc->>+DB: 4. SELECT * FROM recycler_price_list JOIN waste_categories WHERE recycler_id = @recyclerId
+    DB-->>-Svc: 5. Return List<RecyclerPrice>
+    Note over Svc: Tinh toan co canh bao gia cu (JOB-04):<br/>IsOutdated = (DateTime.UtcNow - UpdatedAt).TotalDays > 30
+    Svc-->>-Ctrl: 6. Return IReadOnlyList<RecyclerPriceDto>
+    Ctrl-->>-UI: 7. 200 OK: ApiResponse<IReadOnlyList<RecyclerPriceDto>>
+    UI-->>-Recycler: 8. Hien thi bang gia (Gach nhan canh bao neu IsOutdated == true)
+
+    %% Buoc 2: Luu hang loat toan bo bang gia (PUT /api/v1/recycler/prices)
+    Recycler->>+UI: 9. Dieu chinh gia nhieu loai phe lieu cung luc & Bam nut 'Save price sheet'
+    UI->>+Ctrl: 10. PUT /api/v1/recycler/prices (BulkSavePricesRequest { Items })
+    Ctrl->>+Svc: 11. BulkSavePricesAsync(recyclerId, request, ct)
+    Svc->>+DB: 12. SELECT profile, waste_categories & existing recycler_price_list rows
+    DB-->>-Svc: 13. Return profile, categories dict & existing rows
+
+    alt Danh sach chua WasteCategoryId trung lap hoac chon 'trash' hoac Gia khong nguyen duong (BR-MTH-03)
+        Svc-->>Ctrl: 14a. Throw BusinessRuleException ("BR-MTH-03", "MSG-GEN-01")
+        Ctrl-->>UI: 15a. 400 Bad Request: Danh sach loai phe lieu hoac don gia khong hop le
+        UI-->>Recycler: 16a. Hien thi thong bao loi tren man hinh
+    else Co so dang Online nhung tat ca cac dong sau khi luu deu Inactive (BR-MTH-03 / EF-03)
+        Svc-->>Ctrl: 14b. Throw BusinessRuleException ("BR-MTH-03", "MSG-MTH-06")
+        Ctrl-->>UI: 15b. 400 Bad Request: Vui long giu it nhat 1 loai phe lieu nhan mua khi dang hoat dong
+        UI-->>Recycler: 16b. Yeu cau bat it nhat 1 loai phe lieu
+    else Du lieu hop le (Upsert & Lam moi moc UpdatedAt cho JOB-04)
+        Note over Svc: 1. Neu chua co dong gia va IsActive == true -> INSERT<br/>2. Neu da co -> UPDATE PricePerKg, MinQuantityKg, Status<br/>3. Gan UpdatedAt = DateTime.UtcNow (Xoa co IsOutdated > 30 ngay)
+        Svc->>+DB: 14c. INSERT / UPDATE recycler_price_list (SaveChangesAsync)
+        DB-->>-Svc: 15c. Commit Transaction
+        Svc-->>-Ctrl: 16c. Return IReadOnlyList<RecyclerPriceDto> (IsOutdated = false)
+        Ctrl-->>-UI: 17c. 200 OK: ApiResponse<IReadOnlyList<RecyclerPriceDto>> ("Da luu va cong bo bang gia.")
+        UI-->>-Recycler: 18c. Thong bao cong bo bang gia moi thanh cong
+    end
+

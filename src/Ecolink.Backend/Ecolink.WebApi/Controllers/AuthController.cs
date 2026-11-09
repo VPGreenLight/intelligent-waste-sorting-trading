@@ -1,13 +1,15 @@
+using System.Security.Claims;
 using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ecolink.WebApi.Controllers;
 
 /// <summary>
 /// Phân hệ Xác thực & Quản trị tài khoản (Module 1 - AUTH)
-/// Hiện thực hóa 7 endpoints cốt lõi theo clean_architecture_and_coding_guidelines.md
+/// Hiện thực hóa các endpoints cốt lõi theo clean_architecture_and_coding_guidelines.md
 /// và module1_auth_controller_implementation_plan.md
 /// </summary>
 [ApiController]
@@ -16,21 +18,22 @@ namespace Ecolink.WebApi.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly IAuthService _authService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<AuthController> _logger;
 
-    public AuthController(IAuthService authService, ILogger<AuthController> logger)
+    public AuthController(
+        IAuthService authService,
+        IConfiguration configuration,
+        ILogger<AuthController> logger)
     {
         _authService = authService;
+        _configuration = configuration;
         _logger = logger;
     }
 
     /// <summary>
     /// 1. Đăng ký tài khoản Người dân (User/Citizen)
     /// </summary>
-    /// <param name="request">Thông tin đăng ký (Username, Password, Email, FullName, PhoneNumber)</param>
-    /// <param name="ct">CancellationToken</param>
-    /// <response code="201">Tạo tài khoản thành công (MSG-AUTH-08)</response>
-    /// <response code="400">Trùng email/username hoặc vi phạm định dạng (MSG-AUTH-01 / MSG-GEN-01)</response>
     [HttpPost("register")]
     [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -38,19 +41,20 @@ public class AuthController : ControllerBase
         [FromBody] RegisterUserRequestDto request, CancellationToken ct)
     {
         var result = await _authService.RegisterUserAsync(request, ct);
+        if (!string.IsNullOrEmpty(result.RefreshToken))
+        {
+            SetRefreshTokenCookie(result.RefreshToken);
+        }
+
         return StatusCode(StatusCodes.Status201Created, ApiResponse<AuthResponseDto>.Ok(
-            result, 
-            message: "Tạo tài khoản thành công! Vui lòng kiểm tra email để xác minh tài khoản.", 
+            result,
+            message: "Tạo tài khoản thành công! Chào mừng bạn gia nhập cộng đồng EcoLink.",
             messageCode: "MSG-AUTH-08"));
     }
 
     /// <summary>
     /// 2. Đăng ký tài khoản Đối tác thu mua (Recycler) kèm tọa độ GPS PostGIS
     /// </summary>
-    /// <param name="request">Thông tin cơ sở, người đại diện, tọa độ Latitude/Longitude</param>
-    /// <param name="ct">CancellationToken</param>
-    /// <response code="201">Tạo hồ sơ cơ sở thành công, chờ thẩm định (MSG-MTH-03)</response>
-    /// <response code="400">Dữ liệu đầu vào hoặc tọa độ không hợp lệ (MSG-MTH-01 / MSG-GEN-01)</response>
     [HttpPost("register-recycler")]
     [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -58,19 +62,20 @@ public class AuthController : ControllerBase
         [FromBody] RegisterRecyclerRequestDto request, CancellationToken ct)
     {
         var result = await _authService.RegisterRecyclerAsync(request, ct);
+        if (!string.IsNullOrEmpty(result.RefreshToken))
+        {
+            SetRefreshTokenCookie(result.RefreshToken);
+        }
+
         return StatusCode(StatusCodes.Status201Created, ApiResponse<AuthResponseDto>.Ok(
-            result, 
-            message: "Hồ sơ cơ sở của bạn đang được xem xét và sẽ xuất hiện sau khi duyệt.", 
+            result,
+            message: "Hồ sơ cơ sở của bạn đang được xem xét và sẽ xuất hiện sau khi duyệt.",
             messageCode: "MSG-MTH-03"));
     }
 
     /// <summary>
     /// 3. Đăng nhập hệ thống (Hỗ trợ Brute-force lockout sau 5 lần sai - BR-AUTH-04)
     /// </summary>
-    /// <param name="request">Thông tin đăng nhập (Username/Email và Password)</param>
-    /// <param name="ct">CancellationToken</param>
-    /// <response code="200">Đăng nhập thành công, trả về JWT & Refresh Token (MSG-GEN-01)</response>
-    /// <response code="400">Sai thông tin đăng nhập hoặc tài khoản bị khóa tạm thời (MSG-AUTH-01 / MSG-AUTH-03)</response>
     [HttpPost("login")]
     [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -85,18 +90,31 @@ public class AuthController : ControllerBase
         }
 
         return Ok(ApiResponse<AuthResponseDto>.Ok(
-            result, 
-            message: "Đăng nhập thành công.", 
+            result,
+            message: "Đăng nhập thành công.",
             messageCode: "MSG-GEN-01"));
     }
 
     /// <summary>
-    /// 4. Đăng nhập / Đăng ký tự động qua Google OAuth 2.0 ID Token (BR-AUTH-02, BR-AUTH-07)
+    /// Cấu hình công khai Google OAuth 2.0 Client ID cho trình duyệt mở cửa sổ Google Account Chooser
     /// </summary>
-    /// <param name="request">Google ID Token do Google Identity Services cấp</param>
-    /// <param name="ct">CancellationToken</param>
-    /// <response code="200">Xác thực Google thành công (MSG-AUTH-09)</response>
-    /// <response code="400">Google Token không hợp lệ hoặc đã hết hạn (MSG-AUTH-01)</response>
+    [HttpGet("google-config")]
+    public IActionResult GetGooglePublicConfig()
+    {
+        var clientId = _configuration["GoogleAuth:ClientId"] ?? string.Empty;
+        var enabled = !string.IsNullOrWhiteSpace(clientId)
+                      && !clientId.Contains("mock", StringComparison.OrdinalIgnoreCase)
+                      && !clientId.StartsWith('{');
+
+        return Ok(ApiResponse<object>.Ok(
+            new { enabled, clientId = enabled ? clientId : string.Empty },
+            message: "Cấu hình công khai Google OAuth 2.0.",
+            messageCode: "MSG-GEN-01"));
+    }
+
+    /// <summary>
+    /// 4. Đăng nhập / Đăng ký tự động qua Google OAuth 2.0 ID Token hoặc Access Token (BR-AUTH-02, BR-AUTH-07)
+    /// </summary>
     [HttpPost("google")]
     [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -111,18 +129,14 @@ public class AuthController : ControllerBase
         }
 
         return Ok(ApiResponse<AuthResponseDto>.Ok(
-            result, 
-            message: "Xác thực qua Google thành công.", 
+            result,
+            message: "Xác thực qua Google thành công.",
             messageCode: "MSG-AUTH-09"));
     }
 
     /// <summary>
     /// 5. Làm mới Access Token (Token Rotation & Replay Attack Detection - BR-AUTH-05)
     /// </summary>
-    /// <param name="request">Refresh Token qua Body hoặc lấy tự động từ HttpOnly Cookie</param>
-    /// <param name="ct">CancellationToken</param>
-    /// <response code="200">Cấp cặp Token mới thành công (MSG-GEN-01)</response>
-    /// <response code="401">Phiên làm việc hết hạn hoặc phát hiện tấn công tái sử dụng (MSG-NTF-01)</response>
     [HttpPost("refresh-token")]
     [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
@@ -133,7 +147,7 @@ public class AuthController : ControllerBase
         if (string.IsNullOrWhiteSpace(token))
         {
             return Unauthorized(ApiResponse<AuthResponseDto>.Fail(
-                message: "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.", 
+                message: "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.",
                 messageCode: "MSG-NTF-01"));
         }
 
@@ -145,49 +159,113 @@ public class AuthController : ControllerBase
         }
 
         return Ok(ApiResponse<AuthResponseDto>.Ok(
-            result, 
-            message: "Làm mới phiên đăng nhập thành công.", 
+            result,
+            message: "Làm mới phiên đăng nhập thành công.",
             messageCode: "MSG-GEN-01"));
     }
 
     /// <summary>
     /// 6. Yêu cầu đặt lại mật khẩu (Gửi email token qua Google SMTP - BR-AUTH-06, BR-AUTH-09)
     /// </summary>
-    /// <param name="request">Email nhận liên kết đặt lại mật khẩu</param>
-    /// <param name="ct">CancellationToken</param>
-    /// <response code="200">Phản hồi đồng nhất chống rò rỉ thông tin người dùng (MSG-AUTH-05)</response>
     [HttpPost("forgot-password")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
-    public async Task<ActionResult<ApiResponse<object>>> ForgotPassword(
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<object?>>> ForgotPassword(
         [FromBody] ForgotPasswordRequestDto request, CancellationToken ct)
     {
         await _authService.ForgotPasswordAsync(request.Email, GetClientIp(), ct);
 
         // BR-AUTH-06: Phản hồi đồng nhất dù email có tồn tại trong hệ thống hay không để chống enumeration
-        return Ok(ApiResponse<object>.Ok(
-            null, 
-            message: "Nếu email này tồn tại trong hệ thống, liên kết đặt lại mật khẩu đã được gửi.", 
+        return Ok(ApiResponse<object?>.Ok(
+            null,
+            message: "Nếu email này tồn tại trong hệ thống, liên kết đặt lại mật khẩu đã được gửi.",
             messageCode: "MSG-AUTH-05"));
     }
 
     /// <summary>
     /// 7. Đặt lại mật khẩu mới bằng Token bảo mật (BR-AUTH-06)
     /// </summary>
-    /// <param name="request">Email, Token xác nhận và Mật khẩu mới</param>
-    /// <param name="ct">CancellationToken</param>
-    /// <response code="200">Đặt lại mật khẩu thành công (MSG-GEN-01)</response>
-    /// <response code="400">Token không hợp lệ hoặc đã hết hạn (MSG-AUTH-04)</response>
     [HttpPost("reset-password")]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<ApiResponse<object>>> ResetPassword(
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<object?>>> ResetPassword(
         [FromBody] ResetPasswordRequestDto request, CancellationToken ct)
     {
         await _authService.ResetPasswordAsync(request, ct);
 
-        return Ok(ApiResponse<object>.Ok(
-            null, 
-            message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.", 
+        return Ok(ApiResponse<object?>.Ok(
+            null,
+            message: "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.",
+            messageCode: "MSG-GEN-01"));
+    }
+
+    /// <summary>
+    /// 8. Cập nhật hồ sơ cá nhân của người dùng đang đăng nhập (SU-01)
+    /// </summary>
+    [Authorize]
+    [HttpPut("profile")]
+    [ProducesResponseType(typeof(ApiResponse<UserInfoDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
+    public async Task<ActionResult<ApiResponse<UserInfoDto>>> UpdateProfile(
+        [FromBody] UpdateUserProfileRequestDto request, CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(ApiResponse<UserInfoDto>.Fail(
+                message: "Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.",
+                messageCode: "MSG-NTF-01"));
+        }
+
+        var updated = await _authService.UpdateProfileAsync(userId.Value, request, ct);
+        return Ok(ApiResponse<UserInfoDto>.Ok(
+            updated,
+            message: "Đã lưu hồ sơ cá nhân thành công.",
+            messageCode: "MSG-GEN-01"));
+    }
+
+    /// <summary>
+    /// 9. Đổi mật khẩu tài khoản đang đăng nhập và thu hồi các phiên thiết bị khác (SU-02)
+    /// </summary>
+    [Authorize]
+    [HttpPost("change-password")]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<object?>>> ChangePassword(
+        [FromBody] ChangePasswordRequestDto request, CancellationToken ct)
+    {
+        var userId = GetCurrentUserId();
+        if (!userId.HasValue)
+        {
+            return Unauthorized(ApiResponse<object?>.Fail(
+                message: "Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.",
+                messageCode: "MSG-NTF-01"));
+        }
+
+        var currentRefreshToken = Request.Cookies["refreshToken"];
+        await _authService.ChangePasswordAsync(userId.Value, request, currentRefreshToken, ct);
+
+        return Ok(ApiResponse<object?>.Ok(
+            null,
+            message: "Đã đổi mật khẩu thành công. Các phiên đăng nhập trên thiết bị khác đã được đăng xuất.",
+            messageCode: "MSG-GEN-01"));
+    }
+
+    /// <summary>
+    /// 10. Đăng xuất khỏi phiên làm việc hiện tại và xóa HttpOnly Refresh Token Cookie
+    /// </summary>
+    [HttpPost("logout")]
+    [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status200OK)]
+    public async Task<ActionResult<ApiResponse<object?>>> Logout(
+        [FromBody] LogoutRequestDto? request, CancellationToken ct)
+    {
+        var refreshToken = request?.RefreshToken ?? Request.Cookies["refreshToken"];
+        var userId = GetCurrentUserId();
+        await _authService.LogoutAsync(refreshToken, userId, ct);
+
+        Response.Cookies.Delete("refreshToken");
+        return Ok(ApiResponse<object?>.Ok(
+            null,
+            message: "Đã đăng xuất thành công.",
             messageCode: "MSG-GEN-01"));
     }
 
@@ -237,7 +315,7 @@ public class AuthController : ControllerBase
         var users = await _authService.GetAllDemoUsersAsync(ct);
         return Ok(new
         {
-            message = "Tài khoản mẫu để test nhanh: citizen / citizen123 | collector / collector123 | admin / admin123",
+            message = "Tài khoản mẫu để test nhanh: citizen / citizen123 | collector / collector123 | staff / staff123 | admin / admin123",
             accounts = users
         });
     }
@@ -269,20 +347,26 @@ public class AuthController : ControllerBase
     }
 
     // ================= HELPER METHODS =================
+    private Guid? GetCurrentUserId()
+    {
+        var rawId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");
+        return Guid.TryParse(rawId, out var id) ? id : null;
+    }
+
     private void SetRefreshTokenCookie(string refreshToken)
     {
         var cookieOptions = new CookieOptions
         {
             HttpOnly = true,
             Secure = Request.IsHttps,
-            SameSite = SameSiteMode.Strict,
+            SameSite = SameSiteMode.Lax,
             Expires = DateTime.UtcNow.AddDays(7)
         };
         Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
     }
 
     private string GetClientIp() =>
-        Request.Headers.ContainsKey("X-Forwarded-For") 
-            ? Request.Headers["X-Forwarded-For"].ToString().Split(',')[0].Trim() 
+        Request.Headers.ContainsKey("X-Forwarded-For")
+            ? Request.Headers["X-Forwarded-For"].ToString().Split(',')[0].Trim()
             : HttpContext.Connection.RemoteIpAddress?.ToString() ?? "127.0.0.1";
 }

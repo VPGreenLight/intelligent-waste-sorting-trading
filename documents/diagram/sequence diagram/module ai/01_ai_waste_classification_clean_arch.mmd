@@ -1,0 +1,55 @@
+sequenceDiagram
+    autonumber
+    actor User as Nguoi dan (Citizen)
+    participant UI as React Web App (Camera API)
+    participant Ctrl as WasteScanController
+    participant Svc as WasteScanService
+    participant AIClient as AiVisionHttpClient
+    participant FastAPI as Python FastAPI (AI Container)
+    participant R2 as CloudflareR2Service
+    participant Rule as WasteRuleEngineService
+    participant Repo as AIScanHistoryRepository
+    participant DB as PostgreSQL (ApplicationDbContext)
+
+    User->>+UI: 1. Chup anh rac hoac tai anh tu may
+    UI->>+Ctrl: 2. POST /api/v1/waste-scans/classify (multipart: file, model)
+    Ctrl->>+Svc: 3. ClassifyWasteAsync(userId, stream, fileName, model, ct)
+    
+    Svc->>+AIClient: 4. ClassifyWasteImageAsync(stream, fileName, model, ct)
+    AIClient->>+FastAPI: 5. HTTP POST /predict (bytes, model)
+    Note over FastAPI: 1. YOLOv8: Bounding Box & Crop rac<br/>2. CNN: Phan loai chat lieu chi tiet
+    
+    alt Xu ly thanh cong trong 15s
+        FastAPI-->>-AIClient: 6. 200 OK { top_prediction: "plastic", confidence: 0.89, is_ood: false }
+        AIClient-->>-Svc: 7. Return AiScanResultDto
+        
+        Svc->>+R2: 8. UploadImageAsync(stream, fileName, ct)
+        R2-->>-Svc: 9. Return imageUrl (https://pub-r2.ecolink.vn/...)
+        
+        Svc->>+Rule: 10. GetSortingGuideAsync(categoryCode="plastic", ct)
+        Rule-->>-Svc: 11. Return WasteSortingGuideDto (BinColor, Steps, Warning)
+        
+        alt Confidence >= 0.60 (Nhan dien an toan)
+            Svc->>+Repo: 12. AddAsync(AIScanHistory { status: Completed, score: 0.89 })
+            Repo->>+DB: 13. INSERT INTO ai_scan_histories ...
+            DB-->>-Repo: 14. 1 row affected (scan_id)
+            Repo-->>-Svc: 15. Complete Task
+            Svc-->>Ctrl: 16. Return WasteScanResponseDto (Ket qua tu tin)
+        else Confidence < 0.60 (Out-of-Distribution / Canh bao)
+            Svc->>+Repo: 12b. AddAsync(AIScanHistory { status: Low_Confidence, score: 0.45 })
+            Repo->>+DB: 13b. INSERT INTO ai_scan_histories ...
+            DB-->>-Repo: 14b. 1 row affected (scan_id)
+            Repo-->>-Svc: 15b. Complete Task
+            Svc-->>Ctrl: 16b. Return WasteScanResponseDto (Canh bao do tin cay thap)
+        end
+        Ctrl-->>-UI: 17. 200 OK: ApiResponse<WasteScanResponseDto> (MSG-CLS-01)
+        UI-->>-User: 18. Hien thi Dialog ket qua & huong dan lam sach (SCR-USR-02)
+    else Qua thoi gian 15s hoac AI Service loi (NFR-PER-01)
+        FastAPI-->>-AIClient: 504 Gateway Timeout / Service Unavailable
+        activate AIClient
+        AIClient-->>-Svc: Throw TimeoutException
+        deactivate AIClient
+        Svc-->>-Ctrl: Fallback: Chuyen sang flow chon thu cong
+        Ctrl-->>-UI: 503 Service Unavailable / 422: ApiResponse (MSG-CLS-03)
+        UI-->>-User: Bat giao dien chon danh muc rác bang tay
+    end

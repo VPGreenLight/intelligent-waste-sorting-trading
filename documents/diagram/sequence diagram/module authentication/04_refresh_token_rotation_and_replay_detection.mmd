@@ -1,0 +1,46 @@
+sequenceDiagram
+    autonumber
+    participant UI as React Web App (Axios Interceptor)
+    participant Ctrl as AuthController
+    participant Svc as AuthService
+    participant Token as JwtTokenService
+    participant DB as PostgreSQL (ApplicationDbContext)
+
+    Note over UI: AccessToken het han (401) -> Tu dong goi /refresh-token
+    UI->>+Ctrl: 1. POST /api/v1/auth/refresh-token (Body hoac HttpOnly Cookie)
+    Ctrl->>+Svc: 2. RefreshTokenAsync(refreshToken, clientIp, ct)
+    Svc->>+Token: 3. HashToken(refreshToken) (SHA-256)
+    Token-->>-Svc: 4. Return tokenHash
+    
+    Svc->>+DB: 5. SELECT * FROM refresh_tokens JOIN users WHERE token_hash = @hash
+    
+    alt Token khong ton tai trong DB
+        DB-->>Svc: 6a. Return null
+        Svc-->>Ctrl: 7a. Throw BusinessRuleException ("BR-AUTH-05", "MSG-NTF-01")
+        Ctrl-->>UI: 8a. 401 Unauthorized: Phien lam viec khong ton tai
+    else Tim thay ban ghi RefreshToken
+        DB-->>-Svc: 6b. Return existingToken
+        
+        alt Phat hien Replay Attack (existingToken.IsRevoked == true)
+            Note over Svc: Canh bao bao mat! Ke tan cong dang tai su dung Token cu da thu hoi
+            Svc->>+DB: 7b. UPDATE refresh_tokens SET is_revoked = true WHERE user_id = @uid
+            DB-->>-Svc: 8b. Thu hoi toan bo phien dang nhap cua User (BR-AUTH-05)
+            Svc-->>Ctrl: 9b. Throw BusinessRuleException ("BR-AUTH-05", "MSG-AUTH-10")
+            Ctrl-->>UI: 10b. 400/401: Phat hien bat thuong, buoc dang nhap lai
+        else Token da het han 7 ngay (existingToken.ExpiresAt <= UtcNow)
+            Svc->>+DB: 7c. UPDATE refresh_tokens SET is_revoked = true WHERE id = @id
+            DB-->>-Svc: 8c. 1 row affected
+            Svc-->>Ctrl: 9c. Throw BusinessRuleException ("BR-AUTH-05", "MSG-NTF-01")
+            Ctrl-->>UI: 10c. 401 Unauthorized: Phien lam viec da het han
+        else Token hop le -> Thuc hien Token Rotation
+            Svc->>+Token: 7d. GenerateRefreshToken() & GenerateAccessToken(user)
+            Token-->>-Svc: 8d. Return newAccessToken + (newRawToken, newTokenHash)
+            Note over Svc: Danh dau existingToken.IsRevoked = true<br/>existingToken.ReplacedByTokenHash = newTokenHash
+            Svc->>+DB: 9d. UPDATE old refresh_token & INSERT new refresh_token
+            DB-->>-Svc: 10d. 2 rows affected
+            Svc-->>-Ctrl: 11d. Return AuthResponseDto { AccessToken, RefreshToken }
+            Note over Ctrl: Cap nhat HttpOnly Cookie 'refreshToken' moi
+            Ctrl-->>-UI: 12d. 200 OK: ApiResponse<AuthResponseDto> (MSG-GEN-01)
+        end
+    end
+

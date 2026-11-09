@@ -25,7 +25,22 @@ public class GmailSmtpEmailService : IEmailService
     {
         var senderName = _configuration["MailSettings:SenderName"] ?? "EcoLink Support Team";
         var senderEmail = _configuration["MailSettings:SenderEmail"] ?? "no-reply@ecolink.vn";
-        var resetUrl = $"https://ecolink.vn/reset-password?token={Uri.EscapeDataString(resetToken)}&email={Uri.EscapeDataString(recipientEmail)}";
+        var envName = _configuration["ASPNETCORE_ENVIRONMENT"] ?? "Production";
+        var defaultBaseUrl = string.Equals(envName, "Development", StringComparison.OrdinalIgnoreCase)
+            ? "http://localhost:5173"
+            : "https://ecolink.vn";
+        var frontendBaseUrl = (_configuration["MailSettings:FrontendBaseUrl"] ?? defaultBaseUrl).TrimEnd('/');
+        var resetUrl = $"{frontendBaseUrl}/reset-password?token={Uri.EscapeDataString(resetToken)}&email={Uri.EscapeDataString(recipientEmail)}";
+
+        var password = _configuration["MailSettings:Password"] ?? _configuration["EmailSettings:SenderPassword"] ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(password) || password.Contains("mock") || password.Contains("xxxx"))
+        {
+            _logger.LogInformation(
+                "[Dev Password Reset] Ma xac nhan cho {Email}: {ResetToken} | Link: {ResetUrl}",
+                recipientEmail,
+                resetToken,
+                resetUrl);
+        }
 
         var htmlBody = $@"
             <div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>

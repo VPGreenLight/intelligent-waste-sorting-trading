@@ -1,0 +1,57 @@
+sequenceDiagram
+    autonumber
+    actor Recycler as Recycler (Collector)
+    participant Ctrl as RecyclerHandoverController
+    participant Job as HandoverExpirationJob (Worker)
+    participant Svc as HandoverRequestService
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Recycler,DB: UC R-04 & JOB-03: HUY LICH HEN THU GOM & TU DONG HET HAN YEU CAU CHO (BR-HND-02, BR-HND-06, JOB-03)
+
+    %% ==========================================
+    %% LUONG 1: RECYCLER HUY LICH HEN DA CHOT (R-04)
+    %% ==========================================
+    rect rgb(255, 240, 245)
+        Note over Recycler,DB: LUONG 1: RECYCLER HUY LICH HEN DA XAC NHAN (UC R-04)
+        Recycler->>Ctrl: POST /api/v1/recycler/handover-requests/{id}/cancel (Bearer Token)<br/>{ Reason: "Xe tai chuyen dung gap su co ky thuat" }
+        Ctrl->>Ctrl: Trich xuat RecyclerId tu JWT
+        Ctrl->>Svc: CancelByRecyclerAsync(recyclerId, requestId, reason, ct)
+
+        Svc->>DB: SELECT HandoverRequest WHERE Id = requestId AND RecyclerId = recyclerId
+        DB-->>Svc: entity
+
+        alt entity == null
+            Svc-->>Ctrl: Throw NotFoundException ("Khong tim thay yeu cau ban giao.")
+            Ctrl-->>Recycler: 404 Not Found
+        else entity.Status NOT IN (Accepted, Scheduled) (Chi huy khi da len lich)
+            Svc-->>Ctrl: Throw BusinessRuleException (BR-HND-02: Khong the huy yeu cau o trang thai nay)
+            Ctrl-->>Recycler: 400 Bad Request
+        end
+
+        Svc->>Svc: RequireReason: Kiem tra ly do khong rong, toi da 500 ky tu
+        Svc->>Svc: Kiem tra Huy muon (BR-HND-06):<br/>ConfirmedTimeSlot - UtcNow <= 4 gio?
+
+        Svc->>DB: UPDATE handover_requests<br/>SET status = 'Cancelled', cancel_reason = reason, cancelled_by = recyclerId, is_late_cancellation = late, updated_at = NOW()<br/>WHERE id = requestId
+        DB-->>Svc: Cap nhat thanh cong
+
+        Svc-->>Ctrl: HandoverRequestDto (Status = "Cancelled", CancelReason, IsLateCancellation)
+        Ctrl-->>Recycler: 200 OK (ApiResponse.Ok: Lich thu gom da duoc huy)
+    end
+
+    %% ==========================================
+    %% LUONG 2: BACKGROUND JOB QUET HET HAN (JOB-03)
+    %% ==========================================
+    rect rgb(245, 245, 255)
+        Note over Job,DB: LUONG 2: BACKGROUND JOB QUET YEU CAU CHO QUA 24H (JOB-03)
+        loop Dinh ky moi 15 phut (Timer Trigger)
+            Job->>Svc: ExpirePendingAsync(timeout = 24h, ct)
+            Svc->>Svc: cutoff = UtcNow - 24 hours
+            Svc->>DB: ExecuteUpdateAsync:<br/>UPDATE handover_requests<br/>SET status = 'Expired', updated_at = NOW()<br/>WHERE status = 'Pending' AND created_at < cutoff
+            DB-->>Svc: Tra ve so ban ghi bi het han (expiredCount)
+            alt expiredCount > 0
+                Svc->>Svc: LogInformation: "JOB-03: da chuyen {Count} yeu cau sang Expired."
+            end
+            Svc-->>Job: int expiredCount
+        end
+    end
+

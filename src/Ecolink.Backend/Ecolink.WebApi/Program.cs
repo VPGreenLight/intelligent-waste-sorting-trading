@@ -1,8 +1,11 @@
 using System.Text;
 using Ecolink.Application;
 using Ecolink.Application.Common;
+using Ecolink.Application.Interfaces;
 using Ecolink.Infrastructure;
+using Ecolink.WebApi.Hubs;
 using Ecolink.WebApi.Middlewares;
+using Ecolink.WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -34,11 +37,21 @@ builder.Services.AddControllers()
 // Thêm dịch vụ tầng Application (FluentValidation Validators)
 builder.Services.AddApplicationServices();
 
-// Thêm dịch vụ tầng Infrastructure (AI Client, Rule Engine, Geo Matching, Gamification, Auth)
+// Thêm dịch vụ tầng Infrastructure (AI Client, Rule Engine, Geo Matching, Gamification, Auth, Negotiation Chat)
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-// Cấu hình JWT Bearer Authentication & Authorization
-var jwtSecret = builder.Configuration["JwtSettings:SecretKey"] 
+// Đăng ký SignalR Real-Time Hub & Notifier cho Module In-App Real-Time Negotiation Chatbox (U-08 & R-05)
+builder.Services.AddSignalR();
+builder.Services.AddScoped<INegotiationChatNotifier, SignalRNegotiationChatNotifier>();
+
+// Lấy thông tin người dùng hiện tại (UserId/Role) từ JWT cho Controller và Audit Interceptor
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddHostedService<Ecolink.WebApi.Services.HandoverExpirationJob>(); // JOB-03
+builder.Services.AddHostedService<Ecolink.WebApi.Services.ReceiptAutoCompleteJob>(); // JOB-01
+
+// Cấu hình JWT Bearer Authentication & Authorization (Hỗ trợ cả REST Header và SignalR WebSocket access_token)
+var jwtSecret = builder.Configuration["JwtSettings:SecretKey"]
                 ?? "EcoLink_Super_Secure_Secret_Key_For_JWT_Signing_2026_XYZ987!";
 var jwtIssuer = builder.Configuration["JwtSettings:Issuer"] ?? "EcoLinkBackend";
 var jwtAudience = builder.Configuration["JwtSettings:Audience"] ?? "EcoLinkApp";
@@ -63,6 +76,21 @@ builder.Services.AddAuthentication(options =>
         ValidateLifetime = true,
         ClockSkew = TimeSpan.Zero
     };
+
+    // Cho phép SignalR WebSocket truyền JWT qua query parameter ?access_token=...
+    options.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            var accessToken = context.Request.Query["access_token"];
+            var path = context.HttpContext.Request.Path;
+            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/negotiation-chat"))
+            {
+                context.Token = accessToken;
+            }
+            return Task.CompletedTask;
+        }
+    };
 });
 builder.Services.AddAuthorization();
 
@@ -78,6 +106,7 @@ builder.Services.AddSwaggerGen(c =>
                       "- **Tài khoản Demo có sẵn:**\n" +
                       "  - Người dân: `citizen` / `citizen123`\n" +
                       "  - Cơ sở thu gom: `collector` / `collector123`\n" +
+                      "  - Nhân viên vận hành: `staff` / `staff123`\n" +
                       "  - Quản trị viên: `admin` / `admin123`\n" +
                       "- **Hướng dẫn xác thực:** Đăng nhập tại `POST /api/v1/auth/login`, copy trường `token`, bấm nút **Authorize** ở góc trên bên phải, nhập `Bearer <token>` rồi bấm Authorize."
     });
@@ -102,14 +131,15 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 
-// Cấu hình CORS
+// Cấu hình CORS (hỗ trợ cả Bearer Header lẫn HttpOnly RefreshToken Cookie qua Proxy/Tunnel)
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAll", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.SetIsOriginAllowed(_ => true)
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
@@ -142,5 +172,6 @@ app.MapGet("/health", () => Results.Ok(new
 }));
 
 app.MapControllers();
+app.MapHub<NegotiationChatHub>("/hubs/negotiation-chat");
 
 app.Run();

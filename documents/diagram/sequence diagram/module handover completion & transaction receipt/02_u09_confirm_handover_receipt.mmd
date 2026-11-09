@@ -1,0 +1,90 @@
+sequenceDiagram
+    autonumber
+    actor Citizen as Citizen (User)
+    participant Ctrl as HandoverReceiptController
+    participant Svc as HandoverReceiptService
+    participant DB as ApplicationDbContext (PostgreSQL)
+    participant Game as IGamificationService
+
+    Note over Citizen,Game: UC U-09: XAC NHAN BIEN NHAN BAN GIAO SO VA HOAN TAT GIAO DICH (BR-HND-02, BR-HND-07, BR-GAM-01)
+
+    %% ==========================================
+    %% LUONG 1: XEM NOI DUNG BIEN NHAN DA PHAT HANH
+    %% ==========================================
+    rect rgb(240, 248, 255)
+        Note over Citizen,Game: LUONG 1: XEM BIEN NHAN CHO XAC NHAN (KIEM TRA ANH CAN, KHOI LUONG VA TIEN MAT)
+        Citizen->>Ctrl: GET /api/v1/handover-requests/{requestId}/receipt (Bearer Token)
+        Ctrl->>Ctrl: Trich xuat UserId tu JWT (Role: User/Citizen)
+        Ctrl->>Svc: GetForUserAsync(userId, requestId, ct)
+
+        Svc->>DB: SELECT 1 FROM handover_receipts WHERE RequestId = requestId AND UserId = userId
+        alt Khong tim thay bien nhan hoac khong thuoc ve User
+            DB-->>Svc: null / false
+            Svc-->>Ctrl: Throw NotFoundException ("Khong tim thay bien nhan.")
+            Ctrl-->>Citizen: 404 Not Found
+        else Tim thay bien nhan
+            DB-->>Svc: exists = true
+        end
+
+        Svc->>DB: LoadDtoAsync: SELECT HandoverReceipt + HandoverRequest + Items + WasteCategory + RecyclerProfile
+        DB-->>Svc: Chi tiet bien nhan, dong phe lieu, anh can dong ho va anh hoa don giay
+        Svc->>Svc: Tinh toan do lech % khoi luong va kiem tra HasDeviationWarning (|DeviationPercent| > 20%)
+        Svc-->>Ctrl: ReceiptDto (ReceiptCode, TotalWeightKg, TotalAmountCash, ScaleProofPhotoUrls, HasDeviationWarning, PointsPreview)
+        Ctrl-->>Citizen: 200 OK (ApiResponse.Ok: Du lieu bien nhan + Canh bao MSG-HND-04 neu lech > 20%)
+    end
+
+    %% ==========================================
+    %% LUONG 2: XAC NHAN BIEN NHAN & HOAN TAT GIAO DICH
+    %% ==========================================
+    rect rgb(240, 255, 240)
+        Note over Citizen,Game: LUONG 2: XAC NHAN DA NHAN DU TIEN MAT NGOAI THUC TE VA DONG GIAO DICH
+        Citizen->>Ctrl: POST /api/v1/handover-requests/{requestId}/receipt/confirm (Bearer Token)
+        Ctrl->>Svc: ConfirmAsync(userId, requestId, ct)
+
+        Svc->>DB: SELECT Status FROM handover_requests WHERE Id = requestId AND UserId = userId (BR-HND-03)
+        DB-->>Svc: request
+
+        alt request == null
+            Svc-->>Ctrl: Throw NotFoundException ("Khong tim thay yeu cau ban giao.")
+            Ctrl-->>Citizen: 404 Not Found
+        else request.Status == Completed (BR-HND-07 Immutability)
+            Svc-->>Ctrl: Throw BusinessRuleException ("BR-HND-04", "MSG-GEN-01" - Giao dich da hoan tat va khong the thay doi)
+            Ctrl-->>Citizen: 400 Bad Request
+        else request.Status != AwaitingConfirmation (BR-HND-02 State Machine)
+            Svc-->>Ctrl: Throw BusinessRuleException ("BR-HND-04", "MSG-GEN-01" - Yeu cau chua co bien nhan cho xac nhan)
+            Ctrl-->>Citizen: 400 Bad Request
+        end
+
+        Svc->>Svc: CompleteAsync(requestId, ct): Tinh diem xanh CalculatePoints (1 kg = 10 diem - BR-GAM-01)
+
+        rect rgb(255, 250, 240)
+            Note over Svc,DB: ATOMIC TRANSACTION: CAP NHAT TRANG THAI DONG THOI TRANH RACE CONDITION
+            Svc->>DB: BEGIN TRANSACTION
+            Svc->>DB: UPDATE handover_requests<br/>SET status = 'Completed', updated_at = NOW()<br/>WHERE id = requestId AND status = 'AwaitingConfirmation'
+            DB-->>Svc: changed rows (1 hoac 0)
+
+            alt changed == 0 (Da bi JOB-01 hoac thao tac dong thoi hoan tat truoc)
+                Svc->>DB: ROLLBACK TRANSACTION
+                Svc-->>Ctrl: Throw BusinessRuleException ("BR-HND-04", "MSG-GEN-01" - Bien nhan da duoc xu ly truoc do)
+                Ctrl-->>Citizen: 400 Bad Request
+            else changed == 1
+                Svc->>DB: UPDATE handover_receipts<br/>SET confirmed_by_user_at = NOW(), points_awarded = points<br/>WHERE request_id = requestId
+                Svc->>DB: COMMIT TRANSACTION
+                DB-->>Svc: Transaction Committed
+            end
+        end
+
+        %% Tich hop Gamification
+        rect rgb(245, 245, 255)
+            Note over Svc,Game: TICH HOP GAMIFICATION (BR-GAM-01): CONG DIEM CHO CA 2 BEN
+            Svc->)Game: AwardPointsForRecyclingAsync(receipt.UserId, receipt.TotalWeightKg, ct)
+            Svc->)Game: AwardPointsForRecyclingAsync(receipt.RecyclerId, receipt.TotalWeightKg, ct)
+            Note over Svc,Game: Try-catch bao ve giao dich neu Gamification service loi
+        end
+
+        Svc->>DB: LoadDtoAsync: Doc lai bien nhan da hoan tat
+        DB-->>Svc: ReceiptDto (Status = Completed, ConfirmedByUserAt = NOW, PointsAwarded)
+        Svc-->>Ctrl: ReceiptDto
+        Ctrl-->>Citizen: 200 OK (ApiResponse.Ok: "Giao dich #{ReceiptCode} da duoc danh dau hoan tat.", code = "MSG-HND-03")
+    end
+

@@ -1,0 +1,162 @@
+classDiagram
+    direction TB
+
+    %% Presentation Layer
+    class HandoverRequestController {
+        - IHandoverRequestService _service
+        - ICurrentUserService _currentUser
+        + Create(CreateHandoverRequest, ct) Task~IActionResult~
+        + GetMine(status, page, pageSize, ct) Task~IActionResult~
+        + GetById(id, ct) Task~IActionResult~
+        + Update(id, UpdateHandoverRequest, ct) Task~IActionResult~
+        + Cancel(id, HandoverReasonRequest, ct) Task~IActionResult~
+    }
+    class RecyclerHandoverController {
+        - IHandoverRequestService _service
+        - ICurrentUserService _currentUser
+        + GetIncoming(status, page, pageSize, ct) Task~IActionResult~
+        + GetById(id, ct) Task~IActionResult~
+        + Accept(id, AcceptHandoverRequest, ct) Task~IActionResult~
+        + Reject(id, HandoverReasonRequest, ct) Task~IActionResult~
+        + Cancel(id, HandoverReasonRequest, ct) Task~IActionResult~
+    }
+    class HandoverExpirationJob {
+        - IServiceProvider _serviceProvider
+        - ILogger~HandoverExpirationJob~ _logger
+        # ExecuteAsync(ct) Task
+    }
+
+    %% Application Layer (Inbound & Outbound Ports)
+    class IHandoverRequestService {
+        <<interface>>
+        + CreateAsync(userId, request, ct) Task~HandoverRequestDto~
+        + UpdateAsync(userId, requestId, request, ct) Task~HandoverRequestDto~
+        + CancelByUserAsync(userId, requestId, reason, ct) Task~HandoverRequestDto~
+        + GetUserRequestsAsync(userId, status, page, pageSize, ct) Task~HandoverPagedResult~
+        + GetUserRequestAsync(userId, requestId, ct) Task~HandoverRequestDto~
+        + GetRecyclerRequestsAsync(recyclerId, status, page, pageSize, ct) Task~HandoverPagedResult~
+        + GetRecyclerRequestAsync(recyclerId, requestId, ct) Task~HandoverRequestDto~
+        + AcceptAsync(recyclerId, requestId, note, ct) Task~HandoverRequestDto~
+        + RejectAsync(recyclerId, requestId, reason, ct) Task~HandoverRequestDto~
+        + CancelByRecyclerAsync(recyclerId, requestId, reason, ct) Task~HandoverRequestDto~
+        + ExpirePendingAsync(timeout, ct) Task~int~
+    }
+    class ICurrentUserService {
+        <<interface>>
+        + Guid? UserId
+        + string? Username
+        + string? Role
+        + bool IsAuthenticated
+    }
+
+    %% Infrastructure Layer (Adapters & Implementations)
+    class HandoverRequestService {
+        - ApplicationDbContext _db
+        - ILogger~HandoverRequestService~ _logger
+        + CreateAsync(userId, request, ct) Task~HandoverRequestDto~
+        + UpdateAsync(userId, requestId, request, ct) Task~HandoverRequestDto~
+        + CancelByUserAsync(userId, requestId, reason, ct) Task~HandoverRequestDto~
+        + GetUserRequestsAsync(userId, status, page, pageSize, ct) Task~HandoverPagedResult~
+        + GetUserRequestAsync(userId, requestId, ct) Task~HandoverRequestDto~
+        + GetRecyclerRequestsAsync(recyclerId, status, page, pageSize, ct) Task~HandoverPagedResult~
+        + GetRecyclerRequestAsync(recyclerId, requestId, ct) Task~HandoverRequestDto~
+        + AcceptAsync(recyclerId, requestId, note, ct) Task~HandoverRequestDto~
+        + RejectAsync(recyclerId, requestId, reason, ct) Task~HandoverRequestDto~
+        + CancelByRecyclerAsync(recyclerId, requestId, reason, ct) Task~HandoverRequestDto~
+        + ExpirePendingAsync(timeout, ct) Task~int~
+    }
+    class ApplicationDbContext {
+        + DbSet~HandoverRequest~ HandoverRequests
+        + DbSet~HandoverRequestItem~ HandoverRequestItems
+        + DbSet~User~ Users
+        + DbSet~RecyclerProfile~ RecyclerProfiles
+        + DbSet~RecyclerPrice~ RecyclerPrices
+        + DbSet~WasteCategory~ WasteCategories
+    }
+
+    %% Domain Layer (Core Entities & Enums)
+    class HandoverRequest {
+        + Guid Id
+        + string RequestCode
+        + Guid UserId
+        + Guid RecyclerId
+        + string PickupAddress
+        + decimal? Latitude
+        + decimal? Longitude
+        + string? WastePhotoUrl
+        + DateTime ProposedTimeSlot
+        + DateTime? ConfirmedTimeSlot
+        + DateTime? ActualHandoverAt
+        + HandoverStatus Status
+        + string? UserNote
+        + string? RecyclerNote
+        + string? CancelReason
+        + Guid? CancelledBy
+        + bool IsLateCancellation
+        + DateTime CreatedAt
+        + DateTime UpdatedAt
+        + ICollection~HandoverRequestItem~ Items
+    }
+    class HandoverRequestItem {
+        + Guid Id
+        + Guid RequestId
+        + Guid WasteCategoryId
+        + decimal EstimatedWeightKg
+        + decimal? ActualWeightKg
+        + decimal? AgreedPricePerKg
+        + string? ItemNote
+        + DateTime CreatedAt
+    }
+    class HandoverStatus {
+        <<enumeration>>
+        Pending
+        Negotiating
+        Accepted
+        Scheduled
+        Completed
+        Rejected
+        Cancelled
+        Expired
+        Disputed
+    }
+    class User {
+        + Guid Id
+        + string Username
+        + string FullName
+        + string PhoneNumber
+        + string Role
+    }
+    class RecyclerProfile {
+        + Guid UserId
+        + string FacilityName
+        + string BusinessAddress
+        + string ContactPhone
+        + VerificationStatus VerificationStatus
+        + RecyclerActiveStatus ActiveStatus
+        + string? WeeklyScheduleJson
+    }
+    class WasteCategory {
+        + Guid Id
+        + string Code
+        + string Name
+        + string StandardBinColor
+    }
+
+    %% Core Clean Architecture Connectors
+    HandoverRequestController --> IHandoverRequestService
+    HandoverRequestController --> ICurrentUserService
+    RecyclerHandoverController --> IHandoverRequestService
+    RecyclerHandoverController --> ICurrentUserService
+    HandoverExpirationJob --> IHandoverRequestService
+    HandoverRequestService ..|> IHandoverRequestService
+
+    %% Outbound Persistence Dependency
+    HandoverRequestService --> ApplicationDbContext
+
+    %% Domain Model Relationships
+    User "1" <-- "0..*" HandoverRequest : creates (user_id)
+    RecyclerProfile "1" <-- "0..*" HandoverRequest : receives (recycler_id)
+    HandoverRequest "1" *-- "1..*" HandoverRequestItem : contains items (request_id)
+    WasteCategory "1" <-- "0..*" HandoverRequestItem : categorizes (category_id)
+    HandoverRequest --> HandoverStatus : status state
+

@@ -1,0 +1,65 @@
+sequenceDiagram
+    autonumber
+    actor Citizen as Citizen (User Side - U-08)
+    actor Recycler as Recycler (Recycler Side - R-05)
+    participant Hub as NegotiationChatHub (/hubs/negotiation-chat)
+    participant Ctrl as NegotiationChatController
+    participant MsgVal as SendChatMessageRequestValidator
+    participant Svc as NegotiationChatService
+    participant R2 as CloudflareR2StorageService
+    participant Notifier as SignalRNegotiationChatNotifier
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Citizen, Recycler: 1. Kết nối WebSocket và tham gia phòng chat cô lập theo đơn bàn giao (BR-NEG-01)
+    Citizen->>Hub: Invoke JoinOrderChatRoom(orderId) [JWT Bearer / access_token]
+    Hub->>Svc: VerifyChatRoomAccessAsync(orderId, citizenUserId, "Citizen")
+    Svc->>DB: Query TradeOrders (Include User, Partner, RecyclerProfile)
+    DB-->>Svc: TradeOrder (UserId == citizenUserId)
+    Svc-->>Hub: true (Access Granted)
+    Hub-->>Citizen: Event JoinedOrderChatRoom(orderId) [Added to Group "order:{orderId}"]
+
+    Recycler->>Hub: Invoke JoinOrderChatRoom(orderId)
+    Hub->>Svc: VerifyChatRoomAccessAsync(orderId, recyclerUserId, "Recycler")
+    Svc-->>Hub: true (Access Granted)
+    Hub-->>Recycler: Event JoinedOrderChatRoom(orderId) [Added to Group "order:{orderId}"]
+
+    Note over Citizen, DB: 2. Tải ảnh thực tế phế liệu lên Cloudflare R2 và gửi tin nhắn TEXT / IMAGE (Giữ mở cả sau khi Accepted - BR-NEG-02)
+    opt Đính kèm ảnh chụp thực tế phế liệu (MessageType = Image)
+        Citizen->>Ctrl: POST /api/v1/trade/orders/{orderId}/messages/attachments (IFormFile <= 5MB)
+        Ctrl->>Svc: VerifyChatRoomAccessAsync(orderId, citizenUserId, "Citizen")
+        Svc-->>Ctrl: true
+        Ctrl->>R2: UploadRecyclerDocumentAsync(stream, fileName, contentType, "chat-attachments/{orderId}")
+        R2-->>Ctrl: Public R2 URL (attachmentUrl)
+        Ctrl-->>Citizen: 200 OK ApiResponse<ChatAttachmentUploadResponseDto> (MSG-NEG-UPLOAD-OK)
+    end
+
+    Citizen->>Ctrl: POST /api/v1/trade/orders/{orderId}/messages (SendChatMessageRequest)
+    Ctrl->>MsgVal: ValidateAsync(request)
+    alt Dữ liệu tin nhắn rỗng hoặc vượt 2000 ký tự
+        MsgVal-->>Ctrl: IsValid = false
+        Ctrl-->>Citizen: 400 Bad Request (MSG-GEN-01)
+    else Dữ liệu tin nhắn hợp lệ
+        MsgVal-->>Ctrl: IsValid = true
+        Ctrl->>Svc: SendMessageAsync(orderId, citizenUserId, "Citizen", request)
+        Svc->>DB: Load TradeOrder & kiểm tra IsGeneralChatAllowed(Status) (BR-NEG-01, BR-NEG-02)
+        Svc->>DB: Insert ChatMessage (Type = Text/Image, IsRead = false, SentAt = UtcNow)
+        Svc->>DB: SaveChangesAsync()
+        Svc-->>Ctrl: (ChatMessageDto, RecipientNotification = MSG-NEG-02)
+        Ctrl->>Notifier: NotifyMessageReceivedAsync(orderId, messageDto, MSG-NEG-02)
+        Notifier->>Hub: Broadcast "ReceiveChatMessage" to Group "order:{orderId}"
+        Hub-->>Recycler: Real-time Event ReceiveChatMessage + Notification MSG-NEG-02
+        Hub-->>Citizen: Real-time Event ReceiveChatMessage
+        Ctrl-->>Citizen: 201 Created ApiResponse<ChatMessageDto> (MSG-NEG-02)
+    end
+
+    Note over Recycler, DB: 3. Đối phương mở phòng chat -> Đánh dấu đã đọc tin nhắn (Mark as Read)
+    Recycler->>Ctrl: PUT /api/v1/trade/orders/{orderId}/messages/read
+    Ctrl->>Svc: MarkMessagesAsReadAsync(orderId, recyclerUserId, "Recycler")
+    Svc->>DB: Update ChatMessages (SenderUserId != recyclerUserId && !IsRead) -> IsRead = true, ReadAt = UtcNow
+    Svc->>DB: SaveChangesAsync()
+    Svc-->>Ctrl: markedCount
+    Ctrl->>Notifier: NotifyMessagesReadAsync(orderId, recyclerUserId, markedCount, readAtUtc)
+    Notifier->>Hub: Broadcast "MessagesMarkedAsRead" to Group "order:{orderId}"
+    Hub-->>Citizen: Real-time Event MessagesMarkedAsRead(orderId, recyclerUserId, readAtUtc)
+    Ctrl-->>Recycler: 200 OK ApiResponse (MSG-NEG-READ-OK)
+

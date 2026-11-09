@@ -33,8 +33,8 @@ public class WasteScanController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<WasteScanResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ClassifyImage(
-        IFormFile? file, 
-        [FromForm] string? model = "yolov8_detect", 
+        IFormFile? file,
+        [FromForm] string? model = "yolov8_detect",
         CancellationToken ct = default)
     {
         if (file == null || file.Length == 0)
@@ -55,7 +55,7 @@ public class WasteScanController : ControllerBase
             return BadRequest(ApiResponse<object>.Fail($"Mô hình '{model}' không tồn tại. Danh sách mô hình hỗ trợ: {string.Join(", ", validModels)}.", "MSG-CLS-06"));
         }
 
-        _logger.LogInformation("Tiếp nhận yêu cầu phân loại ảnh: {FileName} ({Length} bytes) với mô hình: {Model}", 
+        _logger.LogInformation("Tiếp nhận yêu cầu phân loại ảnh: {FileName} ({Length} bytes) với mô hình: {Model}",
             file.FileName, file.Length, model);
 
         using var stream = file.OpenReadStream();
@@ -63,10 +63,26 @@ public class WasteScanController : ControllerBase
 
         if (!aiResult.Success)
         {
-            var errorMsg = !string.IsNullOrWhiteSpace(aiResult.ErrorMessage) 
-                ? aiResult.ErrorMessage 
+            var errorMsg = !string.IsNullOrWhiteSpace(aiResult.ErrorMessage)
+                ? aiResult.ErrorMessage
                 : "Không thể phân tích hình ảnh từ AI Vision Service.";
             return BadRequest(ApiResponse<object>.Fail(errorMsg, "MSG-CLS-03"));
+        }
+
+        // Gắn hướng dẫn phân loại (Rule Engine) cho từng vật thể đóng khung để FE chọn xem tức thì
+        var guideCache = new Dictionary<string, WasteSortingGuideDto?>(StringComparer.OrdinalIgnoreCase);
+        if (aiResult.DetectedObjects is { Count: > 0 })
+        {
+            foreach (var obj in aiResult.DetectedObjects)
+            {
+                if (string.IsNullOrWhiteSpace(obj.Label)) continue;
+                if (!guideCache.TryGetValue(obj.Label, out var objGuide))
+                {
+                    objGuide = await _ruleEngine.GetSortingGuideAsync(obj.Label, ct);
+                    guideCache[obj.Label] = objGuide;
+                }
+                obj.SortingGuide = objGuide;
+            }
         }
 
         var response = new WasteScanResponseDto
@@ -81,12 +97,17 @@ public class WasteScanController : ControllerBase
             return Ok(ApiResponse<WasteScanResponseDto>.Ok(response, response.Message, "MSG-CLS-02"));
         }
 
-        // Mapping với cơ sở dữ liệu quy tắc tĩnh (Rule Engine)
+        // Mapping với cơ sở dữ liệu quy tắc tĩnh (Rule Engine) cho vật thể chính (#1)
         var categoryCode = aiResult.TopPrediction.Label;
-        var ruleGuide = await _ruleEngine.GetSortingGuideAsync(categoryCode, ct);
+        if (!guideCache.TryGetValue(categoryCode, out var ruleGuide))
+        {
+            ruleGuide = await _ruleEngine.GetSortingGuideAsync(categoryCode, ct);
+        }
 
         response.SortingGuide = ruleGuide;
-        response.Message = $"Nhận diện thành công loại rác: {aiResult.TopPrediction.DisplayName} với độ tin cậy {Math.Round(aiResult.TopPrediction.Confidence * 100, 1)}% (Mô hình: {model}).";
+        response.Message = aiResult.DetectedCount > 1
+            ? $"Phát hiện {aiResult.DetectedCount} vật thể — Ưu tiên #1: {aiResult.TopPrediction.DisplayName} ({Math.Round(aiResult.TopPrediction.Confidence * 100, 1)}%, Mô hình: {model})."
+            : $"Nhận diện thành công loại rác: {aiResult.TopPrediction.DisplayName} với độ tin cậy {Math.Round(aiResult.TopPrediction.Confidence * 100, 1)}% (Mô hình: {model}).";
 
         return Ok(ApiResponse<WasteScanResponseDto>.Ok(response, response.Message, "MSG-CLS-01"));
     }
@@ -126,15 +147,22 @@ public class WasteScanController : ControllerBase
     /// Báo cáo AI nhận diện sai để quản trị viên kiểm chứng và retrain (UC4, UC17)
     /// </summary>
     [HttpPost("feedback")]
-    public IActionResult SubmitFeedback([FromBody] SubmitFeedbackDto feedback)
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SubmitFeedback([FromBody] SubmitFeedbackDto feedback, CancellationToken ct = default)
     {
+        if (string.IsNullOrWhiteSpace(feedback.UserReportedLabel))
+        {
+            return BadRequest(ApiResponse<object>.Fail("Vui lòng chọn nhãn loại rác đúng.", "MSG-GEN-01"));
+        }
+
         _logger.LogInformation("Tiếp nhận phản hồi báo sai: Dự đoán [{Pred}] -> Người dùng chọn [{UserLabel}]",
             feedback.PredictedLabel, feedback.UserReportedLabel);
 
-        return Ok(new
-        {
-            success = true,
-            message = "Cảm ơn bạn đã phản hồi! Dữ liệu đã được chuyển tới Admin để kiểm chứng và cải thiện mô hình AI."
-        });
+        var syncedToAi = await _aiClient.SubmitFeedbackAsync(feedback, ct);
+
+        return Ok(ApiResponse<object>.Ok(
+            new { syncedToAi },
+            message: "Cảm ơn bạn đã phản hồi! Dữ liệu đã được chuyển tới Nhân viên vận hành để kiểm chứng và cải thiện mô hình AI.",
+            messageCode: "MSG-CLS-06"));
     }
 }

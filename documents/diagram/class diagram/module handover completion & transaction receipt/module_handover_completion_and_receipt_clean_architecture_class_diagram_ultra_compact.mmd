@@ -1,0 +1,147 @@
+classDiagram
+    direction TB
+
+    %% Presentation Layer
+    class RecyclerReceiptController {
+        - IHandoverReceiptService _service
+        - ICurrentUserService _currentUser
+        + Preview(requestId, CreateReceiptRequest, ct) Task~IActionResult~
+        + Create(requestId, CreateReceiptRequest, ct) Task~IActionResult~
+        + Get(requestId, ct) Task~IActionResult~
+        + GetHistory(from, to, page, pageSize, ct) Task~IActionResult~
+    }
+    class HandoverReceiptController {
+        - IHandoverReceiptService _service
+        - ICurrentUserService _currentUser
+        + Get(requestId, ct) Task~IActionResult~
+        + Confirm(requestId, ct) Task~IActionResult~
+        + GetHistory(from, to, page, pageSize, ct) Task~IActionResult~
+    }
+    class ReceiptAutoCompleteJob {
+        - IServiceScopeFactory _scopes
+        - ILogger~ReceiptAutoCompleteJob~ _logger
+        # ExecuteAsync(ct) Task
+    }
+
+    %% Application Layer (Inbound & Outbound Ports)
+    class IHandoverReceiptService {
+        <<interface>>
+        + PreviewAsync(recyclerId, requestId, request, ct) Task~ReceiptDto~
+        + CreateAsync(recyclerId, requestId, request, ct) Task~ReceiptDto~
+        + GetForRecyclerAsync(recyclerId, requestId, ct) Task~ReceiptDto~
+        + GetRecyclerHistoryAsync(recyclerId, from, to, page, pageSize, ct) Task~TransactionHistoryDto~
+        + GetForUserAsync(userId, requestId, ct) Task~ReceiptDto~
+        + ConfirmAsync(userId, requestId, ct) Task~ReceiptDto~
+        + GetUserHistoryAsync(userId, from, to, page, pageSize, ct) Task~TransactionHistoryDto~
+        + AutoCompleteExpiredAsync(timeout, ct) Task~int~
+    }
+    class ICurrentUserService {
+        <<interface>>
+        + Guid? UserId
+        + string? Role
+    }
+    class IGamificationService {
+        <<interface>>
+        + AwardPointsForRecyclingAsync(userId, weightKg, ct) Task
+    }
+
+    %% Infrastructure Layer (Adapters & Implementations)
+    class HandoverReceiptService {
+        - ApplicationDbContext _db
+        - IGamificationService _gamification
+        - ILogger~HandoverReceiptService~ _logger
+        + PreviewAsync(...)
+        + CreateAsync(...)
+        + ConfirmAsync(...)
+        + AutoCompleteExpiredAsync(...)
+        + HistoryAsync(...)
+    }
+    class ApplicationDbContext {
+        + DbSet~HandoverReceipt~ HandoverReceipts
+        + DbSet~HandoverRequest~ HandoverRequests
+        + DbSet~HandoverRequestItem~ HandoverRequestItems
+        + DbSet~User~ Users
+        + DbSet~RecyclerProfile~ RecyclerProfiles
+        + DbSet~RecyclerPrice~ RecyclerPrices
+        + DbSet~WasteCategory~ WasteCategories
+    }
+
+    %% Domain Layer (Core Entities & Enums)
+    class HandoverReceipt {
+        + Guid Id
+        + Guid RequestId
+        + string ReceiptCode
+        + Guid UserId
+        + Guid RecyclerId
+        + decimal TotalWeightKg
+        + decimal TotalAmountCash
+        + long PointsAwarded
+        + string ScaleProofPhotoUrl
+        + string? ReceiptImageUrl
+        + DateTime CreatedAt
+        + DateTime? ConfirmedByUserAt
+    }
+    class HandoverRequest {
+        + Guid Id
+        + string RequestCode
+        + Guid UserId
+        + Guid RecyclerId
+        + HandoverStatus Status
+        + DateTime? ActualHandoverAt
+        + ICollection~HandoverRequestItem~ Items
+        + HandoverReceipt? Receipt
+    }
+    class HandoverRequestItem {
+        + Guid Id
+        + Guid RequestId
+        + Guid WasteCategoryId
+        + decimal EstimatedWeightKg
+        + decimal? ActualWeightKg
+        + decimal? AgreedPricePerKg
+        + string? ItemNote
+    }
+    class HandoverStatus {
+        <<enumeration>>
+        Accepted
+        Scheduled
+        AwaitingConfirmation
+        Completed
+        Disputed
+    }
+    class User {
+        + Guid Id
+        + string FullName
+        + string PhoneNumber
+    }
+    class RecyclerProfile {
+        + Guid UserId
+        + string FacilityName
+        + string BusinessAddress
+        + string ContactPhone
+    }
+    class WasteCategory {
+        + Guid Id
+        + string Code
+        + string Name
+    }
+
+    %% Core Clean Architecture Connectors
+    RecyclerReceiptController --> IHandoverReceiptService
+    RecyclerReceiptController --> ICurrentUserService
+    HandoverReceiptController --> IHandoverReceiptService
+    HandoverReceiptController --> ICurrentUserService
+    ReceiptAutoCompleteJob --> IHandoverReceiptService
+    HandoverReceiptService ..|> IHandoverReceiptService
+    HandoverReceiptService --> IGamificationService
+
+    %% Outbound Persistence Dependency
+    HandoverReceiptService --> ApplicationDbContext
+
+    %% Domain Model Relationships
+    HandoverRequest "1" *-- "0..1" HandoverReceipt : has digital receipt (request_id)
+    User "1" <-- "0..*" HandoverReceipt : receives cash & points (user_id)
+    RecyclerProfile "1" <-- "0..*" HandoverReceipt : issues receipt (recycler_id)
+    HandoverRequest "1" *-- "1..*" HandoverRequestItem : weighs items (request_id)
+    WasteCategory "1" <-- "0..*" HandoverRequestItem : categorizes (category_id)
+    HandoverRequest --> HandoverStatus : lifecycle state
+
