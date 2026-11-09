@@ -11,6 +11,7 @@ Tài liệu đặc tả API của hệ thống EcoLink được chia thành các
 
 | STT | File Tài liệu | Module / Phân hệ | Base Route | Mô tả chính |
 |:---:|:---|:---|:---|:---|
+| **STAT** | [`00_api_inventory_and_endpoint_statistics.md`](./00_api_inventory_and_endpoint_statistics.md) | **API Inventory & Statistical Dashboard** | `All Routes` | Bảng tổng hợp số lượng, thống kê phân loại & danh mục 100% (86 API endpoints) toàn bộ hệ thống. |
 | **00** | [`00_api_overview_and_response_contract.md`](./00_api_overview_and_response_contract.md) | **Overview & Response Contract** | `/api/v1/*` | Khung JSON `ApiResponse<T>`, phân trang `PagedResult<T>`, xác thực JWT, HTTP Status Codes và bảng tra cứu `MSG-*` / `BR-*`. |
 | **01** | [`01_module_authentication_api.md`](./01_module_authentication_api.md) | **Module 1: Authentication & Account (`AUTH`)** | `/api/v1/auth` | Đăng ký tài khoản `Citizen`, Đăng nhập (chống Brute-force), Google OAuth 2.0, Làm mới Token (chống Replay Attack), Quên & Đặt lại mật khẩu qua Gmail SMTP. |
 | **02** | [`02_module_recycler_onboarding_api.md`](./02_module_recycler_onboarding_api.md) | **Module 2: Recycler Onboarding & Verification (`MTH` / `U-17` & `S-04`)** | `/api/v1/recycler-applications` | Tải chứng từ/ảnh cơ sở lên Cloudflare R2, Người dân (`Citizen`) nộp đơn nâng cấp lên Cơ sở thu gom (`Recycler`) kèm tọa độ PostGIS, `Staff/Admin` thẩm định (Duyệt / Từ chối). |

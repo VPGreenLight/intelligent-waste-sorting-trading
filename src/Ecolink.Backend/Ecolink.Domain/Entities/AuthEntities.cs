@@ -19,7 +19,7 @@ public class RecyclerProfile : BaseAuditableEntity
 
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
-    public Point Location { get; set; } = null!; // NetTopologySuite Point (SRID 4326)
+    public Point? Location { get; set; } // NetTopologySuite Point (SRID 4326)
 
     public string OperatingHours { get; set; } = "08:00 - 18:00";
     public string ContactPhone { get; set; } = string.Empty;

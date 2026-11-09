@@ -139,6 +139,107 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("accepted_materials", (string)null);
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.ChatMessage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AttachmentUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("attachment_url");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<bool>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_read");
+
+                    b.Property<string>("MessageContent")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)")
+                        .HasColumnName("message_content");
+
+                    b.Property<string>("MessageType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("message_type");
+
+                    b.Property<string>("ProposalDataJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("proposal_data");
+
+                    b.Property<string>("ProposalStatus")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("proposal_status");
+
+                    b.Property<decimal?>("ProposedPricePerKg")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("proposed_price_per_kg");
+
+                    b.Property<string>("ProposedTimeSlot")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("proposed_time_slot");
+
+                    b.Property<decimal?>("ProposedWeightKg")
+                        .HasPrecision(12, 3)
+                        .HasColumnType("numeric(12,3)")
+                        .HasColumnName("proposed_weight_kg");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<string>("SenderRole")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("sender_role");
+
+                    b.Property<Guid>("SenderUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("sender_user_id");
+
+                    b.Property<DateTime>("SentAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("sent_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("TradeOrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("trade_order_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.HasKey("Id")
+                        .HasName("pk_chat_messages");
+
+                    b.HasIndex("SenderUserId");
+
+                    b.HasIndex("TradeOrderId", "ProposalStatus")
+                        .HasDatabaseName("ix_chat_messages_order_id_proposal_status");
+
+                    b.HasIndex("TradeOrderId", "SentAt")
+                        .HasDatabaseName("ix_chat_messages_order_id_sent_at");
+
+                    b.ToTable("chat_messages", (string)null);
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.CollectionPartner", b =>
                 {
                     b.Property<Guid>("Id")
@@ -960,6 +1061,25 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("id");
 
+                    b.Property<DateTime?>("AcceptedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("accepted_at");
+
+                    b.Property<decimal?>("AgreedPricePerKg")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("agreed_price_per_kg");
+
+                    b.Property<string>("CategoryCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("category_code");
+
+                    b.Property<string>("ConfirmedTimeSlot")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("confirmed_time_slot");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -971,6 +1091,11 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasColumnType("numeric(12,3)")
                         .HasColumnName("estimated_weight_kg");
 
+                    b.Property<decimal?>("InitialPricePerKg")
+                        .HasPrecision(12, 2)
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("initial_price_per_kg");
+
                     b.Property<string>("Note")
                         .HasColumnType("text")
                         .HasColumnName("note");
@@ -978,6 +1103,19 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Property<Guid>("PartnerId")
                         .HasColumnType("uuid")
                         .HasColumnName("partner_id");
+
+                    b.Property<string>("PickupAddress")
+                        .HasColumnType("text")
+                        .HasColumnName("pickup_address");
+
+                    b.Property<string>("ProposedTimeSlot")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("proposed_time_slot");
+
+                    b.Property<Guid?>("RecyclerUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recycler_user_id");
 
                     b.Property<DateTime>("ScheduledAt")
                         .HasColumnType("timestamp with time zone")
@@ -1002,6 +1140,9 @@ namespace Ecolink.Infrastructure.Data.Migrations
 
                     b.HasIndex("PartnerId")
                         .HasDatabaseName("idx_trade_orders_partner_id");
+
+                    b.HasIndex("RecyclerUserId")
+                        .HasDatabaseName("idx_trade_orders_recycler_user_id");
 
                     b.HasIndex("UserId")
                         .HasDatabaseName("idx_trade_orders_user_id");
@@ -1352,6 +1493,27 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("WasteCategory");
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.ChatMessage", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", "SenderUser")
+                        .WithMany()
+                        .HasForeignKey("SenderUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_chat_messages_users");
+
+                    b.HasOne("Ecolink.Domain.Entities.TradeOrder", "TradeOrder")
+                        .WithMany("Messages")
+                        .HasForeignKey("TradeOrderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_chat_messages_trade_orders");
+
+                    b.Navigation("SenderUser");
+
+                    b.Navigation("TradeOrder");
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.CollectionPartner", b =>
                 {
                     b.HasOne("Ecolink.Domain.Entities.User", "User")
@@ -1538,6 +1700,12 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasConstraintName("fk_trade_orders_collection_partners");
 
+                    b.HasOne("Ecolink.Domain.Entities.RecyclerProfile", "RecyclerProfile")
+                        .WithMany()
+                        .HasForeignKey("RecyclerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_trade_orders_recycler_profiles");
+
                     b.HasOne("Ecolink.Domain.Entities.User", "User")
                         .WithMany("TradeOrders")
                         .HasForeignKey("UserId")
@@ -1546,6 +1714,8 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasConstraintName("fk_trade_orders_users");
 
                     b.Navigation("Partner");
+
+                    b.Navigation("RecyclerProfile");
 
                     b.Navigation("User");
                 });
@@ -1598,6 +1768,8 @@ namespace Ecolink.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Ecolink.Domain.Entities.TradeOrder", b =>
                 {
+                    b.Navigation("Messages");
+
                     b.Navigation("Receipt");
                 });
 

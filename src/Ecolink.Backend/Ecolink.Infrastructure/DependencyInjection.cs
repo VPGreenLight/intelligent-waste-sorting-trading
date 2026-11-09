@@ -27,6 +27,7 @@ public static class DependencyInjection
                     npgsqlOptions.UseNetTopologySuite();
                     npgsqlOptions.MigrationsAssembly(typeof(Data.ApplicationDbContext).Assembly.FullName);
                 })
+                .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning))
                 .AddInterceptors(interceptor);
             });
         }

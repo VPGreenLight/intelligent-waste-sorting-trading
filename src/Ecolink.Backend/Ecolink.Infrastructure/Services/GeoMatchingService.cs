@@ -186,60 +186,70 @@ public class GeoMatchingService : IGeoMatchingService
 
         if (_db != null)
         {
-            await EnsureDemoCollectorPricesSeededAsync(cancellationToken);
-
-            // Cột geom trong recycler_profiles có kiểu geometry(Point, 4326) kèm GiST index (gix_recycler_profiles_geom).
-            // Quy đổi bán kính km sang ngưỡng độ (degrees) bao phủ an toàn theo vĩ độ hiện tại để PostgreSQL lọc trước
-            // bằng chỉ mục không gian ST_DWithin(geom, searchPoint, maxDegreeRadius), sau đó tinh chỉnh chính xác bằng Haversine.
-            var searchPoint = new Point(longitude, latitude) { SRID = 4326 };
-            var cosLat = Math.Max(0.1, Math.Cos(DegreesToRadians(latitude)));
-            var latDeltaDeg = safeRadiusKm / 110.574;
-            var lngDeltaDeg = safeRadiusKm / (111.320 * cosLat);
-            var maxDegreeRadius = Math.Max(latDeltaDeg, lngDeltaDeg) * 1.05;
-
-            var minLat = (decimal)(latitude - latDeltaDeg * 1.05);
-            var maxLat = (decimal)(latitude + latDeltaDeg * 1.05);
-            var minLng = (decimal)(longitude - lngDeltaDeg * 1.05);
-            var maxLng = (decimal)(longitude + lngDeltaDeg * 1.05);
-
-            // Truy vấn không gian trực tiếp trên PostgreSQL + PostGIS (ST_DWithin trên gix_recycler_profiles_geom)
-            // Tuân thủ BR-MTH-01 (Verified), BR-MTH-03 & BR-MTH-07 (Prices Active), BR-MTH-06 (Online & User Active)
-            var dbProfiles = await _db.RecyclerProfiles
-                .AsNoTracking()
-                .Include(r => r.User)
-                .Include(r => r.Prices.Where(p => p.Status == PriceStatus.Active))
-                    .ThenInclude(p => p.WasteCategory)
-                .Where(r => r.VerificationStatus == VerificationStatus.Verified
-                            && r.ActiveStatus == RecyclerActiveStatus.Online
-                            && r.User != null
-                            && r.User.Status == UserStatus.Active
-                            && ((r.Location != null && r.Location.IsWithinDistance(searchPoint, maxDegreeRadius))
-                                || (r.Location == null
-                                    && r.Latitude >= minLat && r.Latitude <= maxLat
-                                    && r.Longitude >= minLng && r.Longitude <= maxLng))
-                            && r.Prices.Any(p => p.Status == PriceStatus.Active
-                                && p.WasteCategory != null
-                                && (normalizedCategory == null || p.WasteCategory.Code.ToLower() == normalizedCategory)))
-                .ToListAsync(cancellationToken);
-
-            foreach (var profile in dbProfiles)
+            try
             {
-                var distance = CalculateDistanceKm(
-                    latitude,
-                    longitude,
-                    (double)profile.Latitude,
-                    (double)profile.Longitude);
+                await EnsureDemoCollectorPricesSeededAsync(cancellationToken);
 
-                if (distance <= safeRadiusKm)
+                // Quy đổi bán kính km sang ngưỡng độ (degrees) bao phủ an toàn theo vĩ độ hiện tại để PostgreSQL lọc trước
+                // bằng chỉ mục tọa độ (Bounding Box), sau đó tinh chỉnh chính xác tuyệt đối bằng Haversine.
+                var cosLat = Math.Max(0.1, Math.Cos(DegreesToRadians(latitude)));
+                var latDeltaDeg = safeRadiusKm / 110.574;
+                var lngDeltaDeg = safeRadiusKm / (111.320 * cosLat);
+
+                var minLat = (decimal)(latitude - latDeltaDeg * 1.05);
+                var maxLat = (decimal)(latitude + latDeltaDeg * 1.05);
+                var minLng = (decimal)(longitude - lngDeltaDeg * 1.05);
+                var maxLng = (decimal)(longitude + lngDeltaDeg * 1.05);
+
+                // Truy vấn trực tiếp trên PostgreSQL với điều kiện Bounding Box tiêu chuẩn
+                // Tuân thủ BR-MTH-01 (Verified), BR-MTH-03 & BR-MTH-07 (Prices Active), BR-MTH-06 (Online & User Active)
+                var query = _db.RecyclerProfiles
+                    .AsNoTracking()
+                    .Include(r => r.User)
+                    .Include(r => r.Prices.Where(p => p.Status == PriceStatus.Active))
+                        .ThenInclude(p => p.WasteCategory)
+                    .Where(r => r.VerificationStatus == VerificationStatus.Verified
+                                && r.ActiveStatus == RecyclerActiveStatus.Online
+                                && r.User != null
+                                && r.User.Status == UserStatus.Active
+                                && r.Latitude >= minLat && r.Latitude <= maxLat
+                                && r.Longitude >= minLng && r.Longitude <= maxLng);
+
+                if (normalizedCategory != null)
                 {
-                    results.Add(MapProfileToPartnerDto(profile, Math.Round(distance, 2)));
+                    query = query.Where(r => r.Prices.Any(p => p.Status == PriceStatus.Active
+                                                               && p.WasteCategory != null
+                                                               && p.WasteCategory.Code.ToLower() == normalizedCategory));
+                }
+
+                var dbProfiles = await query.ToListAsync(cancellationToken);
+
+                foreach (var profile in dbProfiles)
+                {
+                    var distance = CalculateDistanceKm(
+                        latitude,
+                        longitude,
+                        (double)profile.Latitude,
+                        (double)profile.Longitude);
+
+                    if (distance <= safeRadiusKm)
+                    {
+                        results.Add(MapProfileToPartnerDto(profile, Math.Round(distance, 2)));
+                    }
+                }
+
+                if (results.Count > 0)
+                {
+                    return results.OrderBy(p => p.DistanceKm).ToList();
                 }
             }
-
-            return results.OrderBy(p => p.DistanceKm).ToList();
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Truy vấn CSDL cơ sở thu mua thất bại, tự động chuyển sang dữ liệu mẫu fallback.");
+            }
         }
 
-        // Fallback khi chạy không có kết nối PostgreSQL
+        // Fallback khi chạy không có kết nối PostgreSQL hoặc CSDL chưa có dữ liệu cơ sở cho toạ độ này
         foreach (var partner in _mockPartners)
         {
             if (normalizedCategory != null &&
@@ -339,29 +349,43 @@ public class GeoMatchingService : IGeoMatchingService
     {
         if (_db != null)
         {
-            await EnsureDemoCollectorPricesSeededAsync(cancellationToken);
+            try
+            {
+                await EnsureDemoCollectorPricesSeededAsync(cancellationToken);
 
-            var profile = await _db.RecyclerProfiles
-                .AsNoTracking()
-                .Include(r => r.User)
-                .Include(r => r.Prices.Where(p => p.Status == PriceStatus.Active))
-                    .ThenInclude(p => p.WasteCategory)
-                .FirstOrDefaultAsync(r => r.UserId == recyclerId
-                                          && r.VerificationStatus == VerificationStatus.Verified
-                                          && r.User != null
-                                          && r.User.Status == UserStatus.Active,
-                    cancellationToken)
-                ?? throw new NotFoundException("Không tìm thấy cơ sở thu mua hoặc cơ sở chưa được phê duyệt.");
+                var profile = await _db.RecyclerProfiles
+                    .AsNoTracking()
+                    .Include(r => r.User)
+                    .Include(r => r.Prices.Where(p => p.Status == PriceStatus.Active))
+                        .ThenInclude(p => p.WasteCategory)
+                    .FirstOrDefaultAsync(r => r.UserId == recyclerId
+                                              && r.VerificationStatus == VerificationStatus.Verified
+                                              && r.User != null
+                                              && r.User.Status == UserStatus.Active,
+                        cancellationToken);
 
-            var distanceKm = (userLat.HasValue && userLng.HasValue && (userLat.Value != 0 || userLng.Value != 0))
-                ? Math.Round(CalculateDistanceKm(userLat.Value, userLng.Value, (double)profile.Latitude, (double)profile.Longitude), 2)
-                : 0.0;
+                if (profile != null)
+                {
+                    var distanceKm = (userLat.HasValue && userLng.HasValue && (userLat.Value != 0 || userLng.Value != 0))
+                        ? Math.Round(CalculateDistanceKm(userLat.Value, userLng.Value, (double)profile.Latitude, (double)profile.Longitude), 2)
+                        : 0.0;
 
-            return MapProfileToPartnerDto(profile, distanceKm);
+                    return MapProfileToPartnerDto(profile, distanceKm);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Truy vấn chi tiết cơ sở {Id} từ CSDL thất bại, chuyển sang mock.", recyclerId);
+            }
         }
 
         var mock = _mockPartners.FirstOrDefault(p => p.Id == recyclerId)
                    ?? throw new NotFoundException("Không tìm thấy cơ sở thu mua.");
+
+        if (userLat.HasValue && userLng.HasValue && (userLat.Value != 0 || userLng.Value != 0))
+        {
+            mock.DistanceKm = Math.Round(CalculateDistanceKm(userLat.Value, userLng.Value, mock.Latitude, mock.Longitude), 2);
+        }
 
         return mock;
     }
@@ -419,8 +443,14 @@ public class GeoMatchingService : IGeoMatchingService
                 ("trash", "Rác thải thông thường / Không thể tái chế", "Đen", false)
             };
 
-            var existingCodes = await _db.WasteCategories.Select(c => c.Code).ToListAsync(ct);
-            var missingCategories = defaultCategories.Where(d => !existingCodes.Contains(d.Code)).ToList();
+            var existingCodes = (await _db.WasteCategories.Select(c => c.Code).ToListAsync(ct))
+                .Select(c => c.Trim().ToLowerInvariant())
+                .ToHashSet();
+
+            var missingCategories = defaultCategories
+                .Where(d => !existingCodes.Contains(d.Code.ToLowerInvariant()))
+                .ToList();
+
             if (missingCategories.Count > 0)
             {
                 foreach (var (code, name, binColor, isRecyclable) in missingCategories)
@@ -745,21 +775,46 @@ public class GeoMatchingService : IGeoMatchingService
                         });
                         await _db.SaveChangesAsync(ct);
                     }
-                    else if (existingProfile != null && existingProfile.Location == null)
+                    else if (existingProfile != null)
                     {
-                        existingProfile.Location = new Point((double)existingProfile.Longitude, (double)existingProfile.Latitude)
+                        var changed = false;
+                        if (existingProfile.VerificationStatus != VerificationStatus.Verified)
                         {
-                            SRID = 4326
-                        };
-                        await _db.SaveChangesAsync(ct);
+                            existingProfile.VerificationStatus = VerificationStatus.Verified;
+                            changed = true;
+                        }
+                        if (existingProfile.ActiveStatus != RecyclerActiveStatus.Online)
+                        {
+                            existingProfile.ActiveStatus = RecyclerActiveStatus.Online;
+                            changed = true;
+                        }
+                        if (existingProfile.Location == null)
+                        {
+                            existingProfile.Location = new Point((double)existingProfile.Longitude, (double)existingProfile.Latitude)
+                            {
+                                SRID = 4326
+                            };
+                            changed = true;
+                        }
+                        if (changed)
+                        {
+                            await _db.SaveChangesAsync(ct);
+                        }
                     }
                 }
             }
 
             // 3. Seed bảng giá Active cho các cơ sở mẫu nếu chưa có
-            var categoriesByCode = await _db.WasteCategories
+            var categoriesList = await _db.WasteCategories
                 .Where(c => c.IsRecyclable)
-                .ToDictionaryAsync(c => c.Code, ct);
+                .ToListAsync(ct);
+
+            var categoriesByCode = new Dictionary<string, WasteCategory>(StringComparer.OrdinalIgnoreCase);
+            foreach (var cat in categoriesList)
+            {
+                var key = cat.Code.Trim().ToLowerInvariant();
+                categoriesByCode.TryAdd(key, cat);
+            }
 
             var addedAnyPrice = false;
             foreach (var f in demoFacilities)
@@ -794,6 +849,11 @@ public class GeoMatchingService : IGeoMatchingService
                 _logger.LogInformation("Đã khởi tạo dữ liệu cơ sở thu mua mẫu đã xác minh (Verified + Online) trên bản đồ.");
             }
 
+            _demoSeedChecked = true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Lỗi kiểm tra/khởi tạo dữ liệu cơ sở mẫu (bỏ qua để không chặn tìm kiếm).");
             _demoSeedChecked = true;
         }
         finally

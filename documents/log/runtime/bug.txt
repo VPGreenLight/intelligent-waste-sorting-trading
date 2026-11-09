@@ -1,0 +1,310 @@
+fail: Microsoft.EntityFrameworkCore.Database.Command[20102]
+      Failed executing DbCommand (3ms) [Parameters=[@targetUserId='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT r.user_id, r.active_status, r.business_address, r.business_photo_url, r.busy_reason, r.contact_phone, r.created_at, r.created_by, r.deleted_at, r.description, r.facility_name, r."Id", r.is_deleted, r.latitude, r.legal_permit_url, r.geom, r.longitude, r.operating_hours, r.rejection_reason, r.representative_name, r.updated_at, r.updated_by, r.verification_status, r.weekly_schedule
+      FROM recycler_profiles AS r
+      WHERE r.user_id = @targetUserId
+      LIMIT 1
+fail: Microsoft.EntityFrameworkCore.Query[10100]
+      An exception occurred while iterating over the results of a query for context type 'Ecolink.Infrastructure.Data.ApplicationDbContext'.
+      Npgsql.PostgresException (0x80004005): 42703: column r.Id does not exist
+
+      POSITION: 184
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+        Exception data:
+          Severity: ERROR
+          SqlState: 42703
+          MessageText: column r.Id does not exist
+          Position: 184
+          File: parse_relation.c
+          Line: 3722
+          Routine: errorMissingColumn
+      Npgsql.PostgresException (0x80004005): 42703: column r.Id does not exist
+
+      POSITION: 184
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+        Exception data:
+          Severity: ERROR
+          SqlState: 42703
+          MessageText: column r.Id does not exist
+          Position: 184
+          File: parse_relation.c
+          Line: 3722
+          Routine: errorMissingColumn
+warn: Ecolink.Infrastructure.Services.GeoMatchingService[0]
+      Lỗi kiểm tra/khởi tạo dữ liệu cơ sở mẫu (bỏ qua để không chặn tìm kiếm).
+      Npgsql.PostgresException (0x80004005): 42703: column r.Id does not exist
+
+      POSITION: 184
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+         at Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitor.SingleOrDefaultAsync[TSource](IAsyncEnumerable`1 asyncEnumerable, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitor.SingleOrDefaultAsync[TSource](IAsyncEnumerable`1 asyncEnumerable, CancellationToken cancellationToken)
+         at Ecolink.Infrastructure.Services.GeoMatchingService.EnsureDemoCollectorPricesSeededAsync(CancellationToken ct) in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.Infrastructure\Services\GeoMatchingService.cs:line 755
+        Exception data:
+          Severity: ERROR
+          SqlState: 42703
+          MessageText: column r.Id does not exist
+          Position: 184
+          File: parse_relation.c
+          Line: 3722
+          Routine: errorMissingColumn
+fail: Microsoft.EntityFrameworkCore.Database.Command[20102]
+      Failed executing DbCommand (4ms) [Parameters=[@minLat='?' (DbType = Decimal), @maxLat='?' (DbType = Decimal), @minLng='?' (DbType = Decimal), @maxLng='?' (DbType = Decimal)], CommandType='Text', CommandTimeout='30']
+      SELECT r.user_id, r.active_status, r.business_address, r.business_photo_url, r.busy_reason, r.contact_phone, r.created_at, r.created_by, r.deleted_at, r.description, r.facility_name, r."Id", r.is_deleted, r.latitude, r.legal_permit_url, r.geom, r.longitude, r.operating_hours, r.rejection_reason, r.representative_name, r.updated_at, r.updated_by, r.verification_status, r.weekly_schedule, u0.id, u0.avatar_url, u0.created_at, u0.created_by, u0.deleted_at, u0.email, u0.failed_login_attempts, u0.full_name, u0.is_deleted, u0.is_google_auth, u0.lockout_until, u0.password_hash, u0.phone_number, u0.role, u0.status, u0.updated_at, u0.updated_by, u0.username, s.price_id, s.collection_conditions, s.effective_from, s.effective_to, s.min_quantity_kg, s.price_per_kg, s.recycler_id, s.status, s.updated_at, s.category_id, s.id, s.code, s.created_at, s.description, s.icon_url, s.is_recyclable, s.name, s.standard_bin_color, s.status0, s.updated_at0
+      FROM recycler_profiles AS r
+      INNER JOIN (
+          SELECT u.id, u.avatar_url, u.created_at, u.created_by, u.deleted_at, u.email, u.failed_login_attempts, u.full_name, u.is_deleted, u.is_google_auth, u.lockout_until, u.password_hash, u.phone_number, u.role, u.status, u.updated_at, u.updated_by, u.username
+          FROM users AS u
+          WHERE NOT (u.is_deleted)
+      ) AS u0 ON r.user_id = u0.id
+      LEFT JOIN (
+          SELECT r0.price_id, r0.collection_conditions, r0.effective_from, r0.effective_to, r0.min_quantity_kg, r0.price_per_kg, r0.recycler_id, r0.status, r0.updated_at, r0.category_id, w.id, w.code, w.created_at, w.description, w.icon_url, w.is_recyclable, w.name, w.standard_bin_color, w.status AS status0, w.updated_at AS updated_at0
+          FROM recycler_price_list AS r0
+          INNER JOIN waste_categories AS w ON r0.category_id = w.id
+          WHERE r0.status = 'Active'
+      ) AS s ON r.user_id = s.recycler_id
+      WHERE NOT (r.is_deleted) AND r.verification_status = 'Verified' AND r.active_status = 'Online' AND u0.status = 'Active' AND r.latitude >= @minLat AND r.latitude <= @maxLat AND r.longitude >= @minLng AND r.longitude <= @maxLng
+      ORDER BY r.user_id, u0.id, s.price_id
+fail: Microsoft.EntityFrameworkCore.Query[10100]
+      An exception occurred while iterating over the results of a query for context type 'Ecolink.Infrastructure.Data.ApplicationDbContext'.
+      Npgsql.PostgresException (0x80004005): 42703: column r.Id does not exist
+
+      POSITION: 184
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+        Exception data:
+          Severity: ERROR
+          SqlState: 42703
+          MessageText: column r.Id does not exist
+          Hint: Perhaps you meant to reference the column "s.id".
+          Position: 184
+          File: parse_relation.c
+          Line: 3729
+          Routine: errorMissingColumn
+      Npgsql.PostgresException (0x80004005): 42703: column r.Id does not exist
+
+      POSITION: 184
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+        Exception data:
+          Severity: ERROR
+          SqlState: 42703
+          MessageText: column r.Id does not exist
+          Hint: Perhaps you meant to reference the column "s.id".
+          Position: 184
+          File: parse_relation.c
+          Line: 3729
+          Routine: errorMissingColumn
+warn: Ecolink.Infrastructure.Services.GeoMatchingService[0]
+      Truy vấn CSDL cơ sở thu mua thất bại, tự động chuyển sang dữ liệu mẫu fallback.
+      Npgsql.PostgresException (0x80004005): 42703: column r.Id does not exist
+
+      POSITION: 184
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+         at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+         at Ecolink.Infrastructure.Services.GeoMatchingService.FindNearestPartnersAsync(Double latitude, Double longitude, String categoryCode, Double radiusKm, CancellationToken cancellationToken) in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.Infrastructure\Services\GeoMatchingService.cs:line 225
+        Exception data:
+          Severity: ERROR
+          SqlState: 42703
+          MessageText: column r.Id does not exist
+          Hint: Perhaps you meant to reference the column "s.id".
+          Position: 184
+          File: parse_relation.c
+          Line: 3729
+          Routine: errorMissingColumn
+fail: Microsoft.EntityFrameworkCore.Database.Command[20102]
+      Failed executing DbCommand (1ms) [Parameters=[@recyclerId='?' (DbType = Guid)], CommandType='Text', CommandTimeout='30']
+      SELECT s.user_id, s.active_status, s.business_address, s.business_photo_url, s.busy_reason, s.contact_phone, s.created_at, s.created_by, s.deleted_at, s.description, s.facility_name, s."Id", s.is_deleted, s.latitude, s.legal_permit_url, s.geom, s.longitude, s.operating_hours, s.rejection_reason, s.representative_name, s.updated_at, s.updated_by, s.verification_status, s.weekly_schedule, s.id0, s.avatar_url, s.created_at0, s.created_by0, s.deleted_at0, s.email, s.failed_login_attempts, s.full_name, s.is_deleted0, s.is_google_auth, s.lockout_until, s.password_hash, s.phone_number, s.role, s.status, s.updated_at0, s.updated_by0, s.username, s0.price_id, s0.collection_conditions, s0.effective_from, s0.effective_to, s0.min_quantity_kg, s0.price_per_kg, s0.recycler_id, s0.status, s0.updated_at, s0.category_id, s0.id, s0.code, s0.created_at, s0.description, s0.icon_url, s0.is_recyclable, s0.name, s0.standard_bin_color, s0.status0, s0.updated_at0
+      FROM (
+          SELECT r.user_id, r.active_status, r.business_address, r.business_photo_url, r.busy_reason, r.contact_phone, r.created_at, r.created_by, r.deleted_at, r.description, r.facility_name, r."Id", r.is_deleted, r.latitude, r.legal_permit_url, r.geom, r.longitude, r.operating_hours, r.rejection_reason, r.representative_name, r.updated_at, r.updated_by, r.verification_status, r.weekly_schedule, u0.id AS id0, u0.avatar_url, u0.created_at AS created_at0, u0.created_by AS created_by0, u0.deleted_at AS deleted_at0, u0.email, u0.failed_login_attempts, u0.full_name, u0.is_deleted AS is_deleted0, u0.is_google_auth, u0.lockout_until, u0.password_hash, u0.phone_number, u0.role, u0.status, u0.updated_at AS updated_at0, u0.updated_by AS updated_by0, u0.username
+          FROM recycler_profiles AS r
+          INNER JOIN (
+              SELECT u.id, u.avatar_url, u.created_at, u.created_by, u.deleted_at, u.email, u.failed_login_attempts, u.full_name, u.is_deleted, u.is_google_auth, u.lockout_until, u.password_hash, u.phone_number, u.role, u.status, u.updated_at, u.updated_by, u.username
+              FROM users AS u
+              WHERE NOT (u.is_deleted)
+          ) AS u0 ON r.user_id = u0.id
+          WHERE NOT (r.is_deleted) AND r.user_id = @recyclerId AND r.verification_status = 'Verified' AND u0.status = 'Active'
+          LIMIT 1
+      ) AS s
+      LEFT JOIN (
+          SELECT r0.price_id, r0.collection_conditions, r0.effective_from, r0.effective_to, r0.min_quantity_kg, r0.price_per_kg, r0.recycler_id, r0.status, r0.updated_at, r0.category_id, w.id, w.code, w.created_at, w.description, w.icon_url, w.is_recyclable, w.name, w.standard_bin_color, w.status AS status0, w.updated_at AS updated_at0
+          FROM recycler_price_list AS r0
+          INNER JOIN waste_categories AS w ON r0.category_id = w.id
+          WHERE r0.status = 'Active'
+      ) AS s0 ON s.user_id = s0.recycler_id
+      ORDER BY s.user_id, s.id0, s0.price_id
+fail: Microsoft.EntityFrameworkCore.Query[10100]
+      An exception occurred while iterating over the results of a query for context type 'Ecolink.Infrastructure.Data.ApplicationDbContext'.
+      Npgsql.PostgresException (0x80004005): 42703: column r.Id does not exist
+
+      POSITION: 1150
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+        Exception data:
+          Severity: ERROR
+          SqlState: 42703
+          MessageText: column r.Id does not exist
+          Hint: Perhaps you meant to reference the column "u0.id".
+          Position: 1150
+          File: parse_relation.c
+          Line: 3729
+          Routine: errorMissingColumn
+      Npgsql.PostgresException (0x80004005): 42703: column r.Id does not exist
+
+      POSITION: 1150
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+        Exception data:
+          Severity: ERROR
+          SqlState: 42703
+          MessageText: column r.Id does not exist
+          Hint: Perhaps you meant to reference the column "u0.id".
+          Position: 1150
+          File: parse_relation.c
+          Line: 3729
+          Routine: errorMissingColumn
+warn: Ecolink.Infrastructure.Services.GeoMatchingService[0]
+      Truy vấn chi tiết cơ sở 99999991-9999-9999-9999-999999999991 từ CSDL thất bại, chuyển sang mock.
+      Npgsql.PostgresException (0x80004005): 42703: column r.Id does not exist
+
+      POSITION: 1150
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+         at Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitor.SingleOrDefaultAsync[TSource](IAsyncEnumerable`1 asyncEnumerable, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitor.SingleOrDefaultAsync[TSource](IAsyncEnumerable`1 asyncEnumerable, CancellationToken cancellationToken)
+         at Ecolink.Infrastructure.Services.GeoMatchingService.GetRecyclerPublicDetailAsync(Guid recyclerId, Nullable`1 userLat, Nullable`1 userLng, CancellationToken cancellationToken) in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.Infrastructure\Services\GeoMatchingService.cs:line 356
+        Exception data:
+          Severity: ERROR
+          SqlState: 42703
+          MessageText: column r.Id does not exist
+          Hint: Perhaps you meant to reference the column "u0.id".
+          Position: 1150
+          File: parse_relation.c
+          Line: 3729
+          Routine: errorMissingColumn
+fail: Microsoft.EntityFrameworkCore.Database.Command[20102]
+      Failed executing DbCommand (4ms) [Parameters=[@p='?', @p2='?' (DbType = DateTime), @cutoff='?' (DbType = DateTime)], CommandType='Text', CommandTimeout='30']
+      UPDATE handover_requests AS h
+      SET status = @p,
+          updated_at = @p2
+      WHERE h.status = 'Pending' AND h.created_at < @cutoff
+fail: Ecolink.WebApi.Services.HandoverExpirationJob[0]
+      JOB-03 thất bại, sẽ thử lại ở lượt sau.
+      Npgsql.PostgresException (0x80004005): 42P01: relation "handover_requests" does not exist
+
+      POSITION: 8
+         at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+         at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+         at Npgsql.NpgsqlCommand.ExecuteNonQuery(Boolean async, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteNonQueryAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+         at Npgsql.EntityFrameworkCore.PostgreSQL.Storage.Internal.NpgsqlExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+         at Ecolink.Infrastructure.Services.HandoverRequestService.ExpirePendingAsync(TimeSpan timeout, CancellationToken ct) in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.Infrastructure\Services\HandoverRequestService.cs:line 254
+         at Ecolink.WebApi.Services.HandoverExpirationJob.ExecuteAsync(CancellationToken stoppingToken) in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.WebApi\Services\HandoverExpirationJob.cs:line 34
+        Exception data:
+          Severity: ERROR
+          SqlState: 42P01
+          MessageText: relation "handover_requests" does not exist
+          Position: 8
+          File: parse_relation.c
+          Line: 1449
+          Routine: parserOpenTable
