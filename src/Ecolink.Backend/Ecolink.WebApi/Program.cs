@@ -48,6 +48,7 @@ builder.Services.AddScoped<INegotiationChatNotifier, SignalRNegotiationChatNotif
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddHostedService<Ecolink.WebApi.Services.HandoverExpirationJob>(); // JOB-03
+builder.Services.AddHostedService<Ecolink.WebApi.Services.ReceiptAutoCompleteJob>(); // JOB-01
 
 // Cấu hình JWT Bearer Authentication & Authorization (Hỗ trợ cả REST Header và SignalR WebSocket access_token)
 var jwtSecret = builder.Configuration["JwtSettings:SecretKey"]

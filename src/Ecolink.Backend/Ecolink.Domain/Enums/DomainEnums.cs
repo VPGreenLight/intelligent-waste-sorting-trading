@@ -33,15 +33,16 @@ public enum RecyclerActiveStatus
 
 public enum OrderStatus
 {
-    Pending = 1,        // Mới tạo, chờ Recycler phản hồi hoặc thương lượng
-    Accepted = 2,       // Đã chốt điều khoản & khóa khung giờ thu gom (BR-NEG-02, BR-NEG-05)
-    Rejected = 3,       // Recycler từ chối yêu cầu
-    Completed = 4,      // Đã quét mã QR hoàn tất bàn giao
-    Cancelled = 5,      // Người dùng hủy trước khi hoàn tất
-    Negotiating = 6,    // Hai bên đang thương lượng giá / khối lượng / khung giờ (BR-NEG-02, BR-HND-02)
-    Scheduled = 7,      // Đã lên lịch chuẩn bị bàn giao thực tế (BR-HND-02)
-    Expired = 8,        // Tự động hết hạn sau 48h không có phản hồi (BR-HND-03)
-    Disputed = 9        // Đang có khiếu nại chờ Staff phân xử (BR-DSP-06)
+    Pending = 1,                // Mới tạo, chờ Recycler phản hồi hoặc thương lượng
+    Accepted = 2,               // Đã chốt điều khoản & khóa khung giờ thu gom (BR-NEG-02, BR-NEG-05)
+    Rejected = 3,               // Recycler từ chối yêu cầu
+    Completed = 4,              // Đã xác nhận biên nhận / quét mã QR hoàn tất bàn giao
+    Cancelled = 5,              // Người dùng hoặc Recycler hủy trước khi hoàn tất
+    Negotiating = 6,            // Hai bên đang thương lượng giá / khối lượng / khung giờ (BR-NEG-02, BR-HND-02)
+    Scheduled = 7,              // Đã lên lịch chuẩn bị bàn giao thực tế (BR-HND-02)
+    Expired = 8,                // Tự động hết hạn sau 24h không có phản hồi (BR-HND-03, JOB-03)
+    Disputed = 9,               // Đang có khiếu nại chờ Staff phân xử (BR-DSP-06)
+    AwaitingConfirmation = 10   // Recycler đã lập biên nhận số, chờ người dân xác nhận (R-06, U-09, JOB-01)
 }
 
 public enum ChatMessageType

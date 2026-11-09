@@ -34,6 +34,17 @@ public class CreateReceiptRequest
     public string? ReceiptImageUrl { get; set; }
 }
 
+/// <summary>Khiếu nại sai lệch khối lượng / đơn giá trên biên nhận bàn giao (U-09 Alternative Flow, BR-DSP-06).</summary>
+public class DisputeReceiptRequest
+{
+    [Required(ErrorMessage = "Vui lòng nhập lý do khiếu nại.")]
+    [MaxLength(500, ErrorMessage = "Lý do khiếu nại tối đa 500 ký tự.")]
+    public string Reason { get; set; } = string.Empty;
+
+    [MaxLength(5, ErrorMessage = "Tối đa 5 ảnh bằng chứng.")]
+    public List<string>? EvidencePhotoUrls { get; set; }
+}
+
 // ============================================================
 // Response
 // ============================================================

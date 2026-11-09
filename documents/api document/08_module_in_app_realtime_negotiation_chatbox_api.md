@@ -1,4 +1,4 @@
-# TÀI LIỆU ĐẶC TẢ API & SIGNALR HUB – MODULE 7: CHATBOX THƯƠNG LƯỢNG & KHUNG GIỜ THU GOM THỜI GIAN THỰC (IN-APP REAL-TIME NEGOTIATION CHATBOX)
+# TÀI LIỆU ĐẶC TẢ API & SIGNALR HUB – MODULE 9: CHATBOX THƯƠNG LƯỢNG & KHUNG GIỜ THU GOM THỜI GIAN THỰC (IN-APP REAL-TIME NEGOTIATION CHATBOX)
 **Mã phân hệ:** `NEG` (`Use Cases U-08: Negotiate via Chatbox (User side)` & `R-05: Negotiate via Chatbox (Recycler side)`)  
 **Controllers & Hubs:** [`NegotiationChatController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/NegotiationChatController.cs), [`NegotiationChatHub.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Hubs/NegotiationChatHub.cs)  
 **Services thực thi:** [`NegotiationChatService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/NegotiationChatService.cs) ([`INegotiationChatService`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Interfaces/INegotiationChatInterfaces.cs)), [`CloudflareR2StorageService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/CloudflareR2StorageService.cs) ([`IFileStorageService`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Interfaces/IRecyclerOnboardingService.cs#L46-L57))  
@@ -245,7 +245,7 @@
 
 ---
 
-## 3. BẢNG MÃ LỖI & MÃ THÔNG BÁO TRONG MODULE 7
+## 3. BẢNG MÃ LỖI & MÃ THÔNG BÁO TRONG MODULE 9
 
 | HTTP Status | `messageCode` | Quy tắc | Trường hợp xảy ra |
 |:---:|:---|:---:|:---|

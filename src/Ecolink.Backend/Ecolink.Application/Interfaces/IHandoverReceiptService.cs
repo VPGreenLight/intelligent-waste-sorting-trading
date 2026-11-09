@@ -14,6 +14,7 @@ public interface IHandoverReceiptService
     // Người dân
     Task<ReceiptDto> GetForUserAsync(Guid userId, Guid requestId, CancellationToken ct = default);
     Task<ReceiptDto> ConfirmAsync(Guid userId, Guid requestId, CancellationToken ct = default);
+    Task<ReceiptDto> DisputeAsync(Guid userId, Guid requestId, DisputeReceiptRequest request, CancellationToken ct = default);
     Task<TransactionHistoryDto> GetUserHistoryAsync(Guid userId, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default);
 
     // JOB-01

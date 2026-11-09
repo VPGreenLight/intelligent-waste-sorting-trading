@@ -118,6 +118,14 @@ public class HandoverReceiptService : IHandoverReceiptService
         }
 
         _logger.LogInformation("Recycler {RecyclerId} lập biên nhận {Code} cho yêu cầu {RequestId}.", recyclerId, receipt.ReceiptCode, requestId);
+
+        await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(
+            _db,
+            entity.Id,
+            recyclerId,
+            $"Cơ sở thu gom đã phát hành biên nhận #{receipt.ReceiptCode}: Tổng khối lượng cân thực tế {receipt.TotalWeightKg:0.##} kg • Tổng thành tiền {receipt.TotalAmountCash:N0} VNĐ. Đang chờ người dân xác nhận.",
+            ct);
+
         return await LoadDtoAsync(requestId, Viewer.Recycler, ct);
     }
 
@@ -163,6 +171,61 @@ public class HandoverReceiptService : IHandoverReceiptService
         if (done == null)
             throw new BusinessRuleException("BR-HND-04", "MSG-GEN-01", "Biên nhận đã được xử lý trước đó.");
 
+        return await LoadDtoAsync(requestId, Viewer.User, ct);
+    }
+
+    public async Task<ReceiptDto> DisputeAsync(Guid userId, Guid requestId, DisputeReceiptRequest request, CancellationToken ct = default)
+    {
+        var reason = request.Reason?.Trim();
+        if (string.IsNullOrEmpty(reason))
+            throw new BusinessRuleException("BR-DSP-06", "MSG-GEN-01", "Vui lòng nhập lý do khiếu nại.");
+        if (reason.Length > 500)
+            throw new BusinessRuleException("BR-DSP-06", "MSG-GEN-01", "Lý do khiếu nại tối đa 500 ký tự.");
+
+        if (request.EvidencePhotoUrls is { Count: > 0 })
+        {
+            if (request.EvidencePhotoUrls.Count > 5)
+                throw new BusinessRuleException("BR-DSP-06", "MSG-GEN-01", "Tối đa 5 ảnh bằng chứng.");
+            foreach (var url in request.EvidencePhotoUrls)
+            {
+                EnsureHttpUrl(url?.Trim() ?? string.Empty);
+            }
+        }
+
+        var entity = await _db.HandoverRequests
+                         .FirstOrDefaultAsync(h => h.Id == requestId && h.UserId == userId, ct)
+                     ?? throw new NotFoundException("Không tìm thấy yêu cầu bàn giao.");
+
+        if (entity.Status != HandoverStatus.AwaitingConfirmation)
+        {
+            var msg = entity.Status == HandoverStatus.Completed
+                ? "Giao dịch đã hoàn tất và không thể thay đổi."
+                : "Chỉ có thể khiếu nại khi biên nhận đang ở trạng thái chờ người dân xác nhận.";
+            throw new BusinessRuleException("BR-HND-07", "MSG-GEN-01", msg);
+        }
+
+        var receipt = await _db.HandoverReceipts.AsNoTracking()
+                          .FirstOrDefaultAsync(r => r.RequestId == requestId, ct)
+                      ?? throw new NotFoundException("Không tìm thấy biên nhận.");
+
+        var now = DateTime.UtcNow;
+        entity.Status = HandoverStatus.Disputed;
+        entity.CancelReason = reason;
+        entity.UpdatedAt = now;
+        await _db.SaveChangesAsync(ct);
+
+        var evidenceNote = request.EvidencePhotoUrls is { Count: > 0 }
+            ? $" (Đính kèm {request.EvidencePhotoUrls.Count} ảnh bằng chứng)"
+            : string.Empty;
+
+        await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(
+            _db,
+            entity.Id,
+            userId,
+            $"Người dân đã gửi khiếu nại biên nhận #{receipt.ReceiptCode}. Lý do: {reason}{evidenceNote}. Đơn chuyển sang trạng thái Disputed chờ Staff phân xử (BR-DSP-06).",
+            ct);
+
+        _logger.LogInformation("Người dùng {UserId} khiếu nại biên nhận {Code} của yêu cầu {RequestId}.", userId, receipt.ReceiptCode, requestId);
         return await LoadDtoAsync(requestId, Viewer.User, ct);
     }
 
@@ -238,6 +301,8 @@ public class HandoverReceiptService : IHandoverReceiptService
             _logger.LogWarning(ex, "Không cộng được điểm vào hồ sơ xanh cho giao dịch {Code}.", receipt.ReceiptCode);
         }
 
+        await HandoverTradeSyncHelper.SyncReceiptCompletionAsync(_db, receipt, ct);
+
         return receipt;
     }
 
@@ -252,8 +317,24 @@ public class HandoverReceiptService : IHandoverReceiptService
     {
         var request = await _db.HandoverRequests
                           .Include(h => h.Items).ThenInclude(i => i.WasteCategory)
-                          .FirstOrDefaultAsync(h => h.Id == requestId && h.RecyclerId == recyclerId, ct)
-                      ?? throw new NotFoundException("Không tìm thấy yêu cầu bàn giao.");   // BR-HND-03
+                          .FirstOrDefaultAsync(h => h.Id == requestId && h.RecyclerId == recyclerId, ct);
+
+        if (request == null)
+        {
+            var legacyTradeOrder = await _db.TradeOrders
+                .Include(o => o.Partner)
+                .FirstOrDefaultAsync(o => o.Id == requestId, ct);
+            if (legacyTradeOrder != null)
+            {
+                await HandoverTradeSyncHelper.EnsureHandoverFromTradeOrderAsync(_db, legacyTradeOrder, ct);
+                request = await _db.HandoverRequests
+                    .Include(h => h.Items).ThenInclude(i => i.WasteCategory)
+                    .FirstOrDefaultAsync(h => h.Id == requestId && h.RecyclerId == recyclerId, ct);
+            }
+        }
+
+        if (request == null)
+            throw new NotFoundException("Không tìm thấy yêu cầu bàn giao.");   // BR-HND-03
 
         if (request.Status is not (HandoverStatus.Accepted or HandoverStatus.Scheduled))
         {

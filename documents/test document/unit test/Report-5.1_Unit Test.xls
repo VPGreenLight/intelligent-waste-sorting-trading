@@ -2070,7 +2070,1125 @@
   </Table>
  </Worksheet>
  <!-- ==================== SHEET 6: NEGOTIATION CHATBOX MODULE (U-08 & R-05) ==================== -->
- <Worksheet ss:Name="6_Negotiation_Chatbox">
+  <Worksheet ss:Name="6_Handover_Request">
+  <Table>
+   <Column ss:Width="85"/>
+   <Column ss:Width="180"/>
+   <Column ss:Width="210"/>
+   <Column ss:Width="290"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="130"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="180"/>
+
+   <Row ss:Index="2">
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Code Module</Data></Cell>
+    <Cell ss:MergeAcross="2" ss:StyleID="SummaryValueLeft"><Data ss:Type="String">HandoverRequestService (U-06, U-07, R-03, R-04, JOB-03)</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Number of TCs</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">24</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="SummaryValue"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Round</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Failed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Pending</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">24</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">24</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">24</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Type</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Boundary</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Count</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">11</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">8</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">5</Data></Cell>
+   </Row>
+
+   <Row ss:Index="11" ss:Height="28">
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test Case ID</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Pre-conditions</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Input parameters</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Expected Results</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Type</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test date</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Tester</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Defect IDs</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Note</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">CreateAsync (HandoverRequestService - U-06)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC001</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">User &quot;citizen&quot; (11111111-...) có 0 đơn active; Recycler &quot;collector&quot; (22222222-...) đã Verified + Online, có bảng giá Active cho plastic (Min: 2.0kg) và paper (Min: 3.0kg); mở cửa 08:00 - 18:00</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+RecyclerId=&quot;22222222-...&quot;;
+Items=[{ WasteCategoryId=plasticId, EstimatedWeightKg=5.0 }, { WasteCategoryId=paperId, EstimatedWeightKg=10.0 }];
+PhotoUrls=[&quot;https://r2.../p1.jpg&quot;, &quot;https://r2.../p2.jpg&quot;];
+ProposedTimeSlot=UtcNow + 24h (10:00 ICT);
+PickupAddress=&quot;Số 45 Lê Duẩn, P. Bến Nghé, Q.1, TP.HCM&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: HandoverRequestDto { RequestCode = &quot;HND-20261104-0001&quot;, Status = &quot;Pending&quot;, TotalEstimatedWeightKg = 15.0, Items.Count = 2, CanEdit = true, CanCancel = true, IsContactRevealed = false }
+Exception: N/A
+Log Message: &quot;Người dùng 11111111-... tạo yêu cầu bàn giao HND-20261104-0001 tới 22222222-...&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tạo yêu cầu bàn giao thành công, sinh mã định danh và lưu chi tiết phế liệu (U-06)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC002</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">User đang đăng nhập bằng tài khoản Recycler &quot;collector&quot; (22222222-...)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;22222222-...&quot;;
+RecyclerId=&quot;22222222-...&quot; (trùng UserId);
+Items=[{ WasteCategoryId=plasticId, EstimatedWeightKg=5.0 }]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-01&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Bạn không thể gửi yêu cầu bàn giao cho chính cơ sở của mình.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn người dùng tự gửi yêu cầu cho chính cơ sở của mình (BR-HND-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC003</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">User &quot;citizen&quot; hiện đang có 3 yêu cầu ở trạng thái hoạt động (Pending, Negotiating, Accepted)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+request=CreateHandoverRequest hợp lệ</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-LIMIT&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Bạn chỉ có thể có tối đa 3 yêu cầu đang xử lý cùng lúc.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giới hạn tối đa 3 đơn active cùng lúc cho mỗi người dân (BR-HND-LIMIT)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC004</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở RecyclerId đang ở trạng thái VerificationStatus = Pending hoặc ActiveStatus = Offline</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+RecyclerId=offlineRecyclerId;
+request=CreateHandoverRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-01&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Cơ sở thu gom hiện không nhận yêu cầu bàn giao.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn gửi yêu cầu đến cơ sở chưa duyệt hoặc đang tạm nghỉ Offline (BR-HND-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC005</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở &quot;collector&quot; chỉ nhận plastic và paper; người dùng gửi yêu cầu gồm loại metal</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+Items=[{ WasteCategoryId=metalId, EstimatedWeightKg=5.0 }]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-01&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Cơ sở thu gom không nhận một trong các loại phế liệu đã chọn.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra tính tương thích danh mục rác với bảng giá niêm yết (BR-HND-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC006</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở quy định plastic có MinQuantityKg = 5.0 kg; người dùng nhập khối lượng 4.99 kg</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+Items=[{ WasteCategoryId=plasticId, EstimatedWeightKg=4.99 }]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-01&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Khối lượng tối thiểu cơ sở thu gom nhận là 5 kg cho mỗi loại.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra biên dưới khối lượng phế liệu tối thiểu (w &lt; price.MinQuantityKg)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC007</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở quy định plastic có MinQuantityKg = 5.0 kg; người dùng nhập đúng 5.00 kg và đính kèm đúng 1 ảnh</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+Items=[{ WasteCategoryId=plasticId, EstimatedWeightKg=5.00 }];
+PhotoUrls=[&quot;https://r2.../p1.jpg&quot;]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: HandoverRequestDto { TotalEstimatedWeightKg = 5.00, PhotoUrls.Count = 1 }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chấp nhận giá trị đúng bằng biên tối thiểu w == MinQuantityKg và biên ảnh tối thiểu</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC008</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Khung giờ hẹn cách hiện tại dưới 2 giờ (UtcNow + 1h30m) hoặc quá 7 ngày (UtcNow + 8 days)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+ProposedTimeSlot=UtcNow.AddHours(1.5)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-NEG-04&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Khung giờ thu gom phải cách hiện tại tối thiểu 2 giờ.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra biên thời gian hẹn thu gom [UtcNow + 2h, UtcNow + 7d] (BR-NEG-04)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC009</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Cơ sở khai báo nghỉ Chủ Nhật (IsClosed = true) hoặc giờ mở cửa 08:00 - 17:30; người dùng hẹn Chủ Nhật hoặc lúc 19:00</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+ProposedTimeSlot=Chủ Nhật (hoặc Thứ 3 lúc 19:00 ICT)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-NEG-04&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Cơ sở thu gom nghỉ vào ngày đã chọn.&quot; (hoặc &quot;Khung giờ nằm ngoài giờ hoạt động...&quot;)</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đối chiếu khung giờ hẹn với lịch làm việc tuần WeeklyScheduleJson (BR-NEG-04)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC010</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Danh sách ảnh đính kèm có 0 ảnh (rỗng) hoặc có 6 ảnh (&gt; 5 ảnh)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+PhotoUrls=[] (hoặc 6 phần tử URL)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-01&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Vui lòng đính kèm từ 1 đến 5 ảnh.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra giới hạn số lượng ảnh phế liệu đính kèm [1, 5] (SCR-USR-06)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC011</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Danh sách Items có 2 dòng cùng chọn danh mục plasticId</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+Items=[{ WasteCategoryId=plasticId, EstimatedWeightKg=3.0 }, { WasteCategoryId=plasticId, EstimatedWeightKg=4.0 }]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-01&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Mỗi loại phế liệu chỉ được xuất hiện một lần trong yêu cầu.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn trùng lặp danh mục rác trong cùng một đơn yêu cầu (BR-HND-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">UpdateAsync &amp; CancelByUserAsync (HandoverRequestService - U-07)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC012</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Yêu cầu requestId thuộc về userId, đang ở trạng thái Pending</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+requestId=validPendingRequestId;
+PickupAddress=&quot;100 Hai Bà Trưng, Q.1&quot;;
+ProposedTimeSlot=UtcNow + 30h</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: HandoverRequestDto { PickupAddress = &quot;100 Hai Bà Trưng, Q.1&quot;, Status = &quot;Pending&quot; }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chỉnh sửa thành công yêu cầu khi còn ở trạng thái Pending (U-07)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC013</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Yêu cầu requestId đã được Recycler chấp nhận (Status = Accepted hoặc Scheduled)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+requestId=acceptedRequestId;
+request=UpdateHandoverRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-02&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Chỉ có thể chỉnh sửa yêu cầu đang ở trạng thái Pending.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn chỉnh sửa khi yêu cầu đã được tiếp nhận xử lý (BR-HND-02)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC014</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Yêu cầu requestId đang ở trạng thái Pending (chưa chốt lịch hẹn)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+requestId=validPendingRequestId;
+reason=&quot;Bận việc gia đình đột xuất, dời sang tuần sau&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: HandoverRequestDto { Status = &quot;Cancelled&quot;, CancelReason = &quot;Bận việc gia đình đột xuất, dời sang tuần sau&quot;, IsLateCancellation = false, CanCancel = false }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Người dân hủy yêu cầu trước khi chốt lịch, không bị tính hủy muộn (U-07)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC015</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn đã Accepted có ConfirmedTimeSlot = UtcNow + 2h30m; thời điểm hủy cách lịch hẹn &lt; 4h (LateCancelWindowHours = 4)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+requestId=acceptedRequestId;
+reason=&quot;Không có nhà để bàn giao&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: HandoverRequestDto { Status = &quot;Cancelled&quot;, IsLateCancellation = true, CancelReason = &quot;Không có nhà để bàn giao&quot; }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tự động đánh dấu IsLateCancellation = true khi hủy sát giờ hẹn dưới 4h (BR-HND-06)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC016</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Yêu cầu đang Pending; người dùng gửi yêu cầu hủy nhưng bỏ trống lý do hoặc nhập toàn khoảng trắng</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+requestId=validPendingRequestId;
+reason=&quot;   &quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-06&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Vui lòng nhập lý do.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bắt buộc nhập lý do hủy có nghĩa tối đa 500 ký tự (BR-HND-06)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC017</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn hàng đã ở trạng thái kết thúc Completed (hoặc Rejected)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+requestId=completedRequestId;
+reason=&quot;Hủy đơn&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-02&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Không thể hủy yêu cầu đang ở trạng thái Completed.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn hủy đơn đã hoàn tất giao dịch (BR-HND-02)</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">AcceptAsync, RejectAsync &amp; CancelByRecyclerAsync (R-03 &amp; R-04)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC018</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn requestId gửi cho recyclerId đang ở trạng thái Pending; khung giờ hẹn ProposedTimeSlot = UtcNow + 24h</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+requestId=pendingRequestId;
+note=&quot;Đã ghi nhận, xe sẽ đến đúng giờ&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: HandoverRequestDto { Status = &quot;Accepted&quot;, ConfirmedTimeSlot = ProposedTimeSlot, RecyclerNote = &quot;Đã ghi nhận...&quot;, IsContactRevealed = true }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Recycler chấp nhận yêu cầu: chốt khung giờ hẹn và mở quyền xem thông tin liên hệ (R-03)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC019</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn đang Pending nhưng người dân đề xuất khung giờ đã trôi qua trong quá khứ (ProposedTimeSlot &lt;= UtcNow)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+requestId=outdatedSlotRequestId;
+note=null</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-NEG-04&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Khung giờ đề xuất đã qua, không thể chấp nhận. Vui lòng từ chối hoặc trao đổi lại với người dân.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn chấp nhận yêu cầu khi khung giờ hẹn đề xuất đã hết hạn (BR-NEG-04)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC020</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn requestId gửi cho recyclerId đang ở trạng thái Pending</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+requestId=pendingRequestId;
+reason=&quot;Kho bãi đang đầy tải, không thể tiếp nhận thêm&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: HandoverRequestDto { Status = &quot;Rejected&quot;, CancelReason = &quot;Kho bãi đang đầy tải...&quot;, CancelledByRole = &quot;Recycler&quot; }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Recycler từ chối yêu cầu kèm lý do bắt buộc (R-03)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC021</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn requestId được gửi cho Recycler B; Recycler A cố tình gọi API Accept/Reject đơn này</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=RecyclerA_Id;
+requestId=RequestBelongsToRecyclerB;
+note=&quot;Chấp nhận&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: NotFoundException (&quot;Không tìm thấy yêu cầu bàn giao.&quot;)
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thực thi BR-HND-03: Recycler chỉ có quyền xem và xử lý đơn gửi cho chính mình</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC022</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn đã ở trạng thái Accepted; Recycler gặp sự cố phương tiện trước giờ thu gom</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+requestId=acceptedRequestId;
+reason=&quot;Xe tải thu gom gặp sự cố kỹ thuật đột xuất&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: HandoverRequestDto { Status = &quot;Cancelled&quot;, CancelReason = &quot;Xe tải thu gom...&quot;, CancelledByRole = &quot;Recycler&quot; }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Recycler hủy lịch hẹn thu gom đã xác nhận kèm lý do bắt buộc (R-04)</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">ExpirePendingAsync &amp; Bảo vệ quyền riêng tư (JOB-03 &amp; BR-HND-08)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC023</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Trong database có 3 đơn Pending tạo cách đây 25h và 2 đơn Pending mới tạo cách đây 2h</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">timeout=TimeSpan.FromHours(24)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: int (count = 3)
+Database: 3 đơn quá hạn chuyển sang Status = &quot;Expired&quot;
+Exception: N/A
+Log Message: &quot;JOB-03: đã chuyển 3 yêu cầu sang Expired.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tự động hủy các yêu cầu Pending quá 24h bằng truy vấn nguyên tử ExecuteUpdateAsync (JOB-03)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC024</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn requestId đang ở trạng thái Pending (IsContactRevealed = false); Recycler xem chi tiết đơn</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+requestId=pendingRequestId</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: HandoverRequestDto { PickupAddress = null, Requester.Phone = null, Requester.Address = null, IsContactRevealed = false }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-04</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thực thi BR-HND-08: che giấu SĐT và địa chỉ người dân khi chưa Accept, tuyệt đối không trả toạ độ GPS</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="7_Handover_Receipt">
+  <Table>
+   <Column ss:Width="85"/>
+   <Column ss:Width="180"/>
+   <Column ss:Width="210"/>
+   <Column ss:Width="290"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="80"/>
+   <Column ss:Width="130"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="65"/>
+   <Column ss:Width="75"/>
+   <Column ss:Width="180"/>
+
+   <Row ss:Index="2">
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Code Module</Data></Cell>
+    <Cell ss:MergeAcross="2" ss:StyleID="SummaryValueLeft"><Data ss:Type="String">HandoverReceiptService (R-06, U-09, U-12, JOB-01)</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Number of TCs</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">24</Data></Cell>
+    <Cell ss:MergeAcross="1" ss:StyleID="SummaryValue"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Round</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Failed</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Pending</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">24</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">24</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">0</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">24</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Testing Type</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="SummaryLabelItalic"><Data ss:Type="String">Boundary</Data></Cell>
+   </Row>
+   <Row>
+    <Cell ss:StyleID="SummaryLabel"><Data ss:Type="String">Count</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">12</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">7</Data></Cell>
+    <Cell ss:StyleID="SummaryValue"><Data ss:Type="Number">5</Data></Cell>
+   </Row>
+
+   <Row ss:Index="11" ss:Height="28">
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test Case ID</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Pre-conditions</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Input parameters</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Expected Results</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Type</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 1</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Test date</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Tester</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 2</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Round 3</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Defect IDs</Data></Cell>
+    <Cell ss:StyleID="TableHeader"><Data ss:Type="String">Note</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">PreviewAsync &amp; CreateAsync (HandoverReceiptService - R-06)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC001</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn requestId gửi cho recyclerId đang ở trạng thái Accepted; gồm 2 loại: plastic (Ước tính: 5.0kg, Đơn giá chốt: 7,000 đ) và paper (Ước tính: 10.0kg, Đơn giá chốt: 3,500 đ)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+requestId=acceptedRequestId;
+Items=[{ ItemId=plasticItemId, ActualWeightKg=5.5 }, { ItemId=paperItemId, ActualWeightKg=10.2 }];
+ScaleProofPhotoUrls=[&quot;https://r2.../scale1.jpg&quot;]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ReceiptDto { ReceiptId = null, TotalWeightKg = 15.7, TotalAmountCash = 74200, DeviationPercent = 4.67, HasDeviationWarning = false, Points = 157, PointsCredited = false }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Xem trước biên nhận hợp lệ (PreviewAsync), tính toán thành tiền và điểm thưởng dự kiến (R-06)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC002</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn requestId gửi cho recyclerId đang ở Accepted; chưa có biên nhận</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+requestId=acceptedRequestId;
+Items=[{ ItemId=plasticItemId, ActualWeightKg=5.0 }, { ItemId=paperItemId, ActualWeightKg=10.0 }];
+ScaleProofPhotoUrls=[&quot;https://r2.../scale1.jpg&quot;, &quot;https://r2.../scale2.jpg&quot;];
+ReceiptImageUrl=&quot;https://r2.../paper_receipt.jpg&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ReceiptDto { ReceiptId != null, ReceiptCode = &quot;RCP-2026-0001&quot;, RequestStatus = &quot;AwaitingConfirmation&quot;, TotalWeightKg = 15.0, TotalAmountCash = 70000, ScaleProofPhotoUrls.Count = 2 }
+Database: handover_receipts tạo mới; items khóa AgreedPricePerKg; request chuyển AwaitingConfirmation
+Exception: N/A
+Log Message: &quot;Recycler 22222222-... lập biên nhận RCP-2026-0001 cho yêu cầu ...&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lập biên nhận số thành công, khóa đơn giá giao dịch và chuyển trạng thái sang AwaitingConfirmation (R-06)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC003</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn requestId ban đầu chỉ có plastic; khi cân phát sinh thêm 3.0 kg glass (loại rác Recycler có trong bảng giá Active, đơn giá 2,500 đ/kg)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+Items=[{ ItemId=plasticItemId, ActualWeightKg=5.0 }, { ItemId=null, WasteCategoryId=glassCategoryId, ActualWeightKg=3.0 }];
+ScaleProofPhotoUrls=[&quot;https://r2.../scale.jpg&quot;]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ReceiptDto { Lines.Count = 2, Lines[1].IsExtra = true, Lines[1].WasteCategoryCode = &quot;glass&quot;, TotalWeightKg = 8.0, TotalAmountCash = 42500 }
+Database: Thêm mới dòng phế liệu với ItemNote = &quot;Phát sinh khi cân tại chỗ&quot;
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hỗ trợ thêm phế liệu phát sinh tại chỗ khi cân (AF-01), áp dụng đúng giá niêm yết của cơ sở</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC004</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn có tổng ước tính 10.0 kg; khối lượng cân thực tế là 13.0 kg (chênh lệch +30.0% &gt; 20% ngưỡng cảnh báo)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+Items=[{ ItemId=itemId, ActualWeightKg=13.0 }];
+ScaleProofPhotoUrls=[&quot;https://r2.../scale.jpg&quot;]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ReceiptDto { TotalWeightKg = 13.0, DeviationPercent = 30.0, HasDeviationWarning = true, DeviationMessage = &quot;Khối lượng xác nhận chênh lệch so với thỏa thuận hơn 20%...&quot; }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bật cờ cảnh báo độ lệch khối lượng MSG-HND-04 khi vượt quá 20% nhưng không chặn tạo biên nhận</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC005</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn có tổng ước tính 10.0 kg; khối lượng cân thực tế là 12.0 kg (chênh lệch đúng bằng biên +20.0%)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+Items=[{ ItemId=itemId, ActualWeightKg=12.0 }];
+ScaleProofPhotoUrls=[&quot;https://r2.../scale.jpg&quot;]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ReceiptDto { DeviationPercent = 20.0, HasDeviationWarning = false, DeviationMessage = null }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra biên cảnh báo lệch khối lượng: đúng ngưỡng \le 20\% không bật cờ cảnh báo</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC006</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn requestId đang ở trạng thái Pending (chưa được Recycler Accept) hoặc đã Completed</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+requestId=pendingRequestId;
+request=CreateReceiptRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-02&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Chỉ lập biên nhận cho yêu cầu đã được chấp nhận (hiện tại: Pending).&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn lập biên nhận khi đơn chưa chốt thỏa thuận tiếp nhận (BR-HND-02)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC007</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn requestId được người dân gửi cho Recycler B; Recycler A cố tình gọi API lập biên nhận cho đơn này</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=RecyclerA_Id;
+requestId=RequestBelongsToRecyclerB;
+request=CreateReceiptRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: NotFoundException (&quot;Không tìm thấy yêu cầu bàn giao.&quot;)
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Thực thi BR-HND-03: chỉ cơ sở được chỉ định trong yêu cầu mới có quyền lập biên nhận</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC008</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn requestId đã được lập biên nhận trước đó (Status = AwaitingConfirmation hoặc bảng handover_receipts đã có bản ghi)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+requestId=alreadyReceiptedRequestId;
+request=CreateReceiptRequest</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-04&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Yêu cầu này đã có biên nhận.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đảm bảo tính duy nhất 1-1 giữa yêu cầu bàn giao và biên nhận số (BR-HND-04)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC009</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Danh sách ảnh cân đính kèm có 0 ảnh (rỗng) hoặc có 6 ảnh (&gt; 5 ảnh) hoặc URL ảnh không hợp lệ</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+ScaleProofPhotoUrls=[] (hoặc 6 phần tử URL)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-04&quot;, &quot;MSG-AUTH-02&quot;)
+Log Message: &quot;Vui lòng tải lên ít nhất 1 ảnh cân (BR-HND-04).&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bắt buộc tải lên từ 1 đến 5 ảnh chụp đồng hồ cân minh chứng (BR-HND-04)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC010</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Khối lượng thực tế bằng 0, số âm (-1.5 kg) hoặc có 3 chữ số thập phân (5.125 kg)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+Items=[{ ItemId=itemId, ActualWeightKg=0 }] (hoặc -1.5 / 5.125)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-05&quot;, &quot;MSG-AUTH-02&quot;)
+Log Message: &quot;Khối lượng thực tế phải lớn hơn 0 và tối đa 2 chữ số thập phân.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra biên khối lượng cân thực tế &gt; 0 và tối đa 2 chữ số thập phân (BR-HND-05)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC011</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn yêu cầu gốc có 2 loại phế liệu (plastic và paper); Recycler chỉ nhập khối lượng cho 1 loại</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+Items=[{ ItemId=plasticItemId, ActualWeightKg=5.0 }] (thiếu paper)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-05&quot;, &quot;MSG-AUTH-02&quot;)
+Log Message: &quot;Vui lòng nhập khối lượng thực tế cho tất cả loại phế liệu trong yêu cầu.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Bắt buộc nhập đầy đủ khối lượng cho toàn bộ các dòng phế liệu đã hẹn (EF-02)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC012</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Dòng phát sinh chọn loại phế liệu metal mà cơ sở không thu mua (không có dòng giá Active trong recycler_price_list)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+Items=[{ ItemId=null, WasteCategoryId=metalCategoryId, ActualWeightKg=2.0 }]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-05&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Loại \&quot;Kim loại\&quot; không nằm trong danh mục đang thu mua của cơ sở.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn dòng phát sinh chứa loại phế liệu cơ sở không tiếp nhận (AF-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC013</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Dòng phát sinh chọn loại phế liệu plastic trong khi đơn gốc đã có sẵn dòng plastic</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+Items=[{ ItemId=plasticItemId, ActualWeightKg=5.0 }, { ItemId=null, WasteCategoryId=plasticCategoryId, ActualWeightKg=2.0 }]</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-05&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Loại phế liệu này đã có trong yêu cầu, hãy nhập theo dòng có sẵn.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn khai báo phát sinh trùng lặp với danh mục rác đã có sẵn trong đơn</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">ConfirmAsync &amp; GetForUserAsync (HandoverReceiptService - U-09)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC014</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn requestId thuộc về userId, đang có biên nhận ở trạng thái AwaitingConfirmation</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+requestId=awaitingRequestId</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ReceiptDto { CanConfirm = true, IsLocked = false, PointsCredited = false, ScaleProofPhotoUrls.Count &gt; 0, TotalAmountCash &gt; 0 }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Người dân tra cứu biên nhận trước khi xác nhận (GetForUserAsync), hiển thị cờ CanConfirm = true</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC015</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn requestId thuộc về userId, đang ở AwaitingConfirmation; tổng khối lượng 15.0 kg</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+requestId=awaitingRequestId</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ReceiptDto { RequestStatus = &quot;Completed&quot;, IsLocked = true, CanConfirm = false, Points = 150, PointsCredited = true, ConfirmedByUserAt != null }
+Gamification: Gọi AwardPointsForRecyclingAsync(15.0kg) cho cả userId và recyclerId
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Người dân xác nhận nhận đủ tiền (ConfirmAsync), chuyển trạng thái Completed và cộng điểm cả hai bên (BR-GAM-01)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC016</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn hàng đã ở trạng thái Completed trước đó (hoặc chưa có biên nhận nào)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+requestId=completedRequestId</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: BusinessRuleException (&quot;BR-HND-04&quot;, &quot;MSG-GEN-01&quot;)
+Log Message: &quot;Giao dịch đã hoàn tất và không thể thay đổi.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đảm bảo tính bất biến (Immutability): giao dịch đã hoàn tất thì bị khóa vĩnh viễn (BR-HND-07)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC017</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Người dùng B cố tình gọi API xác nhận biên nhận của Người dùng A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=UserB_Id;
+requestId=RequestOfUserA</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: null
+Exception: NotFoundException (&quot;Không tìm thấy yêu cầu bàn giao.&quot;)
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Abnormal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Chặn người dùng khác xác nhận biên nhận không thuộc sở hữu của mình</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC018</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Đơn hàng đã Completed; Recycler hoặc người dân xem lại biên nhận</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">ownerId=&quot;22222222-...&quot;;
+requestId=completedRequestId</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: ReceiptDto { IsLocked = true, CanConfirm = false, PointsCredited = true, ConfirmedByUserAt != null }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Hoàng Thắng Nguyễn</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Sau khi Completed, biên nhận ở chế độ chỉ đọc (IsLocked = true), không thể chỉnh sửa (BR-HND-07)</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">AutoCompleteExpiredAsync (HandoverReceiptService - JOB-01)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC019</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Trong database có 2 biên nhận AwaitingConfirmation tạo cách đây 50h (&gt; 48h) và 1 biên nhận mới tạo cách đây 10h</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">timeout=TimeSpan.FromHours(48)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: int (count = 2)
+Database: 2 đơn quá hạn chuyển sang Completed, ConfirmedByUserAt = UtcNow, PointsAwarded = weight * 10
+Gamification: Cộng điểm thành công cho các bên liên quan
+Exception: N/A
+Log Message: &quot;JOB-01: đã tự động hoàn tất 2 giao dịch.&quot;</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tự động hoàn tất các giao dịch người dân không xác nhận sau 48 giờ (JOB-01, BR-HND-07)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC020</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Biên nhận A tạo cách đây 48 giờ 05 phút; Biên nhận B tạo cách đây 47 giờ 55 phút</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">timeout=TimeSpan.FromHours(48)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: int (count = 1 - chỉ hoàn tất Biên nhận A, giữ nguyên Biên nhận B chờ người dân)
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Nguyen Thanh Luan</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Kiểm tra biên thời gian tự động hoàn tất timeout 48 giờ của JOB-01</Data></Cell>
+   </Row>
+   <Row ss:Height="22">
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String">HistoryAsync (HandoverReceiptService - U-12)</Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+    <Cell ss:StyleID="MethodRow"><Data ss:Type="String"></Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC021</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Người dân userId đã hoàn tất 3 giao dịch với tổng khối lượng 45.0 kg, tổng tiền 320,000 đ, tổng điểm 450</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">userId=&quot;11111111-...&quot;;
+from=null; to=null;
+page=1; pageSize=10</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: TransactionHistoryDto { TotalCount = 3, TotalWeightKg = 45.0, TotalAmountCash = 320000, TotalPoints = 450, Items.Count = 3, Items[0].CounterpartName = Tên cơ sở thu gom }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lấy lịch sử giao dịch người dân phân trang kèm tổng số liệu lũy kế toàn thời gian (U-12)</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC022</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Recycler recyclerId có 5 giao dịch trong tháng 11/2026; lọc từ 2026-11-01 đến 2026-11-07</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">recyclerId=&quot;22222222-...&quot;;
+from=2026-11-01;
+to=2026-11-07;
+page=1; pageSize=20</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: TransactionHistoryDto { Items.Count = 5, Items[0].CounterpartName = Tên người dân, Categories = [&quot;Nhựa&quot;, &quot;Giấy&quot;] }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Lọc lịch sử giao dịch cơ sở thu gom theo khoảng thời gian và hiển thị danh mục phế liệu đã thu mua</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC023</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Người dùng truyền tham số ngày kết thúc dạng không giờ (to = 2026-11-05 00:00:00)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">ownerId=&quot;11111111-...&quot;;
+to=2026-11-05 00:00:00</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: TransactionHistoryDto (Hệ thống tự động cộng thêm 1 ngày: to &lt; 2026-11-06 00:00:00 để lấy trọn vẹn ngày 05/11)
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Boundary</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Xử lý biên khoảng ngày lọc lịch sử: bao gồm cả các giao dịch trong ngày kết thúc</Data></Cell>
+   </Row>
+   <Row ss:Height="45">
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">UTC024</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Tài khoản mới đăng ký chưa phát sinh giao dịch nào (ConfirmedByUserAt != null)</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">ownerId=newUserId;
+page=1; pageSize=10</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Return: TransactionHistoryDto { Items = [], TotalCount = 0, TotalWeightKg = 0, TotalAmountCash = 0, TotalPoints = 0 }
+Exception: N/A
+Log Message: N/A</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Normal</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Passed</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">2026-11-08</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Giang Nguyễn Đức</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">Pending</Data></Cell>
+    <Cell ss:StyleID="DataCellCenter"><Data ss:Type="String">N/A</Data></Cell>
+    <Cell ss:StyleID="DataCell"><Data ss:Type="String">Trả về danh sách rỗng và số liệu tổng bằng 0 khi người dùng chưa có giao dịch hoàn tất</Data></Cell>
+   </Row>
+  </Table>
+ </Worksheet>
+<Worksheet ss:Name="8_Negotiation_Chatbox">
   <Table>
    <Column ss:Width="85"/>
    <Column ss:Width="180"/>

@@ -45,6 +45,18 @@ public class HandoverReceiptController : ControllerBase
         var data = await _service.ConfirmAsync(UserId, requestId, ct);
         return Ok(ApiResponse<ReceiptDto>.Ok(data, $"Giao dịch #{data.ReceiptCode} đã được đánh dấu hoàn tất.", "MSG-HND-03"));
     }
+
+    /// <summary>
+    /// Khiếu nại sai lệch số liệu biên nhận (U-09 Alternative Flow, BR-DSP-06).
+    /// Chuyển trạng thái đơn sang Disputed để Staff thẩm định lịch sử chat thương lượng bất biến và ảnh bằng chứng cân.
+    /// </summary>
+    [HttpPost("dispute")]
+    [ProducesResponseType(typeof(ApiResponse<ReceiptDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Dispute(Guid requestId, [FromBody] DisputeReceiptRequest request, CancellationToken ct)
+    {
+        var data = await _service.DisputeAsync(UserId, requestId, request, ct);
+        return Ok(ApiResponse<ReceiptDto>.Ok(data, "Khiếu nại biên nhận đã được ghi nhận và chuyển tới bộ phận vận hành thẩm định.", "MSG-DSP-01"));
+    }
 }
 
 /// <summary>Lịch sử giao dịch của người dân (UC U-12).</summary>

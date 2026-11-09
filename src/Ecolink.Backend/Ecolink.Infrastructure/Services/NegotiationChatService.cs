@@ -257,6 +257,13 @@ public class NegotiationChatService : INegotiationChatService
         };
 
         _db.ChatMessages.Add(proposalMessage);
+        await HandoverTradeSyncHelper.SyncNegotiationToHandoverAsync(
+            _db,
+            context.Order,
+            agreedPricePerKg: null,
+            proposedWeightKg: null,
+            timeSlotText: normalizedTimeSlot,
+            ct);
         await _db.SaveChangesAsync(ct);
 
         var senderDisplayName = context.IsCallerCitizen ? context.CitizenName : context.FacilityName;
@@ -408,6 +415,13 @@ public class NegotiationChatService : INegotiationChatService
         });
 
         _db.ChatMessages.Add(systemMessage);
+        await HandoverTradeSyncHelper.SyncNegotiationToHandoverAsync(
+            _db,
+            context.Order,
+            agreedPricePerKg: request.IsAccepted ? context.Order.AgreedPricePerKg : null,
+            proposedWeightKg: request.IsAccepted ? context.Order.EstimatedWeightKg : null,
+            timeSlotText: request.IsAccepted ? context.Order.ConfirmedTimeSlot : null,
+            ct);
         await _db.SaveChangesAsync(ct);
 
         var resultDto = new ProposalAcceptanceResultDto
@@ -507,6 +521,13 @@ public class NegotiationChatService : INegotiationChatService
         };
 
         _db.ChatMessages.Add(systemMessage);
+        await HandoverTradeSyncHelper.SyncNegotiationToHandoverAsync(
+            _db,
+            context.Order,
+            agreedPricePerKg: context.Order.AgreedPricePerKg,
+            proposedWeightKg: context.Order.EstimatedWeightKg,
+            timeSlotText: context.Order.ConfirmedTimeSlot,
+            ct);
         await _db.SaveChangesAsync(ct);
 
         var resultDto = new ProposalAcceptanceResultDto
@@ -594,6 +615,7 @@ public class NegotiationChatService : INegotiationChatService
             or OrderStatus.Negotiating
             or OrderStatus.Accepted
             or OrderStatus.Scheduled
+            or OrderStatus.AwaitingConfirmation
             or OrderStatus.Completed
             or OrderStatus.Disputed;
 
@@ -604,11 +626,7 @@ public class NegotiationChatService : INegotiationChatService
         bool allowStaffOnDisputed,
         CancellationToken ct)
     {
-        var order = await _db.TradeOrders
-            .Include(o => o.User)
-            .Include(o => o.Partner)
-            .Include(o => o.RecyclerProfile)
-            .FirstOrDefaultAsync(o => o.Id == orderId, ct)
+        var order = await HandoverTradeSyncHelper.EnsureTradeOrderForChatAsync(_db, orderId, ct)
             ?? throw new NotFoundException($"Không tìm thấy yêu cầu bàn giao '{orderId}'.");
 
         // Xác định RecyclerUserId và FacilityName từ RecyclerProfile hoặc CollectionPartner

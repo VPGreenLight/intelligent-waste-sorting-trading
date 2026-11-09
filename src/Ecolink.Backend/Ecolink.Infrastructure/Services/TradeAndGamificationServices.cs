@@ -264,6 +264,7 @@ public class TradeTransactionService : ITradeTransactionService
 
                     _dbContext.TradeOrders.Add(orderEntity);
                     await _dbContext.SaveChangesAsync(cancellationToken);
+                    await HandoverTradeSyncHelper.EnsureHandoverFromTradeOrderAsync(_dbContext, orderEntity, cancellationToken);
 
                     orderDto.PartnerId = orderEntity.PartnerId;
                     orderDto.RecyclerUserId = recyclerProfile?.UserId ?? partnerEntity.UserId;
@@ -360,6 +361,18 @@ public class TradeTransactionService : ITradeTransactionService
         {
             try
             {
+                var unsyncedHandoverIds = await _dbContext.HandoverRequests
+                    .AsNoTracking()
+                    .Where(h => (h.UserId == userId || h.RecyclerId == userId) &&
+                                !_dbContext.TradeOrders.Any(o => o.Id == h.Id))
+                    .Select(h => h.Id)
+                    .ToListAsync(cancellationToken);
+
+                foreach (var hid in unsyncedHandoverIds)
+                {
+                    await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(_dbContext, hid, null, null, cancellationToken);
+                }
+
                 var rawOrders = await _dbContext.TradeOrders
                     .AsNoTracking()
                     .Include(o => o.User)
@@ -464,6 +477,7 @@ public class TradeTransactionService : ITradeTransactionService
                 });
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
+                await HandoverTradeSyncHelper.EnsureHandoverFromTradeOrderAsync(_dbContext, dbOrder, cancellationToken);
 
                 var updatedDto = MapEntityToDto(dbOrder);
                 _orders[orderId] = updatedDto;
@@ -531,6 +545,7 @@ public class TradeTransactionService : ITradeTransactionService
                 });
 
                 await _dbContext.SaveChangesAsync(cancellationToken);
+                await HandoverTradeSyncHelper.EnsureHandoverFromTradeOrderAsync(_dbContext, dbOrder, cancellationToken);
 
                 var updatedDto = MapEntityToDto(dbOrder);
                 _orders[orderId] = updatedDto;
