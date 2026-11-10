@@ -506,7 +506,14 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                     <p>Vui lòng cập nhật lại thông tin/chứng từ theo hướng dẫn trên và gửi lại hồ sơ (MSG-MTH-05).</p>
                  </div>";
 
-        await _emailService.SendEmailAsync(user.Email, user.FullName, subject, htmlBody, ct);
+        try
+        {
+            await _emailService.SendEmailAsync(user.Email, user.FullName, subject, htmlBody, ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Không gửi được email thông báo kết quả thẩm định cho {Email} (BR-NTF-06).", user.Email);
+        }
     }
 
     private static RecyclerApplicationDetailDto MapToDetailDto(User user, RecyclerProfile profile) =>

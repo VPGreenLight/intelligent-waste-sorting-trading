@@ -219,8 +219,9 @@ public class HandoverRequestService : IHandoverRequestService
         if (entity.Status is not (HandoverStatus.Pending or HandoverStatus.Negotiating))
             throw new BusinessRuleException("BR-HND-02", "MSG-GEN-01", $"Không thể từ chối yêu cầu đang ở trạng thái {entity.Status}.");
 
+        var cleanedReason = RequireReason(reason);
         entity.Status = HandoverStatus.Rejected;
-        entity.CancelReason = RequireReason(reason);
+        entity.CancelReason = cleanedReason;
         entity.CancelledBy = recyclerId;
         entity.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
@@ -250,12 +251,29 @@ public class HandoverRequestService : IHandoverRequestService
     {
         var cutoff = DateTime.UtcNow - timeout;
         var now = DateTime.UtcNow;
-        // Cập nhật nguyên tử có điều kiện Status = Pending: nếu Recycler vừa Accept thì bản ghi bị bỏ qua.
-        var count = await _db.HandoverRequests
-            .Where(h => h.Status == HandoverStatus.Pending && h.CreatedAt < cutoff)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(h => h.Status, HandoverStatus.Expired)
-                .SetProperty(h => h.UpdatedAt, now), ct);
+        int count;
+        if (_db.Database.IsRelational())
+        {
+            // Cập nhật nguyên tử có điều kiện Status = Pending: nếu Recycler vừa Accept thì bản ghi bị bỏ qua.
+            count = await _db.HandoverRequests
+                .Where(h => h.Status == HandoverStatus.Pending && h.CreatedAt < cutoff)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(h => h.Status, HandoverStatus.Expired)
+                    .SetProperty(h => h.UpdatedAt, now), ct);
+        }
+        else
+        {
+            var pendingExpired = await _db.HandoverRequests
+                .Where(h => h.Status == HandoverStatus.Pending && h.CreatedAt < cutoff)
+                .ToListAsync(ct);
+            foreach (var h in pendingExpired)
+            {
+                h.Status = HandoverStatus.Expired;
+                h.UpdatedAt = now;
+            }
+            count = pendingExpired.Count;
+            if (count > 0) await _db.SaveChangesAsync(ct);
+        }
 
         try
         {

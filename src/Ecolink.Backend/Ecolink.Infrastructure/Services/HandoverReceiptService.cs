@@ -274,20 +274,35 @@ public class HandoverReceiptService : IHandoverReceiptService
         var now = DateTime.UtcNow;
         var points = CalculatePoints(receipt.TotalWeightKg);
 
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        if (_db.Database.IsRelational())
+        {
+            await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
-        // Cập nhật nguyên tử có điều kiện: nếu người dân và job cùng chạy, chỉ một bên thắng -> điểm chỉ cộng một lần
-        var changed = await _db.HandoverRequests
-            .Where(h => h.Id == requestId && h.Status == HandoverStatus.AwaitingConfirmation)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(h => h.Status, HandoverStatus.Completed)
-                .SetProperty(h => h.UpdatedAt, now), ct);
-        if (changed == 0) return null;
+            // Cập nhật nguyên tử có điều kiện: nếu người dân và job cùng chạy, chỉ một bên thắng -> điểm chỉ cộng một lần
+            var changed = await _db.HandoverRequests
+                .Where(h => h.Id == requestId && h.Status == HandoverStatus.AwaitingConfirmation)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(h => h.Status, HandoverStatus.Completed)
+                    .SetProperty(h => h.UpdatedAt, now), ct);
+            if (changed == 0) return null;
 
-        receipt.ConfirmedByUserAt = now;
-        receipt.PointsAwarded = points;
-        await _db.SaveChangesAsync(ct);
-        await tx.CommitAsync(ct);
+            receipt.ConfirmedByUserAt = now;
+            receipt.PointsAwarded = points;
+            await _db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+        }
+        else
+        {
+            var reqEntity = await _db.HandoverRequests
+                .FirstOrDefaultAsync(h => h.Id == requestId && h.Status == HandoverStatus.AwaitingConfirmation, ct);
+            if (reqEntity == null) return null;
+
+            reqEntity.Status = HandoverStatus.Completed;
+            reqEntity.UpdatedAt = now;
+            receipt.ConfirmedByUserAt = now;
+            receipt.PointsAwarded = points;
+            await _db.SaveChangesAsync(ct);
+        }
 
         // BR-GAM-01: cộng điểm cho cả người dân và Recycler. Điểm gốc đã lưu ở points_awarded;
         // GamificationService hiện là bộ nhớ tạm nên lỗi ở đây không được làm hỏng giao dịch.

@@ -141,9 +141,19 @@ public class RecyclerManagementService : IRecyclerManagementService
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
-            var pattern = $"%{keyword.Trim()}%";
-            query = query.Where(p => EF.Functions.ILike(p.WasteCategory!.Name, pattern)
-                                     || EF.Functions.ILike(p.WasteCategory!.Code, pattern));
+            if (_db.Database.IsRelational())
+            {
+                var pattern = $"%{keyword.Trim()}%";
+                query = query.Where(p => EF.Functions.ILike(p.WasteCategory!.Name, pattern)
+                                         || EF.Functions.ILike(p.WasteCategory!.Code, pattern));
+            }
+            else
+            {
+                var kw = keyword.Trim().ToLowerInvariant();
+                query = query.Where(p => p.WasteCategory != null &&
+                                         (p.WasteCategory.Name.ToLower().Contains(kw) ||
+                                          p.WasteCategory.Code.ToLower().Contains(kw)));
+            }
         }
 
         var items = await query.OrderBy(p => p.WasteCategory!.Name).ToListAsync(ct);
