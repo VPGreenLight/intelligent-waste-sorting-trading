@@ -669,10 +669,15 @@ public class HandoverReceiptService : IHandoverReceiptService
         var prefix = $"RCP-{year}-";
         if (_db.Database.IsRelational())
         {
-            var n = await _db.Database
-                .SqlQuery<long>($"SELECT nextval('seq_handover_receipt_code') AS \"Value\"")
-                .SingleAsync(ct);
-            return $"{prefix}{n:D4}";
+            while (true)
+            {
+                var n = await _db.Database
+                    .SqlQuery<long>($"SELECT nextval('seq_handover_receipt_code') AS \"Value\"")
+                    .SingleAsync(ct);
+                var candidate = $"{prefix}{n:D4}";
+                if (!await _db.HandoverReceipts.AnyAsync(r => r.ReceiptCode == candidate, ct))
+                    return candidate;
+            }
         }
 
         var count = await _db.HandoverReceipts.CountAsync(r => r.ReceiptCode.StartsWith(prefix), ct);

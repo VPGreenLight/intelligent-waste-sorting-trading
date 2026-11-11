@@ -429,11 +429,17 @@ public class HandoverRequestService : IHandoverRequestService
         var prefix = $"HND-{(DateTime.UtcNow + LocalOffset):yyyyMMdd}-";
         if (_db.Database.IsRelational())
         {
-            // Số thứ tự lấy từ sequence PostgreSQL (nguyên tử, không trùng khi tạo đồng thời)
-            var n = await _db.Database
-                .SqlQuery<long>($"SELECT nextval('seq_handover_request_code') AS \"Value\"")
-                .SingleAsync(ct);
-            return $"{prefix}{n:D4}";
+            // Số thứ tự lấy từ sequence PostgreSQL (nguyên tử, không trùng khi tạo đồng thời
+            // và tự động bỏ qua các mã cũ đã tạo trước khi bổ sung sequence)
+            while (true)
+            {
+                var n = await _db.Database
+                    .SqlQuery<long>($"SELECT nextval('seq_handover_request_code') AS \"Value\"")
+                    .SingleAsync(ct);
+                var candidate = $"{prefix}{n:D4}";
+                if (!await _db.HandoverRequests.AnyAsync(h => h.RequestCode == candidate, ct))
+                    return candidate;
+            }
         }
 
         var count = await _db.HandoverRequests.CountAsync(h => h.RequestCode.StartsWith(prefix), ct);
