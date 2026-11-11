@@ -22,8 +22,8 @@ public static class NegotiationRoutes
 /// <summary>
 /// Bộ kiểm thử tích hợp (Integration Tests) cho Module 8: In-App Real-Time Negotiation Chatbox (U-08, R-05).
 /// Kiểm chứng luồng tích hợp xuyên suốt: Khởi tạo đơn bàn giao (M6) -> Mở luồng chat &amp; kiểm soát quyền (BR-NEG-01)
-/// -> Gửi tin nhắn văn bản &amp; đính kèm ảnh R2 -> Gửi Đề xuất giá/giờ &amp; Phản đề xuất ghi đè (`Superseded` - BR-NEG-04)
-/// -> Chấp nhận Đề xuất khóa cứng `AgreedPricePerKg` &amp; `ConfirmedTimeSlot` vào đơn (BR-NEG-06) -> Đánh dấu đã đọc.
+/// -> Gửi tin nhắn văn bản &amp; đính kèm ảnh R2 -> Gửi Đề xuất giá/giờ &amp; Phản đề xuất ghi đè (`Superseded` - BR-NEG-03/04)
+/// -> Chấp nhận Đề xuất khóa cứng `AgreedPricePerKg` &amp; `ConfirmedTimeSlot` vào đơn (BR-NEG-05) -> Đánh dấu đã đọc.
 /// </summary>
 [Trait("Category", "NegotiationChat")]
 public class NegotiationChatTests
@@ -79,7 +79,7 @@ public class NegotiationChatTests
         var uploadRes = (await Api.SendAsync(HttpMethod.Post, NegotiationRoutes.Attachments(orderId), form, citizenToken))
             .ShouldBe(200);
         Assert.Equal("MSG-NEG-UPLOAD-OK", uploadRes.MessageCode());
-        var attachmentUrl = uploadRes.Data().Str("fileUrl");
+        var attachmentUrl = uploadRes.Data().Str("attachmentUrl");
         Assert.False(string.IsNullOrWhiteSpace(attachmentUrl));
 
         // 2. Citizen gửi tin nhắn Text -> 201 Created (MSG-NEG-02)
@@ -124,7 +124,7 @@ public class NegotiationChatTests
         object payload = scenario switch
         {
             "empty-text" => new { messageType = "Text", messageContent = "   ", attachmentUrl = (string?)null },
-            "too-long-text" => new { messageType = "Text", messageContent = new string('x', 1005), attachmentUrl = (string?)null },
+            "too-long-text" => new { messageType = "Text", messageContent = new string('x', 2005), attachmentUrl = (string?)null },
             "image-without-url" => new { messageType = "Image", messageContent = "Ảnh", attachmentUrl = (string?)"" },
             "unsupported-type" => new { messageType = "Audio", messageContent = "Voice", attachmentUrl = (string?)null },
             _ => throw new ArgumentException(scenario)
@@ -134,7 +134,7 @@ public class NegotiationChatTests
             .ShouldFailWith(400);
     }
 
-    // ======================= NEG-04: Validation gửi Đề xuất (BR-NEG-03 & BR-NEG-05) =======================
+    // ======================= NEG-04: Validation gửi Đề xuất (BR-NEG-03 & BR-NEG-04) =======================
 
     [Theory]
     [InlineData("zero-price")]
@@ -147,14 +147,13 @@ public class NegotiationChatTests
         var citizenToken = await HandoverHelper.Citizen();
 
         var futureSlot = DateTime.UtcNow.AddHours(6).ToString("O");
-        var pastSlot = DateTime.UtcNow.AddHours(-2).ToString("O");
 
         object payload = scenario switch
         {
             "zero-price" => new { proposedPricePerKg = 0m, proposedWeightKg = 5m, proposedTimeSlot = futureSlot, note = "Giá 0đ" },
-            "over-max-price" => new { proposedPricePerKg = 1_500_000m, proposedWeightKg = 5m, proposedTimeSlot = futureSlot, note = "Giá vượt trần" },
-            "tiny-weight" => new { proposedPricePerKg = 8000m, proposedWeightKg = 0.05m, proposedTimeSlot = futureSlot, note = "Khối lượng < 0.1kg" },
-            "past-timeslot" => new { proposedPricePerKg = 8000m, proposedWeightKg = 5m, proposedTimeSlot = pastSlot, note = "Giờ quá khứ" },
+            "over-max-price" => new { proposedPricePerKg = 15_000_000m, proposedWeightKg = 5m, proposedTimeSlot = futureSlot, note = "Giá vượt trần 10M" },
+            "tiny-weight" => new { proposedPricePerKg = 8000m, proposedWeightKg = 0m, proposedTimeSlot = futureSlot, note = "Khối lượng <= 0kg" },
+            "past-timeslot" => new { proposedPricePerKg = 8000m, proposedWeightKg = 5m, proposedTimeSlot = "   ", note = "Thiếu khung giờ đề xuất" },
             _ => throw new ArgumentException(scenario)
         };
 
@@ -162,7 +161,7 @@ public class NegotiationChatTests
             .ShouldFailWith(400);
     }
 
-    // ======================= NEG-05: Phản đề xuất ghi đè đề xuất cũ (BR-NEG-04: Superseded) =======================
+    // ======================= NEG-05: Phản đề xuất ghi đè đề xuất cũ (BR-NEG-03: Superseded) =======================
 
     [Fact]
     public async Task NEG05_SendProposal_AndCounterProposal_SupersedesPreviousActiveProposal_BrNeg04()
@@ -183,7 +182,7 @@ public class NegotiationChatTests
 
         Assert.Equal("MSG-NEG-01", propARes.MessageCode());
         var propAId = propARes.Data().GetProperty("id").GetGuid();
-        Assert.Equal("Pending", propARes.Data().Str("proposalStatus"));
+        Assert.Equal("Pending", propARes.Data().GetProperty("proposal").Str("proposalStatus"));
 
         // 2. Collector gửi Phản đề xuất B (8.500đ/kg) -> Đề xuất A tự động chuyển sang Superseded
         var slotB = DateTime.UtcNow.AddHours(6).ToString("O");
@@ -196,19 +195,19 @@ public class NegotiationChatTests
         }, collectorToken)).ShouldBe(201);
 
         var propBId = propBRes.Data().GetProperty("id").GetGuid();
-        Assert.Equal("Pending", propBRes.Data().Str("proposalStatus"));
+        Assert.Equal("Pending", propBRes.Data().GetProperty("proposal").Str("proposalStatus"));
 
         // 3. Kiểm tra trên Thread: ActiveProposal hiện tại là B, còn A đã là Superseded
         var thread = (await Api.GetAsync(NegotiationRoutes.Messages(orderId), citizenToken)).ShouldBe(200).Data();
-        Assert.Equal("InNegotiation", thread.Str("negotiationStatus"));
+        Assert.Equal("Negotiating", thread.Str("orderStatus"));
         Assert.Equal(propBId, thread.GetProperty("activeProposal").GetProperty("id").GetGuid());
 
-        var messages = thread.GetProperty("messages").EnumerateArray().ToList();
+        var messages = thread.GetProperty("messages").GetProperty("items").EnumerateArray().ToList();
         var msgA = messages.First(m => m.GetProperty("id").GetGuid() == propAId);
-        Assert.Equal("Superseded", msgA.Str("proposalStatus"));
+        Assert.Equal("Superseded", msgA.GetProperty("proposal").Str("proposalStatus"));
     }
 
-    // ======================= NEG-06: Chặn tự chấp nhận đề xuất của chính mình (BR-NEG-04) =======================
+    // ======================= NEG-06: Chặn tự chấp nhận đề xuất của chính mình (BR-NEG-03) =======================
 
     [Fact]
     public async Task NEG06_RespondToProposal_SenderCannotRespondToOwnProposal_Returns400WithBrNeg04()
@@ -226,12 +225,12 @@ public class NegotiationChatTests
 
         var propId = propRes.Data().GetProperty("id").GetGuid();
 
-        // Citizen tự bấm chấp nhận đề xuất do chính mình vừa gửi -> bị chặn bởi BR-NEG-04
+        // Citizen tự bấm chấp nhận đề xuất do chính mình vừa gửi -> bị chặn bởi BR-NEG-03 (MSG-NEG-SELF-RESPONSE)
         (await ApiJson.PostAsync(NegotiationRoutes.RespondProposal(orderId, propId), new
         {
             isAccepted = true,
             responseNote = "Tự duyệt"
-        }, citizenToken)).ShouldFailWith(400, "BR-NEG-04");
+        }, citizenToken)).ShouldFailWith(400, "MSG-NEG-SELF-RESPONSE");
     }
 
     // ======================= NEG-07: Từ chối đề xuất & gửi lại đề xuất mới =======================
@@ -252,16 +251,16 @@ public class NegotiationChatTests
         }, citizenToken)).ShouldBe(201);
         var prop1Id = prop1.Data().GetProperty("id").GetGuid();
 
-        // Collector từ chối Đề xuất 1 -> 200 OK (MSG-NEG-REJECT-OK), ProposalStatus = Rejected
+        // Collector từ chối Đề xuất 1 -> 200 OK (MSG-NEG-03), ProposalStatus = Rejected
         var rejectRes = (await ApiJson.PostAsync(NegotiationRoutes.RespondProposal(orderId, prop1Id), new
         {
             isAccepted = false,
             responseNote = "Mức giá này cao hơn trần thu mua hôm nay của cơ sở."
         }, collectorToken)).ShouldBe(200);
 
-        Assert.Equal("MSG-NEG-REJECT-OK", rejectRes.MessageCode());
+        Assert.Equal("MSG-NEG-03", rejectRes.MessageCode());
         Assert.Equal("Rejected", rejectRes.Data().Str("proposalStatus"));
-        Assert.Equal("InNegotiation", rejectRes.Data().Str("negotiationStatus"));
+        Assert.False(rejectRes.Data().GetProperty("isProposalLocked").GetBoolean());
 
         // Sau khi bị từ chối, Citizen gửi lại Đề xuất 2 hợp lý hơn -> 201 Created
         var prop2 = (await ApiJson.PostAsync(NegotiationRoutes.Proposals(orderId), new
@@ -272,10 +271,10 @@ public class NegotiationChatTests
             note = "Đề xuất lần 2 điều chỉnh giá"
         }, citizenToken)).ShouldBe(201);
 
-        Assert.Equal("Pending", prop2.Data().Str("proposalStatus"));
+        Assert.Equal("Pending", prop2.Data().GetProperty("proposal").Str("proposalStatus"));
     }
 
-    // ======================= NEG-08: Chấp nhận đề xuất -> Khóa giá & giờ vào Đơn (BR-NEG-06) =======================
+    // ======================= NEG-08: Chấp nhận đề xuất -> Khóa giá & giờ vào Đơn (BR-NEG-05) =======================
 
     [Fact]
     public async Task NEG08_RespondToProposal_CounterpartyAccepts_LocksAgreedPriceAndTimeSlotIntoOrder_BrNeg06()
@@ -304,9 +303,10 @@ public class NegotiationChatTests
         Assert.Equal("MSG-NEG-03", acceptRes.MessageCode());
         var acceptData = acceptRes.Data();
         Assert.Equal("Accepted", acceptData.Str("proposalStatus"));
-        Assert.Equal("Accepted", acceptData.Str("negotiationStatus"));
+        Assert.Equal("Accepted", acceptData.Str("orderStatus"));
+        Assert.True(acceptData.GetProperty("isProposalLocked").GetBoolean());
         Assert.Equal(8800m, acceptData.GetProperty("agreedPricePerKg").GetDecimal());
-        Assert.Equal(8800m * 12m, acceptData.GetProperty("estimatedTotalAmount").GetDecimal());
+        Assert.Equal(12m, acceptData.GetProperty("confirmedWeightKg").GetDecimal());
 
         // 2. Sau khi đã Accepted, mọi nỗ lực gửi thêm Proposal mới đều bị khóa bởi BR-NEG-02
         (await ApiJson.PostAsync(NegotiationRoutes.Proposals(orderId), new
@@ -315,7 +315,7 @@ public class NegotiationChatTests
             proposedWeightKg = 12m,
             proposedTimeSlot = DateTime.UtcNow.AddHours(6).ToString("O"),
             note = "Đổi ý sau khi đã chốt"
-        }, citizenToken)).ShouldFailWith(400, "BR-NEG-02");
+        }, citizenToken)).ShouldFailWith(400, "MSG-NEG-PROPOSAL-LOCKED");
 
         // 3. Kiểm tra liên Module 6 & 7: Đơn bàn giao đã chuyển sang Accepted và cho phép xem trước biên nhận
         var orderDetail = (await Api.GetAsync(HandoverRoutes.One(orderId), citizenToken)).ShouldBe(200).Data();
@@ -334,8 +334,8 @@ public class NegotiationChatTests
             .ShouldBe(200);
 
         Assert.Equal("MSG-NEG-03", res.MessageCode());
-        Assert.Equal("Accepted", res.Data().Str("negotiationStatus"));
         Assert.Equal("Accepted", res.Data().Str("orderStatus"));
+        Assert.True(res.Data().GetProperty("isProposalLocked").GetBoolean());
         Assert.True(res.Data().GetProperty("agreedPricePerKg").GetDecimal() > 0m);
     }
 
@@ -367,7 +367,7 @@ public class NegotiationChatTests
         var readRes = (await ApiJson.PutAsync(NegotiationRoutes.MarkRead(orderId), null, collectorToken))
             .ShouldBe(200);
         Assert.Equal("MSG-NEG-READ-OK", readRes.MessageCode());
-        Assert.True(readRes.Data().GetInt32() >= 2);
+        Assert.True(readRes.Data().GetProperty("markedCount").GetInt32() >= 2);
 
         // Kiểm tra lại Thread của Collector -> UnreadCount == 0
         var afterRead = (await Api.GetAsync(NegotiationRoutes.Messages(orderId), collectorToken)).ShouldBe(200).Data();

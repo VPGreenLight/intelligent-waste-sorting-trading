@@ -210,7 +210,7 @@ public class WasteScanTests
         "models" => Api.GetAsync(Routes.ScanModels, token),
         "rules" => Api.GetAsync(Routes.ScanRules, token),
         "classify" => Api.SendAsync(HttpMethod.Post, Routes.ScanClassify, Multipart(TestImages.Png()), token),
-        "feedback" => Api.PostJsonAsync(Routes.ScanFeedback, new { note = "anonymous request" }, token),
+        "feedback" => Api.PostJsonAsync(Routes.ScanFeedback, new { userReportedLabel = "plastic", note = "anonymous request" }, token),
         _ => throw new ArgumentException(endpoint),
     };
 

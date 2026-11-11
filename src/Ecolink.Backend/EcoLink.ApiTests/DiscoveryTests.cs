@@ -145,7 +145,7 @@ public class DiscoveryTests
 
         // Lấy thông tin tọa độ và ID của collector hiện tại từ Module 4
         var profile = (await Api.GetAsync(RecyclerRoutes.Profile, collectorToken)).ShouldBe(200).Data();
-        var collectorUserId = profile.GetProperty("userId").GetGuid();
+        var collectorUserId = profile.GetProperty("recyclerId").GetGuid();
         var lat = profile.GetProperty("latitude").GetDecimal().ToString(System.Globalization.CultureInfo.InvariantCulture);
         var lng = profile.GetProperty("longitude").GetDecimal().ToString(System.Globalization.CultureInfo.InvariantCulture);
 
@@ -202,7 +202,7 @@ public class DiscoveryTests
         await RecyclerHelper.EnsureBaselineAsync();
         var collectorToken = await RecyclerHelper.CollectorToken();
         var collectorUserId = (await Api.GetAsync(RecyclerRoutes.Profile, collectorToken))
-            .ShouldBe(200).Data().GetProperty("userId").GetGuid();
+            .ShouldBe(200).Data().GetProperty("recyclerId").GetGuid();
 
         var detailRes = (await Api.GetAsync(DiscoveryRoutes.RecyclerPublicDetail(collectorUserId), query: new Dictionary<string, string>
         {
@@ -242,8 +242,8 @@ public class DiscoveryTests
             ["radiusKm"] = "15"
         })).ShouldBe(200);
 
-        Assert.True(tradePartners.Body.GetProperty("success").GetBoolean());
-        Assert.NotEmpty(tradePartners.Data().EnumerateArray());
+        Assert.Equal(JsonValueKind.Array, tradePartners.Body.ValueKind);
+        Assert.NotEmpty(tradePartners.Body.EnumerateArray());
 
         // 2. GET /api/v1/geocoding/search với từ khóa quá ngắn (< 2 ký tự) -> 400 Bad Request
         (await Api.GetAsync(DiscoveryRoutes.GeocodingSearch, query: new Dictionary<string, string>

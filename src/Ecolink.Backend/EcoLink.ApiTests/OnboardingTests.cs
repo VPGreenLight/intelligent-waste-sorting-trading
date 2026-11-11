@@ -73,11 +73,11 @@ public static class OnboardingHelper
             ["businessAddress"] = "Khu Công Nghệ Cao Hòa Lạc, Thạch Thất, Hà Nội",
             ["latitude"] = 21.0135,
             ["longitude"] = 105.5265,
-            ["businessLicenseUrl"] = $"https://cdn.ecolink.vn/onboarding-docs/permit_{suffix}.png",
-            ["facilityPhotoUrl"] = $"https://cdn.ecolink.vn/onboarding-docs/facility_{suffix}.png",
+            ["legalPermitUrl"] = $"https://cdn.ecolink.vn/onboarding-docs/permit_{suffix}.png",
+            ["businessPhotoUrl"] = $"https://cdn.ecolink.vn/onboarding-docs/facility_{suffix}.png",
             ["contactPhone"] = "0987654321",
-            ["openingHours"] = "07:30 - 18:00 (Thứ 2 - Thứ 7)",
-            ["taxCode"] = "0109876543"
+            ["operatingHours"] = "07:30 - 18:00 (Thứ 2 - Thứ 7)",
+            ["description"] = "Thu mua nhựa PET, giấy carton và lon nhôm tận nơi."
         };
     }
 }
@@ -104,13 +104,14 @@ public class OnboardingTests
         Assert.True(permitRes.Body.GetProperty("success").GetBoolean());
         var permitData = permitRes.Data();
         Assert.False(string.IsNullOrWhiteSpace(permitData.Str("fileUrl")));
-        Assert.Equal("permit", permitData.Str("documentType"));
+        Assert.Contains("legal-permits", permitData.Str("objectKey") ?? string.Empty);
 
         using var photoForm = OnboardingHelper.CreateDocumentMultipart("facility-photo", "anh-co-so.png");
         var photoRes = (await Api.SendAsync(HttpMethod.Post, OnboardingRoutes.UploadDocument, photoForm, citizenToken))
             .ShouldBe(200);
 
         Assert.False(string.IsNullOrWhiteSpace(photoRes.Data().Str("fileUrl")));
+        Assert.Contains("facility-photos", photoRes.Data().Str("objectKey") ?? string.Empty);
     }
 
     // ======================= ONB-02: Phân quyền nộp đơn (RBAC) =======================
@@ -123,10 +124,10 @@ public class OnboardingTests
         // 1. Không có JWT token -> 401 Unauthorized
         (await ApiJson.PostAsync(OnboardingRoutes.Base, payload)).ShouldBe(401);
 
-        // 2. Tài khoản Collector đã là Recycler -> bị chặn bởi BR-MTH-06 (400 Bad Request)
+        // 2. Tài khoản Collector đã là Recycler được duyệt -> bị chặn bởi BR-MTH-01 (400 Bad Request, MSG-MTH-04)
         var collectorToken = await Tokens.GetAsync("collector");
         (await ApiJson.PostAsync(OnboardingRoutes.Base, payload, collectorToken))
-            .ShouldFailWith(400, "MSG-MTH-06");
+            .ShouldFailWith(400, "MSG-MTH-04");
     }
 
     // ======================= ONB-03: Validation tọa độ & chứng từ =======================
@@ -153,12 +154,12 @@ public class OnboardingTests
                 payload["facilityName"] = "";
                 break;
             case "missing-license-url":
-                payload["businessLicenseUrl"] = "";
+                payload["legalPermitUrl"] = "";
                 break;
         }
 
         (await ApiJson.PostAsync(OnboardingRoutes.Base, payload, citizenToken))
-            .ShouldFailWith(400, "MSG-MTH-06");
+            .ShouldFailWith(400, "MSG-GEN-01");
     }
 
     // ======================= ONB-04: Citizen nộp đơn & tra cứu trạng thái /me =======================
@@ -187,7 +188,7 @@ public class OnboardingTests
         Assert.Equal("Pending", meRes.Data().Str("verificationStatus"));
     }
 
-    // ======================= ONB-05: Chặn nộp trùng khi đang Pending (BR-MTH-06) =======================
+    // ======================= ONB-05: Chặn nộp trùng khi đang Pending (BR-MTH-01) =======================
 
     [Fact]
     public async Task ONB05_SubmitApplication_DuplicateWhenAlreadyPending_Returns400WithMsgMth06()
@@ -197,9 +198,9 @@ public class OnboardingTests
 
         (await ApiJson.PostAsync(OnboardingRoutes.Base, payload, citizenToken)).ShouldBe(201);
 
-        // Nộp lần 2 khi hồ sơ đang chờ duyệt -> 400 Bad Request (MSG-MTH-06)
+        // Nộp lần 2 khi hồ sơ đang chờ duyệt -> 400 Bad Request (MSG-MTH-03)
         (await ApiJson.PostAsync(OnboardingRoutes.Base, payload, citizenToken))
-            .ShouldFailWith(400, "MSG-MTH-06");
+            .ShouldFailWith(400, "MSG-MTH-03");
     }
 
     // ======================= ONB-06: Phân quyền Staff/Admin xem danh sách & chi tiết (S-04) =======================
@@ -224,7 +225,7 @@ public class OnboardingTests
             ["pageSize"] = "20"
         })).ShouldBe(200);
 
-        Assert.True(listRes.Data().GetProperty("totalCount").GetInt32() >= 1);
+        Assert.True(listRes.Data().GetProperty("totalRecords").GetInt32() >= 1);
 
         var detailRes = (await Api.GetAsync(OnboardingRoutes.Detail(userId), adminToken)).ShouldBe(200);
         Assert.Equal(userId, detailRes.Data().GetProperty("userId").GetGuid());
@@ -262,7 +263,7 @@ public class OnboardingTests
         Assert.Equal(reason, rejectRes.Data().Str("rejectionReason"));
 
         // 3. Citizen bổ sung chứng từ và nộp lại hồ sơ -> 201 Created, quay lại trạng thái Pending
-        payload["businessLicenseUrl"] = "https://cdn.ecolink.vn/onboarding-docs/permit_resubmitted_hd.png";
+        payload["legalPermitUrl"] = "https://cdn.ecolink.vn/onboarding-docs/permit_resubmitted_hd.png";
         var resubmitRes = (await ApiJson.PostAsync(OnboardingRoutes.Base, payload, citizenToken)).ShouldBe(201);
         Assert.Equal("Pending", resubmitRes.Data().Str("verificationStatus"));
     }
@@ -308,4 +309,3 @@ public class OnboardingTests
         Assert.NotEmpty(prices);
     }
 }
-

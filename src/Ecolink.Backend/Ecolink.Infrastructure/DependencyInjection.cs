@@ -62,6 +62,12 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, GmailSmtpEmailService>();
         services.AddScoped<IAuthService, AuthService>();
 
+        // Đăng ký HttpClient cho Cloudflare R2 Object Storage (KYB Permits, Facility Photos, Chat Attachments)
+        services.AddHttpClient<IFileStorageService, CloudflareR2StorageService>();
+
+        // Đăng ký Recycler Onboarding & Verification Service (Module 3: U-17 & S-04)
+        services.AddScoped<IRecyclerOnboardingService, RecyclerOnboardingService>();
+
         // Đăng ký Recycler Profile, Pricing & Availability Service (R-01, R-02)
         services.AddScoped<IRecyclerManagementService, RecyclerManagementService>();
 
