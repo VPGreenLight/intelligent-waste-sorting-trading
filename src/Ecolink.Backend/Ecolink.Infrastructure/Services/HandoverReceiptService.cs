@@ -665,10 +665,17 @@ public class HandoverReceiptService : IHandoverReceiptService
     /// </summary>
     private async Task<string> GenerateCodeAsync(CancellationToken ct)
     {
-        var n = await _db.Database
-            .SqlQuery<long>($"SELECT nextval('seq_handover_receipt_code') AS \"Value\"")
-            .SingleAsync(ct);
         var year = DateTime.UtcNow.AddHours(7).ToString("yyyy", CultureInfo.InvariantCulture);
-        return $"RCP-{year}-{n:D6}";
+        var prefix = $"RCP-{year}-";
+        if (_db.Database.IsRelational())
+        {
+            var n = await _db.Database
+                .SqlQuery<long>($"SELECT nextval('seq_handover_receipt_code') AS \"Value\"")
+                .SingleAsync(ct);
+            return $"{prefix}{n:D4}";
+        }
+
+        var count = await _db.HandoverReceipts.CountAsync(r => r.ReceiptCode.StartsWith(prefix), ct);
+        return $"{prefix}{count + 1:D4}";
     }
 }
