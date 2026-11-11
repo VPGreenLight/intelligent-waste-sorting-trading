@@ -1,0 +1,134 @@
+================================================================================
+[PART 1] ECOLINK.UNITTESTS - POST-MERGE REGRESSION (31/168 FAILED)
+Branch merged: origin/handover-completion-&-transaction-receipt-fix (aeabd7b3 -> 72a67446)
+Timestamp: 2026-11-11T12:41:18+07:00
+================================================================================
+
+[xUnit.net 00:00:02.41]     Ecolink.UnitTests.Module06_HandoverRequest.HandoverRequestUnitTests.UTC001_CreateAsync_ValidSingleItem_ReturnsPendingAndHNDCode [FAIL]
+  Failed Ecolink.UnitTests.Module06_HandoverRequest.HandoverRequestUnitTests.UTC001_CreateAsync_ValidSingleItem_ReturnsPendingAndHNDCode [48 ms]
+  Error Message:
+   System.InvalidOperationException : Relational-specific methods can only be used when the context is using a relational database provider.
+  Stack Trace:
+     at Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade.GetRelationalConnection()
+     at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.SqlQueryRaw[TResult](DatabaseFacade databaseFacade, String sql, Object[] parameters)
+     at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.SqlQuery[TResult](DatabaseFacade databaseFacade, FormattableString sql)
+     at Ecolink.Infrastructure.Services.HandoverRequestService.GenerateCodeAsync(CancellationToken ct) in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.Infrastructure\Services\HandoverRequestService.cs:line 431
+     at Ecolink.Infrastructure.Services.HandoverRequestService.CreateAsync(Guid userId, CreateHandoverRequest req, CancellationToken ct) in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.Infrastructure\Services\HandoverRequestService.cs:line 72
+     at Ecolink.UnitTests.Module06_HandoverRequest.HandoverRequestUnitTests.UTC001_CreateAsync_ValidSingleItem_ReturnsPendingAndHNDCode() in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.UnitTests\Module06_HandoverRequest\HandoverRequestUnitTests.cs:line 64
+
+[xUnit.net 00:00:02.89]     Ecolink.UnitTests.Module07_HandoverReceipt.HandoverReceiptUnitTests.UTC001_CreateAsync_Cash_ValidWeightsAndScalePhoto_ReturnsAwaitingConfirmation [FAIL]
+  Failed Ecolink.UnitTests.Module07_HandoverReceipt.HandoverReceiptUnitTests.UTC001_CreateAsync_Cash_ValidWeightsAndScalePhoto_ReturnsAwaitingConfirmation [31 ms]
+  Error Message:
+   System.InvalidOperationException : Relational-specific methods can only be used when the context is using a relational database provider.
+  Stack Trace:
+     at Microsoft.EntityFrameworkCore.Infrastructure.DatabaseFacade.GetRelationalConnection()
+     at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.SqlQueryRaw[TResult](DatabaseFacade databaseFacade, String sql, Object[] parameters)
+     at Microsoft.EntityFrameworkCore.RelationalDatabaseFacadeExtensions.SqlQuery[TResult](DatabaseFacade databaseFacade, FormattableString sql)
+     at Ecolink.Infrastructure.Services.HandoverReceiptService.GenerateCodeAsync(CancellationToken ct) in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.Infrastructure\Services\HandoverReceiptService.cs:line 669
+     at Ecolink.Infrastructure.Services.HandoverReceiptService.CreateAsync(Guid recyclerId, Guid requestId, CreateReceiptRequest req, CancellationToken ct) in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.Infrastructure\Services\HandoverReceiptService.cs:line 74
+     at Ecolink.UnitTests.Module07_HandoverReceipt.HandoverReceiptUnitTests.UTC001_CreateAsync_Cash_ValidWeightsAndScalePhoto_ReturnsAwaitingConfirmation() in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.UnitTests\Module07_HandoverReceipt\HandoverReceiptUnitTests.cs:line 79
+
+[xUnit.net 00:00:03.12]     Ecolink.UnitTests.Module07_HandoverReceipt.HandoverReceiptUnitTests.UTC004_CreateAsync_SequentialReceipts_IncrementsReceiptCode [FAIL]
+  Failed Ecolink.UnitTests.Module07_HandoverReceipt.HandoverReceiptUnitTests.UTC004_CreateAsync_SequentialReceipts_IncrementsReceiptCode [19 ms]
+  Error Message:
+   Assert.Matches() Failure:
+   Regex: ^RCP-\d{4}-\d{4}$
+   Value: RCP-2026-000001
+  Stack Trace:
+     at Ecolink.UnitTests.Module07_HandoverReceipt.HandoverReceiptUnitTests.UTC004_CreateAsync_SequentialReceipts_IncrementsReceiptCode() in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.UnitTests\Module07_HandoverReceipt\HandoverReceiptUnitTests.cs:line 142
+
+Failed!  - Failed:    31, Passed:   137, Skipped:     0, Total:   168, Duration: 4 s - Ecolink.UnitTests.dll (net10.0)
+
+
+================================================================================
+[PART 2] EF CORE MIGRATION INSPECTION BEFORE DATABASE UPDATE
+Timestamp: 2026-11-11T13:02:11+07:00
+================================================================================
+
+info: Ecolink.Infrastructure.DependencyInjection[0]
+      Using Local DB Connection String
+20261020130550_InitialAuthModule
+20261030015551_RecyclerPriceListAndAvailability
+20261031134442_StandardizeSnakeCaseSchemaAndDesignColumns
+20261103102102_HandoverRequests
+20261107151710_HandoverReceipts
+20261109022316_HandoverCodeSequences (Pending)
+20261109154426_AddPendingModelChanges
+
+
+================================================================================
+[PART 3] ECOLINK.WEBAPI RUNTIME DI RESOLUTION ERRORS (HTTP 500 MSG-SYS-500)
+Captured during EcoLink.ApiTests live integration run against localhost:5000
+Timestamp: 2026-11-11T13:24:09+07:00
+================================================================================
+
+fail: Ecolink.WebApi.Middlewares.GlobalExceptionMiddleware[0]
+      [Unhandled Error] Tuyến /api/v1/recycler-applications xảy ra lỗi: Unable to resolve service for type 'Ecolink.Application.Interfaces.IRecyclerOnboardingService' while attempting to activate 'Ecolink.WebApi.Controllers.RecyclerApplicationsController'.
+      System.InvalidOperationException: Unable to resolve service for type 'Ecolink.Application.Interfaces.IRecyclerOnboardingService' while attempting to activate 'Ecolink.WebApi.Controllers.RecyclerApplicationsController'.
+         at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.ThrowHelperUnableToResolveService(Type type, Type requiredBy)
+         at lambda_method318(Closure, IServiceProvider, Object[])
+         at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+      --- End of stack trace from previous location ---
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+         at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+         at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+         at Ecolink.WebApi.Middlewares.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.WebApi\Middlewares\GlobalExceptionMiddleware.cs:line 31
+
+fail: Ecolink.WebApi.Middlewares.GlobalExceptionMiddleware[0]
+      [Unhandled Error] Tuyến /api/v1/trade/orders/d900bb74-8536-46bb-a195-87556dda07e1/proposals xảy ra lỗi: Unable to resolve service for type 'Ecolink.Application.Interfaces.IFileStorageService' while attempting to activate 'Ecolink.WebApi.Controllers.NegotiationChatController'.
+      System.InvalidOperationException: Unable to resolve service for type 'Ecolink.Application.Interfaces.IFileStorageService' while attempting to activate 'Ecolink.WebApi.Controllers.NegotiationChatController'.
+         at Microsoft.Extensions.DependencyInjection.ActivatorUtilities.ThrowHelperUnableToResolveService(Type type, Type requiredBy)
+         at lambda_method342(Closure, IServiceProvider, Object[])
+         at Microsoft.AspNetCore.Mvc.Controllers.ControllerFactoryProvider.<>c__DisplayClass6_0.<CreateControllerFactory>g__CreateController|0(ControllerContext controllerContext)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.InvokeInnerFilterAsync()
+      --- End of stack trace from previous location ---
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+         at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Awaited|17_0(ResourceInvoker invoker, Task task, IDisposable scope)
+         at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+         at Microsoft.AspNetCore.Authentication.AuthenticationMiddleware.Invoke(HttpContext context)
+         at Ecolink.WebApi.Middlewares.GlobalExceptionMiddleware.InvokeAsync(HttpContext context) in c:\Projects\EcoLink\intelligent-waste-sorting-trading\src\Ecolink.Backend\Ecolink.WebApi\Middlewares\GlobalExceptionMiddleware.cs:line 31
+
+
+================================================================================
+[PART 4] AI MICROSERVICE CONNECTION & INTEGRATION TEST CONTRACT ERRORS
+Timestamp: 2026-11-11T13:24:35+07:00
+================================================================================
+
+[xUnit.net 00:00:11.42]     EcoLink.ApiTests.WasteScanTests.Classify_ValidPng_Returns200_WithLabelAndConfidence [FAIL]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+   Expected: OK
+   Actual:   BadRequest
+   Response Body:
+   {
+     "success": false,
+     "message": "Lỗi kết nối tới AI Service: No connection could be made because the target machine actively refused it. (localhost:8000)",
+     "messageCode": "MSG-CLS-03",
+     "errors": [],
+     "timestamp": "2026-11-11T06:24:35Z"
+   }
+
+[xUnit.net 00:00:12.05]     EcoLink.ApiTests.WasteScanTests.Feedback_WithoutAuth_IsAllowedByDesign [FAIL]
+  Error Message:
+   Assert.NotEqual() Failure: Values are equal
+   Expected: Not Unauthorized
+   Actual:   BadRequest (MSG-GEN-01: UserReportedLabel is required when submitting feedback)
+
+[xUnit.net 00:00:18.77]     EcoLink.ApiTests.OnboardingTests.CitizenSubmitValidKybApplication_Returns200Or201 [FAIL]
+  Error Message:
+   Assert.True() Failure
+   Expected: True (200/201)
+   Actual:   False (HTTP 500 InternalServerError - MSG-SYS-500)
+
+[xUnit.net 00:00:26.14]     EcoLink.ApiTests.NegotiationChatTests.ProposalLifecycle_CitizenPropose_RecyclerAccept_LocksOrder [FAIL]
+  Error Message:
+   Assert.True() Failure
+   Expected: True (200/201)
+   Actual:   False (HTTP 500 InternalServerError - MSG-SYS-500)
+
