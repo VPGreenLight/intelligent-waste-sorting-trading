@@ -55,5 +55,8 @@ public class ApplicationDbContext : DbContext
 
         // Quét tự động tất cả các cấu hình Fluent API trong tầng Infrastructure
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+        modelBuilder.HasSequence<long>("seq_handover_request_code").StartsAt(1).IncrementsBy(1);
+        modelBuilder.HasSequence<long>("seq_handover_receipt_code").StartsAt(1).IncrementsBy(1);
     }
 }

@@ -659,10 +659,16 @@ public class HandoverReceiptService : IHandoverReceiptService
         catch (JsonException) { return new List<string> { json }; }
     }
 
+    /// <summary>
+    /// Mã biên nhận lấy số từ sequence PostgreSQL (nextval là nguyên tử) nên hai yêu cầu đồng thời
+    /// không bao giờ nhận cùng một số, và việc xóa bản ghi cũng không làm số bị dùng lại.
+    /// </summary>
     private async Task<string> GenerateCodeAsync(CancellationToken ct)
     {
-        var prefix = $"RCP-{DateTime.UtcNow.AddHours(7).ToString("yyyy", CultureInfo.InvariantCulture)}-";
-        var count = await _db.HandoverReceipts.CountAsync(r => r.ReceiptCode.StartsWith(prefix), ct);
-        return $"{prefix}{count + 1:D4}";
+        var n = await _db.Database
+            .SqlQuery<long>($"SELECT nextval('seq_handover_receipt_code') AS \"Value\"")
+            .SingleAsync(ct);
+        var year = DateTime.UtcNow.AddHours(7).ToString("yyyy", CultureInfo.InvariantCulture);
+        return $"RCP-{year}-{n:D6}";
     }
 }
