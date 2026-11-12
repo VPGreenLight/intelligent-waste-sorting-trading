@@ -175,7 +175,6 @@ public static class Tokens
     {
         ["citizen"] = ("citizen", "citizen123"),
         ["collector"] = ("collector", "collector123"),
-        ["staff"] = ("staff", "staff123"),
         ["admin"] = ("admin", "admin123"),
     };
 

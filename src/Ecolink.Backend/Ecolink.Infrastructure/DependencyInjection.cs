@@ -82,6 +82,8 @@ public static class DependencyInjection
         // Đăng ký PayOS Gateway Service (Pay-in & Pay-out)
         services.AddSingleton<IPayOsService, PayOsService>();
 
+        services.AddScoped<IBlogPostService, BlogPostService>();
+
         return services;
     }
 }

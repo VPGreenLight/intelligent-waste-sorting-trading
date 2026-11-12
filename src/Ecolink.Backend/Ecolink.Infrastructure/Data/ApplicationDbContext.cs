@@ -24,6 +24,9 @@ public class ApplicationDbContext : DbContext
     public DbSet<HandoverRequest> HandoverRequests => Set<HandoverRequest>();
     public DbSet<HandoverRequestItem> HandoverRequestItems => Set<HandoverRequestItem>();
     public DbSet<HandoverReceipt> HandoverReceipts => Set<HandoverReceipt>();
+    public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<StaffPermissionAssignment> StaffPermissionAssignments => Set<StaffPermissionAssignment>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();

@@ -138,8 +138,8 @@ public class ReceiptTests
             var r = (await ApiJson.PostAsync(HandoverRoutes.RcPreview(id), ReceiptHelper.Body(items, new[] { 12.5m }), await Collector())).ShouldBe(200);
             var d = r.Data();
             Assert.Equal(12.5m, d.GetProperty("totalWeightKg").GetDecimal());
-            Assert.Equal(100000m, d.GetProperty("totalAmountCash").GetDecimal());   // 12.5 kg x 8.000
-            Assert.Equal(125, d.GetProperty("points").GetInt64());                   // 10 điểm / kg
+            Assert.Equal(100000m, d.GetProperty("totalAmountCash").GetDecimal());   
+            Assert.Equal(125, d.GetProperty("points").GetInt64());                   
             Assert.False(d.GetProperty("pointsCredited").GetBoolean());
             Assert.Equal(JsonValueKind.Null, d.GetProperty("receiptId").ValueKind);
 
@@ -161,12 +161,12 @@ public class ReceiptTests
             var items = await ReceiptHelper.ItemsAsync(id);
             var r = (await ApiJson.PostAsync(HandoverRoutes.RcReceipt(id), ReceiptHelper.Body(items, new[] { 12.5m }), await Collector())).ShouldBe(201);
             var d = r.Data();
-            Assert.Matches(@"^RCP-\d{4}-\d{4}$", d.Str("receiptCode")!);
+            Assert.Matches(@"^RCP-\d{4}-\d{4,}$", d.Str("receiptCode")!);
             Assert.Equal("AwaitingConfirmation", d.Str("requestStatus"));
             Assert.Equal(12.5m, d.GetProperty("totalWeightKg").GetDecimal());
             Assert.Equal(100000m, d.GetProperty("totalAmountCash").GetDecimal());
             Assert.False(d.GetProperty("isLocked").GetBoolean());
-            Assert.False(d.GetProperty("canConfirm").GetBoolean());                  // phía Recycler không xác nhận được
+            Assert.False(d.GetProperty("canConfirm").GetBoolean());                  
             var line = d.GetProperty("lines")[0];
             Assert.Equal(8000m, line.GetProperty("unitPricePerKg").GetDecimal());
             Assert.Equal(100000m, line.GetProperty("subTotal").GetDecimal());
@@ -454,6 +454,29 @@ public class ReceiptTests
             await HandoverHelper.EnsureRecyclerReadyAsync();
             await ReceiptHelper.CompleteQuietlyAsync(id);
         }
+    }
+
+    [Fact]
+    public async Task Create_ConcurrentReceipts_HaveUniqueCodes()
+    {
+        await Prepare();
+        var ids = new List<Guid>();
+        for (var i = 0; i < 3; i++) ids.Add(await ReceiptHelper.AcceptedRequestAsync());
+        try
+        {
+            var token = await Collector();
+            var bodies = new List<object>();
+            foreach (var id in ids) bodies.Add(ReceiptHelper.Body(await ReceiptHelper.ItemsAsync(id), new[] { 10m }));
+
+            // Gửi đồng thời để kiểm tra việc sinh mã không bị trùng
+            var results = await Task.WhenAll(ids.Select((id, i) =>
+                ApiJson.PostAsync(HandoverRoutes.RcReceipt(id), bodies[i], token)));
+
+            foreach (var r in results) r.ShouldBe(201);
+            var codes = results.Select(r => r.Data().Str("receiptCode")).ToList();
+            Assert.Equal(3, codes.Distinct().Count());
+        }
+        finally { foreach (var id in ids) await ReceiptHelper.CompleteQuietlyAsync(id); }
     }
 
     // ---------------- 4. Cảnh báo lệch khối lượng (MSG-HND-04) ----------------
