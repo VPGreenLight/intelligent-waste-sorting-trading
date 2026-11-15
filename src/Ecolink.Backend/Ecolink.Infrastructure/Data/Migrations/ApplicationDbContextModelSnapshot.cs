@@ -143,6 +143,154 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("accepted_materials", (string)null);
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.AccountModerationLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("action_type");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("NewStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("new_status");
+
+                    b.Property<Guid>("PerformedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("performed_by");
+
+                    b.Property<string>("PreviousStatus")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("previous_status");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<Guid?>("RelatedComplaintId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("related_complaint_id");
+
+                    b.Property<int>("RevokedTokensCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("revoked_tokens_count");
+
+                    b.Property<Guid>("TargetUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("target_user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_account_moderation_logs");
+
+                    b.HasIndex("PerformedBy");
+
+                    b.HasIndex("TargetUserId", "CreatedAt")
+                        .HasDatabaseName("idx_account_moderation_logs_target_created_at");
+
+                    b.ToTable("account_moderation_logs", (string)null);
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AuditLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Action")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("action");
+
+                    b.Property<string>("ActorEmail")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("actor_email");
+
+                    b.Property<string>("ActorRole")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("actor_role");
+
+                    b.Property<Guid?>("ActorUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("actor_user_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("EntityId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_id");
+
+                    b.Property<string>("EntityType")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("entity_type");
+
+                    b.Property<string>("IpAddress")
+                        .HasMaxLength(45)
+                        .HasColumnType("character varying(45)")
+                        .HasColumnName("ip_address");
+
+                    b.Property<string>("NewValues")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("new_values");
+
+                    b.Property<string>("OldValues")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("old_values");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("reason");
+
+                    b.Property<string>("UserAgent")
+                        .HasMaxLength(512)
+                        .HasColumnType("character varying(512)")
+                        .HasColumnName("user_agent");
+
+                    b.HasKey("Id")
+                        .HasName("pk_audit_logs");
+
+                    b.HasIndex("CreatedAt")
+                        .HasDatabaseName("idx_audit_logs_created_at");
+
+                    b.HasIndex("EntityType", "EntityId")
+                        .HasDatabaseName("idx_audit_logs_entity");
+
+                    b.HasIndex("ActorUserId", "Action", "CreatedAt")
+                        .HasDatabaseName("idx_audit_logs_actor_action");
+
+                    b.ToTable("audit_logs", (string)null);
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.ChatMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -742,9 +890,6 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(150)")
                         .HasColumnName("facility_name");
 
-                    b.Property<Guid>("Id")
-                        .HasColumnType("uuid");
-
                     b.Property<bool>("IsDeleted")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("boolean")
@@ -761,7 +906,6 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasColumnName("legal_permit_url");
 
                     b.Property<Point>("Location")
-                        .IsRequired()
                         .HasColumnType("geometry(Point, 4326)")
                         .HasColumnName("geom");
 
@@ -946,6 +1090,102 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasDatabaseName("uq_sorting_guidance_rules_category_id");
 
                     b.ToTable("sorting_guidance_rules", (string)null);
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.StaffAttendance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CheckInAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("check_in_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime?>("CheckOutAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("check_out_at");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("ShiftNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("shift_note");
+
+                    b.Property<Guid>("StaffId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("staff_id");
+
+                    b.Property<int>("StreakDay")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("streak_day");
+
+                    b.Property<int>("TasksCompletedSnapshot")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("tasks_completed_snapshot");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<DateOnly>("WorkDate")
+                        .HasColumnType("date")
+                        .HasColumnName("work_date");
+
+                    b.Property<int>("WorkPointsEarned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(10)
+                        .HasColumnName("work_points_earned");
+
+                    b.Property<int?>("WorkedMinutes")
+                        .HasColumnType("integer")
+                        .HasColumnName("worked_minutes");
+
+                    b.HasKey("Id")
+                        .HasName("pk_staff_attendances");
+
+                    b.HasIndex("WorkDate")
+                        .HasDatabaseName("idx_staff_attendances_work_date");
+
+                    b.HasIndex("StaffId", "WorkDate")
+                        .IsUnique()
+                        .HasDatabaseName("uq_staff_attendances_staff_work_date");
+
+                    b.ToTable("staff_attendances", (string)null);
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.StaffPermissionAssignment", b =>
@@ -1279,6 +1519,19 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("lockout_until");
 
+                    b.Property<DateTime?>("ModeratedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("moderated_at");
+
+                    b.Property<Guid?>("ModeratedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("moderated_by");
+
+                    b.Property<string>("ModerationReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("moderation_reason");
+
                     b.Property<string>("PasswordHash")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
@@ -1316,6 +1569,12 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("username");
 
+                    b.Property<int>("WarningCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("warning_count");
+
                     b.HasKey("Id")
                         .HasName("pk_users");
 
@@ -1326,6 +1585,9 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.HasIndex("Username")
                         .IsUnique()
                         .HasDatabaseName("uq_users_username");
+
+                    b.HasIndex("Role", "Status", "CreatedAt")
+                        .HasDatabaseName("idx_users_role_status_created_at");
 
                     b.ToTable("users", (string)null);
                 });
@@ -1495,6 +1757,38 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("Partner");
 
                     b.Navigation("WasteCategory");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AccountModerationLog", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", "PerformedByUser")
+                        .WithMany("ModerationLogsPerformed")
+                        .HasForeignKey("PerformedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_account_moderation_logs_actor_users");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", "TargetUser")
+                        .WithMany("ModerationLogsReceived")
+                        .HasForeignKey("TargetUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_account_moderation_logs_target_users");
+
+                    b.Navigation("PerformedByUser");
+
+                    b.Navigation("TargetUser");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AuditLog", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", "ActorUser")
+                        .WithMany("AuditLogs")
+                        .HasForeignKey("ActorUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_audit_logs_users");
+
+                    b.Navigation("ActorUser");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.ChatMessage", b =>
@@ -1671,6 +1965,18 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("WasteCategory");
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.StaffAttendance", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.StaffProfile", "StaffProfile")
+                        .WithMany("Attendances")
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_staff_attendances_staff_profiles");
+
+                    b.Navigation("StaffProfile");
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.StaffPermissionAssignment", b =>
                 {
                     b.HasOne("Ecolink.Domain.Entities.StaffProfile", "StaffProfile")
@@ -1767,6 +2073,8 @@ namespace Ecolink.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Ecolink.Domain.Entities.StaffProfile", b =>
                 {
+                    b.Navigation("Attendances");
+
                     b.Navigation("Permissions");
                 });
 
@@ -1779,9 +2087,15 @@ namespace Ecolink.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Ecolink.Domain.Entities.User", b =>
                 {
+                    b.Navigation("AuditLogs");
+
                     b.Navigation("EcoProfile");
 
                     b.Navigation("Feedbacks");
+
+                    b.Navigation("ModerationLogsPerformed");
+
+                    b.Navigation("ModerationLogsReceived");
 
                     b.Navigation("PartnerProfile");
 

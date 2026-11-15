@@ -55,6 +55,7 @@ public class StaffProfile : BaseAuditableEntity
     public string Status { get; set; } = "ACTIVE";
 
     public ICollection<StaffPermissionAssignment> Permissions { get; set; } = new List<StaffPermissionAssignment>();
+    public ICollection<StaffAttendance> Attendances { get; set; } = new List<StaffAttendance>();
 }
 
 /// <summary>

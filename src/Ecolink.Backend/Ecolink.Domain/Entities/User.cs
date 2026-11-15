@@ -23,6 +23,12 @@ public class User : BaseAuditableEntity
     public int FailedLoginAttempts { get; set; } = 0;
     public DateTime? LockoutUntil { get; set; }
 
+    // Theo dõi kiểm duyệt tài khoản & cảnh cáo vi phạm (UC S-06, S-07, BR-ADM-03, BR-ADM-04)
+    public int WarningCount { get; set; } = 0;
+    public string? ModerationReason { get; set; }
+    public DateTime? ModeratedAt { get; set; }
+    public Guid? ModeratedBy { get; set; }
+
     // Helper property phục vụ tương thích ngược
     public bool IsActive
     {
@@ -30,11 +36,14 @@ public class User : BaseAuditableEntity
         set => Status = value ? UserStatus.Active : UserStatus.Suspended;
     }
 
-    // Navigation properties - Module 1
+    // Navigation properties - Module 1 & Governance (M-15)
     public RecyclerProfile? RecyclerProfile { get; set; }
     public StaffProfile? StaffProfile { get; set; }
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
     public ICollection<PasswordResetToken> PasswordResetTokens { get; set; } = new List<PasswordResetToken>();
+    public ICollection<AccountModerationLog> ModerationLogsReceived { get; set; } = new List<AccountModerationLog>();
+    public ICollection<AccountModerationLog> ModerationLogsPerformed { get; set; } = new List<AccountModerationLog>();
+    public ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 
     // Navigation properties - Các phân hệ khác
     public UserEcoProfile? EcoProfile { get; set; }

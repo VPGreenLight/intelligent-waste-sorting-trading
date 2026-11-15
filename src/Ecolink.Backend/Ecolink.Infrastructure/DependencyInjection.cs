@@ -10,8 +10,9 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Đăng ký Interceptor kiểm toán tự động & xóa mềm
+        // Đăng ký Interceptor kiểm toán tự động, xóa mềm & bảo vệ bất biến AuditLog (BR-ADM-05)
         services.AddScoped<Data.Interceptors.AuditableEntityInterceptor>();
+        services.AddSingleton<Data.Interceptors.AuditLogImmutabilityInterceptor>();
 
         // Đăng ký CSDL PostgreSQL + PostGIS NetTopologySuite
         var connectionString = configuration.GetConnectionString("DefaultConnection") 
@@ -22,13 +23,14 @@ public static class DependencyInjection
             services.AddDbContext<Data.ApplicationDbContext>((sp, options) =>
             {
                 var interceptor = sp.GetRequiredService<Data.Interceptors.AuditableEntityInterceptor>();
+                var auditGuard = sp.GetRequiredService<Data.Interceptors.AuditLogImmutabilityInterceptor>();
                 options.UseNpgsql(connectionString, npgsqlOptions =>
                 {
                     npgsqlOptions.UseNetTopologySuite();
                     npgsqlOptions.MigrationsAssembly(typeof(Data.ApplicationDbContext).Assembly.FullName);
                 })
                 .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning))
-                .AddInterceptors(interceptor);
+                .AddInterceptors(interceptor, auditGuard);
             });
         }
 
@@ -81,6 +83,14 @@ public static class DependencyInjection
 
         // Đăng ký PayOS Gateway Service (Pay-in & Pay-out)
         services.AddSingleton<IPayOsService, PayOsService>();
+
+        // Đăng ký Module M-15: Governance, Staff, Attendance, Analytics & Audit Trail (FE-17, FE-18)
+        services.AddSingleton<IAuthStateCacheInvalidator, MemoryAuthStateCacheInvalidator>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IAccountGovernanceService, AccountGovernanceService>();
+        services.AddScoped<IStaffManagementService, StaffManagementService>();
+        services.AddScoped<IStaffAttendanceService, StaffAttendanceService>();
+        services.AddScoped<IAdminAnalyticsService, AdminAnalyticsService>();
 
         return services;
     }

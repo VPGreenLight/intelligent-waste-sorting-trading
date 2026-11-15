@@ -40,6 +40,13 @@ public class ApplicationDbContext : DbContext
     public DbSet<WasteCategory> WasteCategories => Set<WasteCategory>();
     public DbSet<AIFeedbackLog> AIFeedbackLogs => Set<AIFeedbackLog>();
 
+    // ==========================================
+    // MODULE M-15: GOVERNANCE, STAFF, ATTENDANCE & AUDIT TRAIL (FE-17, FE-18)
+    // ==========================================
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<AccountModerationLog> AccountModerationLogs => Set<AccountModerationLog>();
+    public DbSet<StaffAttendance> StaffAttendances => Set<StaffAttendance>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);

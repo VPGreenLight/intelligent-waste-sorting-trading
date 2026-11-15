@@ -2,11 +2,14 @@ using System.Text;
 using Ecolink.Application;
 using Ecolink.Application.Common;
 using Ecolink.Application.Interfaces;
+using Ecolink.Domain.Constants;
 using Ecolink.Infrastructure;
 using Ecolink.WebApi.Hubs;
 using Ecolink.WebApi.Middlewares;
+using Ecolink.WebApi.Security;
 using Ecolink.WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -92,7 +95,16 @@ builder.Services.AddAuthentication(options =>
         }
     };
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var code in StaffPermissions.AllCodes)
+    {
+        options.AddPolicy(
+            $"{HasPermissionAttribute.PolicyPrefix}{code}",
+            policy => policy.Requirements.Add(new PermissionRequirement(code)));
+    }
+});
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 // Cấu hình Swagger / OpenAPI Documentation
 builder.Services.AddEndpointsApiExplorer();
@@ -139,6 +151,7 @@ builder.Services.AddCors(options =>
         policy.SetIsOriginAllowed(_ => true)
               .AllowAnyMethod()
               .AllowAnyHeader()
+              .WithExposedHeaders("Content-Disposition", "X-EcoLink-Message-Code", "X-EcoLink-Row-Count")
               .AllowCredentials();
     });
 });
@@ -151,6 +164,7 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
+app.UseMiddleware<AccountStatusGuardMiddleware>();
 app.UseAuthorization();
 
 // Kích hoạt Swagger UI cho cả Local và Tunnel (ngrok)

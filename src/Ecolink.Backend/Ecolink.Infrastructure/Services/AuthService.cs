@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using Ecolink.Domain.Constants;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
 using Ecolink.Domain.Exceptions;
@@ -185,11 +186,11 @@ public class AuthService : IAuthService
             throw new BusinessRuleException("BR-AUTH-03", "MSG-AUTH-01", "Tên đăng nhập, email hoặc mật khẩu không chính xác.");
         }
 
-        // BR-AUTH-05: Chặn tài khoản đang bị đình chỉ hoạt động (Suspended)
-        if (user.Status == UserStatus.Suspended)
+        // BR-AUTH-05: Chặn tài khoản đang bị đình chỉ hoạt động (Suspended) hoặc đã vô hiệu hóa mềm (Deactivated)
+        if (user.Status is UserStatus.Suspended or UserStatus.Deactivated)
         {
             throw new BusinessRuleException("BR-AUTH-05", "MSG-AUTH-04",
-                "Tài khoản của bạn đã bị tạm đình chỉ hoạt động do vi phạm quy chuẩn nền tảng. Vui lòng liên hệ bộ phận hỗ trợ.");
+                "Tài khoản của bạn đã bị tạm đình chỉ hoặc ngừng kích hoạt do vi phạm quy chuẩn nền tảng. Vui lòng liên hệ bộ phận hỗ trợ.");
         }
 
         // BR-AUTH-04: Kiểm tra trạng thái khóa tạm thời (Lockout)
@@ -387,6 +388,13 @@ public class AuthService : IAuthService
             existingToken.IsRevoked = true;
             await _dbContext.SaveChangesAsync(ct);
             throw new BusinessRuleException("BR-AUTH-05", "MSG-NTF-01", "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
+        }
+
+        if (existingToken.User.Status is UserStatus.Suspended or UserStatus.Deactivated)
+        {
+            existingToken.IsRevoked = true;
+            await _dbContext.SaveChangesAsync(ct);
+            throw new BusinessRuleException("BR-AUTH-05", "MSG-AUTH-04", "Tài khoản của bạn đã bị đình chỉ hoặc vô hiệu hóa. Phiên làm việc đã bị thu hồi.");
         }
 
         var (newRawToken, newTokenHash) = _tokenService.GenerateRefreshToken();
@@ -912,6 +920,30 @@ public class AuthService : IAuthService
 
             await _dbContext.SaveChangesAsync(ct);
             _logger.LogInformation("Đảm bảo đầy đủ tài khoản Demo (citizen, collector, staff, admin) trong PostgreSQL");
+        }
+
+        // Đảm bảo tài khoản demoStaff luôn có StaffProfile (NV-001) và bộ quyền chuẩn phục vụ vận hành (A-03, A-04)
+        if (await _dbContext.Users.AnyAsync(u => u.Id == demoStaffId, ct) &&
+            !await _dbContext.StaffProfiles.AnyAsync(s => s.UserId == demoStaffId, ct))
+        {
+            var staffProfile = new StaffProfile
+            {
+                UserId = demoStaffId,
+                StaffCode = "NV-001",
+                Department = "Vận hành tổng hợp",
+                Position = "Trưởng ca vận hành",
+                Status = "ACTIVE",
+                Permissions = StaffPermissions.AllCodes.Select(code => new StaffPermissionAssignment
+                {
+                    Id = Guid.NewGuid(),
+                    StaffId = demoStaffId,
+                    PermissionCode = code,
+                    GrantedBy = demoAdminId,
+                    GrantedAt = DateTime.UtcNow
+                }).ToList()
+            };
+            _dbContext.StaffProfiles.Add(staffProfile);
+            await _dbContext.SaveChangesAsync(ct);
         }
 
         // Seed 6 danh mục rác chuẩn (waste_categories) nếu chưa có

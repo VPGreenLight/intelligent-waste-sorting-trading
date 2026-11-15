@@ -14,8 +14,9 @@ public enum UserStatus
 {
     Active = 1,
     Locked = 2,                 // Khóa tạm thời do sai mật khẩu 5 lần (BR-AUTH-04)
-    Suspended = 3,              // Đình chỉ do vi phạm quy chuẩn
-    PendingVerification = 4     // Chờ xác minh email
+    Suspended = 3,              // Đình chỉ tạm thời do vi phạm quy chuẩn (UC S-07, BR-ADM-03)
+    PendingVerification = 4,    // Chờ xác minh email
+    Deactivated = 5             // Vô hiệu hóa mềm vĩnh viễn, giữ biên nhận lịch sử (UC S-07, BR-ADM-04)
 }
 
 public enum VerificationStatus

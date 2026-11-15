@@ -46,6 +46,7 @@ public static class TestDbContextFactory
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
             .UseInMemoryDatabase(dbName ?? $"ecolink_unit_test_{Guid.NewGuid():N}")
             .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+            .AddInterceptors(new Ecolink.Infrastructure.Data.Interceptors.AuditLogImmutabilityInterceptor())
             .EnableSensitiveDataLogging()
             .Options;
 

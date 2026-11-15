@@ -2,8 +2,8 @@
 ## (FULL-SCOPE API INVENTORY, FORECAST & STATISTICAL DASHBOARD)
 
 **Dự án:** EcoLink – Intelligent Waste Sorting & Trading Platform (`SEP490_G141`)  
-**Phiên bản tài liệu:** `v2.0.0` (Cập nhật quy mô toàn dự án theo SRS `Report-3` – Bao gồm API đã triển khai & API dự kiến cho 6 nhóm phân hệ mở rộng)  
-**Thời điểm cập nhật:** 11/11/2026  
+**Phiên bản tài liệu:** `v2.1.0` (Cập nhật tiến độ sau khi hoàn tất triển khai `FE-17` & `FE-18` thuộc Module `M-15`)  
+**Thời điểm cập nhật:** 15/11/2026  
 **Công nghệ Backend:** ASP.NET Core 10 WebApi (Clean Architecture, Npgsql PostGIS, SignalR WebSocket)  
 **Công nghệ AI Service:** Python 3.11 FastAPI (YOLOv8 + MobileNetV3 + EfficientNet)  
 **Tình trạng tài liệu:** **Tài liệu quy hoạch & đối chiếu tổng thể (Master API Inventory)** – Dùng làm nguồn dữ liệu chuẩn để đồng bộ bảng tính `Report_API List_SEP490_G141` trên Google Drive (`Dashboard` & `API Inventory`).
@@ -18,27 +18,27 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
   * **173 Endpoints thuộc Core Backend (`Ecolink.WebApi` - .NET 10):** gồm **171 REST APIs** và **2 SignalR WebSocket Hubs** (`/hubs/negotiation-chat`, `/hubs/notifications`).
   * **11 REST Endpoints thuộc Dedicated AI Vision Service (`FastAPI` - Python 3.11):** phục vụ nhận diện đa mô hình, Rule Engine, đồng bộ tập dữ liệu huấn luyện và nạp nóng mô hình.
 * **Tiến độ triển khai thực tế trên nhánh `develop` hiện tại:**
-  * **Đã triển khai (`86 Endpoints` – đạt `46.7%`):** gồm `76` Core REST APIs + `1` SignalR Hub + `9` AI FastAPI APIs.
-  * **Dự kiến bổ sung (`98 Endpoints` – chiếm `53.3%`):** gồm `95` Core REST APIs + `1` SignalR Hub + `2` AI FastAPI APIs trải đều trên các phân hệ `FE-03 (Admin Rules)`, `FE-10`, `FE-13`, `FE-14`, `FE-15`, `FE-16`, `FE-17`, `FE-18` và `SU-04`.
+  * **Đã triển khai (`105 Endpoints` – đạt `57.1%`):** gồm `95` Core REST APIs + `1` SignalR Hub + `9` AI FastAPI APIs.
+  * **Dự kiến bổ sung (`79 Endpoints` – chiếm `42.9%`):** gồm `76` Core REST APIs + `1` SignalR Hub + `2` AI FastAPI APIs trải đều trên các phân hệ `FE-03 (Admin Rules)`, `FE-10`, `FE-13`, `FE-14`, `FE-15`, `FE-16` và `SU-04`.
 
 ```text
 +--------------------------------------------------------------------------------------------------+
 |                      TỔNG QUY MÔ API TOÀN HỆ THỐNG ECOLINK (FULL SRS SCOPE)                      |
 |                                          184 ENDPOINTS                                           |
-|                     [ Đã triển khai: 86 (46.7%)  |  Dự kiến bổ sung: 98 (53.3%) ]                |
+|                    [ Đã triển khai: 105 (57.1%)  |  Dự kiến bổ sung: 79 (42.9%) ]                |
 +---------------------------------------------------+----------------------------------------------+
 |        Core .NET 10 WebApi: 173 Endpoints         |     Dedicated AI Service: 11 Endpoints       |
 |     (171 REST APIs + 2 SignalR WebSocket Hubs)    |            (FastAPI Python 3.11)             |
-|       [ Đã có: 77  |  Dự kiến bổ sung: 96 ]       |        [ Đã có: 9  |  Dự kiến thêm: 2 ]      |
+|       [ Đã có: 96  |  Dự kiến bổ sung: 77 ]       |        [ Đã có: 9  |  Dự kiến thêm: 2 ]      |
 +---------------------------------------------------+----------------------------------------------+
 ```
 
 ### Bảng chỉ số KPI đầu trang cho Sheet `API Inventory` & `Dashboard` (Google Drive)
 
-| Chỉ số KPI trên Google Sheet | Hiện trạng Code (`v1.2.0`) | Dự kiến mở rộng (Planned) | Tổng quy mô Toàn dự án (`v2.0.0`) |
+| Chỉ số KPI trên Google Sheet | Hiện trạng Code (`v1.3.0`) | Dự kiến mở rộng (Planned) | Tổng quy mô Toàn dự án (`v2.1.0`) |
 |:---|:---:|:---:|:---:|
-| **Tổng Endpoint** | 86 | +98 | **184** |
-| **Core .NET 10** *(REST + WS)* | 77 | +96 | **173** |
+| **Tổng Endpoint** | 105 | +79 | **184** |
+| **Core .NET 10** *(REST + WS)* | 96 | +77 | **173** |
 | **AI FastAPI** | 9 | +2 | **11** |
 | **WebSocket (SignalR Hub)** | 1 | +1 | **2** |
 
@@ -62,10 +62,10 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 | **M-12** | `FE-14` | **In-System Service Packages & VietQR** | `ServicePaymentController`, `ServicePackagesController` *(dự kiến)*, `AdminReconciliationController` *(dự kiến)* | 5 | 10 | 15 | 0 | **15** | 8.2% | 33.3% |
 | **M-13** | `FE-15` | **AI Misclassification & Dataset Curation** | `StaffAiFeedbackController` *(dự kiến)*, `StaffDatasetCurationController` *(dự kiến)* | 0 | 10 | 10 | 0 | **10** | 5.4% | 0.0% |
 | **M-14** | `FE-16` | **Blog & Content Management** | `BlogsController` *(dự kiến)*, `StaffBlogsController` *(dự kiến)*, `AdminBlogsController` *(dự kiến)* | 0 | 10 | 10 | 0 | **10** | 5.4% | 0.0% |
-| **M-15** | `FE-17..18` | **Account, Staff, Governance & Analytics** | `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `NotificationsController`, `NotificationHub` *(dự kiến)* | 0 | 23 | 22 | 1 | **23** | 12.5% | 0.0% |
+| **M-15** | `FE-17..18` | **Account, Staff, Governance & Analytics** | `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `StaffAttendanceController`, `NotificationsController` *(dự kiến)*, `NotificationHub` *(dự kiến)* | 19 | 4 | 22 | 1 | **23** | 12.5% | 82.6% |
 | **SYS** | `INFRA` | **System Infrastructure & Health** | Minimal API (`Program.cs`) | 1 | 0 | 1 | 0 | **1** | 0.5% | 100.0% |
 | **AIS** | `FE-03/15` | **Dedicated AI Vision Service (Python)** | FastAPI (`app.py`) | 9 | 2 | 11 | 0 | **11** | 6.0% | 81.8% |
-| **TỔNG** | **ALL SRS** | **TOÀN BỘ HỆ THỐNG ECOLINK** | **Core .NET 10 (173) + FastAPI Python (11)** | **86** | **98** | **182** | **2** | **184** | **100.0%** | **46.7%** |
+| **TỔNG** | **ALL SRS** | **TOÀN BỘ HỆ THỐNG ECOLINK** | **Core .NET 10 (173) + FastAPI Python (11)** | **105** | **79** | **182** | **2** | **184** | **100.0%** | **57.1%** |
 
 ---
 
@@ -82,13 +82,13 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 
 | Phương thức HTTP / Giao thức | Ý nghĩa sử dụng chính trong dự án | Đã triển khai | Dự kiến bổ sung | Tổng quy mô | Tỷ lệ (%) |
 |:---|:---|:---:|:---:|:---:|:---:|
-| **GET** | Truy vấn danh sách, tìm kiếm PostGIS, đọc hồ sơ/khiếu nại, KPI Dashboard, Audit Log, xuất báo cáo CSV/XLSX | 37 | 44 | **81** | 44.0% |
-| **POST** | Đăng ký/đăng nhập, quét rác AI, tạo đơn thu gom, biên nhận, điểm danh, đổi quà, khiếu nại, VietQR, đóng gói Dataset | 37 | 25 | **62** | 33.7% |
-| **PUT** | Cập nhật toàn phần hồ sơ, cấu hình bảng giá, cấu hình Gamification, gán nhãn ảnh chuẩn, phân quyền RBAC Staff | 8 | 11 | **19** | 10.3% |
-| **PATCH** | Chuyển trạng thái nghiệp vụ tức thời: duyệt khiếu nại, duyệt blog, khóa tài khoản, đối soát giao dịch, ẩn/mở danh mục | 3 | 13 | **16** | 8.7% |
-| **DELETE** | Xóa đánh giá của chính tác giả (`BR-RVW-03`), xóa thẻ Eco Fact nháp, xóa bài Blog nháp, vô hiệu hóa mềm tài khoản | 0 | 4 | **4** | 2.2% |
+| **GET** | Truy vấn danh sách, tìm kiếm PostGIS, đọc hồ sơ/khiếu nại, KPI Dashboard, Audit Log, xuất báo cáo CSV/XLSX | 48 | 33 | **81** | 44.0% |
+| **POST** | Đăng ký/đăng nhập, quét rác AI, tạo đơn thu gom, biên nhận, điểm danh, đổi quà, khiếu nại, VietQR, đóng gói Dataset | 40 | 22 | **62** | 33.7% |
+| **PUT** | Cập nhật toàn phần hồ sơ, cấu hình bảng giá, cấu hình Gamification, gán nhãn ảnh chuẩn, phân quyền RBAC Staff | 10 | 9 | **19** | 10.3% |
+| **PATCH** | Chuyển trạng thái nghiệp vụ tức thời: duyệt khiếu nại, duyệt blog, khóa tài khoản, đối soát giao dịch, ẩn/mở danh mục | 5 | 11 | **16** | 8.7% |
+| **DELETE** | Xóa đánh giá của chính tác giả (`BR-RVW-03`), xóa thẻ Eco Fact nháp, xóa bài Blog nháp, vô hiệu hóa mềm tài khoản | 1 | 3 | **4** | 2.2% |
 | **WebSocket (`WS`)** | Kết nối SignalR song công thời gian thực cho phòng Chat thương lượng giá và kênh Đẩy thông báo hệ thống | 1 | 1 | **2** | 1.1% |
-| **Tổng cộng** | | **86** | **98** | **184** | **100.0%** |
+| **Tổng cộng** | | **105** | **79** | **184** | **100.0%** |
 
 ---
 
@@ -101,9 +101,9 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 | **Public / Guest** | Mọi người dùng (kể cả chưa đăng nhập, Webhook Gateway & Internal AI) | 30 | 5 | **35** | 19.0% | Đăng ký/đăng nhập, quét rác AI, tìm vựa GPS, bảng xếp hạng, đọc Blog, xem Review vựa, Webhook VietQR |
 | **Citizen (User)** | Người dân đã xác thực tài khoản (`Role = Citizen`) | 11 | 8 | **19** | 10.3% | Nộp đơn mở vựa, đặt lịch thu gom, xác nhận biên nhận, nuôi Cây Ảo, mở Eco Fact, gửi/xóa đánh giá sao |
 | **Recycler (Collector)** | Đối tác cơ sở thu gom đã được xác minh (`Role = Recycler`) | 19 | 0 | **19** | 10.3% | Hồ sơ vựa, cấu hình bảng giá thu mua, lịch mở cửa, nhận/từ chối đơn, phát hành biên nhận cân điện tử |
-| **Staff / Admin** | Nhân viên vận hành (`Staff`) và Quản trị viên hệ thống (`Admin`) | 3 | 68 | **71** | 38.6% | Duyệt vựa, xử lý khiếu nại, kho quà & Eco Fact, gán nhãn Dataset AI, biên tập/duyệt Blog, đối soát VietQR, KPI & RBAC |
+| **Staff / Admin** | Nhân viên vận hành (`Staff`) và Quản trị viên hệ thống (`Admin`) | 22 | 49 | **71** | 38.6% | Duyệt vựa, xử lý khiếu nại, kho quà & Eco Fact, gán nhãn Dataset AI, biên tập/duyệt Blog, đối soát VietQR, KPI & RBAC |
 | **Authenticated (All)** | Nhiều vai trò đã đăng nhập (`Citizen / Recycler` hoặc mọi User hợp lệ) | 23 | 17 | **40** | 21.7% | Hồ sơ cá nhân, chat thương lượng, điểm danh Streak, đổi quà, gửi khiếu nại, mua gói dịch vụ VietQR, nhận thông báo |
-| **Tổng cộng** | | **86** | **98** | **184** | **100.0%** | |
+| **Tổng cộng** | | **105** | **79** | **184** | **100.0%** | |
 
 #### B. Phân rã chi tiết nội bộ nhóm Quản trị & Vận hành (`Staff / Admin` – `71 APIs`)
 
@@ -420,30 +420,30 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 
 ### PHÂN HỆ 15 (`M-15` / `FE-17`, `FE-18`): QUẢN TRỊ TÀI KHOẢN, NHÂN SỰ, THÔNG BÁO & PHÂN TÍCH HỆ THỐNG (GOVERNANCE, STAFF, NOTIFICATIONS & ANALYTICS)
 * **Use Cases bao phủ:** `A-01` (View Dashboard & Analytics), `A-02` (Export Data Reports & Audit Log), `S-06` (View User & Recycler Accounts), `S-07` (Lock / Delete Accounts), `A-03` (Manage Staff Accounts), `A-04` (Manage Staff Permissions), `S-11` (Staff Daily Check-in), `SU-04` (System In-App Notifications)
-* **Controllers & Hubs dự kiến:** `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `StaffAttendanceController`, `NotificationsController`, `NotificationHub` (`/hubs/notifications`)
-* **Quy mô:** `23` APIs = `22` REST + `1` WS Hub (0 Đã triển khai, 23 Dự kiến)
+* **Controllers & Hubs:** `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `StaffAttendanceController` *(đã triển khai)*; `NotificationsController`, `NotificationHub` (`/hubs/notifications`) *(dự kiến)*
+* **Quy mô:** `23` APIs = `22` REST + `1` WS Hub (19 Đã triển khai, 4 Dự kiến)
 
 | STT | Mã Modul | Phương thức | Tuyến đường Endpoint (Route) | Phân quyền (RBAC) | Action / Function | Mô tả chức năng & Use Case nghiệp vụ | Nhóm RBAC | Trạng thái |
 |:---:|:---:|:---:|:---|:---|:---|:---|:---|:---:|
-| **150** | `M-15` | `GET` | `/api/v1/admin/analytics/kpi-summary` | Admin | `GetExecutiveKpiSummary` | Hiển thị bảng chỉ số KPI điều hành: tổng sản lượng phế liệu tái chế (kg/tấn), độ chính xác mô hình AI, người dùng tích cực và doanh thu VietQR (`A-01`, `BR-ADM-07`). | Staff / Admin | Dự kiến |
-| **151** | `M-15` | `GET` | `/api/v1/admin/analytics/charts` | Admin | `GetAnalyticsCharts` | Truy vấn dữ liệu biểu đồ thống kê theo kỳ: tỷ trọng từng nhóm phế liệu, xu hướng giao dịch khu vực và tỷ lệ lỗi nhận diện AI (`A-01`, `BR-ADM-07`). | Staff / Admin | Dự kiến |
-| **152** | `M-15` | `GET` | `/api/v1/admin/reports/export` | Admin | `ExportSystemReport` | Trích xuất báo cáo tổng hợp giao dịch, sản lượng tái chế và vận hành ra tệp CSV/XLSX (ẩn dữ liệu nhạy cảm theo `BR-ADM-06`) (`A-02`). | Staff / Admin | Dự kiến |
-| **153** | `M-15` | `GET` | `/api/v1/admin/audit-logs` | Admin | `GetSystemAuditLogs` | Tra cứu nhật ký kiểm toán hệ thống bất biến (`Audit Trail` chỉ đọc theo `BR-ADM-05`): lịch sử đổi cấu hình, phân quyền, khóa tài khoản, đối soát (`A-02`). | Staff / Admin | Dự kiến |
-| **154** | `M-15` | `GET` | `/api/v1/staff/accounts` | Staff / Admin | `GetAccounts` | Nhân viên xem danh sách tài khoản Người dân và Cơ sở thu gom (lọc vai trò, trạng thái hoạt động, số lần cảnh cáo vi phạm) (`S-06`). | Staff / Admin | Dự kiến |
-| **155** | `M-15` | `GET` | `/api/v1/staff/accounts/{userId:guid}` | Staff / Admin | `GetAccountDetail` | Xem chi tiết hồ sơ tài khoản, thống kê hoạt động giao dịch, lịch sử khiếu nại và nhật ký bị cảnh cáo/khóa trước đó (`S-06`). | Staff / Admin | Dự kiến |
-| **156** | `M-15` | `PATCH` | `/api/v1/staff/accounts/{userId:guid}/lock` | Staff / Admin | `LockOrUnlockAccount` | Tạm khóa (`Suspended`) hoặc mở khóa tài khoản vi phạm chính sách kèm lý do bắt buộc và thu hồi ngay phiên đăng nhập hiện hành (`S-07`, `BR-ADM-03`). | Staff / Admin | Dự kiến |
-| **157** | `M-15` | `DELETE` | `/api/v1/staff/accounts/{userId:guid}` | Staff / Admin | `DeactivateAccount` | Vô hiệu hóa mềm (`Soft-Deactivate`) tài khoản vi phạm nghiêm trọng kèm biên bản lý do, giữ nguyên vẹn lịch sử biên nhận cũ (`S-07`, `BR-ADM-04`). | Staff / Admin | Dự kiến |
-| **158** | `M-15` | `GET` | `/api/v1/admin/staff` | Admin | `GetStaffAccounts` | Quản trị viên tra cứu danh sách tài khoản Nhân viên vận hành (`Staff`), trạng thái công tác và danh sách quyền hiện có (`A-03`). | Staff / Admin | Dự kiến |
-| **159** | `M-15` | `POST` | `/api/v1/admin/staff` | Admin | `CreateStaffAccount` | Quản trị viên tạo mới tài khoản Nhân viên vận hành nội bộ (chỉ Admin được phép tạo theo quy tắc bảo mật `BR-ADM-01`) (`A-03`). | Staff / Admin | Dự kiến |
-| **160** | `M-15` | `PUT` | `/api/v1/admin/staff/{staffId:guid}` | Admin | `UpdateStaffAccount` | Quản trị viên cập nhật thông tin nhân sự, bộ phận chuyên trách hoặc cấp lại mật khẩu tạm cho Nhân viên (`A-03`). | Staff / Admin | Dự kiến |
-| **161** | `M-15` | `PATCH` | `/api/v1/admin/staff/{staffId:guid}/status` | Admin | `UpdateStaffStatus` | Đình chỉ hoặc ngừng kích hoạt tài khoản Nhân viên chuyển công tác/nghỉ việc và hủy toàn bộ phiên truy cập (`A-03`, `BR-ADM-03`). | Staff / Admin | Dự kiến |
-| **162** | `M-15` | `GET` | `/api/v1/admin/permissions/catalog` | Admin | `GetPermissionCatalog` | Lấy danh mục chuẩn toàn bộ mã quyền RBAC nghiệp vụ (`VERIFY_RECYCLER`, `HANDLE_COMPLAINT`, `CURATE_DATASET`, `MANAGE_REWARDS`, `MANAGE_BLOG`...) (`A-04`). | Staff / Admin | Dự kiến |
-| **163** | `M-15` | `GET` | `/api/v1/admin/staff/{staffId:guid}/permissions` | Admin | `GetStaffPermissions` | Xem chi tiết tập quyền RBAC hiện đang được gán cho một tài khoản Nhân viên cụ thể (`A-04`). | Staff / Admin | Dự kiến |
-| **164** | `M-15` | `PUT` | `/api/v1/admin/staff/{staffId:guid}/permissions` | Admin | `UpdateStaffPermissions` | Cấu hình cấp mới hoặc thu hồi các mã quyền RBAC cho Nhân viên và áp dụng kiểm soát truy cập tức thời (`A-04`, `BR-ADM-02`). | Staff / Admin | Dự kiến |
-| **165** | `M-15` | `POST` | `/api/v1/staff/attendance/check-in` | Staff | `CheckInShift` | Nhân viên chấm công bắt đầu ca làm việc hàng ngày để ghi nhận chuyên cần (không sinh điểm thưởng theo `BR-GAM-09`) (`S-11`). | Staff / Admin | Dự kiến |
-| **166** | `M-15` | `POST` | `/api/v1/staff/attendance/check-out` | Staff | `CheckOutShift` | Nhân viên chấm công kết thúc ca trực vận hành và lưu ghi chú bàn giao ca (`S-11`). | Staff / Admin | Dự kiến |
-| **167** | `M-15` | `GET` | `/api/v1/staff/attendance/me` | Staff | `GetMyAttendanceLogs` | Nhân viên tra cứu bảng chấm công cá nhân và lịch sử các ca trực trong tháng (`S-11`). | Staff / Admin | Dự kiến |
-| **168** | `M-15` | `GET` | `/api/v1/admin/staff/attendance` | Admin | `GetAllStaffAttendance` | Quản trị viên theo dõi báo cáo chuyên cần và nhật ký ca trực hàng ngày của toàn bộ đội ngũ Nhân viên (`S-11`, `A-03`). | Staff / Admin | Dự kiến |
+| **150** | `M-15` | `GET` | `/api/v1/admin/analytics/kpi-summary` | Admin | `GetExecutiveKpiSummary` | Hiển thị bảng chỉ số KPI điều hành: tổng sản lượng phế liệu tái chế (kg/tấn), độ chính xác mô hình AI, người dùng tích cực và doanh thu VietQR (`A-01`, `BR-ADM-07`). | Staff / Admin | Đã triển khai |
+| **151** | `M-15` | `GET` | `/api/v1/admin/analytics/charts` | Admin | `GetAnalyticsCharts` | Truy vấn dữ liệu biểu đồ thống kê theo kỳ: tỷ trọng từng nhóm phế liệu, xu hướng giao dịch khu vực và tỷ lệ lỗi nhận diện AI (`A-01`, `BR-ADM-07`). | Staff / Admin | Đã triển khai |
+| **152** | `M-15` | `GET` | `/api/v1/admin/reports/export` | Admin | `ExportSystemReport` | Trích xuất báo cáo tổng hợp giao dịch, sản lượng tái chế và vận hành ra tệp CSV/XLSX (ẩn dữ liệu nhạy cảm theo `BR-ADM-06`) (`A-02`). | Staff / Admin | Đã triển khai |
+| **153** | `M-15` | `GET` | `/api/v1/admin/audit-logs` | Admin | `GetSystemAuditLogs` | Tra cứu nhật ký kiểm toán hệ thống bất biến (`Audit Trail` chỉ đọc theo `BR-ADM-05`): lịch sử đổi cấu hình, phân quyền, khóa tài khoản, đối soát (`A-02`). | Staff / Admin | Đã triển khai |
+| **154** | `M-15` | `GET` | `/api/v1/staff/accounts` | Staff / Admin | `GetAccounts` | Nhân viên xem danh sách tài khoản Người dân và Cơ sở thu gom (lọc vai trò, trạng thái hoạt động, số lần cảnh cáo vi phạm) (`S-06`). | Staff / Admin | Đã triển khai |
+| **155** | `M-15` | `GET` | `/api/v1/staff/accounts/{userId:guid}` | Staff / Admin | `GetAccountDetail` | Xem chi tiết hồ sơ tài khoản, thống kê hoạt động giao dịch, lịch sử khiếu nại và nhật ký bị cảnh cáo/khóa trước đó (`S-06`). | Staff / Admin | Đã triển khai |
+| **156** | `M-15` | `PATCH` | `/api/v1/staff/accounts/{userId:guid}/lock` | Staff / Admin | `LockOrUnlockAccount` | Tạm khóa (`Suspended`) hoặc mở khóa tài khoản vi phạm chính sách kèm lý do bắt buộc và thu hồi ngay phiên đăng nhập hiện hành (`S-07`, `BR-ADM-03`). | Staff / Admin | Đã triển khai |
+| **157** | `M-15` | `DELETE` | `/api/v1/staff/accounts/{userId:guid}` | Staff / Admin | `DeactivateAccount` | Vô hiệu hóa mềm (`Soft-Deactivate`) tài khoản vi phạm nghiêm trọng kèm biên bản lý do, giữ nguyên vẹn lịch sử biên nhận cũ (`S-07`, `BR-ADM-04`). | Staff / Admin | Đã triển khai |
+| **158** | `M-15` | `GET` | `/api/v1/admin/staff` | Admin | `GetStaffAccounts` | Quản trị viên tra cứu danh sách tài khoản Nhân viên vận hành (`Staff`), trạng thái công tác và danh sách quyền hiện có (`A-03`). | Staff / Admin | Đã triển khai |
+| **159** | `M-15` | `POST` | `/api/v1/admin/staff` | Admin | `CreateStaffAccount` | Quản trị viên tạo mới tài khoản Nhân viên vận hành nội bộ (chỉ Admin được phép tạo theo quy tắc bảo mật `BR-ADM-01`) (`A-03`). | Staff / Admin | Đã triển khai |
+| **160** | `M-15` | `PUT` | `/api/v1/admin/staff/{staffId:guid}` | Admin | `UpdateStaffAccount` | Quản trị viên cập nhật thông tin nhân sự, bộ phận chuyên trách hoặc cấp lại mật khẩu tạm cho Nhân viên (`A-03`). | Staff / Admin | Đã triển khai |
+| **161** | `M-15` | `PATCH` | `/api/v1/admin/staff/{staffId:guid}/status` | Admin | `UpdateStaffStatus` | Đình chỉ hoặc ngừng kích hoạt tài khoản Nhân viên chuyển công tác/nghỉ việc và hủy toàn bộ phiên truy cập (`A-03`, `BR-ADM-03`). | Staff / Admin | Đã triển khai |
+| **162** | `M-15` | `GET` | `/api/v1/admin/permissions/catalog` | Admin | `GetPermissionCatalog` | Lấy danh mục chuẩn toàn bộ mã quyền RBAC nghiệp vụ (`VERIFY_RECYCLER`, `HANDLE_COMPLAINT`, `CURATE_DATASET`, `MANAGE_INVENTORY`, `MANAGE_BLOG`...) (`A-04`). | Staff / Admin | Đã triển khai |
+| **163** | `M-15` | `GET` | `/api/v1/admin/staff/{staffId:guid}/permissions` | Admin | `GetStaffPermissions` | Xem chi tiết tập quyền RBAC hiện đang được gán cho một tài khoản Nhân viên cụ thể (`A-04`). | Staff / Admin | Đã triển khai |
+| **164** | `M-15` | `PUT` | `/api/v1/admin/staff/{staffId:guid}/permissions` | Admin | `UpdateStaffPermissions` | Cấu hình cấp mới hoặc thu hồi các mã quyền RBAC cho Nhân viên và áp dụng kiểm soát truy cập tức thời (`A-04`, `BR-ADM-02`). | Staff / Admin | Đã triển khai |
+| **165** | `M-15` | `POST` | `/api/v1/staff/attendance/check-in` | Staff / Admin | `CheckInShift` | Nhân viên chấm công bắt đầu ca làm việc hàng ngày để ghi nhận chuyên cần (không cộng ví điểm công dân theo `BR-GAM-09`) (`S-11`). | Staff / Admin | Đã triển khai |
+| **166** | `M-15` | `POST` | `/api/v1/staff/attendance/check-out` | Staff / Admin | `CheckOutShift` | Nhân viên chấm công kết thúc ca trực vận hành và lưu ghi chú bàn giao ca (`S-11`). | Staff / Admin | Đã triển khai |
+| **167** | `M-15` | `GET` | `/api/v1/staff/attendance/me` | Staff / Admin | `GetMyAttendanceLogs` | Nhân viên tra cứu bảng chấm công cá nhân và lịch sử các ca trực trong tháng (`S-11`). | Staff / Admin | Đã triển khai |
+| **168** | `M-15` | `GET` | `/api/v1/admin/staff/attendance` | Admin | `GetAllStaffAttendance` | Quản trị viên theo dõi báo cáo chuyên cần và nhật ký ca trực hàng ngày của toàn bộ đội ngũ Nhân viên (`S-11`, `A-03`). | Staff / Admin | Đã triển khai |
 | **169** | `M-15` | `GET` | `/api/v1/notifications` | Authenticated | `GetMyNotifications` | Lấy danh sách thông báo hệ thống của người dùng (đơn thu gom, biên nhận, phán quyết khiếu nại, duyệt hồ sơ, thanh toán VietQR) (`SU-04`). | Authenticated (All) | Dự kiến |
 | **170** | `M-15` | `PATCH` | `/api/v1/notifications/{notificationId:guid}/read` | Authenticated | `MarkNotificationRead` | Đánh dấu một thông báo cụ thể là đã đọc (`is_read = true`) (`SU-04`). | Authenticated (All) | Dự kiến |
 | **171** | `M-15` | `PUT` | `/api/v1/notifications/read-all` | Authenticated | `MarkAllNotificationsRead` | Đánh dấu toàn bộ thông báo chưa đọc của tài khoản hiện tại là đã xem (`SU-04`). | Authenticated (All) | Dự kiến |
