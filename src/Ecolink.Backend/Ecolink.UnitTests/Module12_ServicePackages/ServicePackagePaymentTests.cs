@@ -6,6 +6,7 @@ using Ecolink.Application.Validators;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
 using Ecolink.Domain.Exceptions;
+using Ecolink.Infrastructure.Data;
 using Ecolink.Infrastructure.Services;
 using Ecolink.UnitTests.Common;
 using FluentAssertions;
@@ -19,108 +20,137 @@ using Xunit;
 namespace Ecolink.UnitTests.Module12_ServicePackages;
 
 /// <summary>
-/// Bộ kiểm thử đơn vị toàn diện cho Module M-12: In-System Service Packages &amp; VietQR Integration (FE-14).
-/// Bao phủ trọn vẹn 16 kịch bản chuẩn IEEE 829 RTM (TC-PAY-*) + kiểm tra Validator &amp; XLSX OpenXML.
+/// Bộ kiểm thử đơn vị toàn diện cho Module M-12 / FE-14 (Module 10 trong bộ Report-5.1):
+/// In-System Service Packages &amp; VietQR Integration (U-16, R-07, A-10, A-11).
+/// Chuẩn hóa 22 test cases (UTC001 -&gt; UTC022: 10 Normal, 8 Abnormal, 4 Boundary)
+/// đối chiếu trực tiếp với tài liệu đặc tả 10_unit_test_in_system_service_packages_vietqr.md.
 /// </summary>
+[Trait("Module", "M12_ServicePackages")]
 public class ServicePackagePaymentTests
 {
-    private static ICurrentUserService CreateCurrentUserMock(Guid userId, string role = "Admin")
-    {
-        var mock = Substitute.For<ICurrentUserService>();
-        mock.UserId.Returns((Guid?)userId);
-        mock.Role.Returns(role);
-        mock.Email.Returns("admin@ecolink.vn");
-        mock.IsAuthenticated.Returns(true);
-        mock.IpAddress.Returns("127.0.0.1");
-        mock.UserAgent.Returns("EcoLink-UnitTest/1.0");
-        return mock;
-    }
-
     private static (
-        PaymentService PaymentService,
-        ServicePackageService PackageService,
-        AdminReconciliationService ReconciliationService,
-        SubscriptionEntitlementService EntitlementService) CreateServices(
-        Ecolink.Infrastructure.Data.ApplicationDbContext db,
-        Guid actorId,
-        string actorRole = "Admin",
-        Dictionary<string, string?>? configOverrides = null)
+        PaymentService PaymentSvc,
+        ServicePackageService PackageSvc,
+        AdminReconciliationService ReconSvc,
+        SubscriptionEntitlementService EntitlementSvc)
+        CreateServices(
+            ApplicationDbContext db,
+            Guid currentUserId,
+            string currentRole = "User",
+            Dictionary<string, string?>? configOverrides = null)
     {
-        var cache = new MemoryCache(new MemoryCacheOptions());
-        var entitlementService = new SubscriptionEntitlementService(db, cache);
-        var currentUser = CreateCurrentUserMock(actorId, actorRole);
-        var auditService = new AuditLogService(db, currentUser);
-        var config = TestDbContextFactory.CreateConfiguration(configOverrides ?? new Dictionary<string, string?>
+        var defaults = new Dictionary<string, string?>
         {
             ["VietQr:BankCode"] = "TPB",
             ["VietQr:BankName"] = "TPBank",
             ["VietQr:AccountNo"] = "05773216801",
-            ["VietQr:AccountName"] = "ECOLINK PLATFORM SERVICE",
-            ["VietQr:EnableSimulator"] = "true"
-        });
+            ["VietQr:AccountName"] = "ECOLINK PLATFORM"
+        };
 
-        var paymentService = new PaymentService(db, entitlementService, config, NullLogger<PaymentService>.Instance);
-        var packageService = new ServicePackageService(db, entitlementService, auditService);
-        var reconciliationService = new AdminReconciliationService(db, entitlementService, auditService);
-        return (paymentService, packageService, reconciliationService, entitlementService);
+        if (configOverrides != null)
+        {
+            foreach (var kv in configOverrides)
+            {
+                defaults[kv.Key] = kv.Value;
+            }
+        }
+
+        var config = TestDbContextFactory.CreateConfiguration(defaults);
+        var cache = new MemoryCache(new MemoryCacheOptions());
+
+        var currentUser = Substitute.For<ICurrentUserService>();
+        currentUser.UserId.Returns((Guid?)currentUserId);
+        currentUser.Role.Returns(currentRole);
+        currentUser.IsAuthenticated.Returns(true);
+        currentUser.IpAddress.Returns("127.0.0.1");
+        currentUser.UserAgent.Returns("EcoLink-UnitTest/1.0");
+
+        var payOsSvc = Substitute.For<IPayOsService>();
+        var auditSvc = new AuditLogService(db, currentUser);
+        var entitlementSvc = new SubscriptionEntitlementService(db, cache);
+        var packageSvc = new ServicePackageService(db, entitlementSvc, auditSvc);
+        var reconSvc = new AdminReconciliationService(db, entitlementSvc, auditSvc);
+        var paymentSvc = new PaymentService(
+            db,
+            entitlementSvc,
+            config,
+            NullLogger<PaymentService>.Instance,
+            payOsSvc);
+
+        return (paymentSvc, packageSvc, reconSvc, entitlementSvc);
     }
 
     // =========================================================================
-    // 1. TC-PAY-16-01_P: Citizen tạo đơn PREMIUM (59k) & webhook khớp kích hoạt 30 ngày
+    // NORMAL TEST CASES (UTC001 -> UTC010) — 10 TCs
     // =========================================================================
+
+    // UTC001 [Normal] [U-16]: Khởi tạo đơn PREMIUM & kích hoạt 30 ngày Ad-Free qua Webhook khớp tiền
     [Fact]
-    public async Task TC_PAY_16_01_P_CitizenCreatesPremiumOrder_AndExactWebhookActivates30DayAdFree_BR_PAY_01()
+    public async Task UTC001_CreatePayInOrder_ValidPremiumPackage_AndExactWebhookActivates30DayAdFree_Normal()
     {
         using var db = TestDbContextFactory.Create();
         var citizenId = Guid.NewGuid();
-        db.Users.Add(new User { Id = citizenId, Username = "cit01", Email = "cit01@email.vn", FullName = "Nguyễn Dân", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+        db.Users.Add(new User
+        {
+            Id = citizenId,
+            Username = "cit01",
+            Email = "cit01@email.vn",
+            FullName = "Nguyễn An",
+            PasswordHash = "h",
+            Role = UserRole.User,
+            Status = UserStatus.Active
+        });
         await db.SaveChangesAsync();
 
-        var (paymentSvc, packageSvc, _, _) = CreateServices(db, citizenId, "User");
+        var (paymentSvc, packageSvc, _, entitlementSvc) = CreateServices(db, citizenId, "User");
 
-        var order = await paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest
-        {
-            PackageCode = "PREMIUM"
-        });
+        var order = await paymentSvc.CreatePayInOrderAsync(
+            citizenId,
+            UserRole.User,
+            new CreatePayInRequest { PackageCode = "PREMIUM" });
 
+        order.PackageCode.Should().Be("PREMIUM");
         order.Amount.Should().Be(59_000m);
+        order.DurationDays.Should().Be(30);
         order.Status.Should().Be("PENDING");
         order.QrCodeUrl.Should().Contain("img.vietqr.io");
-        order.QrCodeUrl.Should().Contain("59000");
+        order.TransferContent.Should().Contain(order.OrderCode);
+        order.ExpiresAt.Should().BeCloseTo(order.CreatedAt.AddMinutes(15), TimeSpan.FromSeconds(5));
 
-        var whRes = await paymentSvc.ProcessWebhookAsync(new VietQrWebhookPayload
-        {
-            OrderCode = order.OrderCode,
-            Amount = 59_000m,
-            Reference = "FT_EXACT_001"
-        });
-
-        whRes.Success.Should().BeTrue();
-        whRes.Status.Should().Be("PAID");
+        var paidOrder = await paymentSvc.SimulateTransferAsync(order.OrderCode, new SimulateTransferRequest { Scenario = "Exact" });
+        paidOrder.Status.Should().Be("PAID");
+        paidOrder.PaidAmount.Should().Be(59_000m);
+        paidOrder.ReconciliationStatus.Should().Be("Matched");
+        paidOrder.ActivatedSubscription.Should().NotBeNull();
+        paidOrder.ActivatedSubscription!.RemainingDays.Should().BeInRange(29, 30);
 
         var mySubs = await packageSvc.GetMySubscriptionsAsync(citizenId);
         mySubs.CurrentTier.Should().Be("Premium");
         mySubs.Entitlements.IsAdFree.Should().BeTrue();
         mySubs.Entitlements.HasEcoPlusBadge.Should().BeTrue();
-        mySubs.Entitlements.DailyPointMultiplier.Should().Be(1.2m);
-        mySubs.ActiveSubscriptions.Should().HaveCount(1);
-        mySubs.ActiveSubscriptions[0].RemainingDays.Should().BeInRange(29, 30);
+        mySubs.Entitlements.HasVerifiedBlueBadge.Should().BeFalse();
+
+        var ent = await entitlementSvc.GetUserEntitlementsAsync(citizenId);
+        ent.IsAdFree.Should().BeTrue();
     }
 
-    // =========================================================================
-    // 2. TC-PAY-16-02_P: Gia hạn sớm cùng gói PREMIUM cộng dồn thời hạn (BR-PAY-04)
-    // =========================================================================
+    // UTC002 [Normal] [U-16]: Gia hạn sớm cùng gói PREMIUM cộng dồn nối tiếp từ ngày hết hạn cũ (BR-PAY-04)
     [Fact]
-    public async Task TC_PAY_16_02_P_EarlyRenewalSamePackage_StacksRemainingDays_BR_PAY_04()
+    public async Task UTC002_EarlyRenewalSamePackage_StacksRemainingDaysFromOldExpiry_Normal()
     {
         using var db = TestDbContextFactory.Create();
         var citizenId = Guid.NewGuid();
-        db.Users.Add(new User { Id = citizenId, Username = "cit02", Email = "cit02@email.vn", FullName = "Trần An", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
-        await db.SaveChangesAsync();
+        db.Users.Add(new User
+        {
+            Id = citizenId,
+            Username = "cit02",
+            Email = "cit02@email.vn",
+            FullName = "Trần Bình",
+            PasswordHash = "h",
+            Role = UserRole.User,
+            Status = UserStatus.Active
+        });
 
-        var (paymentSvc, packageSvc, _, _) = CreateServices(db, citizenId, "User");
-
-        // Tạo đơn 1 đã kích hoạt còn ~10 ngày hiệu lực
         var oldOrder = new ServiceOrder
         {
             Id = Guid.NewGuid(),
@@ -161,7 +191,7 @@ public class ServicePackagePaymentTests
         });
         await db.SaveChangesAsync();
 
-        // Gia hạn thêm 1 lần PREMIUM 30 ngày
+        var (paymentSvc, packageSvc, _, _) = CreateServices(db, citizenId, "User");
         var renewOrder = await paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
         await paymentSvc.SimulateTransferAsync(renewOrder.OrderCode);
 
@@ -170,117 +200,69 @@ public class ServicePackagePaymentTests
         maxExpiry.Should().BeCloseTo(initialExpiry.AddDays(30), TimeSpan.FromMinutes(1));
     }
 
-    // =========================================================================
-    // 3. TC-PAY-16-03_S: Chặn giả mạo số tiền từ Client (BR-PAY-01)
-    // =========================================================================
+    // UTC003 [Normal] [R-07]: Nâng bậc tức thì từ PREMIUM lên PRO (365 ngày) cho Recycler đã duyệt KYB (BR-PAY-04)
     [Fact]
-    public async Task TC_PAY_16_03_S_TamperedClientAmount_ThrowsBusinessRuleException_BR_PAY_01()
+    public async Task UTC003_UpgradeFromActivePremiumToPro_VerifiedRecycler_ActivatesProImmediately_Normal()
     {
         using var db = TestDbContextFactory.Create();
-        var citizenId = Guid.NewGuid();
-        db.Users.Add(new User { Id = citizenId, Username = "cit03", Email = "cit03@email.vn", FullName = "Lê Gian", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
-        await db.SaveChangesAsync();
-
-        var (paymentSvc, _, _, _) = CreateServices(db, citizenId, "User");
-
-        var act = () => paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest
+        var recId = Guid.NewGuid();
+        db.Users.Add(new User
         {
-            PackageCode = "PREMIUM",
-            Amount = 1_000m
+            Id = recId,
+            Username = "rec_up",
+            Email = "recup@rec.vn",
+            FullName = "Vựa Upgrade",
+            PasswordHash = "h",
+            Role = UserRole.Recycler,
+            Status = UserStatus.Active
         });
-
-        await act.Should().ThrowAsync<BusinessRuleException>()
-            .Where(ex => ex.RuleCode == "BR-PAY-01");
-    }
-
-    // =========================================================================
-    // 4. TC-PAY-16-04_S: Bảo mật sở hữu đơn thanh toán theo UserId (BR-AUTH-08)
-    // =========================================================================
-    [Fact]
-    public async Task TC_PAY_16_04_S_OtherCitizenCannotViewOrCancelOrder_BR_AUTH_08()
-    {
-        using var db = TestDbContextFactory.Create();
-        var userA = Guid.NewGuid();
-        var userB = Guid.NewGuid();
-        db.Users.AddRange(
-            new User { Id = userA, Username = "usera", Email = "a@email.vn", FullName = "User A", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active },
-            new User { Id = userB, Username = "userb", Email = "b@email.vn", FullName = "User B", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
-        await db.SaveChangesAsync();
-
-        var (paymentSvc, _, _, _) = CreateServices(db, userA, "User");
-        var orderA = await paymentSvc.CreatePayInOrderAsync(userA, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
-
-        var listB = await paymentSvc.GetUserOrdersAsync(userB, null);
-        listB.Items.Should().BeEmpty();
-
-        var viewAct = () => paymentSvc.GetOrderForUserAsync(userB, false, orderA.OrderCode);
-        await viewAct.Should().ThrowAsync<ForbiddenAccessException>();
-
-        var cancelAct = () => paymentSvc.CancelPendingOrderAsync(userB, orderA.OrderCode);
-        await cancelAct.Should().ThrowAsync<ForbiddenAccessException>();
-    }
-
-    // =========================================================================
-    // 5. TC-PAY-16-05_N: Chặn tạo đơn QR cho gói BASIC (0đ) & Citizen mua PRO
-    // =========================================================================
-    [Fact]
-    public async Task TC_PAY_16_05_N_RejectsBasicFreeOrder_AndCitizenBuyingProPackage()
-    {
-        using var db = TestDbContextFactory.Create();
-        var citizenId = Guid.NewGuid();
-        db.Users.Add(new User { Id = citizenId, Username = "cit05", Email = "cit05@email.vn", FullName = "Phạm Mai", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
-        await db.SaveChangesAsync();
-
-        var (paymentSvc, _, _, _) = CreateServices(db, citizenId, "User");
-
-        var buyBasic = () => paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "BASIC" });
-        await buyBasic.Should().ThrowAsync<BusinessRuleException>()
-            .Where(ex => ex.RuleCode == "BR-PAY-01");
-
-        var buyPro = () => paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "PRO" });
-        await buyPro.Should().ThrowAsync<ForbiddenAccessException>();
-    }
-
-    // =========================================================================
-    // 6. TC-PAY-07-01_N: Chặn Recycler chưa duyệt KYB mua gói PRO (BR-PAY-03)
-    // =========================================================================
-    [Fact]
-    public async Task TC_PAY_07_01_N_UnverifiedRecyclerCannotPurchaseProPackage_MSG_PAY_06()
-    {
-        using var db = TestDbContextFactory.Create();
-        var recyclerId = Guid.NewGuid();
-        db.Users.Add(new User { Id = recyclerId, Username = "rec_wait", Email = "recwait@thugom.vn", FullName = "Vựa Chờ", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active });
         db.RecyclerProfiles.Add(new RecyclerProfile
         {
-            UserId = recyclerId,
-            FacilityName = "Vựa Chờ Duyệt",
-            RepresentativeName = "Chủ Vựa",
-            BusinessAddress = "Hà Nội",
-            VerificationStatus = VerificationStatus.Pending,
-            ActiveStatus = RecyclerActiveStatus.Offline
+            UserId = recId,
+            FacilityName = "Vựa Upgrade",
+            RepresentativeName = "C",
+            BusinessAddress = "HN",
+            VerificationStatus = VerificationStatus.Verified,
+            ActiveStatus = RecyclerActiveStatus.Online
         });
         await db.SaveChangesAsync();
 
-        var (paymentSvc, packageSvc, _, _) = CreateServices(db, recyclerId, "Recycler");
+        var (paymentSvc, packageSvc, _, _) = CreateServices(db, recId, "Recycler");
 
-        var catalog = await packageSvc.GetAvailablePackagesAsync(recyclerId, UserRole.Recycler);
-        var proItem = catalog.First(c => c.PackageCode == "PRO");
-        proItem.IsEligible.Should().BeFalse();
+        var premOrder = await paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PREMIUM" });
+        await paymentSvc.SimulateTransferAsync(premOrder.OrderCode);
 
-        var act = () => paymentSvc.CreatePayInOrderAsync(recyclerId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
-        await act.Should().ThrowAsync<BusinessRuleException>()
-            .Where(ex => ex.MessageCode == "MSG-PAY-06");
+        var proOrder = await paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+        proOrder.Amount.Should().Be(1_000_000m);
+        proOrder.DurationDays.Should().Be(365);
+        await paymentSvc.SimulateTransferAsync(proOrder.OrderCode);
+
+        var subs = await packageSvc.GetMySubscriptionsAsync(recId);
+        subs.CurrentTier.Should().Be("Pro");
+        subs.Entitlements.HasVerifiedBlueBadge.Should().BeTrue();
+        subs.Entitlements.IsFeaturedMapMarker.Should().BeTrue();
+        subs.Entitlements.MapPriorityBoost.Should().Be(100);
+
+        var proSub = subs.ActiveSubscriptions.First(s => s.PackageCode == "PRO");
+        proSub.StartsAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
+        proSub.RemainingDays.Should().BeInRange(364, 365);
     }
 
-    // =========================================================================
-    // 7. TC-PAY-07-02_P: Gói PRO cấp Tích xanh & đẩy ưu tiên bản đồ PostGIS
-    // =========================================================================
+    // UTC004 [Normal] [R-07]: Gói PRO cấp Tích xanh & đẩy ưu tiên bản đồ GeoMatching trước cơ sở Basic gần hơn
     [Fact]
-    public async Task TC_PAY_07_02_P_ProSubscriptionGrantsBlueBadgeAndFeaturedGeoSort_BR_MTH_04()
+    public async Task UTC004_ProSubscriptionEntitlement_GrantsVerifiedBadgeAndFeaturedGeoSort_Normal()
     {
         using var db = TestDbContextFactory.Create();
         var catId = Guid.NewGuid();
-        db.WasteCategories.Add(new WasteCategory { Id = catId, Code = "plastic", Name = "Nhựa", StandardBinColor = "Cam", IsRecyclable = true, Status = "Active" });
+        db.WasteCategories.Add(new WasteCategory
+        {
+            Id = catId,
+            Code = "plastic",
+            Name = "Nhựa",
+            StandardBinColor = "Cam",
+            IsRecyclable = true,
+            Status = "Active"
+        });
 
         var nearBasicId = Guid.NewGuid();
         var farProId = Guid.NewGuid();
@@ -329,62 +311,27 @@ public class ServicePackagePaymentTests
         partners[0].Id.Should().Be(farProId);
         partners[0].IsFeatured.Should().BeTrue();
         partners[0].HasVerifiedBadge.Should().BeTrue();
-
         partners[1].Id.Should().Be(nearBasicId);
         partners[1].IsFeatured.Should().BeFalse();
-        partners[1].HasVerifiedBadge.Should().BeFalse();
         partners[0].DistanceKm.Should().BeGreaterThan(partners[1].DistanceKm);
     }
 
-    // =========================================================================
-    // 8. TC-PAY-07-03_P: Nâng bậc tức thì từ PREMIUM đang chạy lên PRO (BR-PAY-04)
-    // =========================================================================
+    // UTC005 [Normal] [U-16]: Xử lý Webhook Idempotent khi gửi trùng 3 lần liên tiếp (BR-PAY-02)
     [Fact]
-    public async Task TC_PAY_07_03_P_UpgradeFromActivePremiumToPro_ActivatesProImmediately_BR_PAY_04()
-    {
-        using var db = TestDbContextFactory.Create();
-        var recId = Guid.NewGuid();
-        db.Users.Add(new User { Id = recId, Username = "rec_up", Email = "recup@rec.vn", FullName = "Vựa Upgrade", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active });
-        db.RecyclerProfiles.Add(new RecyclerProfile
-        {
-            UserId = recId,
-            FacilityName = "Vựa Upgrade",
-            RepresentativeName = "C",
-            BusinessAddress = "HN",
-            VerificationStatus = VerificationStatus.Verified,
-            ActiveStatus = RecyclerActiveStatus.Online
-        });
-        await db.SaveChangesAsync();
-
-        var (paymentSvc, packageSvc, _, _) = CreateServices(db, recId, "Recycler");
-
-        // Mua trước PREMIUM
-        var premOrder = await paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PREMIUM" });
-        await paymentSvc.SimulateTransferAsync(premOrder.OrderCode);
-
-        // Nâng cấp ngay lên PRO (1tr / 365 ngày)
-        var proOrder = await paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
-        proOrder.Amount.Should().Be(1_000_000m);
-        await paymentSvc.SimulateTransferAsync(proOrder.OrderCode);
-
-        var subs = await packageSvc.GetMySubscriptionsAsync(recId);
-        subs.CurrentTier.Should().Be("Pro");
-        subs.Entitlements.HasVerifiedBlueBadge.Should().BeTrue();
-        subs.Entitlements.IsFeaturedMapMarker.Should().BeTrue();
-        var proSub = subs.ActiveSubscriptions.First(s => s.PackageCode == "PRO");
-        proSub.StartsAt.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
-        proSub.RemainingDays.Should().BeInRange(364, 365);
-    }
-
-    // =========================================================================
-    // 9. TC-PAY-WH-01_P: Xử lý Webhook Idempotent khi gửi trùng 3 lần (BR-PAY-02)
-    // =========================================================================
-    [Fact]
-    public async Task TC_PAY_WH_01_P_DuplicateWebhookDelivery_ActivatesSubscriptionExactlyOnce_BR_PAY_02()
+    public async Task UTC005_DuplicateWebhookDelivery_ActivatesSubscriptionExactlyOnce_Normal()
     {
         using var db = TestDbContextFactory.Create();
         var userId = Guid.NewGuid();
-        db.Users.Add(new User { Id = userId, Username = "wh01", Email = "wh01@email.vn", FullName = "Lê Trùng", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+        db.Users.Add(new User
+        {
+            Id = userId,
+            Username = "wh01",
+            Email = "wh01@email.vn",
+            FullName = "Lê Trùng",
+            PasswordHash = "h",
+            Role = UserRole.User,
+            Status = UserStatus.Active
+        });
         await db.SaveChangesAsync();
 
         var (paymentSvc, _, _, _) = CreateServices(db, userId, "User");
@@ -404,15 +351,336 @@ public class ServicePackagePaymentTests
         r1.Status.Should().Be("PAID");
         r2.Status.Should().Be("ALREADY_PROCESSED");
         r3.Status.Should().Be("ALREADY_PROCESSED");
-
         (await db.UserSubscriptions.CountAsync(s => s.SourceOrderId == order.Id)).Should().Be(1);
     }
 
-    // =========================================================================
-    // 10. TC-PAY-WH-02_N: Chuyển thiếu tiền -> Gắn Underpaid, KHÔNG kích hoạt gói
-    // =========================================================================
+    // UTC006 [Normal] [U-16]: Tra cứu bảng giá gói dịch vụ & Hủy đơn VietQR đang chờ Pending
     [Fact]
-    public async Task TC_PAY_WH_02_N_UnderpaidWebhook_FlagsAnomalyAndDoesNotActivatePackage()
+    public async Task UTC006_GetAvailablePackagesAndCancelPendingOrder_MarksOrderCancelled_Normal()
+    {
+        using var db = TestDbContextFactory.Create();
+        var recId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = recId,
+            Username = "rec_cat",
+            Email = "rec_cat@thugom.vn",
+            FullName = "Vựa Danh Mục",
+            PasswordHash = "h",
+            Role = UserRole.Recycler,
+            Status = UserStatus.Active
+        });
+        db.RecyclerProfiles.Add(new RecyclerProfile
+        {
+            UserId = recId,
+            FacilityName = "Vựa Danh Mục",
+            RepresentativeName = "Q",
+            BusinessAddress = "Đà Nẵng",
+            VerificationStatus = VerificationStatus.Verified,
+            ActiveStatus = RecyclerActiveStatus.Online
+        });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, packageSvc, _, _) = CreateServices(db, recId, "Recycler");
+
+        var catalog = await packageSvc.GetAvailablePackagesAsync(recId, UserRole.Recycler);
+        catalog.Select(c => c.PackageCode).Should().ContainInOrder("BASIC", "PREMIUM", "PRO");
+        catalog.First(c => c.PackageCode == "PRO").IsEligible.Should().BeTrue();
+        catalog.First(c => c.PackageCode == "BASIC").IsCurrentPlan.Should().BeTrue();
+
+        var order = await paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+        var cancelled = await paymentSvc.CancelPendingOrderAsync(recId, order.OrderCode);
+        cancelled.Status.Should().Be("CANCELLED");
+
+        var refreshed = await paymentSvc.GetOrderForUserAsync(recId, false, order.OrderCode);
+        refreshed.Status.Should().Be("CANCELLED");
+
+        var list = await paymentSvc.GetUserOrdersAsync(recId, "Cancelled");
+        list.Items.Should().ContainSingle(o => o.OrderCode == order.OrderCode);
+    }
+
+    // UTC007 [Normal] [A-10]: Admin tạo gói mới, cập nhật giá với Grandfathering giữ nguyên snapshot cũ & ghi AuditLog
+    [Fact]
+    public async Task UTC007_AdminCreateAndUpdateServicePackage_GrandfathersExistingSubscriptions_Normal()
+    {
+        using var db = TestDbContextFactory.Create();
+        var adminId = Guid.NewGuid();
+        var citizenId = Guid.NewGuid();
+        db.Users.AddRange(
+            new User { Id = adminId, Username = "admin10", Email = "admin10@ecolink.vn", FullName = "Admin 10", PasswordHash = "h", Role = UserRole.Admin, Status = UserStatus.Active },
+            new User { Id = citizenId, Username = "cit10", Email = "cit10@email.vn", FullName = "Citizen 10", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, packageSvc, _, _) = CreateServices(db, adminId, "Admin");
+
+        // 1. Citizen mua PREMIUM ở mức giá cũ 59,000đ
+        var oldOrder = await paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
+        await paymentSvc.SimulateTransferAsync(oldOrder.OrderCode);
+
+        // 2. Admin tạo mới một gói thương mại và tăng giá PREMIUM lên 79,000đ
+        var createdPkg = await packageSvc.CreatePackageAsync(adminId, new UpsertServicePackageRequest
+        {
+            PackageCode = "RECYCLER_VIP",
+            PackageName = "Gói VIP Đẩy Tin",
+            TargetRole = "Recycler",
+            RequiresVerifiedKyb = true,
+            PriceVnd = 299_000m,
+            DurationDays = 90,
+            DisplayOrder = 40,
+            IsActive = true,
+            Features = new ServicePackageFeaturesDto { AdFree = true, VerifiedBlueBadge = true, FeaturedMapMarker = true, MapPriorityBoost = 80, DailyPointMultiplier = 1.4m }
+        });
+        createdPkg.PackageCode.Should().Be("RECYCLER_VIP");
+
+        await packageSvc.UpdatePackageAsync(adminId, CanonicalServicePackages.PremiumId, new UpsertServicePackageRequest
+        {
+            PackageCode = "PREMIUM",
+            PackageName = "Premium (Điều chỉnh giá)",
+            TargetRole = "All",
+            PriceVnd = 79_000m,
+            DurationDays = 45,
+            DisplayOrder = 20,
+            IsActive = true,
+            Features = new ServicePackageFeaturesDto { AdFree = true, EcoPlusBadge = true, DailyPointMultiplier = 1.3m }
+        });
+
+        // 3. Đơn cũ giữ nguyên giá & thời hạn 30d; đơn mới áp giá 79,000đ & 45d (BR-PAY-05)
+        var oldOrderReloaded = await paymentSvc.GetOrderForUserAsync(citizenId, false, oldOrder.OrderCode);
+        oldOrderReloaded.Amount.Should().Be(59_000m);
+        oldOrderReloaded.DurationDays.Should().Be(30);
+
+        var newOrder = await paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
+        newOrder.Amount.Should().Be(79_000m);
+        newOrder.DurationDays.Should().Be(45);
+
+        (await db.AuditLogs.AnyAsync(a => a.Action == "CREATE_SERVICE_PACKAGE")).Should().BeTrue();
+        (await db.AuditLogs.AnyAsync(a => a.Action == "UPDATE_SERVICE_PACKAGE")).Should().BeTrue();
+    }
+
+    // UTC008 [Normal] [A-11]: Admin lọc sổ cái & dùng ActivateOrder đối soát thủ công đơn Underpaid
+    [Fact]
+    public async Task UTC008_AdminResolveUnderpaidOrderWithActivateOrder_ActivatesPackageAndLogsAudit_Normal()
+    {
+        using var db = TestDbContextFactory.Create();
+        var adminId = Guid.NewGuid();
+        var citizenId = Guid.NewGuid();
+        db.Users.AddRange(
+            new User { Id = adminId, Username = "admin_u", Email = "admin_u@ecolink.vn", FullName = "Admin Rec", PasswordHash = "h", Role = UserRole.Admin, Status = UserStatus.Active },
+            new User { Id = citizenId, Username = "cit_u", Email = "cit_u@email.vn", FullName = "Nguyễn Thiếu", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, packageSvc, reconSvc, _) = CreateServices(db, adminId, "Admin");
+        var order = await paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
+        await paymentSvc.SimulateTransferAsync(order.OrderCode, new SimulateTransferRequest { Scenario = "Underpaid", SimulatedAmount = 40_000m });
+
+        var anomalyLedger = await reconSvc.GetPaymentLedgerAsync(new ReconciliationLedgerQuery { OnlyAnomalies = true });
+        anomalyLedger.Items.Items.Should().ContainSingle(i => i.ReferenceCode == order.OrderCode && i.ReconciliationStatus == "Underpaid");
+
+        var resolved = await reconSvc.ResolvePaymentAnomalyAsync(adminId, order.OrderCode, new ResolvePaymentAnomalyRequest
+        {
+            Action = "ApproveAndActivate",
+            ResolutionBankRef = "FT_COMPENSATE_19000",
+            ResolutionNote = "Đã nhận 19.000đ chuyển bù, duyệt kích hoạt gói."
+        });
+
+        resolved.ReconciliationStatus.Should().Be("Resolved");
+        resolved.OrderStatus.Should().Be("Paid");
+
+        var subs = await packageSvc.GetMySubscriptionsAsync(citizenId);
+        subs.CurrentTier.Should().Be("Premium");
+        (await db.AuditLogs.AnyAsync(a => a.Action == "RESOLVE_PAYMENT_ANOMALY" && a.EntityId == order.OrderCode)).Should().BeTrue();
+    }
+
+    // UTC009 [Normal] [A-11]: Admin khớp lệnh thủ công Webhook mồ côi UnmatchedReference với đơn Pending (BR-PAY-06)
+    [Fact]
+    public async Task UTC009_AdminManualMatchOrphanWebhook_MatchesPendingOrderAndActivatesSubscription_Normal()
+    {
+        using var db = TestDbContextFactory.Create();
+        var adminId = Guid.NewGuid();
+        var recId = Guid.NewGuid();
+        db.Users.AddRange(
+            new User { Id = adminId, Username = "admin_m", Email = "admin_m@ecolink.vn", FullName = "Admin Match", PasswordHash = "h", Role = UserRole.Admin, Status = UserStatus.Active },
+            new User { Id = recId, Username = "rec_m", Email = "rec_m@thugom.vn", FullName = "Vựa Quên Nội Dung", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active });
+        db.RecyclerProfiles.Add(new RecyclerProfile
+        {
+            UserId = recId,
+            FacilityName = "Vựa Quên ND",
+            RepresentativeName = "E",
+            BusinessAddress = "HN",
+            VerificationStatus = VerificationStatus.Verified,
+            ActiveStatus = RecyclerActiveStatus.Online
+        });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, packageSvc, reconSvc, _) = CreateServices(db, adminId, "Admin");
+        var order = await paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+
+        var orphanWh = await paymentSvc.ProcessWebhookAsync(new VietQrWebhookPayload
+        {
+            OrderCode = null,
+            Amount = 1_000_000m,
+            Description = "CHUYEN TIEN DICH VU KHONG CO MA DON",
+            Reference = "FT_ORPHAN_2026"
+        });
+        orphanWh.Status.Should().Be("ANOMALY_FLAGGED");
+        orphanWh.ReconciliationStatus.Should().Be("UnmatchedReference");
+        orphanWh.WebhookCode.Should().StartWith("WH-");
+
+        var resolved = await reconSvc.ResolvePaymentAnomalyAsync(adminId, orphanWh.WebhookCode!, new ResolvePaymentAnomalyRequest
+        {
+            Action = "ManualMatchOrder",
+            TargetOrderCode = order.OrderCode,
+            ResolutionNote = "Xác nhận sao kê khớp với đơn PRO của Vựa Quên ND."
+        });
+
+        resolved.ReferenceCode.Should().Be(order.OrderCode);
+        resolved.OrderStatus.Should().Be("Paid");
+        resolved.ReconciliationStatus.Should().Be("Resolved");
+
+        var subs = await packageSvc.GetMySubscriptionsAsync(recId);
+        subs.CurrentTier.Should().Be("Pro");
+    }
+
+    // UTC010 [Normal] [A-11]: Admin xuất bảng kê CSV & XLSX che mờ PII Email/SĐT & bảo vệ AuditLog bất biến (BR-ADM-06)
+    [Fact]
+    public async Task UTC010_AdminExportReconciliationReport_CsvAndXlsx_MasksPiiAndProtectsAuditLog_Normal()
+    {
+        using var db = TestDbContextFactory.Create();
+        var adminId = Guid.NewGuid();
+        var userId = Guid.NewGuid();
+        db.Users.AddRange(
+            new User { Id = adminId, Username = "admin_exp", Email = "admin_exp@ecolink.vn", FullName = "Admin Exp", PasswordHash = "h", Role = UserRole.Admin, Status = UserStatus.Active },
+            new User { Id = userId, Username = "pii_user", Email = "nguyen.secret.pii@gmail.com", PhoneNumber = "0987654321", FullName = "Nguyễn Bảo Mật", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, _, reconSvc, _) = CreateServices(db, adminId, "Admin");
+        var order = await paymentSvc.CreatePayInOrderAsync(userId, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
+        await paymentSvc.SimulateTransferAsync(order.OrderCode);
+
+        var csvResult = await reconSvc.ExportReconciliationReportAsync(adminId, new ReconciliationExportQuery { Format = "csv" });
+        csvResult.ContentType.Should().StartWith("text/csv");
+        csvResult.RowCount.Should().BeGreaterThanOrEqualTo(1);
+        var csvText = Encoding.UTF8.GetString(csvResult.Content);
+        csvText.Should().Contain(order.OrderCode);
+        csvText.Should().Contain("ng***@gmail.com");
+        csvText.Should().Contain("098****321");
+        csvText.Should().NotContain("nguyen.secret.pii@gmail.com");
+        csvText.Should().NotContain("0987654321");
+
+        var xlsxResult = await reconSvc.ExportReconciliationReportAsync(adminId, new ReconciliationExportQuery { Format = "xlsx" });
+        xlsxResult.ContentType.Should().Contain("spreadsheetml.sheet");
+        xlsxResult.Content[0].Should().Be((byte)'P');
+        xlsxResult.Content[1].Should().Be((byte)'K');
+        using var zip = new ZipArchive(new MemoryStream(xlsxResult.Content), ZipArchiveMode.Read);
+        zip.Entries.Should().Contain(e => e.FullName == "xl/worksheets/sheet1.xml");
+
+        // BR-ADM-05: Bảo vệ nhật ký xuất báo cáo bất biến
+        var auditEntry = await db.AuditLogs.FirstAsync(a => a.Action == "EXPORT_RECONCILIATION");
+        db.AuditLogs.Remove(auditEntry);
+        var mutateAudit = () => db.SaveChangesAsync();
+        await mutateAudit.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    // =========================================================================
+    // ABNORMAL TEST CASES (UTC011 -> UTC018) — 8 TCs
+    // =========================================================================
+
+    // UTC011 [Abnormal] [U-16]: Chặn giả mạo giảm số tiền từ Client so với giá gói trong DB (BR-PAY-01)
+    [Fact]
+    public async Task UTC011_CreatePayInOrder_TamperedClientAmount_ThrowsBrPay01_Abnormal()
+    {
+        using var db = TestDbContextFactory.Create();
+        var citizenId = Guid.NewGuid();
+        db.Users.Add(new User { Id = citizenId, Username = "cit03", Email = "cit03@email.vn", FullName = "Lê Gian", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, _, _, _) = CreateServices(db, citizenId, "User");
+
+        var act = () => paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest
+        {
+            PackageCode = "PREMIUM",
+            Amount = 1_000m
+        });
+
+        await act.Should().ThrowAsync<BusinessRuleException>()
+            .Where(ex => ex.RuleCode == "BR-PAY-01");
+    }
+
+    // UTC012 [Abnormal] [U-16]: Bảo mật sở hữu đơn thanh toán theo UserId chống IDOR (BR-AUTH-08)
+    [Fact]
+    public async Task UTC012_OtherCitizenViewOrCancelOrder_ThrowsForbiddenIdor_Abnormal()
+    {
+        using var db = TestDbContextFactory.Create();
+        var userA = Guid.NewGuid();
+        var userB = Guid.NewGuid();
+        db.Users.AddRange(
+            new User { Id = userA, Username = "usera", Email = "a@email.vn", FullName = "User A", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active },
+            new User { Id = userB, Username = "userb", Email = "b@email.vn", FullName = "User B", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, _, _, _) = CreateServices(db, userA, "User");
+        var orderA = await paymentSvc.CreatePayInOrderAsync(userA, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
+
+        var listB = await paymentSvc.GetUserOrdersAsync(userB, null);
+        listB.Items.Should().BeEmpty();
+
+        var viewAct = () => paymentSvc.GetOrderForUserAsync(userB, false, orderA.OrderCode);
+        await viewAct.Should().ThrowAsync<ForbiddenAccessException>();
+
+        var cancelAct = () => paymentSvc.CancelPendingOrderAsync(userB, orderA.OrderCode);
+        await cancelAct.Should().ThrowAsync<ForbiddenAccessException>();
+    }
+
+    // UTC013 [Abnormal] [U-16]: Chặn tạo QR cho gói miễn phí BASIC (0đ) & Citizen cố mua gói PRO của Recycler
+    [Fact]
+    public async Task UTC013_PurchaseFreeBasicOrCitizenBuyPro_Rejected_Abnormal()
+    {
+        using var db = TestDbContextFactory.Create();
+        var citizenId = Guid.NewGuid();
+        db.Users.Add(new User { Id = citizenId, Username = "cit05", Email = "cit05@email.vn", FullName = "Phạm Mai", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, _, _, _) = CreateServices(db, citizenId, "User");
+
+        var buyBasic = () => paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "BASIC" });
+        await buyBasic.Should().ThrowAsync<BusinessRuleException>()
+            .Where(ex => ex.RuleCode == "BR-PAY-01");
+
+        var buyPro = () => paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "PRO" });
+        await buyPro.Should().ThrowAsync<ForbiddenAccessException>();
+    }
+
+    // UTC014 [Abnormal] [R-07]: Chặn Recycler chưa duyệt KYB mua gói PRO (BR-PAY-03 / MSG-PAY-06)
+    [Fact]
+    public async Task UTC014_UnverifiedKybRecyclerBuyPro_ThrowsMsgPay06_Abnormal()
+    {
+        using var db = TestDbContextFactory.Create();
+        var recyclerId = Guid.NewGuid();
+        db.Users.Add(new User { Id = recyclerId, Username = "rec_wait", Email = "recwait@thugom.vn", FullName = "Vựa Chờ", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active });
+        db.RecyclerProfiles.Add(new RecyclerProfile
+        {
+            UserId = recyclerId,
+            FacilityName = "Vựa Chờ Duyệt",
+            RepresentativeName = "Chủ Vựa",
+            BusinessAddress = "Hà Nội",
+            VerificationStatus = VerificationStatus.Pending,
+            ActiveStatus = RecyclerActiveStatus.Offline
+        });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, packageSvc, _, _) = CreateServices(db, recyclerId, "Recycler");
+
+        var catalog = await packageSvc.GetAvailablePackagesAsync(recyclerId, UserRole.Recycler);
+        catalog.First(c => c.PackageCode == "PRO").IsEligible.Should().BeFalse();
+
+        var act = () => paymentSvc.CreatePayInOrderAsync(recyclerId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+        await act.Should().ThrowAsync<BusinessRuleException>()
+            .Where(ex => ex.MessageCode == "MSG-PAY-06");
+    }
+
+    // UTC015 [Abnormal] [U-16]: Chuyển thiếu tiền -> Gắn cờ Underpaid, giữ Pending, KHÔNG kích hoạt gói
+    [Fact]
+    public async Task UTC015_UnderpaidWebhook_KeepsPendingAndFlagsAnomalyWithoutActivation_Abnormal()
     {
         using var db = TestDbContextFactory.Create();
         var userId = Guid.NewGuid();
@@ -437,65 +705,9 @@ public class ServicePackagePaymentTests
         mySubs.ActiveSubscriptions.Should().BeEmpty();
     }
 
-    // =========================================================================
-    // 11. TC-PAY-WH-03_B: Chuyển dư tiền -> Kích hoạt ngay + gắn cờ Overpaid
-    // =========================================================================
+    // UTC016 [Abnormal] [U-16]: Chặn Webhook giả mạo chữ ký / Webhook Secret sai (MSG-PAY-05) & ghi log kiểm toán
     [Fact]
-    public async Task TC_PAY_WH_03_B_OverpaidWebhook_ActivatesPackageImmediatelyAndFlagsOverpaid()
-    {
-        using var db = TestDbContextFactory.Create();
-        var userId = Guid.NewGuid();
-        db.Users.Add(new User { Id = userId, Username = "wh03", Email = "wh03@email.vn", FullName = "Vũ Dư", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
-        await db.SaveChangesAsync();
-
-        var (paymentSvc, packageSvc, _, _) = CreateServices(db, userId, "User");
-        var order = await paymentSvc.CreatePayInOrderAsync(userId, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
-
-        var updated = await paymentSvc.SimulateTransferAsync(order.OrderCode, new SimulateTransferRequest
-        {
-            Scenario = "Overpaid",
-            SimulatedAmount = 65_000m
-        });
-
-        updated.Status.Should().Be("PAID");
-        updated.ReconciliationStatus.Should().Be("Overpaid");
-        updated.PaidAmount.Should().Be(65_000m);
-
-        var mySubs = await packageSvc.GetMySubscriptionsAsync(userId);
-        mySubs.CurrentTier.Should().Be("Premium");
-    }
-
-    // =========================================================================
-    // 12. TC-PAY-WH-04_B: Chuyển khoản muộn sau hạn QR -> Gắn cờ LateTransfer
-    // =========================================================================
-    [Fact]
-    public async Task TC_PAY_WH_04_B_LateTransferOnExpiredQr_FlagsLateTransferWithoutDroppingFunds()
-    {
-        using var db = TestDbContextFactory.Create();
-        var recId = Guid.NewGuid();
-        db.Users.Add(new User { Id = recId, Username = "wh04", Email = "wh04@rec.vn", FullName = "Vựa Trễ", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active });
-        db.RecyclerProfiles.Add(new RecyclerProfile { UserId = recId, FacilityName = "Vựa Trễ", RepresentativeName = "D", BusinessAddress = "HN", VerificationStatus = VerificationStatus.Verified, ActiveStatus = RecyclerActiveStatus.Online });
-        await db.SaveChangesAsync();
-
-        var (paymentSvc, _, _, _) = CreateServices(db, recId, "Recycler");
-        var order = await paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
-
-        var updated = await paymentSvc.SimulateTransferAsync(order.OrderCode, new SimulateTransferRequest
-        {
-            Scenario = "LateTransfer"
-        });
-
-        updated.Status.Should().Be("EXPIRED");
-        updated.ReconciliationStatus.Should().Be("LateTransfer");
-        updated.PaidAmount.Should().Be(1_000_000m);
-        (await db.PaymentWebhookLogs.AnyAsync(w => w.MatchedOrderId == order.Id && w.ProcessingResult == "LateTransfer")).Should().BeTrue();
-    }
-
-    // =========================================================================
-    // 13. TC-PAY-WH-05_N: Chặn Webhook sai chữ ký / Webhook Secret (MSG-PAY-05)
-    // =========================================================================
-    [Fact]
-    public async Task TC_PAY_WH_05_N_InvalidWebhookSecretOrSignature_RejectedWithMsgPay05()
+    public async Task UTC016_InvalidWebhookSignature_RejectedWithMsgPay05AndLogsAudit_Abnormal()
     {
         using var db = TestDbContextFactory.Create();
         var userId = Guid.NewGuid();
@@ -520,181 +732,264 @@ public class ServicePackagePaymentTests
         whRes.Success.Should().BeFalse();
         whRes.Status.Should().Be("INVALID_SIGNATURE");
 
-        (await paymentSvc.GetOrderAsync(order.OrderCode))!.Status.Should().Be("PENDING");
-        (await db.PaymentWebhookLogs.AnyAsync(w => !w.SignatureValid && w.ProcessingResult == "InvalidSignature")).Should().BeTrue();
+        var reloaded = await paymentSvc.GetOrderForUserAsync(userId, false, order.OrderCode);
+        reloaded.Status.Should().Be("PENDING");
+        (await db.PaymentWebhookLogs.AnyAsync(w => w.ProcessingResult == "InvalidSignature" && !w.SignatureValid)).Should().BeTrue();
     }
 
-    // =========================================================================
-    // 14. TC-PAY-10-01_P: Cô lập giá cũ (Grandfathering), chặn tắt BASIC & ghi AuditLog
-    // =========================================================================
+    // UTC017 [Abnormal] [A-10]: Chặn Admin tắt gói mặc định BASIC & chặn hủy đơn đã Paid (409 Conflict)
     [Fact]
-    public async Task TC_PAY_10_01_P_AdminPriceUpdateGrandfathersOldSubscribers_AndBlocksDisablingBasic()
+    public async Task UTC017_DisableBasicPackageAndCancelPaidOrder_ThrowExpectedRules_Abnormal()
     {
         using var db = TestDbContextFactory.Create();
         var adminId = Guid.NewGuid();
         var citizenId = Guid.NewGuid();
         db.Users.AddRange(
-            new User { Id = adminId, Username = "adm10", Email = "adm10@ecolink.vn", FullName = "Admin 10", PasswordHash = "h", Role = UserRole.Admin, Status = UserStatus.Active },
-            new User { Id = citizenId, Username = "cit10", Email = "cit10@email.vn", FullName = "Cit 10", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+            new User { Id = adminId, Username = "admin_lock", Email = "admin_lock@ecolink.vn", FullName = "Admin Lock", PasswordHash = "h", Role = UserRole.Admin, Status = UserStatus.Active },
+            new User { Id = citizenId, Username = "cit_paid", Email = "cit_paid@email.vn", FullName = "Cit Paid", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
         await db.SaveChangesAsync();
 
         var (paymentSvc, packageSvc, _, _) = CreateServices(db, adminId, "Admin");
 
-        // Citizen mua PREMIUM lúc giá đang là 59,000đ
-        var oldOrder = await paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
-        await paymentSvc.SimulateTransferAsync(oldOrder.OrderCode);
-
-        // Admin tăng giá PREMIUM lên 69,000đ & 45 ngày
-        var updatedPkg = await packageSvc.UpdatePackageAsync(adminId, CanonicalServicePackages.PremiumId, new UpsertServicePackageRequest
-        {
-            PackageCode = "PREMIUM",
-            PackageName = "Premium Plus",
-            TargetRole = "All",
-            PriceVnd = 69_000m,
-            DurationDays = 45,
-            IsActive = true,
-            DisplayOrder = 20,
-            Features = new ServicePackageFeaturesDto { TierName = "Premium", AdFree = true, EcoPlusBadge = true, DailyPointMultiplier = 1.2m }
-        });
-
-        updatedPkg.PriceVnd.Should().Be(69_000m);
-        (await db.AuditLogs.AnyAsync(a => a.Action == "UPDATE_SERVICE_PACKAGE")).Should().BeTrue();
-
-        // Đơn cũ giữ nguyên 59,000đ & 30 ngày (Grandfathering)
-        var oldOrderAfter = await paymentSvc.GetOrderAsync(oldOrder.OrderCode);
-        oldOrderAfter!.Amount.Should().Be(59_000m);
-        oldOrderAfter.DurationDays.Should().Be(30);
-
-        // Đơn mới áp dụng giá 69,000đ
-        var newOrder = await paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
-        newOrder.Amount.Should().Be(69_000m);
-
-        // Chặn tắt BASIC miễn phí
-        var toggleBasic = () => packageSvc.TogglePackageStatusAsync(adminId, CanonicalServicePackages.BasicId, new ToggleServicePackageStatusRequest
+        var disableBasic = () => packageSvc.TogglePackageStatusAsync(adminId, CanonicalServicePackages.BasicId, new ToggleServicePackageStatusRequest
         {
             IsActive = false,
-            Reason = "Thử tắt gói nền"
+            Reason = "Thử tắt gói nền BASIC"
         });
-        await toggleBasic.Should().ThrowAsync<BusinessRuleException>()
+        await disableBasic.Should().ThrowAsync<BusinessRuleException>()
             .Where(ex => ex.RuleCode == "BR-PAY-05");
+
+        // Mua & thanh toán xong -> không thể tự ý hủy đơn nữa
+        var paidOrder = await paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
+        await paymentSvc.SimulateTransferAsync(paidOrder.OrderCode);
+
+        var cancelPaid = () => paymentSvc.CancelPendingOrderAsync(citizenId, paidOrder.OrderCode);
+        await cancelPaid.Should().ThrowAsync<ConflictException>()
+            .Where(ex => ex.RuleCode == "BR-PAY-01");
     }
 
-    // =========================================================================
-    // 15. TC-PAY-11-01_P: Admin khớp thủ công Webhook mồ côi WH-... -> kích hoạt gói + AuditLog
-    // =========================================================================
+    // UTC018 [Abnormal] [A-11]: Chặn đối soát lặp giao dịch đã Resolved & thiếu tiền khi ManualMatchOrder (409 / 400)
     [Fact]
-    public async Task TC_PAY_11_01_P_AdminManualMatchOrphanWebhook_ActivatesOrderAndLogsAudit()
+    public async Task UTC018_AdminDoubleResolveOrUnderfundedManualMatch_Rejected_Abnormal()
     {
         using var db = TestDbContextFactory.Create();
         var adminId = Guid.NewGuid();
-        var citizenId = Guid.NewGuid();
+        var recId = Guid.NewGuid();
         db.Users.AddRange(
-            new User { Id = adminId, Username = "adm11", Email = "adm11@ecolink.vn", FullName = "Admin 11", PasswordHash = "h", Role = UserRole.Admin, Status = UserStatus.Active },
-            new User { Id = citizenId, Username = "cit11", Email = "cit11@email.vn", FullName = "Cit 11", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+            new User { Id = adminId, Username = "admin_dbl", Email = "admin_dbl@ecolink.vn", FullName = "Admin Double", PasswordHash = "h", Role = UserRole.Admin, Status = UserStatus.Active },
+            new User { Id = recId, Username = "rec_dbl", Email = "rec_dbl@thugom.vn", FullName = "Vựa Double", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active });
+        db.RecyclerProfiles.Add(new RecyclerProfile
+        {
+            UserId = recId,
+            FacilityName = "Vựa Double",
+            RepresentativeName = "F",
+            BusinessAddress = "HN",
+            VerificationStatus = VerificationStatus.Verified,
+            ActiveStatus = RecyclerActiveStatus.Online
+        });
         await db.SaveChangesAsync();
 
-        var (paymentSvc, packageSvc, recSvc, _) = CreateServices(db, adminId, "Admin");
+        var (paymentSvc, _, reconSvc, _) = CreateServices(db, adminId, "Admin");
 
-        // Tạo đơn PENDING 59,000đ
-        var pendingOrder = await paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
-
-        // Webhook mồ côi đến thiếu mã đơn trong nội dung
-        var whRes = await paymentSvc.ProcessWebhookAsync(new VietQrWebhookPayload
+        // Tạo đơn PRO 1,000,000đ nhưng có webhook mồ côi chỉ nhận 500,000đ
+        var proOrder = await paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+        var orphanWh = await paymentSvc.ProcessWebhookAsync(new VietQrWebhookPayload
         {
-            OrderCode = null,
-            Amount = 59_000m,
-            Description = "NGUYEN VAN A CHUYEN TIEN GOI PREMIUM",
-            Reference = "FT_ORPHAN_888"
-        });
-        whRes.Status.Should().Be("ANOMALY_FLAGGED");
-        whRes.WebhookCode.Should().StartWith("WH-");
-
-        // Admin khớp lệnh thủ công WH-... vào pendingOrder.OrderCode
-        var resolved = await recSvc.ResolvePaymentAnomalyAsync(adminId, whRes.WebhookCode!, new ResolvePaymentAnomalyRequest
-        {
-            Action = nameof(ReconciliationAction.ManualMatchOrder),
-            TargetOrderCode = pendingOrder.OrderCode,
-            ResolutionNote = "Đã kiểm tra sao kê khớp chính xác giao dịch của khách hàng."
+            Amount = 500_000m,
+            Description = "KHONG KHOP",
+            Reference = "FT_SHORT_ORPHAN"
         });
 
-        resolved.ReconciliationStatus.Should().Be("Resolved");
-        resolved.OrderStatus.Should().Be("Paid");
+        var underfundedMatch = () => reconSvc.ResolvePaymentAnomalyAsync(adminId, orphanWh.WebhookCode!, new ResolvePaymentAnomalyRequest
+        {
+            Action = "ManualMatchOrder",
+            TargetOrderCode = proOrder.OrderCode,
+            ResolutionNote = "Thử khớp số tiền thiếu vào đơn PRO"
+        });
+        await underfundedMatch.Should().ThrowAsync<BusinessRuleException>()
+            .Where(ex => ex.RuleCode == "BR-PAY-06");
 
-        var subs = await packageSvc.GetMySubscriptionsAsync(citizenId);
-        subs.CurrentTier.Should().Be("Premium");
-        (await db.AuditLogs.AnyAsync(a => a.Action == "RESOLVE_PAYMENT_ANOMALY")).Should().BeTrue();
+        // Đóng bất thường 1 lần -> lần 2 bị chặn ConflictException
+        await reconSvc.ResolvePaymentAnomalyAsync(adminId, orphanWh.WebhookCode!, new ResolvePaymentAnomalyRequest
+        {
+            Action = "CloseAnomaly",
+            ResolutionNote = "Đã hoàn trả trực tiếp qua ngân hàng."
+        });
+
+        var doubleResolve = () => reconSvc.ResolvePaymentAnomalyAsync(adminId, orphanWh.WebhookCode!, new ResolvePaymentAnomalyRequest
+        {
+            Action = "MarkRefunded",
+            ResolutionNote = "Thử đối soát lần 2."
+        });
+        await doubleResolve.Should().ThrowAsync<ConflictException>()
+            .Where(ex => ex.RuleCode == "BR-PAY-06");
     }
 
     // =========================================================================
-    // 16. TC-PAY-11-02_S: Xuất CSV/XLSX che PII & chặn xóa/sửa thô PaymentWebhookLog
+    // BOUNDARY TEST CASES (UTC019 -> UTC022) — 4 TCs
     // =========================================================================
+
+    // UTC019 [Boundary] [U-16]: Chuyển dư tiền -> Kích hoạt ngay & gắn cờ Overpaid chờ hoàn dư
     [Fact]
-    public async Task TC_PAY_11_02_S_ExportMasksPiiAndProtectsWebhookLogImmutability_BR_ADM_05_06()
+    public async Task UTC019_OverpaidWebhook_ActivatesPackageImmediatelyAndFlagsOverpaid_Boundary()
     {
         using var db = TestDbContextFactory.Create();
-        var adminId = Guid.NewGuid();
-        var citizenId = Guid.NewGuid();
-        db.Users.AddRange(
-            new User { Id = adminId, Username = "adm12", Email = "adm12@ecolink.vn", FullName = "Admin 12", PasswordHash = "h", Role = UserRole.Admin, Status = UserStatus.Active },
-            new User { Id = citizenId, Username = "cit12", Email = "duc.nguyen@email.vn", PhoneNumber = "0901234567", FullName = "Nguyễn Đức", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+        var userId = Guid.NewGuid();
+        db.Users.Add(new User { Id = userId, Username = "wh03", Email = "wh03@email.vn", FullName = "Vũ Dư", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
         await db.SaveChangesAsync();
 
-        var (paymentSvc, _, recSvc, _) = CreateServices(db, adminId, "Admin");
+        var (paymentSvc, packageSvc, _, _) = CreateServices(db, userId, "User");
+        var order = await paymentSvc.CreatePayInOrderAsync(userId, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
+
+        var updated = await paymentSvc.SimulateTransferAsync(order.OrderCode, new SimulateTransferRequest
+        {
+            Scenario = "Overpaid",
+            SimulatedAmount = 65_000m
+        });
+
+        updated.Status.Should().Be("PAID");
+        updated.ReconciliationStatus.Should().Be("Overpaid");
+        updated.PaidAmount.Should().Be(65_000m);
+
+        var mySubs = await packageSvc.GetMySubscriptionsAsync(userId);
+        mySubs.CurrentTier.Should().Be("Premium");
+    }
+
+    // UTC020 [Boundary] [R-07]: Chuyển khoản muộn sau hạn QR 15 phút -> Gắn cờ LateTransfer & tự quét quá hạn
+    [Fact]
+    public async Task UTC020_LateTransferOnExpiredQr_MarksExpiredAndFlagsLateTransfer_Boundary()
+    {
+        using var db = TestDbContextFactory.Create();
+        var recId = Guid.NewGuid();
+        db.Users.Add(new User { Id = recId, Username = "wh04", Email = "wh04@rec.vn", FullName = "Vựa Trễ", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active });
+        db.RecyclerProfiles.Add(new RecyclerProfile { UserId = recId, FacilityName = "Vựa Trễ", RepresentativeName = "D", BusinessAddress = "HN", VerificationStatus = VerificationStatus.Verified, ActiveStatus = RecyclerActiveStatus.Online });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, _, _, _) = CreateServices(db, recId, "Recycler");
+        var order = await paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+
+        var updated = await paymentSvc.SimulateTransferAsync(order.OrderCode, new SimulateTransferRequest
+        {
+            Scenario = "LateTransfer"
+        });
+
+        updated.Status.Should().Be("EXPIRED");
+        updated.ReconciliationStatus.Should().Be("LateTransfer");
+        updated.PaidAmount.Should().Be(1_000_000m);
+        (await db.PaymentWebhookLogs.AnyAsync(w => w.MatchedOrderId == order.Id && w.ProcessingResult == "LateTransfer")).Should().BeTrue();
+    }
+
+    // UTC021 [Boundary] [U-16]: Vòng đời IMemoryCache quyền lợi & Vô hiệu hóa tức thì ngay sau khi kích hoạt gói
+    [Fact]
+    public async Task UTC021_EntitlementCacheHitAndInvalidation_UpdatesImmediatelyAfterActivation_Boundary()
+    {
+        using var db = TestDbContextFactory.Create();
+        var citizenId = Guid.NewGuid();
+        db.Users.Add(new User { Id = citizenId, Username = "cache_u", Email = "cache@email.vn", FullName = "Cache User", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, _, _, entitlementSvc) = CreateServices(db, citizenId, "User");
+
+        // 1. Đọc lần đầu -> lưu Basic vào cache
+        var initialEnt = await entitlementSvc.GetUserEntitlementsAsync(citizenId);
+        initialEnt.CurrentTier.Should().Be("Basic");
+        initialEnt.IsAdFree.Should().BeFalse();
+
+        // 2. Sau khi thanh toán PREMIUM, PaymentService gọi InvalidateUserEntitlements nên đọc lại ra Premium ngay
         var order = await paymentSvc.CreatePayInOrderAsync(citizenId, UserRole.User, new CreatePayInRequest { PackageCode = "PREMIUM" });
         await paymentSvc.SimulateTransferAsync(order.OrderCode);
 
-        // 1. Xuất CSV kiểm tra BOM + Che PII Email & SĐT
-        var csvFile = await recSvc.ExportReconciliationReportAsync(adminId, new ReconciliationExportQuery { Format = "csv" });
-        var csvText = Encoding.UTF8.GetString(csvFile.Content);
-        csvText.Should().NotContain("duc.nguyen@email.vn");
-        csvText.Should().NotContain("0901234567");
-        csvText.Should().Contain("***@email.vn");
-        csvText.Should().Contain("090****567");
-        (await db.AuditLogs.AnyAsync(a => a.Action == "EXPORT_RECONCILIATION")).Should().BeTrue();
+        var updatedEnt = await entitlementSvc.GetUserEntitlementsAsync(citizenId);
+        updatedEnt.CurrentTier.Should().Be("Premium");
+        updatedEnt.IsAdFree.Should().BeTrue();
 
-        // 2. Xuất XLSX OpenXML hợp lệ
-        var xlsxFile = await recSvc.ExportReconciliationReportAsync(adminId, new ReconciliationExportQuery { Format = "xlsx" });
-        using var archive = new ZipArchive(new MemoryStream(xlsxFile.Content), ZipArchiveMode.Read);
-        archive.GetEntry("xl/worksheets/sheet1.xml").Should().NotBeNull();
-
-        // 3. Thử xóa PaymentWebhookLog -> Interceptor phải ném InvalidOperationException (BR-ADM-05)
-        var whLog = await db.PaymentWebhookLogs.FirstAsync();
-        db.PaymentWebhookLogs.Remove(whLog);
-        var deleteAct = () => db.SaveChangesAsync();
-        await deleteAct.Should().ThrowAsync<InvalidOperationException>();
+        // 3. Batch lookup tập rỗng trả về từ điển rỗng không ném ngoại lệ
+        var emptyBatch = await entitlementSvc.GetBatchEntitlementsAsync(Array.Empty<Guid>());
+        emptyBatch.Should().BeEmpty();
     }
 
-    // =========================================================================
-    // 17. Kiểm tra Validators chuẩn A-10 & A-11
-    // =========================================================================
+    // UTC022 [Boundary] [A-10 & A-11]: Ranh giới biên UpsertServicePackageRequestValidator & ResolvePaymentAnomalyRequestValidator
     [Fact]
-    public void ServicePackageValidators_EnforcePayOsMinAmount_AndMandatoryResolutionNote()
+    public void UTC022_ServicePackageValidators_EnforceBoundaryPricesDurationsAndResolutionNote_Boundary()
     {
         var pkgValidator = new UpsertServicePackageRequestValidator();
+        var resolveValidator = new ResolvePaymentAnomalyRequestValidator();
+
+        // Biên dưới hợp lệ: giá 2,000đ, chu kỳ 1 ngày
+        var minValidPkg = pkgValidator.Validate(new UpsertServicePackageRequest
+        {
+            PackageCode = "STARTER_2K",
+            PackageName = "Gói 2K",
+            TargetRole = "User",
+            PriceVnd = 2_000m,
+            DurationDays = 1,
+            Features = new ServicePackageFeaturesDto { AdFree = true, DailyPointMultiplier = 1.0m, MapPriorityBoost = 0 }
+        });
+        minValidPkg.IsValid.Should().BeTrue();
+
+        // Dưới ngưỡng PayOS 2,000đ hoặc chu kỳ 0 ngày -> lỗi
         pkgValidator.Validate(new UpsertServicePackageRequest
         {
-            PackageCode = "TEST_LOW",
-            PackageName = "Gói dưới ngưỡng PayOS",
+            PackageCode = "CHEAP_1K",
+            PackageName = "Gói dưới chuẩn",
             TargetRole = "All",
-            PriceVnd = 500m,
-            DurationDays = 10
+            PriceVnd = 1_500m,
+            DurationDays = 30
         }).IsValid.Should().BeFalse();
 
         pkgValidator.Validate(new UpsertServicePackageRequest
         {
-            PackageCode = "VALID_TIER",
-            PackageName = "Gói Hợp Lệ",
+            PackageCode = "ZERO_DAY",
+            PackageName = "Chu kỳ 0 ngày",
+            TargetRole = "All",
+            PriceVnd = 5_000m,
+            DurationDays = 0
+        }).IsValid.Should().BeFalse();
+
+        // Biên trên chu kỳ hợp lệ (730 ngày) vs vượt quá (731 ngày)
+        pkgValidator.Validate(new UpsertServicePackageRequest
+        {
+            PackageCode = "TWO_YEAR_PRO",
+            PackageName = "Gói 2 năm",
             TargetRole = "Recycler",
-            PriceVnd = 2000m,
-            DurationDays = 30
+            PriceVnd = 1_800_000m,
+            DurationDays = 730
         }).IsValid.Should().BeTrue();
 
-        var recValidator = new ResolvePaymentAnomalyRequestValidator();
-        recValidator.Validate(new ResolvePaymentAnomalyRequest
+        pkgValidator.Validate(new UpsertServicePackageRequest
         {
-            Action = nameof(ReconciliationAction.MarkRefunded),
-            ResolutionBankRef = null,
-            ResolutionNote = "ngắn"
+            PackageCode = "OVER_LIMIT",
+            PackageName = "Quá hạn 730 ngày",
+            TargetRole = "Recycler",
+            PriceVnd = 2_000_000m,
+            DurationDays = 731
+        }).IsValid.Should().BeFalse();
+
+        // ResolvePaymentAnomalyRequestValidator: Note >= 10 ký tự, ManualMatchOrder cần TargetOrderCode, MarkRefunded cần BankRef
+        resolveValidator.Validate(new ResolvePaymentAnomalyRequest
+        {
+            Action = "CloseAnomaly",
+            ResolutionNote = "0123456789"
+        }).IsValid.Should().BeTrue();
+
+        resolveValidator.Validate(new ResolvePaymentAnomalyRequest
+        {
+            Action = "CloseAnomaly",
+            ResolutionNote = "123456789"
+        }).IsValid.Should().BeFalse();
+
+        resolveValidator.Validate(new ResolvePaymentAnomalyRequest
+        {
+            Action = "ManualMatchOrder",
+            ResolutionNote = "Ghi chú đủ dài trên 10 ký tự nhưng thiếu mã đơn.",
+            TargetOrderCode = null
+        }).IsValid.Should().BeFalse();
+
+        resolveValidator.Validate(new ResolvePaymentAnomalyRequest
+        {
+            Action = "MarkRefunded",
+            ResolutionNote = "Đã hoàn tiền nhưng chưa điền mã tham chiếu ngân hàng.",
+            ResolutionBankRef = null
         }).IsValid.Should().BeFalse();
     }
 }

@@ -1,10 +1,10 @@
 # REPORT 5.1 – UNIT TEST SPECIFICATION (TÀI LIỆU ĐẶC TẢ KIỂM THỬ ĐƠN VỊ)
 
 - **Dự án:** Hệ thống Phân loại Rác Thông minh & Giao dịch Phế liệu (**EcoLink**)
-- **Phiên bản:** 1.6
-- **Ngày cập nhật:** 2026-11-16
+- **Phiên bản:** 1.7
+- **Ngày cập nhật:** 2026-11-17
 - **Nhóm thực hiện:** Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức
-- **Phạm vi kiểm thử (9 Core Modules):**
+- **Phạm vi kiểm thử (10 Core Modules):**
   1. **Module 1:** Authentication & Account Management (`AuthService`) — **22 TCs**
   2. **Module 2:** AI Waste Classification & Rule Engine (`AiVisionHttpClient`, `WasteRuleEngineService`, `classify_waste_image`) — **18 TCs**
   3. **Module 3:** Recycler Onboarding & Verification (`RecyclerOnboardingService`, `CloudflareR2StorageService`) — **20 TCs**
@@ -14,7 +14,8 @@
   7. **Module 7:** Handover Completion & Transaction Receipt (`HandoverReceiptService` – `R-06`, `U-09`, `U-12`, `JOB-01`) — **24 TCs**
   8. **Module 8:** In-App Real-Time Negotiation Chatbox (`NegotiationChatService` & `NegotiationChatValidators` – `U-08` & `R-05`) — **20 TCs**
   9. **Module 9:** Account, Staff & System Governance / Analytics (`AdminAnalyticsService`, `AccountGovernanceService`, `StaffManagementService`, `StaffAttendanceService`, `AuditLogService` & `GovernanceValidators` – `A-01..A-04`, `S-06`, `S-07`, `S-11`) — **22 TCs**
-- **Tổng số lượng Unit Test Cases:** **190 TCs** (`87 Normal`, `68 Abnormal`, `35 Boundary`)
+  10. **Module 10:** In-System Service Packages & VietQR Integration (`PaymentService`, `ServicePackageService`, `SubscriptionEntitlementService`, `AdminReconciliationService` & `ServicePackageValidators` – `U-16`, `R-07`, `A-10`, `A-11`) — **22 TCs**
+- **Tổng số lượng Unit Test Cases:** **212 TCs** (`97 Normal`, `76 Abnormal`, `39 Boundary`)
 
 ---
 
@@ -448,3 +449,47 @@
 | **UTC020** | `CheckOut` trước `CheckIn`, `CheckIn` lần 2 hoặc `CheckOut` lần 2 | `StaffAttendanceService` | Cả 3 ca đều ném `BusinessRuleException ("BR-GAM-09")` | Abnormal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | 1 lần/ngày theo UTC+7 |
 | **UTC021** | Biên chuỗi: Ngày 6 $\rightarrow$ 7 (`+15đ`), Ngày 7 $\rightarrow$ 1, Đứt chuỗi $\rightarrow$ 1 | `CheckInAsync` | Tính đúng `CurrentStreakDay` (`7`, `1`, `1`) và điểm thưởng (`15`, `10`, `10`) | Boundary | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chuỗi 7 ngày (`BR-GAM-09`) |
 | **UTC022** | Cả 8 FluentValidators với giá trị độ dài biên | `ValidateAsync` | Từ chối đúng biên sai (`Reason` 9/501, `Password` 7, `ShiftNote` 501) | Boundary | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Toàn bộ `GovernanceValidators` |
+
+---
+
+## PHẦN 10: MODULE IN-SYSTEM SERVICE PACKAGES & VIETQR INTEGRATION (`ServicePackagePaymentTests` – `U-16`, `R-07`, `A-10`, `A-11`)
+
+### 10.1. Bảng Tổng hợp Kiểm thử (Summary Table)
+
+| Code Module | `PaymentService`, `ServicePackageService`, `SubscriptionEntitlementService`, `AdminReconciliationService`, `ServicePackageValidators` | | |
+| :--- | :---: | :---: | :---: |
+| **Number of TCs** | **22** | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** |
+| *Round 1* | 22 | 0 | 0 |
+| *Round 2* | 0 | 0 | 22 |
+| *Round 3* | 0 | 0 | 22 |
+| **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
+| **Count** | **10** | **8** | **4** |
+
+### 10.2. Chi tiết Các Ca Kiểm thử (Test Cases)
+*(Chi tiết đầy đủ 22 test cases `UTC001` $\rightarrow$ `UTC022` xem tại: [`10_unit_test_in_system_service_packages_vietqr.md`](./10_unit_test_in_system_service_packages_vietqr.md) / [`ServicePackagePaymentTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module12_ServicePackages/ServicePackagePaymentTests.cs))*
+
+| Test Case ID | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :--- |
+| **UTC001** | Citizen `Active`, DB có 3 gói `BASIC/PREMIUM/PRO` | `PackageCode="PREMIUM"`, `SimulateTransfer("Exact")` | `Amount=59000, Duration=30, Status="PAID"`, `CurrentTier="Premium", IsAdFree=true` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-01`, `U-16` |
+| **UTC002** | Citizen còn `10` ngày gói `PREMIUM` | Gia hạn thêm `PREMIUM` (`30d`) + `Exact` | `max(ExpiresAt) ≈ initialExpiry + 30 days` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-04` (Cộng dồn) |
+| **UTC003** | Recycler `Verified` KYB đang chạy `PREMIUM` | `CreatePayInOrderAsync("PRO")` + `Exact` | `PRO` (`1tr / 365d`) chạy ngay tại `utcNow`, `HasVerifiedBlueBadge=true, MapPriorityBoost=100` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-04`, `R-07` |
+| **UTC004** | Có Recycler `Basic` gần `1km` & `PRO` xa `3km` | `GeoMatchingService.FindNearestPartnersAsync` | Cơ sở `PRO` đứng `[0]` (`IsFeatured=true, HasVerifiedBadge=true`) | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `R-07`, `U-05` Map Boost |
+| **UTC005** | Đơn `PREMIUM` đang `Pending` | Gửi 3 lần cùng `VietQrWebhookPayload` | `"PAID"` $\rightarrow$ `"ALREADY_PROCESSED"` $\rightarrow$ `"ALREADY_PROCESSED"`, `1` thuê bao | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-02` Idempotency |
+| **UTC006** | Recycler `Verified` tạo đơn `PRO` `Pending` | `GetAvailablePackages`, `CancelPendingOrder`, `GetUserOrders("Cancelled")` | Catalog trả `BASIC, PREMIUM, PRO`; hủy đơn thành `"CANCELLED"` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `STT 116, 117, 120, 122` |
+| **UTC007** | Đã mua `PREMIUM` giá `59k / 30d` | `CreatePackage("RECYCLER_VIP")`, `UpdatePackage(Premium, 79k / 45d)` | Đơn cũ giữ `59k / 30d`, đơn mới lấy `79k / 45d`, ghi `2` AuditLog | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-05` Grandfathering |
+| **UTC008** | Đơn `PREMIUM` bị `Underpaid` (`40k / 59k`) | `GetPaymentLedger(OnlyAnomalies=true)`, `Resolve("ApproveAndActivate")` | `OrderStatus="Paid", ReconciliationStatus="Resolved"`, kích hoạt `Premium` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-06`, `A-11` |
+| **UTC009** | Có đơn `PRO` `Pending` & webhook mồ côi `WH-...` | `Resolve(whCode, "ManualMatchOrder", TargetOrderCode)` | Khớp đơn `PRO` thành `"Paid"` / `"Resolved"`, kích hoạt gói `Pro` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-06` Orphan Match |
+| **UTC010** | Có giao dịch của User lộ Email/SĐT | `ExportReconciliationReport("csv"/"xlsx")`, thử `Remove(AuditLog)` | CSV che `"ng***@gmail.com"`, `"098****321"`; XLSX chứa `sheet1.xml`; chặn xóa log | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-ADM-05`, `BR-ADM-06` |
+| **UTC011** | Tài khoản Citizen `Active` | `CreatePayInOrder` (`PackageCode="PREMIUM", Amount=1000m`) | Ném `BusinessRuleException ("BR-PAY-01")` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chống giả mạo giá |
+| **UTC012** | `User A` sở hữu đơn `PREMIUM`, `User B` khác chủ | `User B` xem danh sách, chi tiết và thử hủy đơn A | Danh sách rỗng; xem và hủy ném `ForbiddenAccessException` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chống IDOR (`BR-AUTH-08`) |
+| **UTC013** | Tài khoản `Role = User` (`Citizen`) | Gọi `CreatePayInOrder` với `"BASIC"` và `"PRO"` | Mua `BASIC` ném `BR-PAY-01`; mua `PRO` ném `ForbiddenAccessException` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-01`, `BR-PAY-03` |
+| **UTC014** | Recycler có KYB `VerificationStatus = Pending` | `GetAvailablePackages` & `CreatePayInOrder("PRO")` | `PRO.IsEligible = false`; tạo đơn ném `BusinessRuleException ("MSG-PAY-06")` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khóa KYB gói PRO |
+| **UTC015** | Đơn `PREMIUM` (`59,000đ`) đang `Pending` | `SimulateTransfer("Underpaid", 50_000m)` | `Status="PENDING", ReconciliationStatus="Underpaid"`, không kích hoạt | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kịch bản `Underpaid` |
+| **UTC016** | Cấu hình `VietQr:WebhookSecret = "ecolink-super-secret"` | `ProcessWebhook(Signature="BAD_SIGNATURE", header="wrong")` | `Success=false, Status="INVALID_SIGNATURE"`, ghi log `InvalidSignature` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Bảo mật chữ ký (`MSG-PAY-05`) |
+| **UTC017** | Có gói `BASIC` & 1 đơn `PREMIUM` đã `Paid` | `TogglePackageStatus(BasicId, false)` & `CancelPendingOrder(paidOrder)` | Ném `BusinessRuleException ("BR-PAY-05")` và `ConflictException ("BR-PAY-01")` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khóa gói `BASIC` & đơn `Paid` |
+| **UTC018** | Đơn `PRO` (`1tr`) & webhook mồ côi `500k` | `ManualMatchOrder` thiếu tiền, sau đó đối soát lần 2 | Lần 1 ném `BR-PAY-06`; đóng xong đối soát tiếp ném `ConflictException` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chống đối soát sai / lặp |
+| **UTC019** | Đơn `PREMIUM` (`59,000đ`) trong hạn QR | `SimulateTransfer("Overpaid", 65_000m)` | `Status="PAID", ReconciliationStatus="Overpaid"`, kích hoạt ngay `Premium` | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên dư tiền (`Overpaid`) |
+| **UTC020** | Đơn `PRO` (`1tr`) quá hạn QR 15 phút | `SimulateTransfer("LateTransfer")` | `Status="EXPIRED", ReconciliationStatus="LateTransfer"`, ghi log không kích hoạt | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên quá hạn QR 15p |
+| **UTC021** | Citizen đọc cache lần đầu (`Basic`) | Thanh toán `PREMIUM` + `GetBatchEntitlementsAsync([])` | Cache tự làm mới thành `Premium`, tập rỗng trả về từ điển rỗng | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Vòng đời `IMemoryCache` |
+| **UTC022** | Cả 2 FluentValidators (`Upsert` & `ResolveAnomaly`) | Giá `2k/1.5k`, chu kỳ `1/730/0/731`, note `10/9` ký tự, thiếu `TargetOrderCode`/`BankRef` | Chấp nhận đúng biên hợp lệ, từ chối mọi biên dưới/trên sai | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `ServicePackageValidators` |

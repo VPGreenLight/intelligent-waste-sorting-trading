@@ -1,0 +1,46 @@
+sequenceDiagram
+    autonumber
+    actor Admin as Quan tri vien (Admin)
+    participant RecCtrl as AdminReconciliationController
+    participant RecSvc as AdminReconciliationService
+    participant Helpers as ServicePackageHelpers
+    participant Cache as SubscriptionEntitlementService
+    participant Audit as AuditLogService
+    participant Pii as PiiMaskingHelper & TabularExport
+    participant DB as PostgreSQL (EF Core)
+
+    Note over Admin,DB: A-11 Giam sat so cai VietQR, doi soat thu cong & Xuat bang ke an danh PII
+
+    Admin->>RecCtrl: GET /api/v1/admin/reconciliations/ledger?onlyAnomalies=true
+    RecCtrl->>RecSvc: GetPaymentLedgerAsync(query)
+    RecSvc->>DB: Load ServiceOrders + Orphan PaymentWebhookLogs (MatchedOrderId == null)
+    RecSvc->>RecSvc: Hop nhat ban ghi, loc trang thai & tinh KPI Summary (MatchedRevenue, OpenAnomalies, Discrepancy)
+    RecCtrl-->>Admin: 200 OK (summary + items)
+
+    Admin->>RecCtrl: PATCH /api/v1/admin/reconciliations/orders/{orderOrWhCode}/resolve
+    RecCtrl->>RecSvc: ResolvePaymentAnomalyAsync(adminId, orderOrWhCode, request)
+    RecSvc->>DB: Kiem tra ma don ECO... hoac webhook mo coi WH-...
+    alt Da Resolved hoac Refunded truoc do
+        RecSvc-->>RecCtrl: ConflictException (BR-PAY-06 / MSG-PAY-08)
+        RecCtrl-->>Admin: 409 Conflict
+    else Cho phep xu ly (ApproveAndActivate / ManualMatchOrder / MarkRefunded / MarkExcessRefunded / CloseAnomaly)
+        RecSvc->>DB: BeginTransactionAsync()
+        alt ApproveAndActivate hoac ManualMatchOrder
+            RecSvc->>DB: Cap nhat Order = Paid, Reconciliation = Resolved, MatchedOrderId
+            RecSvc->>Helpers: ActivateSubscriptionForOrderAsync(db, targetOrder, utcNow)
+            RecSvc->>Cache: InvalidateUserEntitlements(targetOrder.UserId)
+        else MarkRefunded, MarkExcessRefunded hoac CloseAnomaly
+            RecSvc->>DB: Cap nhat Order/OrphanLog = Refunded hoac Resolved + ResolutionBankRef
+        end
+        RecSvc->>Audit: LogAsync(RESOLVE_PAYMENT_ANOMALY)
+        RecSvc->>DB: CommitTransactionAsync()
+        RecCtrl-->>Admin: 200 OK (MSG-PAY-08, ReconciliationLedgerItemDto)
+    end
+
+    Admin->>RecCtrl: GET /api/v1/admin/reconciliations/export?format=csv
+    RecCtrl->>RecSvc: ExportReconciliationReportAsync(adminId, query)
+    RecSvc->>DB: Load Unified Records theo bo loc ngay & trang thai
+    RecSvc->>Pii: MaskEmail(payerEmail) & MaskPhone(payerPhone) (BR-ADM-06)
+    RecSvc->>Pii: BuildUtf8BomCsv() hoac BuildMinimalOpenXmlWorkbook()
+    RecSvc->>Audit: LogAsync(EXPORT_RECONCILIATION)
+    RecCtrl-->>Admin: 200 OK FileStream + Header X-EcoLink-Message-Code: MSG-ADM-02

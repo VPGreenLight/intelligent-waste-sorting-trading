@@ -7,8 +7,8 @@
 | Field | Value | Field | Value |
 | :--- | :--- | :--- | :--- |
 | **Project Name** | Intelligent Waste Sorting and Trading Platform (**EcoLink**) | **Creator** | Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức |
-| **Project Code** | `SEP490_G141` | **Issue Date** | `2026-11-16` |
-| **Document Code** | `SEP490_G141_ITR_v1.1` | **Version** | `1.1` |
+| **Project Code** | `SEP490_G141` | **Issue Date** | `2026-11-17` |
+| **Document Code** | `SEP490_G141_ITR_v1.2` | **Version** | `1.2` |
 
 ### Record of Change
 
@@ -18,6 +18,7 @@
 | `2026-11-10` | `0.9` | Module 03, 05, 08 Cross-Module Integration Tests | **A** | Bổ sung 3 bộ kiểm thử tích hợp liên module (`OnboardingTests`, `DiscoveryTests`, `NegotiationChatTests`) và hợp nhất vào `src/Ecolink.Backend/EcoLink.ApiTests`. | `Report-5.0_Test_Plan`, `Report-5.1_Unit_Test_Specification.md` |
 | `2026-11-11` | `1.0` | Full 8-Module + `SecurityTest` Integration Specification | **M** | Chuẩn hóa toàn bộ tài liệu `Report-5.2` theo đúng biểu mẫu `Report-5.2_Integration Test_SEP490_G141.xlsx` (140 Feature TCs + 16 Security TCs = **156 TCs**) và tách 9 tệp đặc tả chi tiết theo từng module. | `Report-5.2_Integration Test_SEP490_G141.xlsx` |
 | `2026-11-16` | `1.1` | Module 09 (`M15_Governance`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-GOV-001` $\rightarrow$ `ITC-GOV-016`) bao phủ 19 REST APIs (`STT 150–168`) của Module Account, Staff & System Governance / Analytics (`GovernanceTests.cs`), nâng tổng số lên **172 TCs**. | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) |
+| `2026-11-17` | `1.2` | Module 10 (`M12_ServicePackages`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-PAY-001` $\rightarrow$ `ITC-PAY-016`) bao phủ 15 REST APIs (`STT 115–129`) của Module In-System Service Packages & VietQR Integration (`ServicePackageTests.cs`), nâng tổng số lên **188 TCs**. | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) |
 
 *(Ghi chú: `*A` = Added, `D` = Deleted, `M` = Modified)*
 
@@ -74,7 +75,11 @@
 | **37** | Function 9.2: User/Recycler Lock & Soft-Deactivation | `M15_Governance` | Tra cứu hồ sơ (`GET /staff/accounts`), khóa chặn tức thời JWT (`BR-ADM-03`) và vô hiệu hóa mềm bảo toàn biên nhận (`BR-ADM-04`). | Tài khoản `Admin` hoặc `Staff` có quyền `MANAGE_ACCOUNTS`. | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) |
 | **38** | Function 9.3: Staff Provisioning & Dynamic RBAC Matrix | `M15_Governance` | Tạo Staff `0` quyền mặc định (`BR-ADM-01`), cập nhật mật khẩu tạm, phân 7 mã quyền RBAC xóa cache tức thời (`BR-ADM-02`, `MSG-ADM-01`) & chống tự khóa. | Đã đăng nhập tài khoản `Admin`. | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) |
 | **39** | Function 9.4: Staff Daily Shift Attendance & Streak | `M15_Governance` | Điểm danh đầu/cuối ca (`POST /check-in`, `/check-out`) mỗi ngày 1 lần theo UTC+7 (`BR-GAM-09`), tách biệt ví `GreenPoints` (`BR-GAM-08`) và báo cáo Admin. | Tài khoản `Staff` đang hoạt động (`Active`). | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) |
-| **40** | Function 10.1: Cross-Module Security & Authorization | `SecurityTest` | Kiểm thử bảo mật tích hợp: Chống rò rỉ dữ liệu, User Enumeration, Brute-Force, Replay Attack, SQLi/XSS, RBAC & IDOR. | Toàn bộ 9 Module đang hoạt động. | [`integration_test_security.md`](./integration_test_security.md) |
+| **40** | Function 10.1: Catalog, Order Lifecycle, IDOR & Webhook Security | `M12_ServicePackages` | Danh mục 3 gói chuẩn (`BASIC`/`PREMIUM`/`PRO`), tạo QR 15 phút, hủy đơn (`409` nếu `Paid`), chống IDOR (`MSG-ADM-04`), Webhook Idempotent (`BR-PAY-02`), chữ ký (`MSG-PAY-05`) & 5 kịch bản bất thường. | Đã seed 3 gói chuẩn & tài khoản `Citizen`, `Staff`, `Admin`. | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) |
+| **41** | Function 10.2: Recycler KYB Eligibility & Map Priority Boost | `M12_ServicePackages` | Chặn Recycler `Pending` mua `PRO` (`MSG-PAY-06`), duyệt KYB (`M-03`), nâng bậc tức thì `PREMIUM` $\rightarrow$ `PRO` (`BR-PAY-04`) và gắn Tích xanh / Ghim nổi bật bản đồ (`M-05`). | Hồ sơ Recycler đã nộp chứng từ KYB và bật `Online`. | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) |
+| **42** | Function 10.3: Admin Package Catalog & Fee Configuration | `M12_ServicePackages` | Quản trị gói dịch vụ (`A-10`): tạo gói thương mại (`>= 2,000đ`), bảo vệ gói `BASIC` (`BR-PAY-05`), sửa giá áp dụng Grandfathering bảo toàn snapshot đơn cũ. | Đã đăng nhập tài khoản `Admin`. | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) |
+| **43** | Function 10.4: Admin Financial Reconciliation & Anonymized Export | `M12_ServicePackages` | Sổ cái lọc sai lệch, `ApproveAndActivate`, khớp thủ công webhook mồ côi `ManualMatchOrder` (`WH-...`), chặn giải quyết lặp (`409`), xuất CSV/XLSX ẩn danh PII (`BR-ADM-06`) & AuditLog (`BR-ADM-05`). | Có giao dịch `Underpaid` và bản ghi webhook mồ côi. | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) |
+| **44** | Function 11.1: Cross-Module Security & Authorization | `SecurityTest` | Kiểm thử bảo mật tích hợp: Chống rò rỉ dữ liệu, User Enumeration, Brute-Force, Replay Attack, SQLi/XSS, RBAC & IDOR. | Toàn bộ 10 Module đang hoạt động. | [`integration_test_security.md`](./integration_test_security.md) |
 
 ---
 
@@ -84,8 +89,8 @@
 | :--- | :--- | :--- | :--- |
 | **Project Name** | Intelligent Waste Sorting and Trading Platform (**EcoLink**) | **Creator** | Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức |
 | **Project Code** | `SEP490_G141` | **Reviewer/Approver** | GVHD / Hội đồng Chấm Đồ án SEP490 |
-| **Document Code** | `SEP490_G141_Test Report_v1.1` | **Issue Date** | `2026-11-16` |
-| **Notes** | Release 1.1 bổ sung Module 09 (`M15_Governance`: 19 REST APIs `STT 150–168`) nâng tổng phạm vi lên 9 Core Business Modules (`M01_Auth` $\rightarrow$ `M15_Governance`) và 1 Sheet Kiểm thử Bảo mật Tích hợp (`SecurityTest`), thực thi tự động qua [`src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj`](../../../src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj). | | |
+| **Document Code** | `SEP490_G141_Test Report_v1.2` | **Issue Date** | `2026-11-17` |
+| **Notes** | Release 1.2 bổ sung Module 10 (`M12_ServicePackages`: 15 REST APIs `STT 115–129`) nâng tổng phạm vi lên 10 Core Business Modules (`M01_Auth` $\rightarrow$ `M12_ServicePackages`) và 1 Sheet Kiểm thử Bảo mật Tích hợp (`SecurityTest`), thực thi tự động qua [`src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj`](../../../src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj). | | |
 
 ### Bảng Thống kê Kết quả Kiểm thử Tích hợp (Integration Test Statistics Table)
 
@@ -100,11 +105,12 @@
 | **7** | `M07_Receipt` (Handover Completion & Transaction Receipt) | 20 | 0 | 0 | 0 | **20** | [`07_integration_test_handover_completion_and_transaction_receipt.md`](./07_integration_test_handover_completion_and_transaction_receipt.md) / [`ReceiptTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ReceiptTests.cs) |
 | **8** | `M08_Negotiation` (In-App Real-Time Negotiation Chatbox) | 15 | 0 | 0 | 0 | **15** | [`08_integration_test_in_app_realtime_negotiation_chatbox.md`](./08_integration_test_in_app_realtime_negotiation_chatbox.md) / [`NegotiationChatTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/NegotiationChatTests.cs) |
 | **9** | `M15_Governance` (Account, Staff & System Governance) | 16 | 0 | 0 | 0 | **16** | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) / [`GovernanceTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/GovernanceTests.cs) |
-| **10** | `SecurityTest` (Cross-Module Security & Authorization) | 16 | 0 | 0 | 0 | **16** | [`integration_test_security.md`](./integration_test_security.md) |
-| | **Sub total** | **172** | **0** | **0** | **0** | **172** | **246 Automated Test Methods** |
+| **10** | `M12_ServicePackages` (In-System Service Packages & VietQR) | 16 | 0 | 0 | 0 | **16** | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) / [`ServicePackageTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ServicePackageTests.cs) |
+| **11** | `SecurityTest` (Cross-Module Security & Authorization) | 16 | 0 | 0 | 0 | **16** | [`integration_test_security.md`](./integration_test_security.md) |
+| | **Sub total** | **188** | **0** | **0** | **0** | **188** | **268 Automated Test Methods (429 Expanded Executions)** |
 
-- **Test coverage:** `100,00 %` (`172 / 172` Test Cases Executed)
-- **Test successful coverage:** `100,00 %` (`172 / 172` Test Cases Passed)
+- **Test coverage:** `100,00 %` (`188 / 188` Test Cases Executed)
+- **Test successful coverage:** `100,00 %` (`188 / 188` Test Cases Passed)
 
 ---
 
@@ -456,7 +462,44 @@
 
 ---
 
-## SHEET 13: `SecurityTest` – CROSS-MODULE SECURITY & AUTHORIZATION INTEGRATION
+## SHEET 13: `M12_ServicePackages` – IN-SYSTEM SERVICE PACKAGES & VIETQR INTEGRATION
+*(Chi tiết đầy đủ xem tại: [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md))*
+
+| Feature | `In-System Service Packages & VietQR Integration (M12_ServicePackages)` | | | |
+| :--- | :--- | :---: | :---: | :---: |
+| **Test requirement** | Kiểm thử tích hợp End-to-End 15 APIs phân hệ `M-12`: RBAC `401/403`, Bảng giá 3 gói `BASIC`/`PREMIUM`/`PRO`, tạo VietQR động 15 phút & hủy đơn, Webhook Idempotent & chữ ký bảo mật (`BR-PAY-02`), 5 kịch bản bất thường, điều kiện `Verified` KYB & Tích xanh / Ghim nổi bật bản đồ `PRO` (`BR-PAY-03`, `BR-PAY-04`), cấu hình giá & Grandfathering (`BR-PAY-05`), và đối soát / xuất bảng kê ẩn danh PII (`BR-PAY-06`, `BR-ADM-06`). | | | |
+| **Number of TCs** | **16** | | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
+| *Round 1* | 16 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 16 | 0 |
+| *Round 3* | 0 | 0 | 16 | 0 |
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Function 10.1: Catalog, Order Lifecycle, IDOR & Webhook Security (`STT 115–122`)** | | | | | | | | | |
+| **ITC-PAY-001** | Chặn truy cập ẩn danh (`401`) và phân quyền `Admin` (`403` với `Citizen`/`Staff`) trên API quản trị gói & đối soát. | 1. Gọi `GET /service-packages`, `/subscriptions/me`, `/service-payments/orders` không token.<br>2. Dùng token `Citizen` & `Staff` gọi `/admin/service-packages` & `/admin/reconciliations/ledger`. | Bước 1: `401 Unauthorized`. Bước 2: `403 Forbidden` trên cả `Citizen` và `Staff`. | Đã seed `citizen`, `staff`, `admin`. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY01` |
+| **ITC-PAY-002** | Tài khoản `Citizen` mới nhận đủ bảng giá 3 gói chuẩn (`BASIC`, `PREMIUM`, `PRO`) & mặc định tier `Basic`. | 1. Đăng ký `Citizen` mới.<br>2. Gọi `GET /service-packages` và `GET /subscriptions/me`. | `200 OK`, đủ 3 gói (`PRO.isEligible = false`), `currentTier = "Basic"`, `isAdFree = false`. | Tài khoản mới hợp lệ. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY02` |
+| **ITC-PAY-003** | Chặn tạo QR cho `BASIC` (`0đ`), sửa `amount` giả mạo từ client, `amount <= 0` (`MSG-PAY-03`) & Citizen mua `PRO`. | 1. Gửi `POST /create` với `BASIC`, `{PREMIUM, amount=1000}`, `{amount=0}` và `PRO`. | `BASIC` (`400`), `amount=1000` (`400`), `amount=0` (`400 MSG-PAY-03`), `PRO` (`403 Forbidden`). | Citizen đã đăng nhập. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY03` |
+| **ITC-PAY-004** | Tạo đơn `PREMIUM` (`59,000đ`), tra cứu trạng thái/danh sách đơn & chặn IDOR từ Citizen khác (`403 MSG-ADM-04`). | 1. `Citizen A` tạo đơn `PREMIUM`, gọi `GET /orders/{code}` & `GET /orders`.<br>2. `Citizen B` gọi xem & hủy đơn của A. | `Citizen A` `200 OK` (`MSG-PAY-01`, `amount=59000`); `Citizen B` bị chặn `403` (`MSG-ADM-04`). | Có 2 tài khoản `Citizen A` và `B`. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY04` |
+| **ITC-PAY-005** | Hủy đơn thanh toán VietQR đang chờ `Pending` chuyển trạng thái `CANCELLED` (`MSG-PAY-03`). | 1. Tạo đơn `PREMIUM` (`PENDING`).<br>2. Gửi `POST /orders/{orderCode}/cancel`. | HTTP `200 OK`, `messageCode = "MSG-PAY-03"`, `status = "CANCELLED"`. | Đơn đang `Pending`. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY05` |
+| **ITC-PAY-006** | Giả lập chuyển khoản khớp (`Exact`) kích hoạt `Premium` 30 ngày & chặn hủy đơn đã `Paid` (`409 Conflict`). | 1. Tạo đơn `PREMIUM`, gọi `POST /simulate-transfer/{code}` (`Exact`).<br>2. Kiểm tra `/subscriptions/me` và thử gọi `/cancel`. | `status = "PAID"`, `currentTier = "Premium"`, `remainingDays >= 29`; hủy đơn đã `Paid` -> `409 Conflict`. | Dev Simulator bật. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY06` |
+| **ITC-PAY-007** | Gia hạn sớm cùng gói `PREMIUM` tự động cộng dồn nối tiếp thêm 30 ngày (`BR-PAY-04`). | 1. Mua & thanh toán lần 1 `PREMIUM`.<br>2. Mua & thanh toán lần 2 `PREMIUM`.<br>3. Gọi `GET /subscriptions/me`. | Có `2` bản ghi `activeSubscriptions`, `max(remainingDays) >= 59`. | Citizen vừa kích hoạt `PREMIUM`. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY07` |
+| **ITC-PAY-008** | Từ chối Webhook mang chữ ký giả mạo (`400 MSG-PAY-05`) & bảo toàn đơn ở trạng thái `PENDING`. | 1. Tạo đơn `PREMIUM`.<br>2. Gửi `POST /webhook` kèm `signature` sai.<br>3. Kiểm tra lại `GET /orders/{code}`. | HTTP `400 Bad Request` (`MSG-PAY-05`); đơn giữ `"PENDING"`. | Đơn `PREMIUM` đang chờ. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY08` |
+| **ITC-PAY-009** | Xử lý Webhook Idempotent (`BR-PAY-02`) khi gateway gửi trùng 2 lần cùng mã tham chiếu `reference`. | 1. Tạo đơn `PREMIUM`.<br>2. Gửi `POST /webhook` 2 lần liên tiếp cùng `reference`. | Lần 1: `"PAID"`; Lần 2: `"ALREADY_PROCESSED"`; chỉ có `1` `activeSubscription`. | Đơn `PREMIUM` đang `PENDING`. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY09` |
+| **ITC-PAY-010** | Ma trận 3 kịch bản bất thường qua Simulator: `Underpaid` (giữ `Pending`), `Overpaid` (kích hoạt ngay), `LateTransfer` (`Expired`). | 1. Chạy `Underpaid` (`45,000đ`), `Overpaid` (`69,000đ`), `LateTransfer` trên 3 đơn `PREMIUM`. | `Underpaid` giữ `"PENDING"`; `Overpaid` sang `"PAID"` + `"Premium"`; `LateTransfer` sang `"EXPIRED"`. | Dev Simulator bật. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY10` |
+| **Function 10.2: Recycler KYB Eligibility & Map Priority Boost (`R-07` & `M-03` / `M-05`)** | | | | | | | | | |
+| **ITC-PAY-011** | Recycler chưa duyệt KYB (`Pending`) không đủ điều kiện `PRO` & bị từ chối với `MSG-PAY-06`. | 1. Lấy JWT Recycler `Pending`.<br>2. Gọi `GET /service-packages` & `POST /create` (`PRO`). | `PRO.isEligible = false`; tạo đơn trả `400 Bad Request` (`MSG-PAY-06`). | Tài khoản `Recycler` trạng thái `Pending`. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY11` |
+| **ITC-PAY-012** | Luồng liên module (`M-03` $\rightarrow$ `M-12` $\rightarrow$ `M-05`): Duyệt KYB, nâng `PREMIUM` $\rightarrow$ `PRO` (`365d`) & ghim nổi bật trên bản đồ. | 1. Nộp & duyệt KYB (`PUT /verification`), đăng nhập lấy JWT `Recycler`, bật `Online`.<br>2. Mua `PREMIUM` rồi nâng `PRO` (`1,000,000đ`).<br>3. Gọi `GET /recyclers/nearby`. | Kích hoạt ngay `currentTier = "Pro"`, `hasVerifiedBlueBadge = true`, `isFeaturedMapMarker = true`; bản đồ trả `isFeatured = true` & `hasVerifiedBadge = true`. | Hồ sơ tọa độ Hòa Lạc (`21.0135, 105.5265`). | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY12` |
+| **Function 10.3: Admin Package Catalog & Fee Configuration (`A-10` — `STT 123–126`)** | | | | | | | | | |
+| **ITC-PAY-013** | Admin tạo gói mới (`201 MSG-PAY-07`), chặn giá dưới `2,000đ`, bật/tắt gói tạm & bảo vệ gói mặc định `BASIC`. | 1. Gọi `GET /admin/service-packages`, tạo `QA_BOOST_*` (`50k`) & thử `1,500đ`.<br>2. Tắt gói tạm & thử tắt gói `BASIC`. | Tạo hợp lệ `201 MSG-PAY-07`; giá `1,500đ` -> `400`; tắt `QA_BOOST` -> `200`; tắt `BASIC` -> `400` (`BR-PAY-05`). | Đã đăng nhập `Admin`. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY13` |
+| **ITC-PAY-014** | Admin sửa giá gói bằng `PUT /admin/service-packages/{id}` áp dụng Grandfathering cho đơn đã mua (`BR-PAY-05`). | 1. Tạo `QA_GF_*` `50k/30d`, Citizen mua & thanh toán.<br>2. Admin sửa giá lên `80k/45d`.<br>3. Kiểm tra đơn cũ & tạo đơn mới. | Đơn cũ giữ `amount = 50000, durationDays = 30`; đơn mới lấy `amount = 80000, durationDays = 45`. | Đã đăng nhập `Admin` & `Citizen`. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY14` |
+| **Function 10.4: Admin Financial Reconciliation & Anonymized Export (`A-11` — `STT 127–129`)** | | | | | | | | | |
+| **ITC-PAY-015** | Sổ cái lọc sai lệch, `ApproveAndActivate` đơn `Underpaid`, khớp thủ công `ManualMatchOrder` webhook mồ côi `WH-...` & chặn đối soát lặp (`409`). | 1. Lọc `/ledger?onlyAnomalies=true`, đối soát `ApproveAndActivate`, gọi lại lần 2.<br>2. Bắn webhook mồ côi & khớp `ManualMatchOrder` với đơn `Pending`. | Đối soát lần 1 -> `200 MSG-PAY-08` (`Resolved`), lần 2 -> `409 Conflict`; khớp `WH-...` chuyển đơn đích sang `Paid / Resolved`. | Có đơn `Underpaid` & webhook mồ côi. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY15` |
+| **ITC-PAY-016** | Xuất bảng kê đối soát CSV/XLSX kèm header `X-EcoLink-Message-Code: MSG-ADM-02`, che mờ PII Email/SĐT (`BR-ADM-06`) & ghi `AuditLog`. | 1. Citizen có email & SĐT riêng thanh toán `PREMIUM`.<br>2. Admin gọi `/export?format=csv` & `xlsx`.<br>3. Kiểm tra `/admin/audit-logs?action=EXPORT_RECONCILIATION`. | Header `MSG-ADM-02`, CSV có `***@gmail.com` & không lộ email/SĐT thô; XLSX bắt đầu bằng `PK`; AuditLog ghi sự kiện xuất. | Có đơn gắn email/SĐT cụ thể. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY16` |
+
+---
+
+## SHEET 14: `SecurityTest` – CROSS-MODULE SECURITY & AUTHORIZATION INTEGRATION
 *(Chi tiết đầy đủ xem tại: [`integration_test_security.md`](./integration_test_security.md))*
 
 | Test Case ID | Scenario Name | Role / Session | Coverage Technique | Given | When | Then (Expected: HTTP Status / Visibility) | Status | Defect ID | Notes |
