@@ -7,8 +7,8 @@
 | Field | Value | Field | Value |
 | :--- | :--- | :--- | :--- |
 | **Project Name** | Intelligent Waste Sorting and Trading Platform (**EcoLink**) | **Creator** | Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức |
-| **Project Code** | `SEP490_G141` | **Issue Date** | `2026-11-11` |
-| **Document Code** | `SEP490_G141_ITR_v1.0` | **Version** | `1.0` |
+| **Project Code** | `SEP490_G141` | **Issue Date** | `2026-11-16` |
+| **Document Code** | `SEP490_G141_ITR_v1.1` | **Version** | `1.1` |
 
 ### Record of Change
 
@@ -17,6 +17,7 @@
 | `2026-11-01` | `0.1` | Module 01, 02, 04, 06, 07 Integration Test Suite | **A** | Khởi tạo bộ kiểm thử tích hợp API cho 5 phân hệ cốt lõi (`AuthTests`, `WasteScanTests`, `RecyclerTests`, `HandoverTests`, `ReceiptTests`). | `Report-3_SRS`, `Report-4_SDD`, `00_api_inventory_and_endpoint_statistics.md` |
 | `2026-11-10` | `0.9` | Module 03, 05, 08 Cross-Module Integration Tests | **A** | Bổ sung 3 bộ kiểm thử tích hợp liên module (`OnboardingTests`, `DiscoveryTests`, `NegotiationChatTests`) và hợp nhất vào `src/Ecolink.Backend/EcoLink.ApiTests`. | `Report-5.0_Test_Plan`, `Report-5.1_Unit_Test_Specification.md` |
 | `2026-11-11` | `1.0` | Full 8-Module + `SecurityTest` Integration Specification | **M** | Chuẩn hóa toàn bộ tài liệu `Report-5.2` theo đúng biểu mẫu `Report-5.2_Integration Test_SEP490_G141.xlsx` (140 Feature TCs + 16 Security TCs = **156 TCs**) và tách 9 tệp đặc tả chi tiết theo từng module. | `Report-5.2_Integration Test_SEP490_G141.xlsx` |
+| `2026-11-16` | `1.1` | Module 09 (`M15_Governance`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-GOV-001` $\rightarrow$ `ITC-GOV-016`) bao phủ 19 REST APIs (`STT 150–168`) của Module Account, Staff & System Governance / Analytics (`GovernanceTests.cs`), nâng tổng số lên **172 TCs**. | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) |
 
 *(Ghi chú: `*A` = Added, `D` = Deleted, `M` = Modified)*
 
@@ -69,7 +70,11 @@
 | **33** | Function 8.2: Attachment Upload & Text/Image Messaging | `M08_Negotiation` | Tải ảnh phế liệu đính kèm (`POST /attachments`) và gửi tin nhắn `Text`/`Image` (`POST /messages`), cập nhật `unreadCount`. | Người gửi là thành viên của đơn bàn giao. | [`08_integration_test_in_app_realtime_negotiation_chatbox.md`](./08_integration_test_in_app_realtime_negotiation_chatbox.md) |
 | **34** | Function 8.3: Price/Time Proposal & Superseding | `M08_Negotiation` | Gửi Đề xuất giá/giờ (`POST /proposals`) và Phản đề xuất tự động ghi đè đề xuất cũ sang `Superseded` (`BR-NEG-04`). | Đơn đang ở trạng thái cho phép thương lượng. | [`08_integration_test_in_app_realtime_negotiation_chatbox.md`](./08_integration_test_in_app_realtime_negotiation_chatbox.md) |
 | **35** | Function 8.4: Proposal Response, Lock Terms & Mark Read | `M08_Negotiation` | Chấp nhận/Từ chối Đề xuất (`POST /respond`), khóa cứng giá & giờ vào đơn Module 6 (`BR-NEG-06`), chấp nhận nhanh (`/accept-terms`) và đánh dấu đã đọc (`PUT /read`). | Đã có Proposal đang `Pending` hoặc tin nhắn chưa đọc. | [`08_integration_test_in_app_realtime_negotiation_chatbox.md`](./08_integration_test_in_app_realtime_negotiation_chatbox.md) |
-| **36** | Function 9.1: Cross-Module Security & Authorization | `SecurityTest` | Kiểm thử bảo mật tích hợp: Chống rò rỉ dữ liệu, User Enumeration, Brute-Force, Replay Attack, SQLi/XSS, RBAC & IDOR. | Toàn bộ 8 Module đang hoạt động. | [`09_integration_test_security.md`](./09_integration_test_security.md) |
+| **36** | Function 9.1: Executive KPI, Charts, Export & Audit Logs | `M15_Governance` | KPI điều hành & biểu đồ (`GET /analytics/*`), xuất CSV/XLSX che PII (`BR-ADM-06`) và tra cứu nhật ký bất biến (`BR-ADM-05`). | Đã đăng nhập tài khoản `Admin`. | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) |
+| **37** | Function 9.2: User/Recycler Lock & Soft-Deactivation | `M15_Governance` | Tra cứu hồ sơ (`GET /staff/accounts`), khóa chặn tức thời JWT (`BR-ADM-03`) và vô hiệu hóa mềm bảo toàn biên nhận (`BR-ADM-04`). | Tài khoản `Admin` hoặc `Staff` có quyền `MANAGE_ACCOUNTS`. | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) |
+| **38** | Function 9.3: Staff Provisioning & Dynamic RBAC Matrix | `M15_Governance` | Tạo Staff `0` quyền mặc định (`BR-ADM-01`), cập nhật mật khẩu tạm, phân 7 mã quyền RBAC xóa cache tức thời (`BR-ADM-02`, `MSG-ADM-01`) & chống tự khóa. | Đã đăng nhập tài khoản `Admin`. | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) |
+| **39** | Function 9.4: Staff Daily Shift Attendance & Streak | `M15_Governance` | Điểm danh đầu/cuối ca (`POST /check-in`, `/check-out`) mỗi ngày 1 lần theo UTC+7 (`BR-GAM-09`), tách biệt ví `GreenPoints` (`BR-GAM-08`) và báo cáo Admin. | Tài khoản `Staff` đang hoạt động (`Active`). | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) |
+| **40** | Function 10.1: Cross-Module Security & Authorization | `SecurityTest` | Kiểm thử bảo mật tích hợp: Chống rò rỉ dữ liệu, User Enumeration, Brute-Force, Replay Attack, SQLi/XSS, RBAC & IDOR. | Toàn bộ 9 Module đang hoạt động. | [`integration_test_security.md`](./integration_test_security.md) |
 
 ---
 
@@ -79,8 +84,8 @@
 | :--- | :--- | :--- | :--- |
 | **Project Name** | Intelligent Waste Sorting and Trading Platform (**EcoLink**) | **Creator** | Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức |
 | **Project Code** | `SEP490_G141` | **Reviewer/Approver** | GVHD / Hội đồng Chấm Đồ án SEP490 |
-| **Document Code** | `SEP490_G141_Test Report_v1.0` | **Issue Date** | `2026-11-11` |
-| **Notes** | Release 1.0 bao gồm đầy đủ 8 Core Business Modules (`M01_Auth` $\rightarrow$ `M08_Negotiation`) và 1 Sheet Kiểm thử Bảo mật Tích hợp (`SecurityTest`), thực thi tự động qua project [`src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj`](../../../src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj). | | |
+| **Document Code** | `SEP490_G141_Test Report_v1.1` | **Issue Date** | `2026-11-16` |
+| **Notes** | Release 1.1 bổ sung Module 09 (`M15_Governance`: 19 REST APIs `STT 150–168`) nâng tổng phạm vi lên 9 Core Business Modules (`M01_Auth` $\rightarrow$ `M15_Governance`) và 1 Sheet Kiểm thử Bảo mật Tích hợp (`SecurityTest`), thực thi tự động qua [`src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj`](../../../src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj). | | |
 
 ### Bảng Thống kê Kết quả Kiểm thử Tích hợp (Integration Test Statistics Table)
 
@@ -94,11 +99,12 @@
 | **6** | `M06_Handover` (Handover Request Management) | 22 | 0 | 0 | 0 | **22** | [`06_integration_test_handover_request_management.md`](./06_integration_test_handover_request_management.md) / [`HandoverTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/HandoverTests.cs) |
 | **7** | `M07_Receipt` (Handover Completion & Transaction Receipt) | 20 | 0 | 0 | 0 | **20** | [`07_integration_test_handover_completion_and_transaction_receipt.md`](./07_integration_test_handover_completion_and_transaction_receipt.md) / [`ReceiptTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ReceiptTests.cs) |
 | **8** | `M08_Negotiation` (In-App Real-Time Negotiation Chatbox) | 15 | 0 | 0 | 0 | **15** | [`08_integration_test_in_app_realtime_negotiation_chatbox.md`](./08_integration_test_in_app_realtime_negotiation_chatbox.md) / [`NegotiationChatTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/NegotiationChatTests.cs) |
-| **9** | `SecurityTest` (Cross-Module Security & Authorization) | 16 | 0 | 0 | 0 | **16** | [`09_integration_test_security.md`](./09_integration_test_security.md) |
-| | **Sub total** | **156** | **0** | **0** | **0** | **156** | **236 Automated Test Methods (415 Data Scenarios)** |
+| **9** | `M15_Governance` (Account, Staff & System Governance) | 16 | 0 | 0 | 0 | **16** | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) / [`GovernanceTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/GovernanceTests.cs) |
+| **10** | `SecurityTest` (Cross-Module Security & Authorization) | 16 | 0 | 0 | 0 | **16** | [`integration_test_security.md`](./integration_test_security.md) |
+| | **Sub total** | **172** | **0** | **0** | **0** | **172** | **246 Automated Test Methods** |
 
-- **Test coverage:** `100,00 %` (`156 / 156` Test Cases Executed)
-- **Test successful coverage:** `100,00 %` (`156 / 156` Test Cases Passed)
+- **Test coverage:** `100,00 %` (`172 / 172` Test Cases Executed)
+- **Test successful coverage:** `100,00 %` (`172 / 172` Test Cases Passed)
 
 ---
 
@@ -413,8 +419,45 @@
 
 ---
 
-## SHEET 12: `SecurityTest` – CROSS-MODULE SECURITY & AUTHORIZATION INTEGRATION
-*(Chi tiết đầy đủ xem tại: [`09_integration_test_security.md`](./09_integration_test_security.md))*
+## SHEET 12: `M15_Governance` – ACCOUNT, STAFF & SYSTEM GOVERNANCE / ANALYTICS
+*(Chi tiết đầy đủ xem tại: [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md))*
+
+| Feature | `Account, Staff & System Governance / Analytics (M15_Governance)` | | | |
+| :--- | :--- | :---: | :---: | :---: |
+| **Test requirement** | Kiểm thử tích hợp 19 REST APIs (`STT 150–168`): Phân quyền `Admin` & `HasPermission` (`BR-ADM-02`), KPI & biểu đồ từ đơn `Completed` (`BR-ADM-07`), Export CSV/XLSX che PII (`BR-ADM-06`), `AuditLogs` bất biến (`BR-ADM-05`), Khóa chặn JWT tức thời & Vô hiệu hóa mềm (`BR-ADM-03`, `BR-ADM-04`), Tạo Staff `0` quyền (`BR-ADM-01`) & Điểm danh ca trực UTC+7 tách biệt ví công dân (`BR-GAM-08`, `BR-GAM-09`). | | | |
+| **Number of TCs** | **16** | | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
+| *Round 1* | 16 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 16 | 0 |
+| *Round 3* | 0 | 0 | 16 | 0 |
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Function 9.1: Executive KPI, Charts, Anonymized Exports & Audit Trail (`STT 150–153`)** | | | | | | | | | |
+| **ITC-GOV-001** | Chặn `Guest` (`401`), `Citizen` & `Staff` (`403`) trên API điều hành `Admin`. | 1. Gọi `GET /admin/analytics/kpi-summary` và `GET /admin/staff` không token / token `Citizen` / `Staff`. | `401 Unauthorized` / `403 Forbidden`. | Đã seed tài khoản demo. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV01` |
+| **ITC-GOV-002** | `Admin` truy xuất KPI tổng quan theo các kỳ `7d`, `30d`, `all`. | 1. Gửi `GET /api/v1/admin/analytics/kpi-summary`. | HTTP `200 OK`, đủ trường KPI, AI Benchmark & Backlog. | Đã đăng nhập `Admin`. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV02` |
+| **ITC-GOV-003** | Truy vấn dữ liệu 3 loại biểu đồ phân tích (`GET /analytics/charts?months=6`). | 1. Gửi `GET /api/v1/admin/analytics/charts?months=6`. | HTTP `200 OK`, `monthlyHandoverTrend` có `6` tháng. | Đã đăng nhập `Admin`. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV03` |
+| **ITC-GOV-004** | Xuất báo cáo CSV che dấu PII (`BR-ADM-06`) và ghi nhận `EXPORT_REPORT` (`BR-ADM-05`). | 1. Gọi `GET /admin/reports/export?dataset=accounts&format=csv`.<br>2. Tra cứu `/admin/audit-logs?action=EXPORT_REPORT`. | CSV chứa `***@`, Audit Log ghi `EXPORT_REPORT`. | Đã đăng nhập `Admin`. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV04` |
+| **ITC-GOV-005** | Xuất Excel `.xlsx` hợp lệ OpenXML (`PK`) & chặn định dạng `pdf` (`400`). | 1. Gọi `/export?dataset=handovers&format=xlsx` và `format=pdf`. | `200 OK` binary `.xlsx` (`PK`, `sheet1.xml`); `pdf` -> `400`. | Đã đăng nhập `Admin`. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV05` |
+| **ITC-GOV-006** | Lọc Audit Logs theo `action`, `entityType` & phân trang (`GET /admin/audit-logs`). | 1. Gửi `GET /api/v1/admin/audit-logs?action=EXPORT_REPORT`. | HTTP `200 OK`, mọi dòng khớp bộ lọc. | Có dữ liệu trong `audit_logs`. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV06` |
+| **Function 9.2: User/Recycler Inspection, Instant Lock & Soft-Deactivation (`STT 154–157`)** | | | | | | | | | |
+| **ITC-GOV-007** | Tra cứu danh sách & chi tiết hồ sơ tài khoản ngoài + `404` cho ID lạ. | 1. Gọi `GET /staff/accounts`, `GET /staff/accounts/{id}` và `Guid.NewGuid()`. | `200 OK` kèm `activityStats`; ID lạ trả `404`. | Tài khoản `Citizen` vừa tạo. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV07` |
+| **ITC-GOV-008** | Chặn khóa tài khoản khi lý do rỗng hoặc ngắn `< 10` ký tự (`BR-ADM-03`). | 1. Gửi `PATCH /staff/accounts/{id}/lock` với `reason=""` và `"Quá ngắn"`. | HTTP `400 Bad Request`. | Tài khoản đang `Active`. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV08` |
+| **ITC-GOV-009** | Khóa (`Suspended`) chặn JWT còn hạn (`AccountStatusGuardMiddleware` `403 MSG-AUTH-04`) & Mở khóa khôi phục. | 1. Khóa Citizen $\rightarrow$ gọi `/auth/me`.<br>2. Mở khóa $\rightarrow$ gọi lại `/auth/me`. | Khi khóa: `403 MSG-AUTH-04`; khi mở: `200 OK`. | Citizen vừa tạo còn JWT. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV09` |
+| **ITC-GOV-010** | Vô hiệu hóa mềm (`DELETE /staff/accounts/{id}`) chặn phiên nhưng giữ nguyên bản ghi (`BR-ADM-04`). | 1. Gửi `DELETE /staff/accounts/{id}`.<br>2. Kiểm tra `/auth/me` & `/staff/accounts/{id}`. | `200 OK` (`MSG-ADM-03`, `Deactivated`); JWT `403`, hồ sơ vẫn đọc được. | Citizen vừa tạo. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV10` |
+| **Function 9.3: Staff Provisioning & Dynamic RBAC Matrix (`STT 158–164`)** | | | | | | | | | |
+| **ITC-GOV-011** | Tạo Staff (`POST /admin/staff`) khởi tạo `0` quyền mặc định (`BR-ADM-01`) & tra cứu `GET /staff`. | 1. Gọi `POST /admin/staff` không truyền quyền.<br>2. Gọi `GET /admin/staff?keyword={code}`. | `201 Created`, `staffCode = "NV-..."`, `permissions.Length = 0`. | Đã đăng nhập `Admin`. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV11` |
+| **ITC-GOV-012** | Cập nhật hồ sơ & cấp lại mật khẩu tạm (`PUT /admin/staff/{id}`) cho phép đăng nhập mới. | 1. Gửi `PUT /admin/staff/{id}` kèm `resetTemporaryPassword`.<br>2. Gọi `POST /auth/login`. | `200 OK`, đăng nhập thành công bằng MK mới. | Staff dùng một lần. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV12` |
+| **ITC-GOV-013** | Danh mục 7 quyền RBAC (`GET /permissions/catalog`) & Cấp/Thu hồi (`PUT /permissions`) hiệu lực tức thời (`BR-ADM-02`). | 1. Staff `0` quyền gọi `/staff/accounts`.<br>2. Cấp `"account.manage"` $\rightarrow$ gọi lại.<br>3. Thu hồi `[]` $\rightarrow$ gọi lại. | `403` (`MSG-ADM-04`) $\rightarrow$ `200 OK` (`MSG-ADM-01` & mở truy cập) $\rightarrow$ `403` tức thời. | Có `Admin` & `Staff` mới. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV13` |
+| **ITC-GOV-014** | Chặn `Admin` tự đình chỉ chính mình (`403`) & khóa/mở khóa Staff (`PATCH /staff/{id}/status`). | 1. `Admin` gọi `/status` cho chính mình.<br>2. Đình chỉ Staff $\rightarrow$ mở lại. | Tự khóa: `403`; Đình chỉ Staff chặn JWT `403`, mở lại `200 OK`. | Có `Admin` & `Staff` mới. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV14` |
+| **Function 9.4: Staff Daily Shift Attendance (`STT 165–168`)** | | | | | | | | | |
+| **ITC-GOV-015** | Điểm danh đầu ca (`POST /check-in`), tách biệt ví `GreenPoints` (`BR-GAM-08`) và chặn điểm danh lần 2 (`BR-GAM-09`). | 1. Staff mới gọi `POST /check-in`.<br>2. Kiểm tra `/auth/me` & `/attendance/me`.<br>3. Gọi `POST /check-in` lần 2. | `201 Created` (`+10đ`), `currentGreenPoints = 0`, lần 2 trả `400 Bad Request`. | Staff mới chưa check-in. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV15` |
+| **ITC-GOV-016** | Kết thúc ca trực (`POST /check-out`) & Admin tra cứu chuyên cần (`GET /admin/staff/attendance`). | 1. `Check-in` $\rightarrow$ `Check-out`.<br>2. Admin gọi `/admin/staff/attendance?staffId={id}`. | `200 OK`, ghi nhận `checkedOutToday = true` và `shiftNote` trên báo cáo Admin. | Staff đã check-in hôm nay. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV16` |
+
+---
+
+## SHEET 13: `SecurityTest` – CROSS-MODULE SECURITY & AUTHORIZATION INTEGRATION
+*(Chi tiết đầy đủ xem tại: [`integration_test_security.md`](./integration_test_security.md))*
 
 | Test Case ID | Scenario Name | Role / Session | Coverage Technique | Given | When | Then (Expected: HTTP Status / Visibility) | Status | Defect ID | Notes |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :--- |

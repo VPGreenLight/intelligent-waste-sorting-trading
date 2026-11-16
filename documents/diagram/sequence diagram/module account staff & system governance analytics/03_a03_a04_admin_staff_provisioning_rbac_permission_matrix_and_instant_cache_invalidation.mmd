@@ -1,0 +1,67 @@
+sequenceDiagram
+    autonumber
+    actor Admin as Admin (HR & RBAC Administrator - A-03 & A-04)
+    actor Staff as Staff Member
+    participant Ctrl as AdminStaffController
+    participant Val as Staff Validators (Create / Update / Status / Permissions)
+    participant Svc as StaffManagementService
+    participant Perm as PermissionAuthorizationHandler
+    participant Cache as MemoryAuthStateCacheInvalidator
+    participant Audit as AuditLogService
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Admin, DB: 1. Admin khởi tạo nhân viên nội bộ với 0 quyền mặc định (UC A-03 - BR-ADM-01)
+    Admin->>Ctrl: POST /api/v1/admin/staff { fullName, email, department, position } [JWT Admin]
+    Ctrl->>Val: CreateStaffAccountValidator.ValidateAsync(request)
+    Ctrl->>Svc: CreateStaffAccountAsync(adminUserId, request)
+    Svc->>DB: Check duplicate Email / Username / StaffCode
+    Svc->>DB: Auto-generate StaffCode ("NV-001",...) + Hash Password (BCrypt)
+    Svc->>DB: Insert User (Role = Staff, Active) + StaffProfile + 0 Permissions (Least-Privilege BR-ADM-01)
+    Svc->>DB: SaveChangesAsync()
+    Svc->>Audit: LogAsync("CREATE_STAFF", "StaffProfile", staffId, newValues={staffCode, permissions=[]})
+    Svc-->>Ctrl: StaffAccountDto (Permissions = [])
+    Ctrl-->>Admin: 201 Created ApiResponse<StaffAccountDto> (MSG-GEN-01)
+
+    Note over Admin, DB: 2. Admin tra cứu danh mục 7 mã quyền & cấu hình ma trận RBAC (UC A-04 - BR-ADM-02)
+    Admin->>Ctrl: GET /api/v1/admin/permissions/catalog
+    Ctrl->>Svc: GetPermissionCatalog()
+    Svc-->>Ctrl: 7 Canonical Permissions + Legacy Aliases
+    Ctrl-->>Admin: 200 OK ApiResponse (MSG-GEN-01)
+
+    Admin->>Ctrl: PUT /api/v1/admin/staff/{staffId}/permissions { permissions: ["ai.dataset", "MANAGE_ACCOUNTS"], reason }
+    Ctrl->>Val: UpdateStaffPermissionsValidator.ValidateAsync(request)
+    alt Chứa mã quyền không hợp lệ ngoài 7 mã chuẩn
+        Val-->>Ctrl: IsValid = false
+        Ctrl-->>Admin: 400 Bad Request (MSG-GEN-01)
+    else Hợp lệ
+        Ctrl->>Svc: UpdateStaffPermissionsAsync(adminUserId, staffId, request)
+        Svc->>Svc: StaffPermissions.Normalize() -> ["CURATE_DATASET", "MANAGE_ACCOUNTS"]
+        Svc->>DB: Sync StaffPermissionAssignments (Remove revoked, Add newly granted)
+        Svc->>DB: SaveChangesAsync()
+        Svc->>Cache: InvalidateUserAuthState(staffId) [Clear auth_snapshot:{staffId} in IMemoryCache]
+        Svc->>Audit: LogAsync("UPDATE_STAFF_PERMISSIONS", "StaffProfile", staffId, oldValues, newValues, reason)
+        Svc-->>Ctrl: StaffAccountDto (Updated Permissions)
+        Ctrl-->>Admin: 200 OK ApiResponse<StaffAccountDto> (MSG-ADM-01)
+    end
+
+    Note over Staff, DB: Hiệu lực RBAC tức thời không cần đăng nhập lại (BR-ADM-02)
+    Staff->>Perm: Request GET /api/v1/staff/accounts [Existing JWT]
+    Perm->>DB: Cache missed -> Load fresh Permissions from staff_permission_assignments
+    alt Quyền MANAGE_ACCOUNTS đã bị Admin gỡ bỏ
+        Perm-->>Staff: 403 Forbidden (BR-ADM-02, MSG-ADM-04)
+    else Vẫn còn quyền MANAGE_ACCOUNTS
+        Perm-->>Staff: Succeed requirement -> 200 OK
+    end
+
+    Note over Admin, DB: 3. Đình chỉ / kích hoạt lại nhân sự kèm chống tự khóa mình (UC A-03 - BR-ADM-03)
+    Admin->>Ctrl: PATCH /api/v1/admin/staff/{staffId}/status { status: "Suspended", reason }
+    Ctrl->>Svc: UpdateStaffStatusAsync(adminUserId, staffId, request)
+    alt adminUserId == staffId
+        Svc-->>Ctrl: Throw ForbiddenAccessException("BR-ADM-03", "MSG-ADM-04")
+        Ctrl-->>Admin: 403 Forbidden (MSG-ADM-04)
+    else Hợp lệ
+        Svc->>DB: Update User.Status, StaffProfile.Status, Revoke RefreshTokens, Insert AccountModerationLog
+        Svc->>Cache: InvalidateUserAuthState(staffId)
+        Svc->>Audit: LogAsync("UPDATE_STAFF_STATUS", "StaffProfile", staffId, reason)
+        Ctrl-->>Admin: 200 OK ApiResponse<StaffAccountDto> (MSG-ADM-03)
+    end

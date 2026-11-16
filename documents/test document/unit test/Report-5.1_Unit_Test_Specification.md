@@ -1,10 +1,10 @@
 # REPORT 5.1 – UNIT TEST SPECIFICATION (TÀI LIỆU ĐẶC TẢ KIỂM THỬ ĐƠN VỊ)
 
 - **Dự án:** Hệ thống Phân loại Rác Thông minh & Giao dịch Phế liệu (**EcoLink**)
-- **Phiên bản:** 1.5
-- **Ngày cập nhật:** 2026-11-09
+- **Phiên bản:** 1.6
+- **Ngày cập nhật:** 2026-11-16
 - **Nhóm thực hiện:** Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức
-- **Phạm vi kiểm thử (8 Core Modules):**
+- **Phạm vi kiểm thử (9 Core Modules):**
   1. **Module 1:** Authentication & Account Management (`AuthService`) — **22 TCs**
   2. **Module 2:** AI Waste Classification & Rule Engine (`AiVisionHttpClient`, `WasteRuleEngineService`, `classify_waste_image`) — **18 TCs**
   3. **Module 3:** Recycler Onboarding & Verification (`RecyclerOnboardingService`, `CloudflareR2StorageService`) — **20 TCs**
@@ -13,7 +13,8 @@
   6. **Module 6:** Handover Request Management (`HandoverRequestService` – `U-06`, `U-07`, `R-03`, `R-04`, `JOB-03`) — **24 TCs**
   7. **Module 7:** Handover Completion & Transaction Receipt (`HandoverReceiptService` – `R-06`, `U-09`, `U-12`, `JOB-01`) — **24 TCs**
   8. **Module 8:** In-App Real-Time Negotiation Chatbox (`NegotiationChatService` & `NegotiationChatValidators` – `U-08` & `R-05`) — **20 TCs**
-- **Tổng số lượng Unit Test Cases:** **168 TCs** (`77 Normal`, `60 Abnormal`, `31 Boundary`)
+  9. **Module 9:** Account, Staff & System Governance / Analytics (`AdminAnalyticsService`, `AccountGovernanceService`, `StaffManagementService`, `StaffAttendanceService`, `AuditLogService` & `GovernanceValidators` – `A-01..A-04`, `S-06`, `S-07`, `S-11`) — **22 TCs**
+- **Tổng số lượng Unit Test Cases:** **190 TCs** (`87 Normal`, `68 Abnormal`, `35 Boundary`)
 
 ---
 
@@ -400,3 +401,50 @@
 | **UTC018** | Kiểm tra độ dài biên của nội dung tin nhắn văn bản (`2000` ký tự vs `2001` ký tự) | `MessageType="Text"`;<br>`MessageContent=new string('a', 2000)` (và `2001` ký tự) | `Return: IsValid = true` với `2000` ký tự; `IsValid = false` với `2001` ký tự (`"Nội dung tin nhắn không được vượt quá 2000 ký tự."`)<br>`Exception: N/A`<br>`Log Message: N/A` | Boundary | Passed | 2026-11-03 | Giang Nguyễn Đức | Pending | Pending | N/A | Kiểm tra biên trên độ dài tin nhắn văn bản `MaxLength = 2000` |
 | **UTC019** | Kiểm tra giá trị biên trên của đơn giá và khối lượng trong bản đề xuất | `ProposedPricePerKg=10_000_000`;<br>`ProposedWeightKg=100_000`;<br>`ProposedTimeSlot="2026-11-05 08:00 - 10:00"` | `Return: ValidationResult { IsValid = true, Errors.Count = 0 }`<br>`Exception: N/A`<br>`Log Message: N/A` | Boundary | Passed | 2026-11-03 | Giang Nguyễn Đức | Pending | Pending | N/A | Chấp nhận giá trị biên hợp lệ tối đa `10.000.000 VNĐ/kg` và `100.000 kg` |
 | **UTC020** | Gửi tin nhắn `Image` thiếu `AttachmentUrl` hoặc gửi đề xuất có `ProposedPricePerKg = 0` và bỏ trống `ProposedTimeSlot` | `ProposedPricePerKg=0`;<br>`ProposedWeightKg=-5`;<br>`ProposedTimeSlot=""` | `Return: ValidationResult { IsValid = false, Errors.Count = 3 (đơn giá > 0, khối lượng > 0, khung giờ không được để trống) }`<br>`Exception: N/A`<br>`Log Message: N/A` | Abnormal | Passed | 2026-11-03 | Giang Nguyễn Đức | Pending | Pending | N/A | Bắt lỗi đầu vào khi thiếu khung giờ đề xuất hoặc giá/khối lượng âm (`BR-NEG-04`) |
+
+---
+
+## PHẦN 9: MODULE ACCOUNT, STAFF & SYSTEM GOVERNANCE / ANALYTICS (`AdminAnalyticsService`, `AccountGovernanceService`, `StaffManagementService`, `StaffAttendanceService`, `AuditLogService` – `A-01..A-04`, `S-06`, `S-07`, `S-11`)
+
+### 9.1. Bảng Tổng hợp Kiểm thử (Summary Table)
+
+| Code Module | `Governance Module Services & GovernanceValidators (M-15 / FE-17, FE-18)` | | |
+| :--- | :---: | :---: | :---: |
+| **Number of TCs** | **22** | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** |
+| *Round 1* | 22 | 0 | 0 |
+| *Round 2* | 0 | 0 | 22 |
+| *Round 3* | 0 | 0 | 22 |
+| **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
+| **Count** | **10** | **8** | **4** |
+
+---
+
+### 9.2. Danh sách Chi tiết Test Cases (`Governance Module`)
+
+*(Chi tiết đầy đủ 22 test cases `UTC001` $\rightarrow$ `UTC022` xem tại: [`09_unit_test_account_staff_system_governance_analytics.md`](./09_unit_test_account_staff_system_governance_analytics.md) / [`GovernanceModuleTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module15_Governance/GovernanceModuleTests.cs))*
+
+| Test Case ID | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :--- |
+| **UTC001** | Có đơn `Completed`, `Cancelled` và đơn VietQR `PAID`, `PENDING` | `Period="30d"` | `CompletedHandovers = 2, RecycledWeightKg = 10.0, VietQrRevenue = 199000` | Normal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-ADM-07` |
+| **UTC002** | Có đơn `Completed` (`6 kg` Nhựa, `4 kg` Giấy) và `Pending` (`90 kg`) | `months=6` | `MonthlyHandoverTrend.Count = 6, Plastic Share = 60%` | Normal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-ADM-07` |
+| **UTC003** | Tham số `months` dưới biên và vượt biên (`0` vs `36`) | `months=0`, `months=36` | Trả đúng `1` tháng và `12` tháng | Boundary | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `Math.Clamp(1, 12)` |
+| **UTC004** | Có tài khoản `"duc.nguyen@email.vn"`, SĐT `"0912345678"` | `Dataset="accounts", Format="csv" / "xlsx"` | Che `"du***@email.vn"`, `"091****678"`, ghi `2` log `EXPORT_REPORT` | Normal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-ADM-06`, `BR-ADM-05` |
+| **UTC005** | Truyền `Format="pdf"` hoặc `Dataset="secret_tokens"` | `ExportSystemReportAsync` | Ném `BusinessRuleException ("BR-ADM-06")` | Abnormal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Bảo vệ đầu vào export |
+| **UTC006** | Đã có bản ghi `AuditLog` gốc | Sửa `Reason` hoặc `Remove()` | Ném `InvalidOperationException` chứa `"BR-ADM-05"` | Abnormal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `AuditLogImmutabilityInterceptor` |
+| **UTC007** | Có log `"LOCK_ACCOUNT"` và `"EXPORT_REPORT"` | `Action="export_report", Keyword="tuần 46"` | `TotalRecords = 1`, trả đúng bản ghi khớp | Normal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Lọc Audit Trail (`A-02`) |
+| **UTC008** | Có đủ 4 vai trò và giao dịch `Completed` (`14.5 kg`) | `GetAccountsAsync()`, `GetAccountDetailAsync()` | Loại trừ `Staff`/`Admin`, trả đủ `ActivityStats` | Normal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Cô lập tài khoản ngoài (`S-06`) |
+| **UTC009** | Có user `WarningCount = 0` và `WarningCount = 2` | `MinWarnings=2, Page=-3, Size=500` | `PageNumber = 1, PageSize = 100, TotalRecords = 1` | Boundary | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kẹp biên phân trang |
+| **UTC010** | Recycler đang `Active`, `Online`, có `2` token & cache snapshot | Khóa (`IsLocked=true`) rồi Mở khóa | Thu hồi `RefreshToken`, đặt `Offline`, xóa cache, khôi phục khi mở khóa | Normal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-ADM-03` |
+| **UTC011** | Nhập lý do khóa ngắn `"Quá ngắn"` (`< 10` ký tự) | `LockOrUnlockAccountAsync` | Ném `BusinessRuleException ("BR-ADM-03")` | Abnormal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Lý do tối thiểu 10 ký tự |
+| **UTC012** | Staff cố khóa hoặc vô hiệu hóa tài khoản `Admin` | `Lock` / `Deactivate` | Ném `ForbiddenAccessException ("MSG-ADM-04")` | Abnormal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chống leo thang đặc quyền |
+| **UTC013** | Citizen có `5` đơn `Completed` và `5` biên nhận | `DeactivateAccountAsync` | `Status = Deactivated`, giữ nguyên `5` `HandoverReceipts` | Normal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Soft-Deactivate (`BR-ADM-04`) |
+| **UTC014** | Tạo Staff không truyền quyền, sau đó cập nhật & reset MK | `Create` $\rightarrow$ `UpdateStaffAccountAsync` | `StaffCode = "NV-001", Permissions = []`, reset MK thu hồi token cũ | Normal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Least-Privilege (`BR-ADM-01`) |
+| **UTC015** | Tạo Staff trùng Email hoặc trùng `StaffCode` | `CreateStaffAccountAsync` | Ném `BusinessRuleException` (`BR-AUTH-01` / `BR-ADM-01`) | Abnormal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kiểm tra duy nhất |
+| **UTC016** | Staff tự đình chỉ chính mình hoặc truyền sai trạng thái | `UpdateStaffStatusAsync` | Ném `ForbiddenAccessException` / `BusinessRuleException` | Abnormal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Self-Lock Guard (`BR-ADM-03`) |
+| **UTC017** | Cấp `["ai.dataset", "MANAGE_ACCOUNTS"]` rồi thu hồi | `UpdateStaffPermissionsAsync` | Chuẩn hóa alias, xóa cache tức thời, ghi diff vào `audit_logs` | Normal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-ADM-02`, `MSG-ADM-01` |
+| **UTC018** | Truyền mã quyền lạ `"SUPER_ROOT_HACK"` | `UpdateStaffPermissionsAsync` | `IsValid = false`, ném `BusinessRuleException ("BR-ADM-02")` | Abnormal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Bảo vệ danh mục 7 quyền |
+| **UTC019** | Staff `CurrentGreenPoints = 0`, thực hiện `CheckIn` $\rightarrow$ `CheckOut` | `StaffAttendanceService` | `+10` điểm ca trực, ví `CurrentGreenPoints = 0`, báo cáo đếm tác vụ | Normal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-GAM-08`, `BR-GAM-09` |
+| **UTC020** | `CheckOut` trước `CheckIn`, `CheckIn` lần 2 hoặc `CheckOut` lần 2 | `StaffAttendanceService` | Cả 3 ca đều ném `BusinessRuleException ("BR-GAM-09")` | Abnormal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | 1 lần/ngày theo UTC+7 |
+| **UTC021** | Biên chuỗi: Ngày 6 $\rightarrow$ 7 (`+15đ`), Ngày 7 $\rightarrow$ 1, Đứt chuỗi $\rightarrow$ 1 | `CheckInAsync` | Tính đúng `CurrentStreakDay` (`7`, `1`, `1`) và điểm thưởng (`15`, `10`, `10`) | Boundary | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chuỗi 7 ngày (`BR-GAM-09`) |
+| **UTC022** | Cả 8 FluentValidators với giá trị độ dài biên | `ValidateAsync` | Từ chối đúng biên sai (`Reason` 9/501, `Password` 7, `ShiftNote` 501) | Boundary | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Toàn bộ `GovernanceValidators` |

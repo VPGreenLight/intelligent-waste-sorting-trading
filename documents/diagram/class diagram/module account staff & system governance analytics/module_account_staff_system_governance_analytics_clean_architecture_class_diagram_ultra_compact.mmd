@@ -1,0 +1,260 @@
+classDiagram
+    direction TB
+
+    %% Presentation & Security Layer (Ecolink.WebApi)
+    class AdminAnalyticsController {
+        - IAdminAnalyticsService _analyticsService
+        - IAuditLogService _auditLogService
+        + GetExecutiveKpiSummary(ExecutiveKpiQueryRequest, ct) Task~IActionResult~
+        + GetAnalyticsCharts(months, ct) Task~IActionResult~
+        + ExportSystemReport(ReportExportQueryRequest, ct) Task~IActionResult~
+        + GetSystemAuditLogs(AuditLogFilterRequest, ct) Task~IActionResult~
+    }
+    class StaffAccountsController {
+        - IAccountGovernanceService _accountService
+        - IValidator~LockOrUnlockAccountRequest~ _lockValidator
+        - IValidator~DeactivateAccountRequest~ _deactivateValidator
+        + GetAccounts(AccountGovernanceFilterRequest, ct) Task~IActionResult~
+        + GetAccountDetail(userId, ct) Task~IActionResult~
+        + LockOrUnlockAccount(userId, LockOrUnlockAccountRequest, ct) Task~IActionResult~
+        + DeactivateAccount(userId, DeactivateAccountRequest, ct) Task~IActionResult~
+    }
+    class AdminStaffController {
+        - IStaffManagementService _staffService
+        - IValidator~CreateStaffAccountRequest~ _createValidator
+        - IValidator~UpdateStaffAccountRequest~ _updateValidator
+        - IValidator~UpdateStaffStatusRequest~ _statusValidator
+        - IValidator~UpdateStaffPermissionsRequest~ _permissionsValidator
+        + GetStaffAccounts(StaffAccountFilterRequest, ct) Task~IActionResult~
+        + CreateStaffAccount(CreateStaffAccountRequest, ct) Task~IActionResult~
+        + UpdateStaffAccount(staffId, UpdateStaffAccountRequest, ct) Task~IActionResult~
+        + UpdateStaffStatus(staffId, UpdateStaffStatusRequest, ct) Task~IActionResult~
+        + GetPermissionCatalog() IActionResult
+        + GetStaffPermissions(staffId, ct) Task~IActionResult~
+        + UpdateStaffPermissions(staffId, UpdateStaffPermissionsRequest, ct) Task~IActionResult~
+    }
+    class StaffAttendanceController {
+        - IStaffAttendanceService _attendanceService
+        - IValidator~StaffCheckInRequest~ _checkInValidator
+        - IValidator~StaffCheckOutRequest~ _checkOutValidator
+        + CheckInShift(StaffCheckInRequest, ct) Task~IActionResult~
+        + CheckOutShift(StaffCheckOutRequest, ct) Task~IActionResult~
+        + GetMyAttendanceLogs(month, year, ct) Task~IActionResult~
+        + GetAllStaffAttendance(AdminStaffAttendanceFilterRequest, ct) Task~IActionResult~
+    }
+    class PermissionAuthorizationHandler {
+        - ApplicationDbContext _dbContext
+        - IMemoryCache _cache
+        # HandleRequirementAsync(context, PermissionRequirement) Task
+    }
+    class AccountStatusGuardMiddleware {
+        - RequestDelegate _next
+        + InvokeAsync(HttpContext) Task
+    }
+
+    %% Application Layer (Inbound Ports, Validators & Security Port)
+    class IAdminAnalyticsService {
+        <<interface>>
+        + GetExecutiveKpiSummaryAsync(ExecutiveKpiQueryRequest, ct) Task~ExecutiveKpiSummaryDto~
+        + GetAnalyticsChartsAsync(months, ct) Task~AnalyticsChartsDto~
+        + ExportSystemReportAsync(adminUserId, ReportExportQueryRequest, ct) Task~ExportedReportFileResult~
+    }
+    class IAccountGovernanceService {
+        <<interface>>
+        + GetAccountsAsync(AccountGovernanceFilterRequest, ct) Task~PagedResult~
+        + GetAccountDetailAsync(targetUserId, ct) Task~ManagedAccountDetailDto~
+        + LockOrUnlockAccountAsync(actorUserId, targetUserId, LockOrUnlockAccountRequest, ct) Task~ManagedAccountSummaryDto~
+        + DeactivateAccountAsync(actorUserId, targetUserId, DeactivateAccountRequest, ct) Task~ManagedAccountSummaryDto~
+    }
+    class IStaffManagementService {
+        <<interface>>
+        + GetStaffAccountsAsync(StaffAccountFilterRequest, ct) Task~IReadOnlyList~
+        + CreateStaffAccountAsync(adminUserId, CreateStaffAccountRequest, ct) Task~StaffAccountDto~
+        + UpdateStaffAccountAsync(adminUserId, staffId, UpdateStaffAccountRequest, ct) Task~StaffAccountDto~
+        + UpdateStaffStatusAsync(adminUserId, staffId, UpdateStaffStatusRequest, ct) Task~StaffAccountDto~
+        + GetPermissionCatalog() IReadOnlyList~PermissionCatalogItemDto~
+        + GetStaffPermissionsAsync(staffId, ct) Task~StaffPermissionsDetailDto~
+        + UpdateStaffPermissionsAsync(adminUserId, staffId, UpdateStaffPermissionsRequest, ct) Task~StaffAccountDto~
+    }
+    class IStaffAttendanceService {
+        <<interface>>
+        + CheckInAsync(staffUserId, StaffCheckInRequest, ct) Task~StaffAttendanceStatusDto~
+        + CheckOutAsync(staffUserId, StaffCheckOutRequest, ct) Task~StaffAttendanceStatusDto~
+        + GetMyAttendanceAsync(staffUserId, month, year, ct) Task~StaffAttendanceStatusDto~
+        + GetAllStaffAttendanceAsync(AdminStaffAttendanceFilterRequest, ct) Task~PagedResult~
+    }
+    class IAuditLogService {
+        <<interface>>
+        + LogAsync(action, entityType, entityId, oldValues, newValues, reason, explicitActorId, ct) Task
+        + GetAuditLogsAsync(AuditLogFilterRequest, ct) Task~PagedResult~
+    }
+    class IAuthStateCacheInvalidator {
+        <<interface>>
+        + InvalidateUserAuthState(userId) void
+    }
+
+    %% Infrastructure Layer (Service Implementations, Persistence & Interceptor)
+    class AdminAnalyticsService {
+        - ApplicationDbContext _dbContext
+        - IPaymentService _paymentService
+        - IAuditLogService _auditLogService
+        - IHttpClientFactory _httpClientFactory
+        + GetExecutiveKpiSummaryAsync(ExecutiveKpiQueryRequest, ct) Task~ExecutiveKpiSummaryDto~
+        + GetAnalyticsChartsAsync(months, ct) Task~AnalyticsChartsDto~
+        + ExportSystemReportAsync(adminUserId, ReportExportQueryRequest, ct) Task~ExportedReportFileResult~
+    }
+    class AccountGovernanceService {
+        - ApplicationDbContext _dbContext
+        - IAuditLogService _auditLogService
+        - IAuthStateCacheInvalidator _authCacheInvalidator
+        - IEmailService _emailService
+        + GetAccountsAsync(AccountGovernanceFilterRequest, ct) Task~PagedResult~
+        + GetAccountDetailAsync(targetUserId, ct) Task~ManagedAccountDetailDto~
+        + LockOrUnlockAccountAsync(actorUserId, targetUserId, LockOrUnlockAccountRequest, ct) Task~ManagedAccountSummaryDto~
+        + DeactivateAccountAsync(actorUserId, targetUserId, DeactivateAccountRequest, ct) Task~ManagedAccountSummaryDto~
+    }
+    class StaffManagementService {
+        - ApplicationDbContext _dbContext
+        - IAuditLogService _auditLogService
+        - IAuthStateCacheInvalidator _authCacheInvalidator
+        + CreateStaffAccountAsync(adminUserId, CreateStaffAccountRequest, ct) Task~StaffAccountDto~
+        + UpdateStaffStatusAsync(adminUserId, staffId, UpdateStaffStatusRequest, ct) Task~StaffAccountDto~
+        + UpdateStaffPermissionsAsync(adminUserId, staffId, UpdateStaffPermissionsRequest, ct) Task~StaffAccountDto~
+    }
+    class StaffAttendanceService {
+        - ApplicationDbContext _dbContext
+        - IAuditLogService _auditLogService
+        + CheckInAsync(staffUserId, StaffCheckInRequest, ct) Task~StaffAttendanceStatusDto~
+        + CheckOutAsync(staffUserId, StaffCheckOutRequest, ct) Task~StaffAttendanceStatusDto~
+        + GetMyAttendanceAsync(staffUserId, month, year, ct) Task~StaffAttendanceStatusDto~
+        + GetAllStaffAttendanceAsync(AdminStaffAttendanceFilterRequest, ct) Task~PagedResult~
+    }
+    class AuditLogService {
+        - ApplicationDbContext _dbContext
+        - ICurrentUserService _currentUserService
+        + LogAsync(action, entityType, entityId, oldValues, newValues, reason, explicitActorId, ct) Task
+        + GetAuditLogsAsync(AuditLogFilterRequest, ct) Task~PagedResult~
+    }
+    class MemoryAuthStateCacheInvalidator {
+        - IMemoryCache _cache
+        + InvalidateUserAuthState(userId) void
+    }
+    class AuditLogImmutabilityInterceptor {
+        + SavingChanges(DbContextEventData, InterceptionResult) InterceptionResult~int~
+        + SavingChangesAsync(DbContextEventData, InterceptionResult, ct) ValueTask~InterceptionResult~
+    }
+    class TabularReportExportHelper {
+        + BuildUtf8BomCsv(headers, rows) byte[]
+        + BuildMinimalOpenXmlWorkbook(sheetName, headers, rows) byte[]
+    }
+    class PiiMaskingHelper {
+        + MaskEmail(email) string
+        + MaskPhone(phone) string
+    }
+    class ApplicationDbContext {
+        + DbSet~User~ Users
+        + DbSet~StaffProfile~ StaffProfiles
+        + DbSet~StaffPermissionAssignment~ StaffPermissionAssignments
+        + DbSet~AuditLog~ AuditLogs
+        + DbSet~AccountModerationLog~ AccountModerationLogs
+        + DbSet~StaffAttendance~ StaffAttendances
+    }
+
+    %% Domain Layer (Core Entities & Constants)
+    class User {
+        + Guid Id
+        + string Username
+        + string Email
+        + UserRole Role
+        + UserStatus Status
+        + int WarningCount
+        + string? ModerationReason
+        + DateTime? ModeratedAt
+        + Guid? ModeratedBy
+    }
+    class StaffProfile {
+        + Guid UserId
+        + string StaffCode
+        + string? Department
+        + string? Position
+        + string Status
+    }
+    class StaffPermissionAssignment {
+        + Guid Id
+        + Guid StaffId
+        + string PermissionCode
+        + Guid GrantedBy
+        + DateTime GrantedAt
+    }
+    class AuditLog {
+        + Guid Id
+        + Guid? ActorUserId
+        + string Action
+        + string EntityType
+        + string? EntityId
+        + string? OldValues
+        + string? NewValues
+        + string? Reason
+        + DateTime CreatedAt
+    }
+    class AccountModerationLog {
+        + Guid Id
+        + Guid TargetUserId
+        + Guid PerformedBy
+        + string ActionType
+        + string PreviousStatus
+        + string NewStatus
+        + string Reason
+        + int RevokedTokensCount
+        + DateTime CreatedAt
+    }
+    class StaffAttendance {
+        + Guid Id
+        + Guid StaffId
+        + DateOnly WorkDate
+        + DateTime CheckInAt
+        + DateTime? CheckOutAt
+        + int? WorkedMinutes
+        + int StreakDay
+        + int WorkPointsEarned
+        + int TasksCompletedSnapshot
+    }
+
+    %% Clean Architecture Dependency Connectors
+    AdminAnalyticsController --> IAdminAnalyticsService
+    AdminAnalyticsController --> IAuditLogService
+    StaffAccountsController --> IAccountGovernanceService
+    AdminStaffController --> IStaffManagementService
+    StaffAttendanceController --> IStaffAttendanceService
+    PermissionAuthorizationHandler --> ApplicationDbContext
+    AccountStatusGuardMiddleware --> ApplicationDbContext
+
+    AdminAnalyticsService ..|> IAdminAnalyticsService
+    AccountGovernanceService ..|> IAccountGovernanceService
+    StaffManagementService ..|> IStaffManagementService
+    StaffAttendanceService ..|> IStaffAttendanceService
+    AuditLogService ..|> IAuditLogService
+    MemoryAuthStateCacheInvalidator ..|> IAuthStateCacheInvalidator
+
+    AdminAnalyticsService --> TabularReportExportHelper
+    AdminAnalyticsService --> PiiMaskingHelper
+    AdminAnalyticsService --> IAuditLogService
+    AccountGovernanceService --> IAuditLogService
+    AccountGovernanceService --> IAuthStateCacheInvalidator
+    StaffManagementService --> IAuditLogService
+    StaffManagementService --> IAuthStateCacheInvalidator
+    StaffAttendanceService --> IAuditLogService
+
+    AdminAnalyticsService --> ApplicationDbContext
+    AccountGovernanceService --> ApplicationDbContext
+    StaffManagementService --> ApplicationDbContext
+    StaffAttendanceService --> ApplicationDbContext
+    AuditLogService --> ApplicationDbContext
+    ApplicationDbContext --> AuditLogImmutabilityInterceptor
+
+    %% Domain Relationships
+    User "1" -- "0..1" StaffProfile : internal staff profile (A-03)
+    StaffProfile "1" *-- "0..*" StaffPermissionAssignment : RBAC permissions (BR-ADM-02)
+    StaffProfile "1" *-- "0..*" StaffAttendance : shift logs (BR-GAM-09)
+    User "1" -- "0..*" AccountModerationLog : moderated target / actor (S-07)
+    User "0..1" -- "0..*" AuditLog : immutable audit actor (BR-ADM-05)

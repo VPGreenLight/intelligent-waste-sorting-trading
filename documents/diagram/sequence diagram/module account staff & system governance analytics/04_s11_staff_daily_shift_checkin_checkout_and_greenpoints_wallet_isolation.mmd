@@ -1,0 +1,66 @@
+sequenceDiagram
+    autonumber
+    actor Staff as Staff / Admin (Shift Worker - S-11)
+    actor Admin as Admin (HR Reviewer - A-03 / S-11)
+    participant Ctrl as StaffAttendanceController
+    participant Val as StaffCheckInValidator / StaffCheckOutValidator
+    participant Svc as StaffAttendanceService
+    participant Audit as AuditLogService
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Staff, DB: 1. Điểm danh đầu ca (UTC+7), tính chuỗi 7 ngày & tách biệt ví công dân (UC S-11 - BR-GAM-08, BR-GAM-09)
+    Staff->>Ctrl: POST /api/v1/staff/attendance/check-in { shiftNote } [JWT Staff/Admin]
+    Ctrl->>Val: ValidateAsync(request) [ShiftNote <= 500 chars]
+    alt ShiftNote > 500 ký tự
+        Val-->>Ctrl: IsValid = false
+        Ctrl-->>Staff: 400 Bad Request (MSG-GEN-01)
+    else Hợp lệ
+        Ctrl->>Svc: CheckInAsync(staffUserId, payload, ct)
+        Svc->>DB: EnsureStaffProfileExistsAsync(staffUserId) [Auto-init NV-xxx / ADM-xx if missing]
+        Svc->>Svc: Compute todayVn = DateOnly.FromDateTime(UtcNow + 07:00)
+        Svc->>DB: Check StaffAttendances WHERE StaffId == userId AND WorkDate == todayVn
+        alt Đã điểm danh trong ngày hôm nay (BR-GAM-09)
+            Svc-->>Ctrl: Throw BusinessRuleException("BR-GAM-09")
+            Ctrl-->>Staff: 400 Bad Request (MSG-GEN-01)
+        else Chưa điểm danh hôm nay
+            Svc->>DB: Query last StaffAttendance WHERE WorkDate < todayVn ORDER BY WorkDate DESC
+            alt Có mặt ngày hôm qua (WorkDate == todayVn - 1)
+                Svc->>Svc: streakDay = (last.StreakDay % 7) + 1
+            else Bỏ lỡ ngày trước đó (Đứt chuỗi)
+                Svc->>Svc: streakDay = 1
+            end
+            Svc->>Svc: pointsEarned = (streakDay == 7 ? 15 : 10)
+            Svc->>DB: Insert StaffAttendance (KHÔNG đụng UserEcoProfiles.CurrentGreenPoints - BR-GAM-08)
+            Svc->>DB: SaveChangesAsync()
+            Svc->>Audit: LogAsync("STAFF_CHECK_IN", "StaffAttendance", attendanceId, newValues={streakDay, pointsEarned})
+            Svc-->>Ctrl: StaffAttendanceStatusDto
+            Ctrl-->>Staff: 201 Created ApiResponse<StaffAttendanceStatusDto> (MSG-GEN-01)
+        end
+    end
+
+    Note over Staff, DB: 2. Kết thúc ca trực & ghi nhận số lượng tác vụ vận hành trong ca
+    Staff->>Ctrl: POST /api/v1/staff/attendance/check-out { shiftNote }
+    Ctrl->>Svc: CheckOutAsync(staffUserId, payload, ct)
+    Svc->>DB: Find today StaffAttendance
+    alt Chưa Check-in hoặc đã Check-out trước đó
+        Svc-->>Ctrl: Throw BusinessRuleException("BR-GAM-09")
+        Ctrl-->>Staff: 400 Bad Request (MSG-GEN-01)
+    else Hợp lệ
+        Svc->>DB: Count AuditLogs WHERE ActorUserId == staffUserId AND CreatedAt BETWEEN CheckInAt..Now
+        Svc->>DB: Update CheckOutAt = UtcNow, WorkedMinutes, TasksCompletedSnapshot, ShiftNote
+        Svc->>DB: SaveChangesAsync()
+        Svc->>Audit: LogAsync("STAFF_CHECK_OUT", "StaffAttendance", attendanceId, newValues={workedMinutes, tasksCompleted})
+        Svc-->>Ctrl: StaffAttendanceStatusDto
+        Ctrl-->>Staff: 200 OK ApiResponse<StaffAttendanceStatusDto> (MSG-GEN-01)
+    end
+
+    Note over Staff, Admin: 3. Nhân viên tự tra cứu bảng tháng & Admin giám sát chuyên cần đội ngũ
+    Staff->>Ctrl: GET /api/v1/staff/attendance/me?month=11&year=2026
+    Ctrl->>Svc: GetMyAttendanceAsync(staffUserId, month, year, ct)
+    Svc->>DB: Aggregate StaffAttendances & monthly AuditLogs count
+    Ctrl-->>Staff: 200 OK ApiResponse<StaffAttendanceStatusDto>
+
+    Admin->>Ctrl: GET /api/v1/admin/staff/attendance?pageNumber=1&pageSize=20 [JWT Admin]
+    Ctrl->>Svc: GetAllStaffAttendanceAsync(filter, ct)
+    Svc->>DB: Query StaffAttendances Include(StaffProfile, User)
+    Ctrl-->>Admin: 200 OK ApiResponse<PagedResult<AdminStaffAttendanceItemDto>>
