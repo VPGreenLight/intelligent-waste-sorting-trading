@@ -74,13 +74,26 @@ public class AdminAnalyticsService : IAdminAnalyticsService
         var recycledWeightKg = await completedReceiptsQuery.SumAsync(r => (decimal?)r.TotalWeightKg, ct) ?? 0m;
         var grossTradeValueVnd = await completedReceiptsQuery.SumAsync(r => (decimal?)r.TotalAmountCash, ct) ?? 0m;
 
-        // Doanh thu gói dịch vụ nội bộ qua VietQR (chỉ cộng hóa đơn PAID theo BR-ADM-07)
-        var allPaymentOrders = await _paymentService.GetAllOrdersAsync(ct);
-        var vietQrRevenueVnd = allPaymentOrders
-            .Where(o => string.Equals(o.Status, "PAID", StringComparison.OrdinalIgnoreCase) &&
-                        o.CreatedAt >= fromUtc &&
-                        o.CreatedAt < toExclusiveUtc)
-            .Sum(o => o.Amount);
+        // Doanh thu gói dịch vụ nội bộ qua VietQR (ưu tiên truy vấn trực tiếp service_orders PostgreSQL, fallback IPaymentService nếu chạy mock test)
+        decimal vietQrRevenueVnd;
+        if (await _dbContext.ServiceOrders.AsNoTracking().AnyAsync(ct))
+        {
+            vietQrRevenueVnd = await _dbContext.ServiceOrders
+                .AsNoTracking()
+                .Where(o => o.OrderStatus == ServiceOrderStatus.Paid
+                            && o.CreatedAt >= fromUtc
+                            && o.CreatedAt < toExclusiveUtc)
+                .SumAsync(o => (decimal?)o.ExpectedAmountVnd, ct) ?? 0m;
+        }
+        else
+        {
+            var allPaymentOrders = await _paymentService.GetAllOrdersAsync(ct);
+            vietQrRevenueVnd = allPaymentOrders
+                .Where(o => string.Equals(o.Status, "PAID", StringComparison.OrdinalIgnoreCase) &&
+                            o.CreatedAt >= fromUtc &&
+                            o.CreatedAt < toExclusiveUtc)
+                .Sum(o => o.Amount);
+        }
 
         // Hàng đợi tồn đọng vận hành thời gian thực
         var pendingAiFeedback = await _dbContext.AIFeedbackLogs
@@ -315,21 +328,43 @@ public class AdminAnalyticsService : IAdminAnalyticsService
             case "cashflow":
             {
                 headers = ["Mã hóa đơn", "Nội dung gói dịch vụ", "Số tiền (VND)", "Ngân hàng", "Trạng thái đối soát", "Ngày tạo", "Ngày thanh toán"];
-                var orders = (await _paymentService.GetAllOrdersAsync(ct))
-                    .Where(o => o.CreatedAt >= fromUtc && o.CreatedAt < toExclusiveUtc)
-                    .OrderByDescending(o => o.CreatedAt)
-                    .ToList();
-
-                rows = orders.Select(o => new[]
+                if (await _dbContext.ServiceOrders.AsNoTracking().AnyAsync(ct))
                 {
-                    o.OrderCode,
-                    o.Description,
-                    o.Amount.ToString("0", CultureInfo.InvariantCulture),
-                    o.BankCode,
-                    o.Status,
-                    o.CreatedAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
-                    o.PaidAt?.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) ?? "-"
-                }).ToList();
+                    var dbOrders = await _dbContext.ServiceOrders
+                        .AsNoTracking()
+                        .Where(o => o.CreatedAt >= fromUtc && o.CreatedAt < toExclusiveUtc)
+                        .OrderByDescending(o => o.CreatedAt)
+                        .ToListAsync(ct);
+
+                    rows = dbOrders.Select(o => new[]
+                    {
+                        o.OrderCode,
+                        $"{o.PackageCodeSnapshot} - {o.Description}",
+                        o.ExpectedAmountVnd.ToString("0", CultureInfo.InvariantCulture),
+                        o.BankCode,
+                        o.ReconciliationStatus.ToString(),
+                        o.CreatedAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+                        o.PaidAt?.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) ?? "-"
+                    }).ToList();
+                }
+                else
+                {
+                    var orders = (await _paymentService.GetAllOrdersAsync(ct))
+                        .Where(o => o.CreatedAt >= fromUtc && o.CreatedAt < toExclusiveUtc)
+                        .OrderByDescending(o => o.CreatedAt)
+                        .ToList();
+
+                    rows = orders.Select(o => new[]
+                    {
+                        o.OrderCode,
+                        o.Description,
+                        o.Amount.ToString("0", CultureInfo.InvariantCulture),
+                        o.BankCode,
+                        o.Status,
+                        o.CreatedAt.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture),
+                        o.PaidAt?.ToString("yyyy-MM-dd HH:mm", CultureInfo.InvariantCulture) ?? "-"
+                    }).ToList();
+                }
                 break;
             }
 
@@ -404,7 +439,7 @@ public class AdminAnalyticsService : IAdminAnalyticsService
         var stamp = DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         if (format == "xlsx")
         {
-            var xlsxBytes = BuildMinimalOpenXmlWorkbook(dataset, headers, rows);
+            var xlsxBytes = TabularReportExportHelper.BuildMinimalOpenXmlWorkbook(dataset, headers, rows);
             return new ExportedReportFileResult
             {
                 Content = xlsxBytes,
@@ -414,7 +449,7 @@ public class AdminAnalyticsService : IAdminAnalyticsService
             };
         }
 
-        var csvBytes = BuildUtf8BomCsv(headers, rows);
+        var csvBytes = TabularReportExportHelper.BuildUtf8BomCsv(headers, rows);
         return new ExportedReportFileResult
         {
             Content = csvBytes,
@@ -568,119 +603,5 @@ public class AdminAnalyticsService : IAdminAnalyticsService
             "all" => (new DateOnly(2025, 1, 1), today, "Toàn thời gian"),
             _ => (today.AddDays(-29), today, "30 ngày gần nhất")
         };
-    }
-
-    private static byte[] BuildUtf8BomCsv(string[] headers, List<string[]> rows)
-    {
-        static string EscapeCell(string? v)
-        {
-            var s = v ?? string.Empty;
-            return s.IndexOfAny([',', '"', '\r', '\n']) >= 0
-                ? $"\"{s.Replace("\"", "\"\"")}\""
-                : s;
-        }
-
-        var sb = new StringBuilder();
-        sb.Append('\uFEFF'); // UTF-8 BOM cho Excel trên Windows
-        sb.Append(string.Join(",", headers.Select(EscapeCell))).Append("\r\n");
-
-        foreach (var row in rows)
-        {
-            sb.Append(string.Join(",", row.Select(EscapeCell))).Append("\r\n");
-        }
-
-        return Encoding.UTF8.GetBytes(sb.ToString());
-    }
-
-    /// <summary>
-    /// Tạo tệp OpenXML Spreadsheet (.xlsx) hợp lệ chuẩn ECMA-376 bằng thư viện nén chuẩn của .NET (không phụ thuộc gói ngoài).
-    /// </summary>
-    private static byte[] BuildMinimalOpenXmlWorkbook(string sheetTitle, string[] headers, List<string[]> rows)
-    {
-        XNamespace mainNs = "http://schemas.openxmlformats.org/spreadsheetml/2006/main";
-        XNamespace relNs = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
-        XNamespace pkgRelNs = "http://schemas.openxmlformats.org/package/2006/relationships";
-        XNamespace ctNs = "http://schemas.openxmlformats.org/package/2006/content-types";
-
-        static string ColName(int colIdx)
-        {
-            var name = string.Empty;
-            int n = colIdx + 1;
-            while (n > 0)
-            {
-                int rem = (n - 1) % 26;
-                name = (char)('A' + rem) + name;
-                n = (n - 1) / 26;
-            }
-            return name;
-        }
-
-        XElement BuildInlineRow(int rowNum, string[] values) =>
-            new(mainNs + "row",
-                new XAttribute("r", rowNum),
-                values.Select((val, cIdx) =>
-                    new XElement(mainNs + "c",
-                        new XAttribute("r", $"{ColName(cIdx)}{rowNum}"),
-                        new XAttribute("t", "inlineStr"),
-                        new XElement(mainNs + "is",
-                            new XElement(mainNs + "t", val ?? string.Empty)))));
-
-        var sheetData = new XElement(mainNs + "sheetData");
-        sheetData.Add(BuildInlineRow(1, headers));
-        for (int i = 0; i < rows.Count; i++)
-        {
-            sheetData.Add(BuildInlineRow(i + 2, rows[i]));
-        }
-
-        var safeName = new string(sheetTitle.Where(char.IsLetterOrDigit).Take(25).ToArray());
-        if (string.IsNullOrEmpty(safeName)) safeName = "Report";
-
-        using var ms = new MemoryStream();
-        using (var archive = new ZipArchive(ms, ZipArchiveMode.Create, leaveOpen: true))
-        {
-            WriteXmlEntry(archive, "[Content_Types].xml", new XDocument(
-                new XElement(ctNs + "Types",
-                    new XElement(ctNs + "Default", new XAttribute("Extension", "rels"), new XAttribute("ContentType", "application/vnd.openxmlformats-package.relationships+xml")),
-                    new XElement(ctNs + "Default", new XAttribute("Extension", "xml"), new XAttribute("ContentType", "application/xml")),
-                    new XElement(ctNs + "Override", new XAttribute("PartName", "/xl/workbook.xml"), new XAttribute("ContentType", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml")),
-                    new XElement(ctNs + "Override", new XAttribute("PartName", "/xl/worksheets/sheet1.xml"), new XAttribute("ContentType", "application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"))
-                )));
-
-            WriteXmlEntry(archive, "_rels/.rels", new XDocument(
-                new XElement(pkgRelNs + "Relationships",
-                    new XElement(pkgRelNs + "Relationship",
-                        new XAttribute("Id", "rId1"),
-                        new XAttribute("Type", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"),
-                        new XAttribute("Target", "xl/workbook.xml")))));
-
-            WriteXmlEntry(archive, "xl/workbook.xml", new XDocument(
-                new XElement(mainNs + "workbook",
-                    new XAttribute(XNamespace.Xmlns + "r", relNs),
-                    new XElement(mainNs + "sheets",
-                        new XElement(mainNs + "sheet",
-                            new XAttribute("name", safeName),
-                            new XAttribute("sheetId", "1"),
-                            new XAttribute(relNs + "id", "rId1"))))));
-
-            WriteXmlEntry(archive, "xl/_rels/workbook.xml.rels", new XDocument(
-                new XElement(pkgRelNs + "Relationships",
-                    new XElement(pkgRelNs + "Relationship",
-                        new XAttribute("Id", "rId1"),
-                        new XAttribute("Type", "http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet"),
-                        new XAttribute("Target", "worksheets/sheet1.xml")))));
-
-            WriteXmlEntry(archive, "xl/worksheets/sheet1.xml", new XDocument(
-                new XElement(mainNs + "worksheet", sheetData)));
-        }
-
-        return ms.ToArray();
-    }
-
-    private static void WriteXmlEntry(ZipArchive archive, string entryPath, XDocument doc)
-    {
-        var entry = archive.CreateEntry(entryPath, CompressionLevel.Fastest);
-        using var stream = entry.Open();
-        using var writer = new StreamWriter(stream, new UTF8Encoding(false));
-        doc.Save(writer);
     }
 }

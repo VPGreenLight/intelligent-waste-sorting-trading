@@ -68,3 +68,65 @@ public enum FeedbackStatus
     Verified = 2,
     Rejected = 3
 }
+
+public enum ServiceTargetRole
+{
+    User = 1,       // Dành cho Citizen (U-16)
+    Recycler = 2,   // Dành cho Cơ sở thu mua (R-07)
+    All = 3
+}
+
+public enum ServiceOrderStatus
+{
+    Pending = 1,    // Đang chờ chuyển khoản VietQR (TTL 15 phút)
+    Paid = 2,       // Đã thanh toán & kích hoạt gói thuê bao
+    Expired = 3,    // Hết hạn thanh toán QR
+    Cancelled = 4,  // Người dùng hủy đơn khi còn Pending
+    Refunded = 5    // Đã hoàn tiền (cho các khoản bất thường sau khi Admin đối soát)
+}
+
+public enum ServicePaymentStatus
+{
+    Pending = 1,
+    Success = 2,
+    Anomaly = 3,
+    Failed = 4,
+    Refunded = 5
+}
+
+public enum ReconciliationStatus
+{
+    Pending = 1,
+    Matched = 2,
+    Underpaid = 3,
+    Overpaid = 4,
+    LateTransfer = 5,
+    UnmatchedReference = 6,
+    Resolved = 7,
+    Refunded = 8
+}
+
+public enum PaymentAnomalyType
+{
+    None = 0,
+    Underpaid = 1,
+    Overpaid = 2,
+    LateTransfer = 3,
+    UnmatchedReference = 4
+}
+
+public enum ReconciliationAction
+{
+    ApproveAndActivate = 1, // Chấp nhận giao dịch lệch/trễ và kích hoạt gói
+    ManualMatchOrder = 2,   // Khớp webhook mồ côi vào 1 OrderCode hợp lệ
+    MarkRefunded = 3,       // Xác nhận đã hoàn tiền toàn phần cho khách
+    MarkExcessRefunded = 4, // Xác nhận đã hoàn lại phần tiền thừa (Overpaid)
+    CloseAnomaly = 5        // Đóng bất thường có lý do đối soát hợp lệ
+}
+
+public enum SubscriptionStatus
+{
+    Active = 1,
+    Expired = 2,
+    Revoked = 3
+}

@@ -47,6 +47,14 @@ public class ApplicationDbContext : DbContext
     public DbSet<AccountModerationLog> AccountModerationLogs => Set<AccountModerationLog>();
     public DbSet<StaffAttendance> StaffAttendances => Set<StaffAttendance>();
 
+    // ==========================================
+    // MODULE M-12: IN-SYSTEM SERVICE PACKAGES & VIETQR PAYMENT (FE-14)
+    // ==========================================
+    public DbSet<ServicePackage> ServicePackages => Set<ServicePackage>();
+    public DbSet<ServiceOrder> ServiceOrders => Set<ServiceOrder>();
+    public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
+    public DbSet<PaymentWebhookLog> PaymentWebhookLogs => Set<PaymentWebhookLog>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);

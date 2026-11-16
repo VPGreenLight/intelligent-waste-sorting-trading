@@ -2,8 +2,8 @@
 ## (FULL-SCOPE API INVENTORY, FORECAST & STATISTICAL DASHBOARD)
 
 **Dự án:** EcoLink – Intelligent Waste Sorting & Trading Platform (`SEP490_G141`)  
-**Phiên bản tài liệu:** `v2.1.0` (Cập nhật tiến độ sau khi hoàn tất triển khai `FE-17` & `FE-18` thuộc Module `M-15`)  
-**Thời điểm cập nhật:** 15/11/2026  
+**Phiên bản tài liệu:** `v2.2.0` (Cập nhật tiến độ sau khi hoàn tất triển khai `FE-14` thuộc Module `M-12`: Gói dịch vụ & VietQR)  
+**Thời điểm cập nhật:** 16/11/2026  
 **Công nghệ Backend:** ASP.NET Core 10 WebApi (Clean Architecture, Npgsql PostGIS, SignalR WebSocket)  
 **Công nghệ AI Service:** Python 3.11 FastAPI (YOLOv8 + MobileNetV3 + EfficientNet)  
 **Tình trạng tài liệu:** **Tài liệu quy hoạch & đối chiếu tổng thể (Master API Inventory)** – Dùng làm nguồn dữ liệu chuẩn để đồng bộ bảng tính `Report_API List_SEP490_G141` trên Google Drive (`Dashboard` & `API Inventory`).
@@ -17,28 +17,28 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 * **Tổng quy mô toàn hệ thống (Full Project Scope – `184 Endpoints`):**
   * **173 Endpoints thuộc Core Backend (`Ecolink.WebApi` - .NET 10):** gồm **171 REST APIs** và **2 SignalR WebSocket Hubs** (`/hubs/negotiation-chat`, `/hubs/notifications`).
   * **11 REST Endpoints thuộc Dedicated AI Vision Service (`FastAPI` - Python 3.11):** phục vụ nhận diện đa mô hình, Rule Engine, đồng bộ tập dữ liệu huấn luyện và nạp nóng mô hình.
-* **Tiến độ triển khai thực tế trên nhánh `develop` hiện tại:**
-  * **Đã triển khai (`105 Endpoints` – đạt `57.1%`):** gồm `95` Core REST APIs + `1` SignalR Hub + `9` AI FastAPI APIs.
-  * **Dự kiến bổ sung (`79 Endpoints` – chiếm `42.9%`):** gồm `76` Core REST APIs + `1` SignalR Hub + `2` AI FastAPI APIs trải đều trên các phân hệ `FE-03 (Admin Rules)`, `FE-10`, `FE-13`, `FE-14`, `FE-15`, `FE-16` và `SU-04`.
+* **Tiến độ triển khai thực tế trên nhánh hiện tại:**
+  * **Đã triển khai (`115 Endpoints` – đạt `62.5%`):** gồm `105` Core REST APIs + `1` SignalR Hub + `9` AI FastAPI APIs.
+  * **Dự kiến bổ sung (`69 Endpoints` – chiếm `37.5%`):** gồm `66` Core REST APIs + `1` SignalR Hub + `2` AI FastAPI APIs trải đều trên các phân hệ `FE-03 (Admin Rules)`, `FE-10`, `FE-13`, `FE-15`, `FE-16` và `SU-04`.
 
 ```text
 +--------------------------------------------------------------------------------------------------+
 |                      TỔNG QUY MÔ API TOÀN HỆ THỐNG ECOLINK (FULL SRS SCOPE)                      |
 |                                          184 ENDPOINTS                                           |
-|                    [ Đã triển khai: 105 (57.1%)  |  Dự kiến bổ sung: 79 (42.9%) ]                |
+|                    [ Đã triển khai: 115 (62.5%)  |  Dự kiến bổ sung: 69 (37.5%) ]                |
 +---------------------------------------------------+----------------------------------------------+
 |        Core .NET 10 WebApi: 173 Endpoints         |     Dedicated AI Service: 11 Endpoints       |
 |     (171 REST APIs + 2 SignalR WebSocket Hubs)    |            (FastAPI Python 3.11)             |
-|       [ Đã có: 96  |  Dự kiến bổ sung: 77 ]       |        [ Đã có: 9  |  Dự kiến thêm: 2 ]      |
+|       [ Đã có: 106 |  Dự kiến bổ sung: 67 ]       |        [ Đã có: 9  |  Dự kiến thêm: 2 ]      |
 +---------------------------------------------------+----------------------------------------------+
 ```
 
 ### Bảng chỉ số KPI đầu trang cho Sheet `API Inventory` & `Dashboard` (Google Drive)
 
-| Chỉ số KPI trên Google Sheet | Hiện trạng Code (`v1.3.0`) | Dự kiến mở rộng (Planned) | Tổng quy mô Toàn dự án (`v2.1.0`) |
+| Chỉ số KPI trên Google Sheet | Hiện trạng Code (`v2.2.0`) | Dự kiến mở rộng (Planned) | Tổng quy mô Toàn dự án (`v2.2.0`) |
 |:---|:---:|:---:|:---:|
-| **Tổng Endpoint** | 105 | +79 | **184** |
-| **Core .NET 10** *(REST + WS)* | 96 | +77 | **173** |
+| **Tổng Endpoint** | 115 | +69 | **184** |
+| **Core .NET 10** *(REST + WS)* | 106 | +67 | **173** |
 | **AI FastAPI** | 9 | +2 | **11** |
 | **WebSocket (SignalR Hub)** | 1 | +1 | **2** |
 
@@ -59,13 +59,13 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 | **M-09** | `FE-07/09` | **Direct Trade Orders & QR Confirmation** | `TradeController` | 5 | 0 | 5 | 0 | **5** | 2.7% | 100.0% |
 | **M-10** | `FE-13` | **Gamification, Virtual Tree & Rewards** | `GamificationController`, `StaffGamificationController` *(dự kiến)*, `AdminGamificationController` *(dự kiến)* | 2 | 25 | 27 | 0 | **27** | 14.7% | 7.4% |
 | **M-11** | `FE-10` | **Rating, Review & Complaint Resolution** | `ReviewsController` *(dự kiến)*, `ComplaintsController` *(dự kiến)*, `StaffComplaintsController` *(dự kiến)* | 0 | 12 | 12 | 0 | **12** | 6.5% | 0.0% |
-| **M-12** | `FE-14` | **In-System Service Packages & VietQR** | `ServicePaymentController`, `ServicePackagesController` *(dự kiến)*, `AdminReconciliationController` *(dự kiến)* | 5 | 10 | 15 | 0 | **15** | 8.2% | 33.3% |
+| **M-12** | `FE-14` | **In-System Service Packages & VietQR** | `ServicePaymentController`, `ServicePackagesController`, `AdminReconciliationController` | 15 | 0 | 15 | 0 | **15** | 8.2% | 100.0% |
 | **M-13** | `FE-15` | **AI Misclassification & Dataset Curation** | `StaffAiFeedbackController` *(dự kiến)*, `StaffDatasetCurationController` *(dự kiến)* | 0 | 10 | 10 | 0 | **10** | 5.4% | 0.0% |
 | **M-14** | `FE-16` | **Blog & Content Management** | `BlogsController` *(dự kiến)*, `StaffBlogsController` *(dự kiến)*, `AdminBlogsController` *(dự kiến)* | 0 | 10 | 10 | 0 | **10** | 5.4% | 0.0% |
 | **M-15** | `FE-17..18` | **Account, Staff, Governance & Analytics** | `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `StaffAttendanceController`, `NotificationsController` *(dự kiến)*, `NotificationHub` *(dự kiến)* | 19 | 4 | 22 | 1 | **23** | 12.5% | 82.6% |
 | **SYS** | `INFRA` | **System Infrastructure & Health** | Minimal API (`Program.cs`) | 1 | 0 | 1 | 0 | **1** | 0.5% | 100.0% |
 | **AIS** | `FE-03/15` | **Dedicated AI Vision Service (Python)** | FastAPI (`app.py`) | 9 | 2 | 11 | 0 | **11** | 6.0% | 81.8% |
-| **TỔNG** | **ALL SRS** | **TOÀN BỘ HỆ THỐNG ECOLINK** | **Core .NET 10 (173) + FastAPI Python (11)** | **105** | **79** | **182** | **2** | **184** | **100.0%** | **57.1%** |
+| **TỔNG** | **ALL SRS** | **TOÀN BỘ HỆ THỐNG ECOLINK** | **Core .NET 10 (173) + FastAPI Python (11)** | **115** | **69** | **182** | **2** | **184** | **100.0%** | **62.5%** |
 
 ---
 
@@ -82,13 +82,13 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 
 | Phương thức HTTP / Giao thức | Ý nghĩa sử dụng chính trong dự án | Đã triển khai | Dự kiến bổ sung | Tổng quy mô | Tỷ lệ (%) |
 |:---|:---|:---:|:---:|:---:|:---:|
-| **GET** | Truy vấn danh sách, tìm kiếm PostGIS, đọc hồ sơ/khiếu nại, KPI Dashboard, Audit Log, xuất báo cáo CSV/XLSX | 48 | 33 | **81** | 44.0% |
-| **POST** | Đăng ký/đăng nhập, quét rác AI, tạo đơn thu gom, biên nhận, điểm danh, đổi quà, khiếu nại, VietQR, đóng gói Dataset | 40 | 22 | **62** | 33.7% |
-| **PUT** | Cập nhật toàn phần hồ sơ, cấu hình bảng giá, cấu hình Gamification, gán nhãn ảnh chuẩn, phân quyền RBAC Staff | 10 | 9 | **19** | 10.3% |
-| **PATCH** | Chuyển trạng thái nghiệp vụ tức thời: duyệt khiếu nại, duyệt blog, khóa tài khoản, đối soát giao dịch, ẩn/mở danh mục | 5 | 11 | **16** | 8.7% |
+| **GET** | Truy vấn danh sách, tìm kiếm PostGIS, đọc hồ sơ/khiếu nại, KPI Dashboard, Audit Log, xuất báo cáo CSV/XLSX | 53 | 28 | **81** | 44.0% |
+| **POST** | Đăng ký/đăng nhập, quét rác AI, tạo đơn thu gom, biên nhận, điểm danh, đổi quà, khiếu nại, VietQR, đóng gói Dataset | 42 | 20 | **62** | 33.7% |
+| **PUT** | Cập nhật toàn phần hồ sơ, cấu hình bảng giá, cấu hình Gamification, gán nhãn ảnh chuẩn, phân quyền RBAC Staff | 11 | 8 | **19** | 10.3% |
+| **PATCH** | Chuyển trạng thái nghiệp vụ tức thời: duyệt khiếu nại, duyệt blog, khóa tài khoản, đối soát giao dịch, ẩn/mở danh mục | 7 | 9 | **16** | 8.7% |
 | **DELETE** | Xóa đánh giá của chính tác giả (`BR-RVW-03`), xóa thẻ Eco Fact nháp, xóa bài Blog nháp, vô hiệu hóa mềm tài khoản | 1 | 3 | **4** | 2.2% |
 | **WebSocket (`WS`)** | Kết nối SignalR song công thời gian thực cho phòng Chat thương lượng giá và kênh Đẩy thông báo hệ thống | 1 | 1 | **2** | 1.1% |
-| **Tổng cộng** | | **105** | **79** | **184** | **100.0%** |
+| **Tổng cộng** | | **115** | **69** | **184** | **100.0%** |
 
 ---
 
@@ -101,9 +101,9 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 | **Public / Guest** | Mọi người dùng (kể cả chưa đăng nhập, Webhook Gateway & Internal AI) | 30 | 5 | **35** | 19.0% | Đăng ký/đăng nhập, quét rác AI, tìm vựa GPS, bảng xếp hạng, đọc Blog, xem Review vựa, Webhook VietQR |
 | **Citizen (User)** | Người dân đã xác thực tài khoản (`Role = Citizen`) | 11 | 8 | **19** | 10.3% | Nộp đơn mở vựa, đặt lịch thu gom, xác nhận biên nhận, nuôi Cây Ảo, mở Eco Fact, gửi/xóa đánh giá sao |
 | **Recycler (Collector)** | Đối tác cơ sở thu gom đã được xác minh (`Role = Recycler`) | 19 | 0 | **19** | 10.3% | Hồ sơ vựa, cấu hình bảng giá thu mua, lịch mở cửa, nhận/từ chối đơn, phát hành biên nhận cân điện tử |
-| **Staff / Admin** | Nhân viên vận hành (`Staff`) và Quản trị viên hệ thống (`Admin`) | 22 | 49 | **71** | 38.6% | Duyệt vựa, xử lý khiếu nại, kho quà & Eco Fact, gán nhãn Dataset AI, biên tập/duyệt Blog, đối soát VietQR, KPI & RBAC |
-| **Authenticated (All)** | Nhiều vai trò đã đăng nhập (`Citizen / Recycler` hoặc mọi User hợp lệ) | 23 | 17 | **40** | 21.7% | Hồ sơ cá nhân, chat thương lượng, điểm danh Streak, đổi quà, gửi khiếu nại, mua gói dịch vụ VietQR, nhận thông báo |
-| **Tổng cộng** | | **105** | **79** | **184** | **100.0%** | |
+| **Staff / Admin** | Nhân viên vận hành (`Staff`) và Quản trị viên hệ thống (`Admin`) | 29 | 42 | **71** | 38.6% | Duyệt vựa, xử lý khiếu nại, kho quà & Eco Fact, gán nhãn Dataset AI, biên tập/duyệt Blog, đối soát VietQR, KPI & RBAC |
+| **Authenticated (All)** | Nhiều vai trò đã đăng nhập (`Citizen / Recycler` hoặc mọi User hợp lệ) | 26 | 14 | **40** | 21.7% | Hồ sơ cá nhân, chat thương lượng, điểm danh Streak, đổi quà, gửi khiếu nại, mua gói dịch vụ VietQR, nhận thông báo |
+| **Tổng cộng** | | **115** | **69** | **184** | **100.0%** | |
 
 #### B. Phân rã chi tiết nội bộ nhóm Quản trị & Vận hành (`Staff / Admin` – `71 APIs`)
 
@@ -355,26 +355,26 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 
 ### PHÂN HỆ 12 (`M-12` / `FE-14`): GÓI DỊCH VỤ NỘI BỘ & TÍCH HỢP VIETQR (IN-SYSTEM SERVICE PACKAGES & VIETQR)
 * **Use Cases bao phủ:** `U-16` (Citizen Purchase In-System Services via VietQR), `R-07` (Recycler Purchase In-System Services via VietQR), `A-10` (Configure In-System Service Fees), `A-11` (Manage Financial Reconciliation)
-* **Controllers:** `ServicePaymentController` (hiện có), `ServicePackagesController` *(dự kiến)*, `AdminReconciliationController` *(dự kiến)*
-* **Quy mô:** `15` APIs (5 Đã triển khai, 10 Dự kiến)
+* **Controllers:** `ServicePaymentController`, `ServicePackagesController`, `AdminReconciliationController`
+* **Quy mô:** `15` APIs (15 Đã triển khai, 0 Dự kiến)
 
 | STT | Mã Modul | Phương thức | Tuyến đường Endpoint (Route) | Phân quyền (RBAC) | Action / Function | Mô tả chức năng & Use Case nghiệp vụ | Nhóm RBAC | Trạng thái |
 |:---:|:---:|:---:|:---|:---|:---|:---|:---|:---:|
-| **115** | `M-12` | `POST` | `/api/v1/service-payments/create` | Citizen / Recycler | `CreateServicePayment` | Khởi tạo đơn mua gói dịch vụ nội bộ (Citizen `U-16`: Ad-Free, EcoPlus; Recycler `R-07`: Tích xanh uy tín, Ghim nổi bật bản đồ) và sinh mã VietQR động (`BR-PAY-01`). | Authenticated (All) | Đã triển khai |
-| **116** | `M-12` | `GET` | `/api/v1/service-payments/orders/{orderCode}` | Authenticated | `GetOrderStatus` | Tra cứu trạng thái thanh toán thời gian thực của đơn mua gói dịch vụ (`Pending`, `Paid`, `Failed`, `Cancelled`) (`U-16`, `R-07`). | Authenticated (All) | Đã triển khai |
-| **117** | `M-12` | `GET` | `/api/v1/service-payments/orders` | Authenticated | `GetAllOrders` | Xem danh sách toàn bộ hóa đơn thanh toán gói dịch vụ nội bộ của tài khoản (`U-16`, `R-07`). | Authenticated (All) | Đã triển khai |
-| **118** | `M-12` | `POST` | `/api/v1/service-payments/webhook` | Public (Gateway) | `ReceivePaymentWebhook` | Webhook tự động nhận thông báo biến động số dư từ cổng VietQR / PayOS, kiểm tra Idempotency và kích hoạt gói dịch vụ (`BR-PAY-02`, `BR-PAY-03`). | Public / Guest | Đã triển khai |
-| **119** | `M-12` | `POST` | `/api/v1/service-payments/simulate-transfer/{orderCode}` | Public (Dev/Test) | `SimulateTransfer` | Giả lập sự kiện khách hàng quét mã VietQR chuyển khoản thành công phục vụ kiểm thử tích hợp tự động. | Public / Guest | Đã triển khai |
-| **120** | `M-12` | `GET` | `/api/v1/service-packages` | Authenticated | `GetAvailablePackages` | Lấy bảng giá các gói dịch vụ đang mở bán lọc theo đối tượng (`Citizen`: EcoPlus/Ad-Free; `Recycler`: Blue Badge/Featured Marker) (`U-16`, `R-07`). | Authenticated (All) | Dự kiến |
-| **121** | `M-12` | `GET` | `/api/v1/service-packages/subscriptions/me` | Citizen / Recycler | `GetMySubscriptions` | Xem các gói đặc quyền đang hoạt động của tài khoản, thời hạn còn lại và lịch sử gia hạn cộng dồn (`U-16`, `R-07`, `BR-PAY-04`). | Authenticated (All) | Dự kiến |
-| **122** | `M-12` | `POST` | `/api/v1/service-payments/orders/{orderCode}/cancel` | Citizen / Recycler | `CancelPendingOrder` | Hủy mã đơn thanh toán VietQR đang chờ chuyển khoản (`Pending`) khi người dùng đổi ý chọn gói dịch vụ khác (`U-16`, `R-07`). | Authenticated (All) | Dự kiến |
-| **123** | `M-12` | `GET` | `/api/v1/admin/service-packages` | Admin | `GetAllServicePackages` | Quản trị viên tra cứu toàn bộ danh mục gói dịch vụ thương mại, biểu phí, thời hạn và số lượng thuê bao đang đăng ký (`A-10`). | Staff / Admin | Dự kiến |
-| **124** | `M-12` | `POST` | `/api/v1/admin/service-packages` | Admin | `CreateServicePackage` | Quản trị viên tạo gói dịch vụ mới: tên gói, vai trò áp dụng, mức phí (VNĐ), số ngày hiệu lực và danh sách đặc quyền (`A-10`, `BR-PAY-05`). | Staff / Admin | Dự kiến |
-| **125** | `M-12` | `PUT` | `/api/v1/admin/service-packages/{packageId:guid}` | Admin | `UpdateServicePackage` | Quản trị viên cập nhật đơn giá và chu kỳ gói dịch vụ cho các lượt đăng ký mới (giữ nguyên gói đang hiệu lực theo `BR-PAY-05`) (`A-10`). | Staff / Admin | Dự kiến |
-| **126** | `M-12` | `PATCH` | `/api/v1/admin/service-packages/{packageId:guid}/status` | Admin | `TogglePackageStatus` | Mở bán công khai hoặc ngừng cung cấp gói dịch vụ trên giao diện nâng cấp tài khoản (`A-10`). | Staff / Admin | Dự kiến |
-| **127** | `M-12` | `GET` | `/api/v1/admin/reconciliations/ledger` | Admin | `GetPaymentLedger` | Quản trị viên theo dõi sổ cái dòng tiền VietQR vào hệ thống, lọc các giao dịch lệch tiền hoặc sai nội dung chuyển khoản (`Anomaly`) (`A-11`, `BR-PAY-06`). | Staff / Admin | Dự kiến |
-| **128** | `M-12` | `PATCH` | `/api/v1/admin/reconciliations/orders/{orderCode}/resolve` | Admin | `ResolvePaymentAnomaly` | Đối soát thủ công giao dịch VietQR bất thường: xác nhận khớp lệnh bù hoặc ghi nhận hoàn tiền kèm mã giao dịch ngân hàng (`A-11`, `BR-PAY-06`). | Staff / Admin | Dự kiến |
-| **129** | `M-12` | `GET` | `/api/v1/admin/reconciliations/export` | Admin | `ExportReconciliationReport` | Xuất bảng kê đối soát doanh thu dịch vụ VietQR theo kỳ kế toán (CSV/XLSX) (`A-11`). | Staff / Admin | Dự kiến |
+| **115** | `M-12` | `POST` | `/api/v1/service-payments/create` | Citizen / Recycler | `CreateServicePayment` | Khởi tạo đơn mua gói dịch vụ nội bộ (`PREMIUM` 59k / `PRO` 1tr) và sinh mã VietQR động (`BR-PAY-01`, `BR-PAY-03`). | Authenticated (All) | Đã triển khai |
+| **116** | `M-12` | `GET` | `/api/v1/service-payments/orders/{orderCode}` | Authenticated | `GetOrderStatus` | Tra cứu trạng thái thanh toán thời gian thực của đơn mua gói dịch vụ (`Pending`, `Paid`, `Expired`, `Cancelled`, `Refunded`) (`U-16`, `R-07`). | Authenticated (All) | Đã triển khai |
+| **117** | `M-12` | `GET` | `/api/v1/service-payments/orders` | Authenticated | `GetAllOrders` | Xem danh sách hóa đơn thanh toán gói dịch vụ nội bộ của chính tài khoản đăng nhập (`U-16`, `R-07`). | Authenticated (All) | Đã triển khai |
+| **118** | `M-12` | `POST` | `/api/v1/service-payments/webhook` | Public (Gateway) | `ReceivePaymentWebhook` | Webhook tự động nhận thông báo biến động số dư từ cổng VietQR / PayOS, kiểm tra Idempotency, phân loại 5 bất thường và kích hoạt gói (`BR-PAY-02`, `BR-PAY-06`). | Public / Guest | Đã triển khai |
+| **119** | `M-12` | `POST` | `/api/v1/service-payments/simulate-transfer/{orderCode}` | Public (Dev/Test) | `SimulateTransfer` | Giả lập sự kiện khách hàng quét mã VietQR chuyển khoản (`Exact`, `Underpaid`, `Overpaid`, `LateTransfer`, `Unmatched`) phục vụ kiểm thử. | Public / Guest | Đã triển khai |
+| **120** | `M-12` | `GET` | `/api/v1/service-packages` | Authenticated | `GetAvailablePackages` | Lấy bảng giá 3 gói dịch vụ (`Basic`, `Premium`, `Pro`) đang mở bán kèm trạng thái đủ điều kiện KYB/Vai trò (`U-16`, `R-07`). | Authenticated (All) | Đã triển khai |
+| **121** | `M-12` | `GET` | `/api/v1/service-packages/subscriptions/me` | Citizen / Recycler | `GetMySubscriptions` | Xem bậc gói hiện tại, các đặc quyền đang hoạt động, thời hạn còn lại và lịch sử gia hạn cộng dồn (`U-16`, `R-07`, `BR-PAY-04`). | Authenticated (All) | Đã triển khai |
+| **122** | `M-12` | `POST` | `/api/v1/service-payments/orders/{orderCode}/cancel` | Citizen / Recycler | `CancelPendingOrder` | Hủy mã đơn thanh toán VietQR đang chờ chuyển khoản (`Pending`) khi người dùng đổi ý chọn gói dịch vụ khác (`U-16`, `R-07`). | Authenticated (All) | Đã triển khai |
+| **123** | `M-12` | `GET` | `/api/v1/admin/service-packages` | Admin | `GetAllServicePackages` | Quản trị viên tra cứu toàn bộ danh mục gói dịch vụ thương mại, biểu phí, thời hạn và số lượng thuê bao đang đăng ký (`A-10`). | Staff / Admin | Đã triển khai |
+| **124** | `M-12` | `POST` | `/api/v1/admin/service-packages` | Admin | `CreateServicePackage` | Quản trị viên tạo gói dịch vụ mới: tên gói, vai trò áp dụng, mức phí (`>= 2000` VNĐ), số ngày hiệu lực và danh sách đặc quyền (`A-10`, `BR-PAY-05`). | Staff / Admin | Đã triển khai |
+| **125** | `M-12` | `PUT` | `/api/v1/admin/service-packages/{packageId:guid}` | Admin | `UpdateServicePackage` | Quản trị viên cập nhật đơn giá và chu kỳ gói dịch vụ cho các lượt đăng ký mới (giữ nguyên gói đang hiệu lực theo `BR-PAY-05`) (`A-10`). | Staff / Admin | Đã triển khai |
+| **126** | `M-12` | `PATCH` | `/api/v1/admin/service-packages/{packageId:guid}/status` | Admin | `TogglePackageStatus` | Mở bán công khai hoặc ngừng cung cấp gói dịch vụ trên giao diện nâng cấp tài khoản (`A-10`). | Staff / Admin | Đã triển khai |
+| **127** | `M-12` | `GET` | `/api/v1/admin/reconciliations/ledger` | Admin | `GetPaymentLedger` | Quản trị viên theo dõi sổ cái dòng tiền VietQR vào hệ thống, lọc các giao dịch lệch tiền hoặc sai nội dung chuyển khoản (`Anomaly`) (`A-11`, `BR-PAY-06`). | Staff / Admin | Đã triển khai |
+| **128** | `M-12` | `PATCH` | `/api/v1/admin/reconciliations/orders/{orderCode}/resolve` | Admin | `ResolvePaymentAnomaly` | Đối soát thủ công giao dịch VietQR bất thường: xác nhận khớp lệnh bù hoặc ghi nhận hoàn tiền kèm mã giao dịch ngân hàng (`A-11`, `BR-PAY-06`). | Staff / Admin | Đã triển khai |
+| **129** | `M-12` | `GET` | `/api/v1/admin/reconciliations/export` | Admin | `ExportReconciliationReport` | Xuất bảng kê đối soát doanh thu dịch vụ VietQR theo kỳ kế toán (CSV/XLSX) ẩn danh PII (`A-11`, `BR-ADM-06`). | Staff / Admin | Đã triển khai |
 
 ---
 

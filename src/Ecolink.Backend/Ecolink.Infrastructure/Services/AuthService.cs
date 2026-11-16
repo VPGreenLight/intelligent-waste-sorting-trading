@@ -650,7 +650,11 @@ public class AuthService : IAuthService
             .Include(u => u.EcoProfile)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
-        return user != null ? MapToUserInfoDto(user) : null;
+        if (user == null) return null;
+
+        var userDto = MapToUserInfoDto(user);
+        await PopulateUserEntitlementsAsync(userDto, cancellationToken);
+        return userDto;
     }
 
     public async Task<UserInfoDto?> GetUserByTokenAsync(string token, CancellationToken cancellationToken = default)
@@ -714,6 +718,9 @@ public class AuthService : IAuthService
         _dbContext.RefreshTokens.Add(refreshTokenRecord);
         await _dbContext.SaveChangesAsync(ct);
 
+        var userDto = MapToUserInfoDto(user);
+        await PopulateUserEntitlementsAsync(userDto, ct);
+
         return new AuthResponseDto
         {
             Success = true,
@@ -721,11 +728,29 @@ public class AuthService : IAuthService
             RefreshToken = rawRefreshToken,
             TokenType = "Bearer",
             ExpiresAt = _tokenService.GetAccessTokenExpiration(),
-            User = MapToUserInfoDto(user),
+            User = userDto,
             Message = messageCode == "MSG-MTH-03"
                 ? "Hồ sơ cơ sở của bạn đang được xem xét và sẽ xuất hiện sau khi duyệt."
                 : "Thao tác xác thực thành công."
         };
+    }
+
+    private async Task PopulateUserEntitlementsAsync(UserInfoDto dto, CancellationToken ct)
+    {
+        var utcNow = DateTime.UtcNow;
+        var activeSubs = await _dbContext.UserSubscriptions
+            .AsNoTracking()
+            .Where(s => s.UserId == dto.Id
+                        && s.Status == SubscriptionStatus.Active
+                        && s.StartsAt <= utcNow
+                        && s.ExpiresAt > utcNow)
+            .ToListAsync(ct);
+
+        var summary = ServicePackageHelpers.AggregateEntitlements(activeSubs);
+        dto.CurrentTier = summary.CurrentTier;
+        dto.IsAdFree = summary.IsAdFree;
+        dto.HasVerifiedBadge = summary.HasVerifiedBlueBadge;
+        dto.IsFeaturedMapMarker = summary.IsFeaturedMapMarker;
     }
 
     private static UserInfoDto MapToUserInfoDto(User user)

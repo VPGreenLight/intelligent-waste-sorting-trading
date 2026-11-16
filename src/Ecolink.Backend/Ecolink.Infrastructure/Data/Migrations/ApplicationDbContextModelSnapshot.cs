@@ -759,6 +759,121 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("password_reset_tokens", (string)null);
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.PaymentWebhookLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AnomalyType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("anomaly_type");
+
+                    b.Property<string>("BankReference")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("bank_reference");
+
+                    b.Property<string>("GatewaySource")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("gateway_source");
+
+                    b.Property<string>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("idempotency_key");
+
+                    b.Property<Guid?>("MatchedOrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("matched_order_id");
+
+                    b.Property<string>("ParsedOrderCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("parsed_order_code");
+
+                    b.Property<string>("ProcessingResult")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("processing_result");
+
+                    b.Property<string>("RawPayload")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("raw_payload");
+
+                    b.Property<decimal>("ReceivedAmountVnd")
+                        .HasColumnType("numeric(14,0)")
+                        .HasColumnName("received_amount_vnd");
+
+                    b.Property<DateTime>("ReceivedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("received_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("ResolutionBankRef")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("resolution_bank_ref");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasColumnType("text")
+                        .HasColumnName("resolution_note");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<Guid?>("ResolvedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resolved_by");
+
+                    b.Property<bool>("SignatureValid")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("signature_valid");
+
+                    b.Property<string>("TransferDescription")
+                        .HasColumnType("text")
+                        .HasColumnName("transfer_description");
+
+                    b.Property<string>("WebhookCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("webhook_code");
+
+                    b.HasKey("Id")
+                        .HasName("pk_payment_webhook_logs");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("uq_payment_webhook_logs_idempotency");
+
+                    b.HasIndex("ResolvedBy");
+
+                    b.HasIndex("WebhookCode")
+                        .IsUnique()
+                        .HasDatabaseName("uq_payment_webhook_logs_webhook_code");
+
+                    b.HasIndex("MatchedOrderId", "ReceivedAt")
+                        .HasDatabaseName("idx_payment_webhook_logs_order");
+
+                    b.HasIndex("ProcessingResult", "ReceivedAt")
+                        .HasDatabaseName("idx_payment_webhook_logs_result");
+
+                    b.ToTable("payment_webhook_logs", (string)null);
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.RecyclerPrice", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1014,6 +1129,428 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.HasIndex("UserId");
 
                     b.ToTable("refresh_tokens", (string)null);
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.ServiceOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AccountName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("account_name");
+
+                    b.Property<string>("AccountNo")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("account_no");
+
+                    b.Property<string>("AnomalyNote")
+                        .HasColumnType("text")
+                        .HasColumnName("anomaly_note");
+
+                    b.Property<string>("AnomalyType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("anomaly_type");
+
+                    b.Property<string>("BankCode")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("bank_code");
+
+                    b.Property<string>("BankName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("bank_name");
+
+                    b.Property<string>("CheckoutUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("checkout_url");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("System")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("description");
+
+                    b.Property<int>("DurationDaysSnapshot")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_days_snapshot");
+
+                    b.Property<decimal>("ExpectedAmountVnd")
+                        .HasColumnType("numeric(14,0)")
+                        .HasColumnName("expected_amount_vnd");
+
+                    b.Property<string>("FeaturesSnapshot")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("features_snapshot")
+                        .HasDefaultValueSql("'{}'::jsonb");
+
+                    b.Property<long?>("GatewayOrderCode")
+                        .HasColumnType("bigint")
+                        .HasColumnName("gateway_order_code");
+
+                    b.Property<string>("GatewayTransactionNo")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("gateway_transaction_no");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("OrderCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("order_code");
+
+                    b.Property<string>("OrderStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("order_status");
+
+                    b.Property<string>("PackageCodeSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("package_code_snapshot");
+
+                    b.Property<Guid>("PackageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("package_id");
+
+                    b.Property<string>("PackageNameSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("package_name_snapshot");
+
+                    b.Property<decimal?>("PaidAmountVnd")
+                        .HasColumnType("numeric(14,0)")
+                        .HasColumnName("paid_amount_vnd");
+
+                    b.Property<DateTime?>("PaidAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("paid_at");
+
+                    b.Property<string>("PaymentMethod")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("VIETQR")
+                        .HasColumnName("payment_method");
+
+                    b.Property<string>("PaymentReference")
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("payment_reference");
+
+                    b.Property<string>("PaymentStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("payment_status");
+
+                    b.Property<string>("QrCodeUrl")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("qr_code_url");
+
+                    b.Property<DateTime>("QrExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("qr_expires_at");
+
+                    b.Property<string>("QrPayload")
+                        .HasColumnType("text")
+                        .HasColumnName("qr_payload");
+
+                    b.Property<string>("ReconciliationStatus")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("reconciliation_status");
+
+                    b.Property<string>("ResolutionBankRef")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("resolution_bank_ref");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasColumnType("text")
+                        .HasColumnName("resolution_note");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<Guid?>("ResolvedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resolved_by");
+
+                    b.Property<string>("TransferContent")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("transfer_content");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_service_orders");
+
+                    b.HasIndex("GatewayOrderCode")
+                        .IsUnique()
+                        .HasDatabaseName("uq_service_orders_gateway_order_code");
+
+                    b.HasIndex("OrderCode")
+                        .IsUnique()
+                        .HasDatabaseName("uq_service_orders_order_code");
+
+                    b.HasIndex("PackageId");
+
+                    b.HasIndex("PaymentReference")
+                        .IsUnique()
+                        .HasDatabaseName("uq_service_orders_payment_reference");
+
+                    b.HasIndex("ResolvedBy");
+
+                    b.HasIndex("OrderStatus", "PaidAt")
+                        .HasDatabaseName("idx_service_orders_paid_created")
+                        .HasFilter("order_status = 'Paid'");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("idx_service_orders_user_created")
+                        .HasFilter("is_deleted = FALSE");
+
+                    b.HasIndex("ReconciliationStatus", "OrderStatus", "CreatedAt")
+                        .HasDatabaseName("idx_service_orders_reconciliation");
+
+                    b.ToTable("service_orders", (string)null);
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.ServicePackage", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("System")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<int>("DisplayOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(100)
+                        .HasColumnName("display_order");
+
+                    b.Property<int>("DurationDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("duration_days");
+
+                    b.Property<string>("FeaturesJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("features_json")
+                        .HasDefaultValueSql("'{}'::jsonb");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
+
+                    b.Property<bool>("IsDefaultFree")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_default_free");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("PackageCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("package_code");
+
+                    b.Property<string>("PackageName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("package_name");
+
+                    b.Property<decimal>("PriceVnd")
+                        .HasColumnType("numeric(14,0)")
+                        .HasColumnName("price_vnd");
+
+                    b.Property<bool>("RequiresVerifiedKyb")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("requires_verified_kyb");
+
+                    b.Property<string>("TargetRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("target_role");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.HasKey("Id")
+                        .HasName("pk_service_packages");
+
+                    b.HasIndex("PackageCode")
+                        .IsUnique()
+                        .HasDatabaseName("uq_service_packages_package_code");
+
+                    b.HasIndex("TargetRole", "IsActive", "DisplayOrder")
+                        .HasDatabaseName("idx_service_packages_role_active")
+                        .HasFilter("is_deleted = FALSE");
+
+                    b.ToTable("service_packages", null, t =>
+                        {
+                            t.HasCheckConstraint("chk_service_packages_pricing_mode", "(is_default_free = TRUE AND price_vnd = 0 AND duration_days = 0) OR (is_default_free = FALSE AND price_vnd >= 2000 AND duration_days BETWEEN 1 AND 730)");
+                        });
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("51000001-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Description = "Gói mặc định miễn phí với đầy đủ tính năng phân loại rác AI và bàn giao cơ bản.",
+                            DisplayOrder = 10,
+                            DurationDays = 0,
+                            FeaturesJson = "{\"tierName\":\"Basic\",\"adFree\":false,\"dailyPointMultiplier\":1.0,\"ecoPlusBadge\":false,\"verifiedBlueBadge\":false,\"featuredMapMarker\":false,\"mapPriorityBoost\":0}",
+                            IsActive = true,
+                            IsDefaultFree = true,
+                            IsDeleted = false,
+                            PackageCode = "BASIC",
+                            PackageName = "Basic (Mặc định)",
+                            PriceVnd = 0m,
+                            RequiresVerifiedKyb = false,
+                            TargetRole = "All"
+                        },
+                        new
+                        {
+                            Id = new Guid("51000001-0000-0000-0000-000000000002"),
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Description = "Tắt hoàn toàn banner quảng cáo trong 30 ngày kèm đặc quyền hội viên EcoPlus.",
+                            DisplayOrder = 20,
+                            DurationDays = 30,
+                            FeaturesJson = "{\"tierName\":\"Premium\",\"adFree\":true,\"dailyPointMultiplier\":1.2,\"ecoPlusBadge\":true,\"verifiedBlueBadge\":false,\"featuredMapMarker\":false,\"mapPriorityBoost\":0}",
+                            IsActive = true,
+                            IsDefaultFree = false,
+                            IsDeleted = false,
+                            PackageCode = "PREMIUM",
+                            PackageName = "Premium (Tắt quảng cáo)",
+                            PriceVnd = 59000m,
+                            RequiresVerifiedKyb = false,
+                            TargetRole = "All"
+                        },
+                        new
+                        {
+                            Id = new Guid("51000002-0000-0000-0000-000000000001"),
+                            CreatedAt = new DateTime(2026, 1, 1, 0, 0, 0, 0, DateTimeKind.Utc),
+                            CreatedBy = "System",
+                            Description = "Gói thương mại 1 năm dành cho Cơ sở thu mua đã xác minh KYB: Tắt quảng cáo, Huy hiệu Tích xanh và Ghim Nổi bật ưu tiên trên bản đồ.",
+                            DisplayOrder = 30,
+                            DurationDays = 365,
+                            FeaturesJson = "{\"tierName\":\"Pro\",\"adFree\":true,\"dailyPointMultiplier\":1.2,\"ecoPlusBadge\":true,\"verifiedBlueBadge\":true,\"featuredMapMarker\":true,\"mapPriorityBoost\":100}",
+                            IsActive = true,
+                            IsDefaultFree = false,
+                            IsDeleted = false,
+                            PackageCode = "PRO",
+                            PackageName = "Pro (Tích xanh & Ưu tiên bản đồ)",
+                            PriceVnd = 1000000m,
+                            RequiresVerifiedKyb = true,
+                            TargetRole = "Recycler"
+                        });
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.SortingRule", b =>
@@ -1660,6 +2197,112 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("user_eco_profiles", (string)null);
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.UserSubscription", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("System")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<DateTime>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("FeaturesSnapshot")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("features_snapshot")
+                        .HasDefaultValueSql("'{}'::jsonb");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("PackageCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("package_code");
+
+                    b.Property<Guid>("PackageId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("package_id");
+
+                    b.Property<string>("RevokeReason")
+                        .HasColumnType("text")
+                        .HasColumnName("revoke_reason");
+
+                    b.Property<DateTime?>("RevokedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("revoked_at");
+
+                    b.Property<Guid>("SourceOrderId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_order_id");
+
+                    b.Property<DateTime>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("starts_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_subscriptions");
+
+                    b.HasIndex("PackageId");
+
+                    b.HasIndex("SourceOrderId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_user_subscriptions_source_order");
+
+                    b.HasIndex("UserId", "Status", "ExpiresAt")
+                        .HasDatabaseName("idx_user_subscriptions_active_lookup")
+                        .HasFilter("is_deleted = FALSE");
+
+                    b.ToTable("user_subscriptions", null, t =>
+                        {
+                            t.HasCheckConstraint("chk_user_subscriptions_window", "expires_at > starts_at");
+                        });
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.WasteCategory", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1908,6 +2551,25 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.PaymentWebhookLog", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.ServiceOrder", "MatchedOrder")
+                        .WithMany("WebhookLogs")
+                        .HasForeignKey("MatchedOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_payment_webhook_logs_orders");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", "ResolverUser")
+                        .WithMany()
+                        .HasForeignKey("ResolvedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_payment_webhook_logs_resolver");
+
+                    b.Navigation("MatchedOrder");
+
+                    b.Navigation("ResolverUser");
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.RecyclerPrice", b =>
                 {
                     b.HasOne("Ecolink.Domain.Entities.RecyclerProfile", "Recycler")
@@ -1949,6 +2611,35 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired()
                         .HasConstraintName("fk_refresh_tokens_users");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.ServiceOrder", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.ServicePackage", "Package")
+                        .WithMany("Orders")
+                        .HasForeignKey("PackageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_service_orders_packages");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", "ResolverUser")
+                        .WithMany()
+                        .HasForeignKey("ResolvedBy")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_service_orders_resolver");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_service_orders_users");
+
+                    b.Navigation("Package");
+
+                    b.Navigation("ResolverUser");
 
                     b.Navigation("User");
                 });
@@ -2054,6 +2745,36 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.UserSubscription", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.ServicePackage", "Package")
+                        .WithMany("Subscriptions")
+                        .HasForeignKey("PackageId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_subscriptions_packages");
+
+                    b.HasOne("Ecolink.Domain.Entities.ServiceOrder", "SourceOrder")
+                        .WithOne("Subscription")
+                        .HasForeignKey("Ecolink.Domain.Entities.UserSubscription", "SourceOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_subscriptions_orders");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_subscriptions_users");
+
+                    b.Navigation("Package");
+
+                    b.Navigation("SourceOrder");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.CollectionPartner", b =>
                 {
                     b.Navigation("AcceptedMaterials");
@@ -2069,6 +2790,20 @@ namespace Ecolink.Infrastructure.Data.Migrations
             modelBuilder.Entity("Ecolink.Domain.Entities.RecyclerProfile", b =>
                 {
                     b.Navigation("Prices");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.ServiceOrder", b =>
+                {
+                    b.Navigation("Subscription");
+
+                    b.Navigation("WebhookLogs");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.ServicePackage", b =>
+                {
+                    b.Navigation("Orders");
+
+                    b.Navigation("Subscriptions");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.StaffProfile", b =>

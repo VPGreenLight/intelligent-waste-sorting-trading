@@ -24,6 +24,7 @@ public class GeoMatchingService : IGeoMatchingService
     private readonly ILogger<GeoMatchingService> _logger;
     private readonly ApplicationDbContext? _db;
     private readonly IWasteRuleEngineService? _ruleEngine;
+    private readonly ISubscriptionEntitlementService? _entitlementService;
 
     // Danh sách dự phòng khi chạy ở chế độ không kết nối CSDL (ưu tiên khu vực Hòa Lạc & Hà Nội)
     private static readonly List<CollectionPartnerDto> _mockPartners = new()
@@ -158,11 +159,13 @@ public class GeoMatchingService : IGeoMatchingService
     public GeoMatchingService(
         ILogger<GeoMatchingService> logger,
         ApplicationDbContext? db = null,
-        IWasteRuleEngineService? ruleEngine = null)
+        IWasteRuleEngineService? ruleEngine = null,
+        ISubscriptionEntitlementService? entitlementService = null)
     {
         _logger = logger;
         _db = db;
         _ruleEngine = ruleEngine;
+        _entitlementService = entitlementService;
     }
 
     public async Task<IEnumerable<CollectionPartnerDto>> FindNearestPartnersAsync(
@@ -240,7 +243,12 @@ public class GeoMatchingService : IGeoMatchingService
 
                 if (results.Count > 0)
                 {
-                    return results.OrderBy(p => p.DistanceKm).ToList();
+                    await EnrichPartnerEntitlementsAsync(results, cancellationToken);
+                    return results
+                        .OrderByDescending(p => p.IsFeatured)
+                        .ThenByDescending(p => p.HasVerifiedBadge)
+                        .ThenBy(p => p.DistanceKm)
+                        .ToList();
                 }
             }
             catch (Exception ex)
@@ -370,7 +378,9 @@ public class GeoMatchingService : IGeoMatchingService
                         ? Math.Round(CalculateDistanceKm(userLat.Value, userLng.Value, (double)profile.Latitude, (double)profile.Longitude), 2)
                         : 0.0;
 
-                    return MapProfileToPartnerDto(profile, distanceKm);
+                    var detailDto = MapProfileToPartnerDto(profile, distanceKm);
+                    await EnrichPartnerEntitlementsAsync([detailDto], cancellationToken);
+                    return detailDto;
                 }
             }
             catch (Exception ex)
@@ -419,8 +429,49 @@ public class GeoMatchingService : IGeoMatchingService
             OperatingHours = profile.OperatingHours,
             Description = profile.Description,
             BusinessPhotoUrl = profile.BusinessPhotoUrl,
+            HasVerifiedBadge = false,
+            IsFeatured = false,
             Materials = activeMaterials
         };
+    }
+
+    private async Task EnrichPartnerEntitlementsAsync(List<CollectionPartnerDto> partners, CancellationToken ct)
+    {
+        if (partners.Count == 0) return;
+
+        IReadOnlyDictionary<Guid, UserEntitlementSummaryDto>? entitlementMap = null;
+
+        if (_entitlementService != null)
+        {
+            entitlementMap = await _entitlementService.GetBatchEntitlementsAsync(partners.Select(p => p.Id), ct);
+        }
+        else if (_db != null)
+        {
+            var ids = partners.Select(p => p.Id).Distinct().ToList();
+            var utcNow = DateTime.UtcNow;
+            var activeSubs = await _db.UserSubscriptions
+                .AsNoTracking()
+                .Where(s => ids.Contains(s.UserId)
+                            && s.Status == SubscriptionStatus.Active
+                            && s.StartsAt <= utcNow
+                            && s.ExpiresAt > utcNow)
+                .ToListAsync(ct);
+
+            entitlementMap = activeSubs
+                .GroupBy(s => s.UserId)
+                .ToDictionary(g => g.Key, g => ServicePackageHelpers.AggregateEntitlements(g));
+        }
+
+        if (entitlementMap == null) return;
+
+        foreach (var partner in partners)
+        {
+            if (entitlementMap.TryGetValue(partner.Id, out var ent))
+            {
+                partner.HasVerifiedBadge = ent.HasVerifiedBlueBadge;
+                partner.IsFeatured = ent.IsFeaturedMapMarker;
+            }
+        }
     }
 
     private async Task EnsureDemoCollectorPricesSeededAsync(CancellationToken ct)

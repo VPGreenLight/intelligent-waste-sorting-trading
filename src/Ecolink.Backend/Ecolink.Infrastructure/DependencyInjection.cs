@@ -78,8 +78,11 @@ public static class DependencyInjection
 
         services.AddScoped<IHandoverReceiptService, HandoverReceiptService>();
 
-        // Đăng ký Payment Service (VietQR & Webhook)
-        services.AddSingleton<IPaymentService, PaymentService>();
+        // Đăng ký Module M-12: In-System Service Packages & VietQR Payment (FE-14)
+        services.AddScoped<ISubscriptionEntitlementService, SubscriptionEntitlementService>();
+        services.AddScoped<IServicePackageService, ServicePackageService>();
+        services.AddScoped<IAdminReconciliationService, AdminReconciliationService>();
+        services.AddScoped<IPaymentService, PaymentService>();
 
         // Đăng ký PayOS Gateway Service (Pay-in & Pay-out)
         services.AddSingleton<IPayOsService, PayOsService>();

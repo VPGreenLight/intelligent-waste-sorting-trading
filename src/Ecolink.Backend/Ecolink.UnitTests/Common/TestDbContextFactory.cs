@@ -29,6 +29,14 @@ public sealed class TestApplicationDbContext : ApplicationDbContext
             .HasConversion(
                 v => v == null ? null : wktWriter.Write(v),
                 v => string.IsNullOrEmpty(v) ? null : CreatePointFromWkt(wktReader, v));
+
+        // Tắt sinh giá trị xmin của PostgreSQL trên EF Core InMemory khi kiểm thử ServiceOrder
+        var xminProp = modelBuilder.Entity<ServiceOrder>().Metadata.FindProperty("xmin");
+        if (xminProp != null)
+        {
+            xminProp.ValueGenerated = Microsoft.EntityFrameworkCore.Metadata.ValueGenerated.Never;
+            xminProp.IsConcurrencyToken = false;
+        }
     }
 
     private static Point CreatePointFromWkt(WKTReader reader, string wkt)
