@@ -8,7 +8,7 @@
 | :--- | :--- | :--- | :--- |
 | **Project Name** | Intelligent Waste Sorting and Trading Platform (**EcoLink**) | **Creator** | Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức |
 | **Project Code** | `SEP490_G141` | **Issue Date** | `2026-11-17` |
-| **Document Code** | `SEP490_G141_ITR_v1.2` | **Version** | `1.2` |
+| **Document Code** | `SEP490_G141_ITR_v1.3` | **Version** | `1.3` |
 
 ### Record of Change
 
@@ -19,6 +19,7 @@
 | `2026-11-11` | `1.0` | Full 8-Module + `SecurityTest` Integration Specification | **M** | Chuẩn hóa toàn bộ tài liệu `Report-5.2` theo đúng biểu mẫu `Report-5.2_Integration Test_SEP490_G141.xlsx` (140 Feature TCs + 16 Security TCs = **156 TCs**) và tách 9 tệp đặc tả chi tiết theo từng module. | `Report-5.2_Integration Test_SEP490_G141.xlsx` |
 | `2026-11-16` | `1.1` | Module 09 (`M15_Governance`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-GOV-001` $\rightarrow$ `ITC-GOV-016`) bao phủ 19 REST APIs (`STT 150–168`) của Module Account, Staff & System Governance / Analytics (`GovernanceTests.cs`), nâng tổng số lên **172 TCs**. | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) |
 | `2026-11-17` | `1.2` | Module 10 (`M12_ServicePackages`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-PAY-001` $\rightarrow$ `ITC-PAY-016`) bao phủ 15 REST APIs (`STT 115–129`) của Module In-System Service Packages & VietQR Integration (`ServicePackageTests.cs`), nâng tổng số lên **188 TCs**. | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) |
+| `2026-11-17` | `1.3` | Module 11 (`M13_AiCuration`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-CLS-001` $\rightarrow$ `ITC-CLS-016`) bao phủ 10 Core APIs (`STT 130–139`), nâng cấp `021, 024` và FastAPI (`STT 183–184`) của Module AI Misclassification Feedback & Dataset Curation (`AiCurationTests.cs`), nâng tổng số lên **204 TCs**. | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) |
 
 *(Ghi chú: `*A` = Added, `D` = Deleted, `M` = Modified)*
 
@@ -79,7 +80,11 @@
 | **41** | Function 10.2: Recycler KYB Eligibility & Map Priority Boost | `M12_ServicePackages` | Chặn Recycler `Pending` mua `PRO` (`MSG-PAY-06`), duyệt KYB (`M-03`), nâng bậc tức thì `PREMIUM` $\rightarrow$ `PRO` (`BR-PAY-04`) và gắn Tích xanh / Ghim nổi bật bản đồ (`M-05`). | Hồ sơ Recycler đã nộp chứng từ KYB và bật `Online`. | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) |
 | **42** | Function 10.3: Admin Package Catalog & Fee Configuration | `M12_ServicePackages` | Quản trị gói dịch vụ (`A-10`): tạo gói thương mại (`>= 2,000đ`), bảo vệ gói `BASIC` (`BR-PAY-05`), sửa giá áp dụng Grandfathering bảo toàn snapshot đơn cũ. | Đã đăng nhập tài khoản `Admin`. | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) |
 | **43** | Function 10.4: Admin Financial Reconciliation & Anonymized Export | `M12_ServicePackages` | Sổ cái lọc sai lệch, `ApproveAndActivate`, khớp thủ công webhook mồ côi `ManualMatchOrder` (`WH-...`), chặn giải quyết lặp (`409`), xuất CSV/XLSX ẩn danh PII (`BR-ADM-06`) & AuditLog (`BR-ADM-05`). | Có giao dịch `Underpaid` và bản ghi webhook mồ côi. | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) |
-| **44** | Function 11.1: Cross-Module Security & Authorization | `SecurityTest` | Kiểm thử bảo mật tích hợp: Chống rò rỉ dữ liệu, User Enumeration, Brute-Force, Replay Attack, SQLi/XSS, RBAC & IDOR. | Toàn bộ 10 Module đang hoạt động. | [`integration_test_security.md`](./integration_test_security.md) |
+| **44** | Function 11.1: Scan History Persistence & Misclassification Feedback | `M13_AiCuration` | Quét ảnh lưu `AiScanHistory` (`SHA-256`, `scanId`, `imageUrl`), tự thu thập ca OOD `< 60%` (`LowConfidenceAuto`), chặn nhãn sai `BR-CLS-02` & trùng `scanId` (`409`). | WebApi, Postgres & FastAPI đang hoạt động. | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) |
+| **45** | Function 11.2: Fine-Grained RBAC & Misclassification Review | `M13_AiCuration` | Phân quyền `[HasPermission]` giữa `REVIEW_AI` và `CURATE_DATASET` (`403 MSG-ADM-04`), duyệt 1 chạm `ApproveAndLabel`, bác bỏ `Reject` (`BR-CLS-06`), cô lập `/feedback/me` (`BR-CLS-08`) & `409` duyệt lặp. | Admin tạo và phân quyền Staff động. | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) |
+| **46** | Function 11.3: Ground-Truth Annotation & Atomic Batch Assign | `M13_AiCuration` | Gán nhãn Ground-Truth đơn lẻ kèm tọa độ YOLO `[0, 1]`, chặn biên ngoài `(0, 1]` và gán hàng loạt nguyên tử (`POST /batch-assign`) rollback khi thiếu ID (`404`). | Có mẫu `Unlabeled` trong `ai_dataset_items`. | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) |
+| **47** | Function 11.4: Sticky Stratified Split 70/20/10, ZIP Export & FastAPI Sync | `M13_AiCuration` | Đóng gói `70/20/10` (`201 MSG-CLS-08`), kiểm định Sticky Split Zero Data Leakage `v1 -> v2` (`BR-CLS-07`), cờ lệch lớp `> 2.50x`, xuất `.zip` `YOLO` (`MSG-ADM-02`) & đồng bộ FastAPI (`SyncedToAi`). | Có mẫu `VerifiedLabeled` trong kho `S-03`. | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) |
+| **48** | Function 12.1: Cross-Module Security & Authorization | `SecurityTest` | Kiểm thử bảo mật tích hợp: Chống rò rỉ dữ liệu, User Enumeration, Brute-Force, Replay Attack, SQLi/XSS, RBAC & IDOR. | Toàn bộ 11 Module đang hoạt động. | [`integration_test_security.md`](./integration_test_security.md) |
 
 ---
 
@@ -89,8 +94,8 @@
 | :--- | :--- | :--- | :--- |
 | **Project Name** | Intelligent Waste Sorting and Trading Platform (**EcoLink**) | **Creator** | Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức |
 | **Project Code** | `SEP490_G141` | **Reviewer/Approver** | GVHD / Hội đồng Chấm Đồ án SEP490 |
-| **Document Code** | `SEP490_G141_Test Report_v1.2` | **Issue Date** | `2026-11-17` |
-| **Notes** | Release 1.2 bổ sung Module 10 (`M12_ServicePackages`: 15 REST APIs `STT 115–129`) nâng tổng phạm vi lên 10 Core Business Modules (`M01_Auth` $\rightarrow$ `M12_ServicePackages`) và 1 Sheet Kiểm thử Bảo mật Tích hợp (`SecurityTest`), thực thi tự động qua [`src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj`](../../../src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj). | | |
+| **Document Code** | `SEP490_G141_Test Report_v1.3` | **Issue Date** | `2026-11-17` |
+| **Notes** | Release 1.3 bổ sung Module 11 (`M13_AiCuration`: 10 Core APIs `STT 130–139`, nâng cấp `021/024` & FastAPI `183–184`) nâng tổng phạm vi lên 11 Core Business Modules (`M01_Auth` $\rightarrow$ `M13_AiCuration`) và 1 Sheet Kiểm thử Bảo mật Tích hợp (`SecurityTest`), thực thi tự động qua [`src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj`](../../../src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj). | | |
 
 ### Bảng Thống kê Kết quả Kiểm thử Tích hợp (Integration Test Statistics Table)
 
@@ -106,11 +111,12 @@
 | **8** | `M08_Negotiation` (In-App Real-Time Negotiation Chatbox) | 15 | 0 | 0 | 0 | **15** | [`08_integration_test_in_app_realtime_negotiation_chatbox.md`](./08_integration_test_in_app_realtime_negotiation_chatbox.md) / [`NegotiationChatTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/NegotiationChatTests.cs) |
 | **9** | `M15_Governance` (Account, Staff & System Governance) | 16 | 0 | 0 | 0 | **16** | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) / [`GovernanceTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/GovernanceTests.cs) |
 | **10** | `M12_ServicePackages` (In-System Service Packages & VietQR) | 16 | 0 | 0 | 0 | **16** | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) / [`ServicePackageTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ServicePackageTests.cs) |
-| **11** | `SecurityTest` (Cross-Module Security & Authorization) | 16 | 0 | 0 | 0 | **16** | [`integration_test_security.md`](./integration_test_security.md) |
-| | **Sub total** | **188** | **0** | **0** | **0** | **188** | **268 Automated Test Methods (429 Expanded Executions)** |
+| **11** | `M13_AiCuration` (AI Feedback & Dataset Curation) | 16 | 0 | 0 | 0 | **16** | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) / [`AiCurationTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/AiCurationTests.cs) |
+| **12** | `SecurityTest` (Cross-Module Security & Authorization) | 16 | 0 | 0 | 0 | **16** | [`integration_test_security.md`](./integration_test_security.md) |
+| | **Sub total** | **204** | **0** | **0** | **0** | **204** | **284 Automated Test Methods** |
 
-- **Test coverage:** `100,00 %` (`188 / 188` Test Cases Executed)
-- **Test successful coverage:** `100,00 %` (`188 / 188` Test Cases Passed)
+- **Test coverage:** `100,00 %` (`204 / 204` Test Cases Executed)
+- **Test successful coverage:** `100,00 %` (`204 / 204` Test Cases Passed)
 
 ---
 
@@ -499,7 +505,40 @@
 
 ---
 
-## SHEET 14: `SecurityTest` – CROSS-MODULE SECURITY & AUTHORIZATION INTEGRATION
+## SHEET 14: `M13_AiCuration` – AI MISCLASSIFICATION FEEDBACK & DATASET CURATION
+*(Chi tiết đầy đủ xem tại: [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md))*
+
+| Feature | `AI Misclassification Feedback & Dataset Curation (M13_AiCuration)` | | | |
+| :--- | :--- | :---: | :---: | :---: |
+| **Test requirement** | Kiểm thử tích hợp End-to-End 10 Core APIs (`STT 130–139`), nâng cấp `STT 021, 024` và FastAPI (`STT 183–184`): lưu vết phiên quét `SHA-256`, tự thu thập OOD `< 60%` (`BR-CLS-03`), kiểm tra danh mục `Active` (`BR-CLS-02`), chặn trùng `ScanId` (`BR-CLS-05`), `[HasPermission]` hạt mịn (`BR-ADM-02`), thẩm định & gán nhãn hàng loạt nguyên tử (`BR-CLS-06`), Sticky Stratified Split `70/20/10` Zero Data Leakage (`BR-CLS-07`) và xuất `.zip` `YOLO`. | | | |
+| **Number of TCs** | **16** | | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
+| *Round 1* | 16 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 16 | 0 |
+| *Round 3* | 0 | 0 | 16 | 0 |
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **ITC-CLS-001** | Quét ảnh lưu `AiScanHistory` & gửi báo cáo sai vào PostgreSQL. | 1. Gửi `POST /classify` lấy `scanId`, `imageUrl`.<br>2. Gửi `POST /feedback` (`plastic`). | `200 MSG-CLS-06`, `status="Pending"`, `normalizedLabel="plastic"`. | WebApi, Postgres & FastAPI bật. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS01` |
+| **ITC-CLS-002** | Tự động thu thập mẫu OOD `< 60%` vào hàng đợi `LowConfidenceAuto`. | 1. Quét ảnh `32x32`.<br>2. Gọi `GET /staff/ai-labeling/queue?sourceType=LowConfidenceAuto`. | Ca OOD xuất hiện với `status="Unlabeled"`. | Có quyền Staff/Admin. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS02` |
+| **ITC-CLS-003** | Chặn báo cáo sai với nhãn danh mục không tồn tại (`BR-CLS-02`). | 1. Gửi `POST /feedback` với `userReportedLabel="nuclear_waste"`. | HTTP `400 Bad Request`. | Đã đăng nhập `Citizen`. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS03` |
+| **ITC-CLS-004** | Chặn gửi báo cáo trùng lặp trên cùng một `scanId` (`BR-CLS-05`). | 1. Quét lấy `scanId`.<br>2. Gửi `POST /feedback` lặp 2 lần cùng `scanId`. | Lần 1 `200`; lần 2 `409 Conflict`. | Có `scanId` hợp lệ. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS04` |
+| **ITC-CLS-005** | Kiểm soát `[HasPermission]` hạt mịn giữa `REVIEW_AI` và `CURATE_DATASET`. | 1. Kiểm tra `401`/`403` cho Citizen & 3 Staff quyền khác nhau. | `REVIEW_AI` & `CURATE_DATASET` tách bạch (`403 MSG-ADM-04`). | Đã phân quyền RBAC động. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS05` |
+| **ITC-CLS-006** | Thẩm định 1 chạm `ApproveAndLabel` thăng cấp `VerifiedLabeled` & ghi `AuditLog`. | 1. Staff `[REVIEW_AI]` gọi `PATCH /review` (`ApproveAndLabel`, 1 box). | `200 MSG-CLS-07`, `datasetItemStatus="VerifiedLabeled"`, ghi `AuditLog`. | Có báo cáo `Pending`. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS06` |
+| **ITC-CLS-007** | Bác bỏ (`Reject`) ảnh nhiễu bắt buộc lý do `>= 5` ký tự (`BR-CLS-06`). | 1. Thử `Reject` ngắn (`"Mờ"`) rồi `Reject` hợp lệ. | Lý do ngắn `400`; hợp lệ `200`, `datasetItemId=null`. | Có báo cáo `Pending`. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS07` |
+| **ITC-CLS-008** | Cô lập `/waste-scan/feedback/me` (`BR-CLS-08`) & chặn duyệt lặp (`409`). | 1. `Citizen B` gọi `/feedback/me`.<br>2. Staff duyệt 2 lần 1 báo cáo. | B không thấy báo cáo A; duyệt lặp `409 Conflict`. | Có `Citizen A, B`. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS08` |
+| **ITC-CLS-009** | Gán nhãn Ground-Truth & hộp bao YOLO `[0, 1]`. | 1. Gửi `PUT /staff/ai-labeling/{itemId}` kèm 1 YOLO box. | `200 OK`, `status="VerifiedLabeled"`, lưu `yoloAnnotations`. | Có mẫu `Unlabeled`. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS09` |
+| **ITC-CLS-010** | Chặn tọa độ YOLO ngoài biên `(0, 1]`. | 1. Gửi `xCenter=1.25, width=0.0`. | HTTP `400 Bad Request`. | Có mẫu `DatasetItem`. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS10` |
+| **ITC-CLS-011** | Gán hàng loạt nguyên tử (`POST /batch-assign`) & rollback khi có ID lạ. | 1. Gọi kèm `Guid.NewGuid()` (`404`).<br>2. Gọi hợp lệ 3 ID. | Lần 1 `404` rollback cả 3; lần 2 `200`, `updatedCount=3`. | Có 3 mẫu `Unlabeled`. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS11` |
+| **ITC-CLS-012** | Đóng gói Dataset `70/20/10` (`201`) & chặn tổng tỷ lệ `!= 100` (`400`). | 1. Gọi `POST /versions` với `70/20/5` (`400`) và `70/20/10` (`201`). | Sai tổng `400`; đúng tỷ lệ `201 MSG-CLS-08`. | Có mẫu `VerifiedLabeled`. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS12` |
+| **ITC-CLS-013** | Kiểm định **Sticky Split Zero Data Leakage** qua phiên bản `v1 -> v2`. | 1. Tạo `v1`, thêm 5 mẫu mới, tạo `v2`, đối chiếu `manifest.json`. | `100%` mẫu `v1` giữ nguyên phân tập ở `v2`. | Có mẫu `VerifiedLabeled`. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS13` |
+| **ITC-CLS-014** | Thống kê kho dữ liệu & cờ mất cân bằng lớp `> 2.50x`. | 1. Bổ sung `plastic` lệch so với `glass`, gọi `GET /ai-datasets`. | Tính đúng `imbalanceRatio` & gắn `isBalanced=false` khi `> 2.50x`. | Có dữ liệu đa lớp. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS14` |
+| **ITC-CLS-015** | Xuất gói `.zip` chuẩn `YOLO` (`data.yaml` + `manifest.json`). | 1. Gọi `GET /versions/{id}/export?format=yolo`. | `200 OK` (`application/zip`), header `MSG-ADM-02`, hợp lệ `ZipArchive`. | Có phiên bản Dataset. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS15` |
+| **ITC-CLS-016** | Đồng bộ phiên bản Dataset sang FastAPI (`/api/v1/datasets/curate`). | 1. Tạo phiên bản với `syncToAiService=true`. | Chuyển `status="SyncedToAi"`, có `syncedToAiAt`. | AI Service đang chạy. | Passed | Pending | Pending | N/A | `AiCurationTests.CLS16` |
+
+---
+
+## SHEET 15: `SecurityTest` – CROSS-MODULE SECURITY & AUTHORIZATION INTEGRATION
 *(Chi tiết đầy đủ xem tại: [`integration_test_security.md`](./integration_test_security.md))*
 
 | Test Case ID | Scenario Name | Role / Session | Coverage Technique | Given | When | Then (Expected: HTTP Status / Visibility) | Status | Defect ID | Notes |

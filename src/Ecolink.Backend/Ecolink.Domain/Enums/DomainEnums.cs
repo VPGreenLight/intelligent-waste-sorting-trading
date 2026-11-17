@@ -130,3 +130,39 @@ public enum SubscriptionStatus
     Expired = 2,
     Revoked = 3
 }
+
+public enum AiFeedbackReviewDecision
+{
+    ApproveAndLabel = 1, // Duyệt báo lỗi và chốt luôn nhãn chuẩn + đưa vào VerifiedLabeled
+    ApproveToQueue = 2,  // Duyệt ảnh hợp lệ, chuyển sang hàng đợi gán nhãn S-02
+    Reject = 3           // Bác bỏ ảnh mờ/nhiễu/không hợp lệ (cấm vào Dataset BR-CLS-06)
+}
+
+public enum DatasetItemSourceType
+{
+    UserFeedback = 1,
+    LowConfidenceAuto = 2,
+    StaffUpload = 3,
+    BenchmarkSeed = 4
+}
+
+public enum DatasetItemStatus
+{
+    Unlabeled = 1,
+    VerifiedLabeled = 2,
+    Excluded = 3
+}
+
+public enum DatasetSplitType
+{
+    Train = 1,
+    Validation = 2,
+    Test = 3
+}
+
+public enum DatasetVersionStatus
+{
+    Published = 1,
+    SyncedToAi = 2,
+    Archived = 3
+}

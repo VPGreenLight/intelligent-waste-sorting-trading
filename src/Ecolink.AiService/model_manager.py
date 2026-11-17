@@ -781,3 +781,15 @@ class ModelManager:
             "annotated_image_base64": f"data:image/jpeg;base64,{base64_img}",
             "inference_time_ms": latency_ms,
         }
+
+    def reload_models(self) -> Dict[str, Any]:
+        """Xóa bộ nhớ đệm trọng số trên RAM và quét nạp lại danh sách mô hình mới từ đĩa."""
+        self._loaded_models.clear()
+        available = self.list_available_models()
+        ready_count = len([m for m in available if m.get("is_ready")])
+        return {
+            "success": True,
+            "reloaded_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "ready_count": ready_count,
+            "models": available,
+        }

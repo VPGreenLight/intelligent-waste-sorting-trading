@@ -55,6 +55,14 @@ public class ApplicationDbContext : DbContext
     public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
     public DbSet<PaymentWebhookLog> PaymentWebhookLogs => Set<PaymentWebhookLog>();
 
+    // ==========================================
+    // MODULE M-13: AI MISCLASSIFICATION FEEDBACK & DATASET CURATION (FE-15)
+    // ==========================================
+    public DbSet<AiScanHistory> AiScanHistories => Set<AiScanHistory>();
+    public DbSet<AiDatasetItem> AiDatasetItems => Set<AiDatasetItem>();
+    public DbSet<AiDatasetVersion> AiDatasetVersions => Set<AiDatasetVersion>();
+    public DbSet<AiDatasetVersionItem> AiDatasetVersionItems => Set<AiDatasetVersionItem>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);

@@ -24,6 +24,7 @@ yolov8n-cls.pt
 # Raw Heavy Training Datasets (Only keep sample val for demo)
 data/dataset-resized/
 data/trashnet_split/train/
+data/curated_datasets/
 data/*.zip
 *.cache
 

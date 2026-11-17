@@ -215,6 +215,29 @@ class FeedbackCreateRequest(BaseModel):
     note: Optional[str] = Field("", example="Chai nhựa có dán nhãn giấy lớn")
     image_url: Optional[str] = Field(None, example="")
 
+class CuratedYoloBox(BaseModel):
+    category_code: str
+    x_center: float
+    y_center: float
+    width: float
+    height: float
+
+class CuratedDatasetSample(BaseModel):
+    item_id: str
+    image_url: str
+    image_sha256: str
+    split: str = Field(..., pattern="^(train|val|validation|test)$")
+    category_code: str
+    annotations: List[CuratedYoloBox] = Field(default_factory=list)
+
+class DatasetCurateRequest(BaseModel):
+    version_code: str = Field(..., example="v1.1.0")
+    version_name: str = Field(..., example="Dataset T11/2026")
+    train_ratio: int = Field(70, ge=1, le=100)
+    val_ratio: int = Field(20, ge=0, le=99)
+    test_ratio: int = Field(10, ge=0, le=99)
+    items: List[CuratedDatasetSample] = Field(default_factory=list)
+
 class RuleUpdateRequest(BaseModel):
     category: Optional[str] = Field(None, example="plastic")
     bin_color_name: Optional[str] = Field(None, example="Thùng Màu Vàng")
@@ -556,6 +579,78 @@ def get_all_feedback_logs():
         "total": len(load_feedback_data()),
         "feedback_logs": load_feedback_data()
     }
+
+
+@app.post("/api/v1/datasets/curate", tags=["6. Feedback & Retrain Loop"])
+def curate_dataset_version(req: DatasetCurateRequest):
+    """Tiếp nhận phiên bản tập dữ liệu chuẩn hóa Train/Val/Test từ Core Backend và kiểm định chống rò rỉ SHA-256."""
+    if req.train_ratio + req.val_ratio + req.test_ratio != 100:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Tổng tỷ lệ train_ratio + val_ratio + test_ratio phải bằng 100."
+        )
+
+    split_hashes: Dict[str, set] = {"train": set(), "val": set(), "test": set()}
+    split_counts: Dict[str, int] = {"train": 0, "val": 0, "test": 0}
+    normalized_items: List[Dict[str, Any]] = []
+
+    for item in req.items:
+        sp = "val" if item.split in ("val", "validation") else item.split
+        split_hashes[sp].add(item.image_sha256.lower())
+        split_counts[sp] += 1
+        normalized_items.append({
+            "item_id": item.item_id,
+            "image_url": item.image_url,
+            "image_sha256": item.image_sha256.lower(),
+            "split": sp,
+            "category_code": item.category_code,
+            "annotations": [a.model_dump() for a in item.annotations]
+        })
+
+    # Kiểm định Zero Data Leakage (BR-CLS-07): tuyệt đối không trùng SHA-256 giữa train và test/val
+    leakage_train_test = split_hashes["train"] & split_hashes["test"]
+    leakage_train_val = split_hashes["train"] & split_hashes["val"]
+    if leakage_train_test or leakage_train_val:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Phát hiện rò rỉ dữ liệu (trùng image_sha256 giữa tập Train và Validation/Test)."
+        )
+
+    safe_code = "".join(c for c in req.version_code if c.isalnum() or c in ("v", ".", "-", "_"))
+    target_dir = DATA_DIR / "curated_datasets" / (safe_code or "latest")
+    target_dir.mkdir(parents=True, exist_ok=True)
+    manifest_path = target_dir / "manifest.json"
+    with open(manifest_path, "w", encoding="utf-8") as f:
+        json.dump({
+            "version_code": req.version_code,
+            "version_name": req.version_name,
+            "ratios": {
+                "train": req.train_ratio,
+                "val": req.val_ratio,
+                "test": req.test_ratio
+            },
+            "counts": split_counts,
+            "created_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "classes": CLASS_NAMES,
+            "items": normalized_items
+        }, f, ensure_ascii=False, indent=2)
+
+    return {
+        "success": True,
+        "version_code": req.version_code,
+        "manifest_path": str(manifest_path),
+        "total_samples": len(normalized_items),
+        "train_count": split_counts["train"],
+        "val_count": split_counts["val"],
+        "test_count": split_counts["test"],
+        "leakage_detected": False
+    }
+
+
+@app.post("/api/v1/models/reload", tags=["2. AI Model Governance & Monitoring"])
+def reload_ai_models():
+    """Nạp nóng lại trọng số mô hình trong thư mục models/ sau quá trình huấn luyện lại."""
+    return model_manager.reload_models()
 
 
 @app.get("/api/v1/stats", tags=["7. Analytics & Stats"])

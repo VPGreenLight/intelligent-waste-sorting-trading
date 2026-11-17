@@ -151,7 +151,7 @@ builder.Services.AddCors(options =>
         policy.SetIsOriginAllowed(_ => true)
               .AllowAnyMethod()
               .AllowAnyHeader()
-              .WithExposedHeaders("Content-Disposition", "X-EcoLink-Message-Code", "X-EcoLink-Row-Count")
+              .WithExposedHeaders("Content-Disposition", "X-EcoLink-Message-Code", "X-EcoLink-Row-Count", "X-EcoLink-Sample-Count")
               .AllowCredentials();
     });
 });

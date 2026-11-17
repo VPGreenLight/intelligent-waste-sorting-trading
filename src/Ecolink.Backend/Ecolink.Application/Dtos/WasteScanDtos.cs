@@ -55,6 +55,8 @@ public class WasteSortingGuideDto
 
 public class WasteScanResponseDto
 {
+    public Guid? ScanId { get; set; }
+    public string? ImageUrl { get; set; }
     public AiScanResultDto AiResult { get; set; } = new();
     public WasteSortingGuideDto? SortingGuide { get; set; }
     public string Message { get; set; } = string.Empty;
@@ -62,6 +64,7 @@ public class WasteScanResponseDto
 
 public class SubmitFeedbackDto
 {
+    public Guid? ScanId { get; set; }
     public string ImageUrl { get; set; } = string.Empty;
     public string PredictedLabel { get; set; } = string.Empty;
     public double ConfidenceScore { get; set; }

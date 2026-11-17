@@ -1,0 +1,175 @@
+classDiagram
+    direction TB
+
+    namespace Presentation_WebApi {
+        class WasteScanController {
+            -IAiVisionClient _aiClient
+            -IWasteRuleEngineService _ruleEngine
+            -IAiFeedbackService? _feedbackService
+            +ClassifyImage(IFormFile, string? model) Task~IActionResult~
+            +SubmitFeedback(SubmitFeedbackDto) Task~IActionResult~
+            +GetMyFeedbackReports(string? status, int, int) Task~ActionResult~
+        }
+
+        class StaffAiFeedbackController {
+            -IAiFeedbackService _feedbackService
+            -IAiDatasetCurationService _curationService
+            +GetFeedbackQueue(StaffAiFeedbackFilterRequest) Task~ActionResult~
+            +GetFeedbackDetail(Guid reportId) Task~ActionResult~
+            +ReviewFeedback(Guid, ReviewAiFeedbackRequest) Task~ActionResult~
+            +GetLabelingQueue(AiLabelingQueueFilterRequest) Task~ActionResult~
+            +AssignGroundTruthLabel(Guid, AssignGroundTruthLabelRequest) Task~ActionResult~
+            +BatchAssignLabels(BatchAssignLabelsRequest) Task~ActionResult~
+        }
+
+        class StaffDatasetCurationController {
+            -IAiDatasetCurationService _curationService
+            +GetDatasetDashboard() Task~ActionResult~
+            +CreateDatasetVersion(CreateDatasetVersionRequest) Task~ActionResult~
+            +ExportDatasetVersion(Guid versionId, string format) Task~IActionResult~
+        }
+    }
+
+    namespace Application_Layer {
+        class IAiFeedbackService {
+            <<interface>>
+            +RecordScanHistoryAsync(byte[], string, string?, Guid?, AiScanResultDto) Task~Tuple~
+            +SubmitFeedbackAsync(Guid?, SubmitFeedbackDto) Task~SubmitAiFeedbackResponseDto~
+            +GetMyFeedbackReportsAsync(Guid, string?, int, int) Task~PagedResult~
+            +GetStaffFeedbackQueueAsync(StaffAiFeedbackFilterRequest) Task~StaffAiFeedbackQueueDto~
+            +GetStaffFeedbackDetailAsync(Guid) Task~StaffAiFeedbackDetailDto~
+            +ReviewFeedbackAsync(Guid, Guid, ReviewAiFeedbackRequest) Task~StaffAiFeedbackDetailDto~
+        }
+
+        class IAiDatasetCurationService {
+            <<interface>>
+            +GetLabelingQueueAsync(AiLabelingQueueFilterRequest) Task~PagedResult~
+            +AssignGroundTruthLabelAsync(Guid, Guid, AssignGroundTruthLabelRequest) Task~AiDatasetItemDto~
+            +BatchAssignLabelsAsync(Guid, BatchAssignLabelsRequest) Task~BatchAssignLabelsResultDto~
+            +GetDatasetOverviewAsync() Task~AiDatasetDashboardDto~
+            +CreateDatasetVersionAsync(Guid, CreateDatasetVersionRequest) Task~AiDatasetVersionDto~
+            +ExportDatasetVersionAsync(Guid, Guid, string) Task~DatasetArchiveExportResult~
+        }
+
+        class IAiVisionClient {
+            <<interface>>
+            +ClassifyWasteImageAsync(Stream, string, string?) Task~AiScanResultDto~
+            +SubmitFeedbackAsync(SubmitFeedbackDto) Task~bool~
+            +CurateDatasetAsync(CurateDatasetSyncRequest) Task~CurateDatasetSyncResponseDto~
+            +ReloadModelsAsync() Task~AiModelReloadResponseDto~
+        }
+
+        class AiCurationValidators {
+            +SubmitFeedbackDtoValidator
+            +ReviewAiFeedbackRequestValidator
+            +AssignGroundTruthLabelRequestValidator
+            +BatchAssignLabelsRequestValidator
+            +CreateDatasetVersionRequestValidator
+        }
+    }
+
+    namespace Infrastructure_Layer {
+        class AiFeedbackService {
+            -ApplicationDbContext _db
+            -IAiVisionClient _aiVisionClient
+            -IFileStorageService _fileStorageService
+            -IAuditLogService _auditLogService
+        }
+
+        class AiDatasetCurationService {
+            -ApplicationDbContext _db
+            -IAiVisionClient _aiVisionClient
+            -IAuditLogService _auditLogService
+            -ComputeStickyStratifiedSplits() List
+        }
+
+        class AiDatasetExportBuilder {
+            <<static>>
+            +BuildZipAsync(AiDatasetVersion, List, string format) Task~DatasetArchiveExportResult~
+        }
+
+        class AiCategoryNormalizer {
+            <<static>>
+            +NormalizeCode(string?) string
+            +GetYoloClassIndex(string?) int
+            +FormatFeedbackStatus(FeedbackStatus) string
+        }
+
+        class AiVisionHttpClient {
+            -HttpClient _httpClient
+        }
+    }
+
+    namespace Domain_Entities {
+        class AiScanHistory {
+            +Guid Id
+            +Guid? UserId
+            +string ImageUrl
+            +string ImageSha256
+            +string PredictedLabel
+            +double ConfidenceScore
+            +bool IsOutOfDistribution
+            +string DetectedObjectsJson
+        }
+
+        class AIFeedbackLog {
+            +Guid Id
+            +Guid? UserId
+            +Guid? ScanId
+            +string? ImageSha256
+            +string UserReportedLabel
+            +string? AdminVerifiedLabel
+            +FeedbackStatus Status
+            +AiFeedbackReviewDecision? ReviewDecision
+            +Guid? DatasetItemId
+        }
+
+        class AiDatasetItem {
+            +Guid Id
+            +DatasetItemSourceType SourceType
+            +string ImageSha256
+            +string? GroundTruthLabel
+            +string YoloAnnotationsJson
+            +DatasetItemStatus Status
+            +DatasetSplitType? StickySplit
+        }
+
+        class AiDatasetVersion {
+            +Guid Id
+            +string VersionCode
+            +int TrainCount
+            +int ValCount
+            +int TestCount
+            +decimal ImbalanceRatio
+            +bool IsBalanced
+            +DatasetVersionStatus Status
+        }
+
+        class AiDatasetVersionItem {
+            +Guid VersionId
+            +Guid DatasetItemId
+            +DatasetSplitType AssignedSplit
+            +string CategoryCodeSnapshot
+        }
+    }
+
+    WasteScanController --> IAiFeedbackService : uses
+    WasteScanController --> IAiVisionClient : uses
+    StaffAiFeedbackController --> IAiFeedbackService : uses
+    StaffAiFeedbackController --> IAiDatasetCurationService : uses
+    StaffDatasetCurationController --> IAiDatasetCurationService : uses
+
+    AiFeedbackService ..|> IAiFeedbackService : implements
+    AiDatasetCurationService ..|> IAiDatasetCurationService : implements
+    AiVisionHttpClient ..|> IAiVisionClient : implements
+
+    AiFeedbackService ..> AiCategoryNormalizer : normalizes
+    AiDatasetCurationService ..> AiDatasetExportBuilder : builds ZIP
+    AiDatasetCurationService ..> AiCategoryNormalizer : class index
+    AiCurationValidators ..> Application_Layer : validates
+
+    AiScanHistory "0..1" <-- "0..*" AIFeedbackLog : ScanId
+    AIFeedbackLog "0..1" <-- "0..1" AiDatasetItem : SourceFeedbackId
+    AiScanHistory "0..1" <-- "0..1" AiDatasetItem : SourceScanId
+    AiDatasetVersion "1" o-- "0..*" AiDatasetVersionItem : Items
+    AiDatasetItem "1" -- "0..*" AiDatasetVersionItem : Snapshots

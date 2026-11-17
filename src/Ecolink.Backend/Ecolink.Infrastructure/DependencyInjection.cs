@@ -95,6 +95,10 @@ public static class DependencyInjection
         services.AddScoped<IStaffAttendanceService, StaffAttendanceService>();
         services.AddScoped<IAdminAnalyticsService, AdminAnalyticsService>();
 
+        // Đăng ký Module M-13: AI Misclassification Feedback & Dataset Curation (FE-15)
+        services.AddScoped<IAiFeedbackService, AiFeedbackService>();
+        services.AddScoped<IAiDatasetCurationService, AiDatasetCurationService>();
+
         return services;
     }
 }

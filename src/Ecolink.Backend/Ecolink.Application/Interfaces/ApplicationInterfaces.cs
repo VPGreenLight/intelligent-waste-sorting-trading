@@ -7,6 +7,21 @@ public interface IAiVisionClient
     Task<AiScanResultDto> ClassifyWasteImageAsync(Stream imageStream, string fileName, string? model = "yolov8_detect", CancellationToken cancellationToken = default);
     Task<object?> GetAvailableModelsAsync(CancellationToken cancellationToken = default);
     Task<bool> SubmitFeedbackAsync(SubmitFeedbackDto feedback, CancellationToken cancellationToken = default);
+
+    Task<CurateDatasetSyncResponseDto> CurateDatasetAsync(CurateDatasetSyncRequest request, CancellationToken cancellationToken = default)
+        => Task.FromResult(new CurateDatasetSyncResponseDto
+        {
+            Success = false,
+            VersionCode = request.VersionCode,
+            ErrorMessage = "CurateDatasetAsync chưa được triển khai trên client này."
+        });
+
+    Task<AiModelReloadResponseDto> ReloadModelsAsync(CancellationToken cancellationToken = default)
+        => Task.FromResult(new AiModelReloadResponseDto
+        {
+            Success = false,
+            ErrorMessage = "ReloadModelsAsync chưa được triển khai trên client này."
+        });
 }
 
 public interface IWasteRuleEngineService

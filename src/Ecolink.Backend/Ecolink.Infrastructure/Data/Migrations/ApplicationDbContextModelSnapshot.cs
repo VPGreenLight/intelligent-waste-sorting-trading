@@ -50,10 +50,34 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasColumnName("created_at")
                         .HasDefaultValueSql("NOW()");
 
+                    b.Property<Guid?>("DatasetItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("dataset_item_id");
+
+                    b.Property<string>("DetectedObjectsSnapshot")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("detected_objects_snapshot")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
+                    b.Property<string>("ImageSha256")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("image_sha256");
+
                     b.Property<string>("ImageUrl")
                         .IsRequired()
                         .HasColumnType("text")
                         .HasColumnName("image_url");
+
+                    b.Property<string>("ModelUsed")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("yolov8_detect")
+                        .HasColumnName("model_used");
 
                     b.Property<string>("Note")
                         .HasColumnType("text")
@@ -64,6 +88,27 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)")
                         .HasColumnName("predicted_label");
+
+                    b.Property<string>("ReviewDecision")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("review_decision");
+
+                    b.Property<string>("ReviewNote")
+                        .HasColumnType("text")
+                        .HasColumnName("review_note");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("reviewed_at");
+
+                    b.Property<Guid?>("ReviewedByStaffId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewed_by_staff_id");
+
+                    b.Property<Guid?>("ScanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("scan_id");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -85,11 +130,29 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(50)")
                         .HasColumnName("user_reported_label");
 
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
                     b.HasKey("Id")
                         .HasName("pk_ai_feedback_logs");
 
+                    b.HasIndex("DatasetItemId")
+                        .HasDatabaseName("idx_ai_feedback_logs_dataset_item_id");
+
+                    b.HasIndex("ReviewedByStaffId");
+
+                    b.HasIndex("ScanId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_ai_feedback_logs_scan_id");
+
                     b.HasIndex("UserId")
                         .HasDatabaseName("idx_ai_feedback_logs_user_id");
+
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("idx_ai_feedback_logs_status_created");
 
                     b.ToTable("ai_feedback_logs", (string)null);
                 });
@@ -207,6 +270,507 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasDatabaseName("idx_account_moderation_logs_target_created_at");
 
                     b.ToTable("account_moderation_logs", (string)null);
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AiDatasetItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("System")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<Guid?>("GroundTruthCategoryId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("ground_truth_category_id");
+
+                    b.Property<string>("GroundTruthLabel")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("ground_truth_label");
+
+                    b.Property<int>("ImageHeight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("image_height");
+
+                    b.Property<string>("ImageSha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("image_sha256");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("image_url");
+
+                    b.Property<int>("ImageWidth")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("image_width");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<DateTime?>("LabeledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("labeled_at");
+
+                    b.Property<Guid?>("LabeledByStaffId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("labeled_by_staff_id");
+
+                    b.Property<double?>("PredictedConfidence")
+                        .HasColumnType("double precision")
+                        .HasColumnName("predicted_confidence");
+
+                    b.Property<string>("PredictedLabel")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("predicted_label");
+
+                    b.Property<string>("QualityNote")
+                        .HasColumnType("text")
+                        .HasColumnName("quality_note");
+
+                    b.Property<Guid?>("SourceFeedbackId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_feedback_id");
+
+                    b.Property<Guid?>("SourceScanId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("source_scan_id");
+
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("UserFeedback")
+                        .HasColumnName("source_type");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("Unlabeled")
+                        .HasColumnName("status");
+
+                    b.Property<string>("StickySplit")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("sticky_split");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<string>("YoloAnnotationsJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("yolo_annotations_json")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_ai_dataset_items");
+
+                    b.HasIndex("GroundTruthCategoryId");
+
+                    b.HasIndex("ImageSha256")
+                        .IsUnique()
+                        .HasDatabaseName("uq_ai_dataset_items_sha256");
+
+                    b.HasIndex("LabeledByStaffId");
+
+                    b.HasIndex("SourceFeedbackId");
+
+                    b.HasIndex("SourceScanId");
+
+                    b.HasIndex("StickySplit", "GroundTruthLabel")
+                        .HasDatabaseName("idx_ai_dataset_items_split")
+                        .HasFilter("is_deleted = FALSE");
+
+                    b.HasIndex("Status", "GroundTruthLabel", "CreatedAt")
+                        .HasDatabaseName("idx_ai_dataset_items_queue")
+                        .HasFilter("is_deleted = FALSE");
+
+                    b.ToTable("ai_dataset_items", null, t =>
+                        {
+                            t.HasCheckConstraint("chk_ai_dataset_items_verified_label", "status <> 'VerifiedLabeled' OR (ground_truth_category_id IS NOT NULL AND ground_truth_label IS NOT NULL)");
+                        });
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AiDatasetVersion", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("ClassDistributionJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("class_distribution_json")
+                        .HasDefaultValueSql("'{}'::jsonb");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("System")
+                        .HasColumnName("created_by");
+
+                    b.Property<Guid>("CreatedByStaffId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_staff_id");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<decimal>("ImbalanceRatio")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("numeric(6,2)")
+                        .HasDefaultValue(1.00m)
+                        .HasColumnName("imbalance_ratio");
+
+                    b.Property<bool>("IsBalanced")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_balanced");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("Published")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime?>("SyncedToAiAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("synced_to_ai_at");
+
+                    b.Property<int>("TestCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("test_count");
+
+                    b.Property<int>("TestRatio")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(10)
+                        .HasColumnName("test_ratio");
+
+                    b.Property<int>("TotalSamples")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("total_samples");
+
+                    b.Property<int>("TrainCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("train_count");
+
+                    b.Property<int>("TrainRatio")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(70)
+                        .HasColumnName("train_ratio");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<int>("ValCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("val_count");
+
+                    b.Property<int>("ValRatio")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(20)
+                        .HasColumnName("val_ratio");
+
+                    b.Property<string>("VersionCode")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("version_code");
+
+                    b.Property<string>("VersionName")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("version_name");
+
+                    b.HasKey("Id")
+                        .HasName("pk_ai_dataset_versions");
+
+                    b.HasIndex("CreatedByStaffId");
+
+                    b.HasIndex("VersionCode")
+                        .IsUnique()
+                        .HasDatabaseName("uq_ai_dataset_versions_code");
+
+                    b.ToTable("ai_dataset_versions", null, t =>
+                        {
+                            t.HasCheckConstraint("chk_ai_dataset_versions_ratios", "train_ratio > 0 AND val_ratio >= 0 AND test_ratio >= 0 AND (train_ratio + val_ratio + test_ratio = 100)");
+                        });
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AiDatasetVersionItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("AssignedSplit")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("assigned_split");
+
+                    b.Property<string>("CategoryCodeSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("category_code_snapshot");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("DatasetItemId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("dataset_item_id");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<Guid>("VersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("version_id");
+
+                    b.Property<string>("YoloAnnotationsSnapshot")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("yolo_annotations_snapshot")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
+                    b.HasKey("Id")
+                        .HasName("pk_ai_dataset_version_items");
+
+                    b.HasIndex("DatasetItemId");
+
+                    b.HasIndex("VersionId", "DatasetItemId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_ai_dataset_version_items_pair");
+
+                    b.HasIndex("VersionId", "AssignedSplit", "CategoryCodeSnapshot")
+                        .HasDatabaseName("idx_ai_dataset_version_items_split");
+
+                    b.ToTable("ai_dataset_version_items", (string)null);
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AiScanHistory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<double>("ConfidenceScore")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("double precision")
+                        .HasDefaultValue(0.0)
+                        .HasColumnName("confidence_score");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("System")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("DetectedObjectsJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("detected_objects_json")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
+                    b.Property<int>("ImageHeight")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("image_height");
+
+                    b.Property<string>("ImageSha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("image_sha256");
+
+                    b.Property<string>("ImageStorageKey")
+                        .HasColumnType("text")
+                        .HasColumnName("image_storage_key");
+
+                    b.Property<string>("ImageUrl")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("image_url");
+
+                    b.Property<int>("ImageWidth")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("image_width");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<bool>("IsOutOfDistribution")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_out_of_distribution");
+
+                    b.Property<string>("ModelUsed")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("yolov8_detect")
+                        .HasColumnName("model_used");
+
+                    b.Property<string>("PredictedLabel")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasDefaultValue("unknown")
+                        .HasColumnName("predicted_label");
+
+                    b.Property<string>("ScanStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("Completed")
+                        .HasColumnName("scan_status");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<Guid?>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_ai_scan_histories");
+
+                    b.HasIndex("ImageSha256")
+                        .HasDatabaseName("idx_ai_scan_histories_sha256");
+
+                    b.HasIndex("IsOutOfDistribution", "CreatedAt")
+                        .HasDatabaseName("idx_ai_scan_histories_ood");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("idx_ai_scan_histories_user")
+                        .HasFilter("is_deleted = FALSE");
+
+                    b.ToTable("ai_scan_histories", (string)null);
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.AuditLog", b =>
@@ -2372,11 +2936,27 @@ namespace Ecolink.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Ecolink.Domain.Entities.AIFeedbackLog", b =>
                 {
+                    b.HasOne("Ecolink.Domain.Entities.User", "ReviewedByStaff")
+                        .WithMany()
+                        .HasForeignKey("ReviewedByStaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_ai_feedback_logs_reviewer");
+
+                    b.HasOne("Ecolink.Domain.Entities.AiScanHistory", "Scan")
+                        .WithMany()
+                        .HasForeignKey("ScanId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_ai_feedback_logs_scan");
+
                     b.HasOne("Ecolink.Domain.Entities.User", "User")
                         .WithMany("Feedbacks")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.SetNull)
                         .HasConstraintName("fk_ai_feedback_logs_users");
+
+                    b.Navigation("ReviewedByStaff");
+
+                    b.Navigation("Scan");
 
                     b.Navigation("User");
                 });
@@ -2421,6 +3001,82 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("PerformedByUser");
 
                     b.Navigation("TargetUser");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AiDatasetItem", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.WasteCategory", "GroundTruthCategory")
+                        .WithMany()
+                        .HasForeignKey("GroundTruthCategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_ai_dataset_items_category");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", "LabeledByStaff")
+                        .WithMany()
+                        .HasForeignKey("LabeledByStaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_ai_dataset_items_staff");
+
+                    b.HasOne("Ecolink.Domain.Entities.AIFeedbackLog", "SourceFeedback")
+                        .WithMany()
+                        .HasForeignKey("SourceFeedbackId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_ai_dataset_items_feedback");
+
+                    b.HasOne("Ecolink.Domain.Entities.AiScanHistory", "SourceScan")
+                        .WithMany()
+                        .HasForeignKey("SourceScanId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_ai_dataset_items_scan");
+
+                    b.Navigation("GroundTruthCategory");
+
+                    b.Navigation("LabeledByStaff");
+
+                    b.Navigation("SourceFeedback");
+
+                    b.Navigation("SourceScan");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AiDatasetVersion", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", "CreatedByStaff")
+                        .WithMany()
+                        .HasForeignKey("CreatedByStaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_ai_dataset_versions_staff");
+
+                    b.Navigation("CreatedByStaff");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AiDatasetVersionItem", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.AiDatasetItem", "DatasetItem")
+                        .WithMany("VersionItems")
+                        .HasForeignKey("DatasetItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_ai_dataset_version_items_item");
+
+                    b.HasOne("Ecolink.Domain.Entities.AiDatasetVersion", "Version")
+                        .WithMany("Items")
+                        .HasForeignKey("VersionId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("fk_ai_dataset_version_items_ver");
+
+                    b.Navigation("DatasetItem");
+
+                    b.Navigation("Version");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AiScanHistory", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_ai_scan_histories_users");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.AuditLog", b =>
@@ -2773,6 +3429,16 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("SourceOrder");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AiDatasetItem", b =>
+                {
+                    b.Navigation("VersionItems");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.AiDatasetVersion", b =>
+                {
+                    b.Navigation("Items");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.CollectionPartner", b =>

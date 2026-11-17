@@ -30,8 +30,15 @@ public sealed class TestApplicationDbContext : ApplicationDbContext
                 v => v == null ? null : wktWriter.Write(v),
                 v => string.IsNullOrEmpty(v) ? null : CreatePointFromWkt(wktReader, v));
 
-        // Tắt sinh giá trị xmin của PostgreSQL trên EF Core InMemory khi kiểm thử ServiceOrder
-        var xminProp = modelBuilder.Entity<ServiceOrder>().Metadata.FindProperty("xmin");
+        // Tắt sinh giá trị xmin của PostgreSQL trên EF Core InMemory khi kiểm thử các bảng có Optimistic Concurrency Token
+        DisableInMemoryXmin<ServiceOrder>(modelBuilder);
+        DisableInMemoryXmin<AIFeedbackLog>(modelBuilder);
+        DisableInMemoryXmin<AiDatasetItem>(modelBuilder);
+    }
+
+    private static void DisableInMemoryXmin<TEntity>(ModelBuilder modelBuilder) where TEntity : class
+    {
+        var xminProp = modelBuilder.Entity<TEntity>().Metadata.FindProperty("xmin");
         if (xminProp != null)
         {
             xminProp.ValueGenerated = Microsoft.EntityFrameworkCore.Metadata.ValueGenerated.Never;

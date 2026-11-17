@@ -1,10 +1,10 @@
 # REPORT 5.1 – UNIT TEST SPECIFICATION (TÀI LIỆU ĐẶC TẢ KIỂM THỬ ĐƠN VỊ)
 
 - **Dự án:** Hệ thống Phân loại Rác Thông minh & Giao dịch Phế liệu (**EcoLink**)
-- **Phiên bản:** 1.7
+- **Phiên bản:** 1.8
 - **Ngày cập nhật:** 2026-11-17
 - **Nhóm thực hiện:** Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức
-- **Phạm vi kiểm thử (10 Core Modules):**
+- **Phạm vi kiểm thử (11 Core Modules):**
   1. **Module 1:** Authentication & Account Management (`AuthService`) — **22 TCs**
   2. **Module 2:** AI Waste Classification & Rule Engine (`AiVisionHttpClient`, `WasteRuleEngineService`, `classify_waste_image`) — **18 TCs**
   3. **Module 3:** Recycler Onboarding & Verification (`RecyclerOnboardingService`, `CloudflareR2StorageService`) — **20 TCs**
@@ -15,7 +15,8 @@
   8. **Module 8:** In-App Real-Time Negotiation Chatbox (`NegotiationChatService` & `NegotiationChatValidators` – `U-08` & `R-05`) — **20 TCs**
   9. **Module 9:** Account, Staff & System Governance / Analytics (`AdminAnalyticsService`, `AccountGovernanceService`, `StaffManagementService`, `StaffAttendanceService`, `AuditLogService` & `GovernanceValidators` – `A-01..A-04`, `S-06`, `S-07`, `S-11`) — **22 TCs**
   10. **Module 10:** In-System Service Packages & VietQR Integration (`PaymentService`, `ServicePackageService`, `SubscriptionEntitlementService`, `AdminReconciliationService` & `ServicePackageValidators` – `U-16`, `R-07`, `A-10`, `A-11`) — **22 TCs**
-- **Tổng số lượng Unit Test Cases:** **212 TCs** (`97 Normal`, `76 Abnormal`, `39 Boundary`)
+  11. **Module 11:** AI Misclassification Feedback & Dataset Curation (`AiFeedbackService`, `AiDatasetCurationService`, `AiDatasetExportBuilder`, `AiCurationValidators` – `U-04`, `S-01`, `S-02`, `S-03`) — **22 TCs**
+- **Tổng số lượng Unit Test Cases:** **234 TCs** (`107 Normal`, `84 Abnormal`, `43 Boundary`)
 
 ---
 
@@ -493,3 +494,47 @@
 | **UTC020** | Đơn `PRO` (`1tr`) quá hạn QR 15 phút | `SimulateTransfer("LateTransfer")` | `Status="EXPIRED", ReconciliationStatus="LateTransfer"`, ghi log không kích hoạt | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên quá hạn QR 15p |
 | **UTC021** | Citizen đọc cache lần đầu (`Basic`) | Thanh toán `PREMIUM` + `GetBatchEntitlementsAsync([])` | Cache tự làm mới thành `Premium`, tập rỗng trả về từ điển rỗng | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Vòng đời `IMemoryCache` |
 | **UTC022** | Cả 2 FluentValidators (`Upsert` & `ResolveAnomaly`) | Giá `2k/1.5k`, chu kỳ `1/730/0/731`, note `10/9` ký tự, thiếu `TargetOrderCode`/`BankRef` | Chấp nhận đúng biên hợp lệ, từ chối mọi biên dưới/trên sai | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `ServicePackageValidators` |
+
+---
+
+## PHẦN 11: MODULE AI MISCLASSIFICATION FEEDBACK & DATASET CURATION (`AiFeedbackCurationTests` – `U-04`, `S-01`, `S-02`, `S-03`)
+
+### 11.1. Bảng Tổng hợp Kiểm thử (Summary Table)
+
+| Code Module | `AiFeedbackService`, `AiDatasetCurationService`, `AiDatasetExportBuilder`, `AiCurationValidators` | | |
+| :--- | :---: | :---: | :---: |
+| **Number of TCs** | **22** | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** |
+| *Round 1* | 22 | 0 | 0 |
+| *Round 2* | 0 | 0 | 22 |
+| *Round 3* | 0 | 0 | 22 |
+| **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
+| **Count** | **10** | **8** | **4** |
+
+### 11.2. Chi tiết Các Ca Kiểm thử (Test Cases)
+*(Chi tiết đầy đủ 22 test cases `UTC001` $\rightarrow$ `UTC022` xem tại: [`11_unit_test_ai_misclassification_feedback_dataset_curation.md`](./11_unit_test_ai_misclassification_feedback_dataset_curation.md) / [`AiFeedbackCurationTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module13_AiFeedbackCuration/AiFeedbackCurationTests.cs))*
+
+| Test Case ID | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :--- |
+| **UTC001** | `Citizen` hợp lệ, ảnh tự tin `0.91` | `RecordScanHistoryAsync` (`IsOutOfDistribution=false`) | Lưu `AiScanHistory` có `ImageSha256` 64 ký tự, không tạo `LowConfidenceAuto` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `U-04` lưu vết |
+| **UTC002** | Ảnh tin cậy `0.42 < 0.60` quét lặp 2 lần | `RecordScanHistoryAsync` (`IsOutOfDistribution=true`) x2 | Nạp duy nhất `1` `AiDatasetItem` (`LowConfidenceAuto`, `Unlabeled`) khử trùng `SHA-256` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-CLS-03` |
+| **UTC003** | Đã có `ScanId` & `waste_categories` `Active` | `SubmitFeedbackAsync` (`"plastic_bottle"`) | Chuẩn hóa `"plastic"`, lưu `Pending` vào DB, đồng bộ AI Service | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-CLS-05` |
+| **UTC004** | Có báo cáo của `Citizen A` & `Citizen B` | `GetMyFeedbackReportsAsync(CitizenA, "Reviewed")` | Chỉ trả báo cáo của `Citizen A`, cô lập tuyệt đối dữ liệu | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-CLS-08` |
+| **UTC005** | Báo cáo đang `Pending` | `ReviewFeedbackAsync("ApproveAndLabel", "paper", YOLO box)` | Chuyển `Reviewed`, tạo `VerifiedLabeled`, ghi `AuditLog` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-01` 1 chạm |
+| **UTC006** | Báo cáo `Pending` chuyển hàng đợi | `ApproveToQueue` $\rightarrow$ `AssignGroundTruthLabel("metal")` | Chuyển sang `VerifiedLabeled` kèm hộp bao YOLO, ghi `AuditLog` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-01` $\rightarrow$ `S-02` |
+| **UTC007** | Có `3` mẫu `Unlabeled` | `BatchAssignLabelsAsync(3 IDs, "cardboard")` | Cập nhật đủ `3` mẫu sang `VerifiedLabeled`, ghi `BATCH_ASSIGN_AI_LABELS` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-02` Batch |
+| **UTC008** | Có `30` mẫu `VerifiedLabeled` (10 mỗi lớp) | `CreateDatasetVersionAsync("v1.0.0", 70/20/10)` | Chia đúng `21/6/3` (`7/2/1` từng lớp), `Status="SyncedToAi"` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-03`, `BR-CLS-07` |
+| **UTC009** | Đã có `v1.0.0` (10 mẫu); thêm 10 mẫu mới | `CreateDatasetVersionAsync("v1.1.0")` | `100%` mẫu `Test`/`Val` cũ giữ nguyên phân tập, `Train(v1.1) ∩ Test(v1.0) == ∅` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Zero Data Leakage |
+| **UTC010** | Có phiên bản `v1.0.0` chứa `2` mẫu `metal` | `ExportDatasetVersionAsync("yolo")` & `("imagefolder")` | Xuất `.zip` chứa `data.yaml`, `labels/*.txt`, `manifest.json`; ghi `AuditLog` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `STT 139`, `BR-ADM-05` |
+| **UTC011** | Có nhãn lạ & nhãn `Status="Inactive"` | `SubmitFeedbackAsync("nuclear_waste")` & `("inactive_foam")` | Cả 2 ném `BusinessRuleException ("BR-CLS-02")` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-CLS-02` |
+| **UTC012** | `ScanId` đã gửi báo cáo trước đó | `SubmitFeedbackAsync` lặp cùng `ScanId` | Ném `ConflictException ("BR-CLS-05")` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chặn trùng `ScanId` |
+| **UTC013** | `ScanId = Guid.NewGuid()` không tồn tại | `SubmitFeedbackAsync` | Ném `NotFoundException` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Toàn vẹn `ScanId` |
+| **UTC014** | Ca OOD `< 60%` nằm chờ trong kho `Unlabeled` | `Reject` với lý do `< 5` ký tự rồi lý do hợp lệ | Lý do ngắn bị chặn `400`; lý do hợp lệ đặt `Rejected` & `Excluded` khỏi Dataset | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-CLS-06` |
+| **UTC015** | Báo cáo đã được `ApproveAndLabel` | `ReviewFeedbackAsync("Reject")` lần 2 | Ném `ConflictException` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chống duyệt lặp |
+| **UTC016** | Có `1` ID hợp lệ & `1` ID không tồn tại | `BatchAssignLabelsAsync` | Ném `NotFoundException` và rollback toàn bộ, mẫu hợp lệ giữ `Unlabeled` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | ACID Rollback |
+| **UTC017** | Kho chỉ có `Unlabeled`; hoặc trùng `v1.0.0` | `CreateDatasetVersionAsync` | Kho rỗng ném `BR-CLS-06`; trùng mã phiên bản ném `ConflictException` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-CLS-06`, `BR-CLS-07` |
+| **UTC018** | AI Service ngoại tuyến khi đồng bộ | `CreateDatasetVersion(sync=true)` & `ReloadModelsAsync()` | Lưu an toàn `Published` + `AiSyncWarning`; `ReloadModels` trả `Success=false` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Resilient Sync |
+| **UTC019** | `AssignGroundTruthLabelRequestValidator` | Tọa độ YOLO `[0.0, 1.0, 1.0, 0.001]` vs `width=0`, `x=1.01` | Chấp nhận biên hợp lệ trong `[0, 1]`, chặn biên sai | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên hộp bao YOLO |
+| **UTC020** | `CreateDatasetVersionRequestValidator` | `70/20/10`, `100/0/0` vs `70/20/5` & semver `"1.0"` | Chấp nhận tổng `= 100%` & SemVer hợp lệ, từ chối biên sai | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên tỷ lệ chia tập |
+| **UTC021** | Tỷ lệ `5:2` (`2.50x`) vs `12:2` (`6.00x`) | `GetDatasetOverviewAsync()` | `2.50x` -> `IsBalanced=true`; `6.00x` -> `IsBalanced=false`, cờ `NeedsMoreSamples` | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Ngưỡng cân bằng `2.50x` |
+| **UTC022** | `BatchAssignLabelsRequestValidator` | Số lượng `1`, `200` vs `0`, `201` phần tử | Chấp nhận `[1..200]`, từ chối `0` và `201` | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Giới hạn Batch `1..200` |

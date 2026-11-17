@@ -2,7 +2,7 @@
 ## (FULL-SCOPE API INVENTORY, FORECAST & STATISTICAL DASHBOARD)
 
 **Dự án:** EcoLink – Intelligent Waste Sorting & Trading Platform (`SEP490_G141`)  
-**Phiên bản tài liệu:** `v2.2.0` (Cập nhật tiến độ sau khi hoàn tất triển khai `FE-14` thuộc Module `M-12`: Gói dịch vụ & VietQR)  
+**Phiên bản tài liệu:** `v2.3.0` (Cập nhật tiến độ sau khi hoàn tất triển khai `FE-15` thuộc Module `M-13` & `AIS`: Phản hồi lỗi AI & Quản trị Dataset)  
 **Thời điểm cập nhật:** 17/11/2026  
 **Công nghệ Backend:** ASP.NET Core 10 WebApi (Clean Architecture, Npgsql PostGIS, SignalR WebSocket)  
 **Công nghệ AI Service:** Python 3.11 FastAPI (YOLOv8 + MobileNetV3 + EfficientNet)  
@@ -18,28 +18,28 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
   * **173 Endpoints thuộc Core Backend (`Ecolink.WebApi` - .NET 10):** gồm **171 REST APIs** và **2 SignalR WebSocket Hubs** (`/hubs/negotiation-chat`, `/hubs/notifications`).
   * **11 REST Endpoints thuộc Dedicated AI Vision Service (`FastAPI` - Python 3.11):** phục vụ nhận diện đa mô hình, Rule Engine, đồng bộ tập dữ liệu huấn luyện và nạp nóng mô hình.
 * **Tiến độ triển khai thực tế trên nhánh hiện tại:**
-  * **Đã triển khai (`115 Endpoints` – đạt `62.5%`):** gồm `105` Core REST APIs + `1` SignalR Hub + `9` AI FastAPI APIs.
-  * **Dự kiến bổ sung (`69 Endpoints` – chiếm `37.5%`):** gồm `66` Core REST APIs + `1` SignalR Hub + `2` AI FastAPI APIs trải đều trên các phân hệ `FE-03 (Admin Rules)`, `FE-10`, `FE-13`, `FE-15`, `FE-16` và `SU-04`.
+  * **Đã triển khai (`127 Endpoints` – đạt `69.0%`):** gồm `115` Core REST APIs + `1` SignalR Hub + `11` AI FastAPI APIs (`100% AIS`).
+  * **Dự kiến bổ sung (`57 Endpoints` – chiếm `31.0%`):** gồm `56` Core REST APIs + `1` SignalR Hub + `0` AI FastAPI APIs trải đều trên các phân hệ `FE-03 (Admin Rules)`, `FE-10`, `FE-13`, `FE-16` và `SU-04`.
 
 ```text
 +--------------------------------------------------------------------------------------------------+
 |                      TỔNG QUY MÔ API TOÀN HỆ THỐNG ECOLINK (FULL SRS SCOPE)                      |
 |                                          184 ENDPOINTS                                           |
-|                    [ Đã triển khai: 115 (62.5%)  |  Dự kiến bổ sung: 69 (37.5%) ]                |
+|                    [ Đã triển khai: 127 (69.0%)  |  Dự kiến bổ sung: 57 (31.0%) ]                |
 +---------------------------------------------------+----------------------------------------------+
 |        Core .NET 10 WebApi: 173 Endpoints         |     Dedicated AI Service: 11 Endpoints       |
 |     (171 REST APIs + 2 SignalR WebSocket Hubs)    |            (FastAPI Python 3.11)             |
-|       [ Đã có: 106 |  Dự kiến bổ sung: 67 ]       |        [ Đã có: 9  |  Dự kiến thêm: 2 ]      |
+|       [ Đã có: 116 |  Dự kiến bổ sung: 57 ]       |        [ Đã có: 11 |  Dự kiến thêm: 0 ]      |
 +---------------------------------------------------+----------------------------------------------+
 ```
 
 ### Bảng chỉ số KPI đầu trang cho Sheet `API Inventory` & `Dashboard` (Google Drive)
 
-| Chỉ số KPI trên Google Sheet | Hiện trạng Code (`v2.2.0`) | Dự kiến mở rộng (Planned) | Tổng quy mô Toàn dự án (`v2.2.0`) |
+| Chỉ số KPI trên Google Sheet | Hiện trạng Code (`v2.3.0`) | Dự kiến mở rộng (Planned) | Tổng quy mô Toàn dự án (`v2.3.0`) |
 |:---|:---:|:---:|:---:|
-| **Tổng Endpoint** | 115 | +69 | **184** |
-| **Core .NET 10** *(REST + WS)* | 106 | +67 | **173** |
-| **AI FastAPI** | 9 | +2 | **11** |
+| **Tổng Endpoint** | 127 | +57 | **184** |
+| **Core .NET 10** *(REST + WS)* | 116 | +57 | **173** |
+| **AI FastAPI** | 11 | +0 | **11** |
 | **WebSocket (SignalR Hub)** | 1 | +1 | **2** |
 
 ---
@@ -60,12 +60,12 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 | **M-10** | `FE-13` | **Gamification, Virtual Tree & Rewards** | `GamificationController`, `StaffGamificationController` *(dự kiến)*, `AdminGamificationController` *(dự kiến)* | 2 | 25 | 27 | 0 | **27** | 14.7% | 7.4% |
 | **M-11** | `FE-10` | **Rating, Review & Complaint Resolution** | `ReviewsController` *(dự kiến)*, `ComplaintsController` *(dự kiến)*, `StaffComplaintsController` *(dự kiến)* | 0 | 12 | 12 | 0 | **12** | 6.5% | 0.0% |
 | **M-12** | `FE-14` | **In-System Service Packages & VietQR** | `ServicePaymentController`, `ServicePackagesController`, `AdminReconciliationController` | 15 | 0 | 15 | 0 | **15** | 8.2% | 100.0% |
-| **M-13** | `FE-15` | **AI Misclassification & Dataset Curation** | `StaffAiFeedbackController` *(dự kiến)*, `StaffDatasetCurationController` *(dự kiến)* | 0 | 10 | 10 | 0 | **10** | 5.4% | 0.0% |
+| **M-13** | `FE-15` | **AI Misclassification & Dataset Curation** | `StaffAiFeedbackController`, `StaffDatasetCurationController` | 10 | 0 | 10 | 0 | **10** | 5.4% | 100.0% |
 | **M-14** | `FE-16` | **Blog & Content Management** | `BlogsController` *(dự kiến)*, `StaffBlogsController` *(dự kiến)*, `AdminBlogsController` *(dự kiến)* | 0 | 10 | 10 | 0 | **10** | 5.4% | 0.0% |
 | **M-15** | `FE-17..18` | **Account, Staff, Governance & Analytics** | `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `StaffAttendanceController`, `NotificationsController` *(dự kiến)*, `NotificationHub` *(dự kiến)* | 19 | 4 | 22 | 1 | **23** | 12.5% | 82.6% |
 | **SYS** | `INFRA` | **System Infrastructure & Health** | Minimal API (`Program.cs`) | 1 | 0 | 1 | 0 | **1** | 0.5% | 100.0% |
-| **AIS** | `FE-03/15` | **Dedicated AI Vision Service (Python)** | FastAPI (`app.py`) | 9 | 2 | 11 | 0 | **11** | 6.0% | 81.8% |
-| **TỔNG** | **ALL SRS** | **TOÀN BỘ HỆ THỐNG ECOLINK** | **Core .NET 10 (173) + FastAPI Python (11)** | **115** | **69** | **182** | **2** | **184** | **100.0%** | **62.5%** |
+| **AIS** | `FE-03/15` | **Dedicated AI Vision Service (Python)** | FastAPI (`app.py`) | 11 | 0 | 11 | 0 | **11** | 6.0% | 100.0% |
+| **TỔNG** | **ALL SRS** | **TOÀN BỘ HỆ THỐNG ECOLINK** | **Core .NET 10 (173) + FastAPI Python (11)** | **127** | **57** | **182** | **2** | **184** | **100.0%** | **69.0%** |
 
 ---
 
@@ -82,13 +82,13 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 
 | Phương thức HTTP / Giao thức | Ý nghĩa sử dụng chính trong dự án | Đã triển khai | Dự kiến bổ sung | Tổng quy mô | Tỷ lệ (%) |
 |:---|:---|:---:|:---:|:---:|:---:|
-| **GET** | Truy vấn danh sách, tìm kiếm PostGIS, đọc hồ sơ/khiếu nại, KPI Dashboard, Audit Log, xuất báo cáo CSV/XLSX | 53 | 28 | **81** | 44.0% |
-| **POST** | Đăng ký/đăng nhập, quét rác AI, tạo đơn thu gom, biên nhận, điểm danh, đổi quà, khiếu nại, VietQR, đóng gói Dataset | 42 | 20 | **62** | 33.7% |
-| **PUT** | Cập nhật toàn phần hồ sơ, cấu hình bảng giá, cấu hình Gamification, gán nhãn ảnh chuẩn, phân quyền RBAC Staff | 11 | 8 | **19** | 10.3% |
-| **PATCH** | Chuyển trạng thái nghiệp vụ tức thời: duyệt khiếu nại, duyệt blog, khóa tài khoản, đối soát giao dịch, ẩn/mở danh mục | 7 | 9 | **16** | 8.7% |
+| **GET** | Truy vấn danh sách, tìm kiếm PostGIS, đọc hồ sơ/khiếu nại, KPI Dashboard, Audit Log, xuất báo cáo CSV/XLSX | 59 | 22 | **81** | 44.0% |
+| **POST** | Đăng ký/đăng nhập, quét rác AI, tạo đơn thu gom, biên nhận, điểm danh, đổi quà, khiếu nại, VietQR, đóng gói Dataset | 46 | 16 | **62** | 33.7% |
+| **PUT** | Cập nhật toàn phần hồ sơ, cấu hình bảng giá, cấu hình Gamification, gán nhãn ảnh chuẩn, phân quyền RBAC Staff | 12 | 7 | **19** | 10.3% |
+| **PATCH** | Chuyển trạng thái nghiệp vụ tức thời: duyệt khiếu nại, duyệt blog, khóa tài khoản, đối soát giao dịch, ẩn/mở danh mục | 8 | 8 | **16** | 8.7% |
 | **DELETE** | Xóa đánh giá của chính tác giả (`BR-RVW-03`), xóa thẻ Eco Fact nháp, xóa bài Blog nháp, vô hiệu hóa mềm tài khoản | 1 | 3 | **4** | 2.2% |
 | **WebSocket (`WS`)** | Kết nối SignalR song công thời gian thực cho phòng Chat thương lượng giá và kênh Đẩy thông báo hệ thống | 1 | 1 | **2** | 1.1% |
-| **Tổng cộng** | | **115** | **69** | **184** | **100.0%** |
+| **Tổng cộng** | | **127** | **57** | **184** | **100.0%** |
 
 ---
 
@@ -98,12 +98,12 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 
 | Nhóm RBAC chuẩn | Đối tượng được phép truy cập | Đã triển khai | Dự kiến bổ sung | Tổng API | Tỷ lệ (%) | Ví dụ nghiệp vụ tiêu biểu |
 |:---|:---|:---:|:---:|:---:|:---:|:---|
-| **Public / Guest** | Mọi người dùng (kể cả chưa đăng nhập, Webhook Gateway & Internal AI) | 30 | 5 | **35** | 19.0% | Đăng ký/đăng nhập, quét rác AI, tìm vựa GPS, bảng xếp hạng, đọc Blog, xem Review vựa, Webhook VietQR |
-| **Citizen (User)** | Người dân đã xác thực tài khoản (`Role = Citizen`) | 11 | 8 | **19** | 10.3% | Nộp đơn mở vựa, đặt lịch thu gom, xác nhận biên nhận, nuôi Cây Ảo, mở Eco Fact, gửi/xóa đánh giá sao |
+| **Public / Guest** | Mọi người dùng (kể cả chưa đăng nhập, Webhook Gateway & Internal AI) | 32 | 3 | **35** | 19.0% | Đăng ký/đăng nhập, quét rác AI, tìm vựa GPS, bảng xếp hạng, đọc Blog, xem Review vựa, Webhook VietQR, Internal AI Curate/Reload |
+| **Citizen (User)** | Người dân đã xác thực tài khoản (`Role = Citizen`) | 12 | 7 | **19** | 10.3% | Nộp đơn mở vựa, đặt lịch thu gom, xác nhận biên nhận, nuôi Cây Ảo, mở Eco Fact, theo dõi báo cáo AI sai, gửi/xóa đánh giá sao |
 | **Recycler (Collector)** | Đối tác cơ sở thu gom đã được xác minh (`Role = Recycler`) | 19 | 0 | **19** | 10.3% | Hồ sơ vựa, cấu hình bảng giá thu mua, lịch mở cửa, nhận/từ chối đơn, phát hành biên nhận cân điện tử |
-| **Staff / Admin** | Nhân viên vận hành (`Staff`) và Quản trị viên hệ thống (`Admin`) | 29 | 42 | **71** | 38.6% | Duyệt vựa, xử lý khiếu nại, kho quà & Eco Fact, gán nhãn Dataset AI, biên tập/duyệt Blog, đối soát VietQR, KPI & RBAC |
+| **Staff / Admin** | Nhân viên vận hành (`Staff`) và Quản trị viên hệ thống (`Admin`) | 38 | 33 | **71** | 38.6% | Duyệt vựa, xử lý khiếu nại, kho quà & Eco Fact, gán nhãn & đóng gói Dataset AI, biên tập/duyệt Blog, đối soát VietQR, KPI & RBAC |
 | **Authenticated (All)** | Nhiều vai trò đã đăng nhập (`Citizen / Recycler` hoặc mọi User hợp lệ) | 26 | 14 | **40** | 21.7% | Hồ sơ cá nhân, chat thương lượng, điểm danh Streak, đổi quà, gửi khiếu nại, mua gói dịch vụ VietQR, nhận thông báo |
-| **Tổng cộng** | | **115** | **69** | **184** | **100.0%** | |
+| **Tổng cộng** | | **127** | **57** | **184** | **100.0%** | |
 
 #### B. Phân rã chi tiết nội bộ nhóm Quản trị & Vận hành (`Staff / Admin` – `71 APIs`)
 
@@ -380,22 +380,23 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 ---
 
 ### PHÂN HỆ 13 (`M-13` / `FE-15`): PHẢN HỒI LỖI AI & QUẢN TRỊ BỘ DỮ LIỆU HUẤN LUYỆN (AI MISCLASSIFICATION FEEDBACK & DATASET CURATION)
-* **Use Cases bao phủ:** `U-04` (Report Incorrect AI Classification – phối hợp cùng endpoint `STT 024` ở `M-03`), `S-01` (Review Misclassified Images), `S-02` (Label Image Data), `S-03` (Update Verified Dataset)
-* **Controllers dự kiến:** `StaffAiFeedbackController`, `StaffDatasetCurationController`
-* **Quy mô:** `10` APIs tại Core .NET (0 Đã triển khai, 10 Dự kiến; phối hợp cùng `2` API nội bộ mới tại `AIS`)
+* **Tài liệu đặc tả chi tiết:** [`11_module_ai_misclassification_feedback_dataset_curation_api.md`](./11_module_ai_misclassification_feedback_dataset_curation_api.md)
+* **Use Cases bao phủ:** `U-04` (Report Incorrect AI Classification – phối hợp cùng endpoint `STT 021, 024` ở `M-03`), `S-01` (Review Misclassified Images), `S-02` (Label Image Data), `S-03` (Update Verified Dataset)
+* **Controllers:** `WasteScanController` (`STT 021, 024, 130`), `StaffAiFeedbackController` (`STT 131–136`), `StaffDatasetCurationController` (`STT 137–139`)
+* **Quy mô:** `10` APIs tại Core .NET (10 Đã triển khai, 0 Dự kiến; phối hợp cùng `2` API nội bộ `STT 183–184` tại `AIS`)
 
 | STT | Mã Modul | Phương thức | Tuyến đường Endpoint (Route) | Phân quyền (RBAC) | Action / Function | Mô tả chức năng & Use Case nghiệp vụ | Nhóm RBAC | Trạng thái |
 |:---:|:---:|:---:|:---|:---|:---|:---|:---|:---:|
-| **130** | `M-13` | `GET` | `/api/v1/waste-scan/feedback/me` | Citizen (User) | `GetMyFeedbackReports` | Người dân xem lại lịch sử các báo cáo nhận diện sai AI đã đóng góp và kết quả xác minh của đội ngũ vận hành (`U-04`). | Citizen (User) | Dự kiến |
-| **131** | `M-13` | `GET` | `/api/v1/staff/ai-feedback` | Staff / Admin | `GetMisclassificationQueue` | Nhân viên xem hàng đợi ảnh rác bị báo nhận diện nhầm (lọc theo nhãn dự đoán sai, nhãn người dùng đề xuất, độ tin cậy) (`S-01`). | Staff / Admin | Dự kiến |
-| **132** | `M-13` | `GET` | `/api/v1/staff/ai-feedback/{reportId:guid}` | Staff / Admin | `GetMisclassificationDetail` | Xem chi tiết mẫu ảnh nhận diện lỗi: ảnh gốc trên R2, phân phối xác suất của AI, nhãn đề xuất và metadata thiết bị chụp (`S-01`). | Staff / Admin | Dự kiến |
-| **133** | `M-13` | `PATCH` | `/api/v1/staff/ai-feedback/{reportId:guid}/review` | Staff / Admin | `ReviewMisclassifiedImage` | Nhân viên thẩm định ảnh báo lỗi: chấp nhận đưa vào kho chờ gán nhãn chuẩn hoặc loại bỏ ảnh mờ/ngoài phạm vi (`Rejected`) (`S-01`, `BR-CLS-06`). | Staff / Admin | Dự kiến |
-| **134** | `M-13` | `GET` | `/api/v1/staff/ai-labeling/queue` | Staff / Admin | `GetUnlabeledImages` | Lấy danh sách ảnh thô và ảnh báo lỗi đã duyệt đang chờ Nhân viên gán nhãn thực tế chuẩn (`Ground-Truth`) (`S-02`). | Staff / Admin | Dự kiến |
-| **135** | `M-13` | `PUT` | `/api/v1/staff/ai-labeling/{itemId:guid}` | Staff / Admin | `AssignGroundTruthLabel` | Nhân viên gán nhãn danh mục phế liệu chuẩn hóa (`MasterWasteCategory`) và tọa độ vùng vật thể (YOLO Bounding Box tùy chọn) (`S-02`, `BR-CLS-06`). | Staff / Admin | Dự kiến |
-| **136** | `M-13` | `POST` | `/api/v1/staff/ai-labeling/batch-assign` | Staff / Admin | `BatchAssignLabels` | Gán nhãn chuẩn hàng loạt cho tập ảnh đồng nhất đã được Nhân viên kiểm định chất lượng hình ảnh (`S-02`). | Staff / Admin | Dự kiến |
-| **137** | `M-13` | `GET` | `/api/v1/staff/ai-datasets` | Staff / Admin | `GetDatasetVersions` | Xem danh sách các phiên bản bộ dữ liệu chuẩn (`Dataset Versions`), thống kê số lượng mẫu theo từng lớp rác và lịch sử cập nhật (`S-03`). | Staff / Admin | Dự kiến |
-| **138** | `M-13` | `POST` | `/api/v1/staff/ai-datasets/versions` | Staff / Admin | `CreateVerifiedDatasetVersion` | Tuyển chọn ảnh sạch đã xác thực nhãn để đóng gói phiên bản Dataset mới (`Train/Val/Test` chống trùng lặp rò rỉ theo `BR-CLS-07`) (`S-03`). | Staff / Admin | Dự kiến |
-| **139** | `M-13` | `GET` | `/api/v1/staff/ai-datasets/versions/{versionId:guid}/export` | Staff / Admin | `ExportVerifiedDataset` | Tải xuống gói dữ liệu chuẩn hóa (ZIP/Manifest chuẩn YOLO & ImageFolder) phục vụ huấn luyện lại mô hình AI (`S-03`). | Staff / Admin | Dự kiến |
+| **130** | `M-13` | `GET` | `/api/v1/waste-scan/feedback/me` | Authenticated | `GetMyFeedbackReports` | Người dân xem lại lịch sử các báo cáo nhận diện sai AI đã đóng góp và kết quả xác minh của đội ngũ vận hành (`U-04`, `BR-CLS-08`). | Citizen (User) | Đã triển khai |
+| **131** | `M-13` | `GET` | `/api/v1/staff/ai-feedback` | Staff [`REVIEW_AI`] / Admin | `GetFeedbackQueue` | Nhân viên xem hàng đợi ảnh rác bị báo nhận diện nhầm (lọc theo nhãn dự đoán sai, nhãn người dùng đề xuất, độ tin cậy, tìm kiếm) (`S-01`). | Staff / Admin | Đã triển khai |
+| **132** | `M-13` | `GET` | `/api/v1/staff/ai-feedback/{reportId:guid}` | Staff [`REVIEW_AI`] / Admin | `GetFeedbackDetail` | Xem chi tiết mẫu ảnh nhận diện lỗi: ảnh gốc trên R2, phân phối xác suất & bounding boxes lúc quét, nhãn đề xuất và người báo cáo (`S-01`). | Staff / Admin | Đã triển khai |
+| **133** | `M-13` | `PATCH` | `/api/v1/staff/ai-feedback/{reportId:guid}/review` | Staff [`REVIEW_AI`] / Admin | `ReviewFeedback` | Nhân viên thẩm định ảnh báo lỗi (`ApproveAndLabel` 1 chạm, `ApproveToQueue` hoặc `Reject` ảnh mờ kèm lý do bắt buộc) (`S-01`, `BR-CLS-06`). | Staff / Admin | Đã triển khai |
+| **134** | `M-13` | `GET` | `/api/v1/staff/ai-labeling/queue` | Staff [`REVIEW_AI`] / Admin | `GetLabelingQueue` | Lấy danh sách ảnh thô (`LowConfidenceAuto` < 60%) và ảnh báo lỗi đã duyệt đang chờ Nhân viên gán nhãn thực tế chuẩn (`S-02`). | Staff / Admin | Đã triển khai |
+| **135** | `M-13` | `PUT` | `/api/v1/staff/ai-labeling/{itemId:guid}` | Staff [`REVIEW_AI`] / Admin | `AssignGroundTruthLabel` | Nhân viên gán nhãn danh mục phế liệu chuẩn hóa (`MasterWasteCategory`) và tọa độ hộp bao YOLO chuẩn hóa `[0, 1]` (`S-02`, `BR-CLS-06`). | Staff / Admin | Đã triển khai |
+| **136** | `M-13` | `POST` | `/api/v1/staff/ai-labeling/batch-assign` | Staff [`REVIEW_AI`] / Admin | `BatchAssignLabels` | Gán nhãn chuẩn hàng loạt nguyên tử cho tập ảnh đồng nhất trong 1 giao dịch CSDL (`S-02`). | Staff / Admin | Đã triển khai |
+| **137** | `M-13` | `GET` | `/api/v1/staff/ai-datasets` | Staff [`CURATE_DATASET`] / Admin | `GetDatasetDashboard` | Xem thống kê kho dữ liệu sạch theo từng lớp, chỉ số cân bằng (`ImbalanceRatio`), độ chính xác thực nghiệm và lịch sử phiên bản (`S-03`). | Staff / Admin | Đã triển khai |
+| **138** | `M-13` | `POST` | `/api/v1/staff/ai-datasets/versions` | Staff [`CURATE_DATASET`] / Admin | `CreateDatasetVersion` | Đóng gói phiên bản Dataset mới theo thuật toán **Sticky Stratified Split `70/20/10`** chống rò rỉ theo `SHA-256` (`BR-CLS-07`) (`S-03`). | Staff / Admin | Đã triển khai |
+| **139** | `M-13` | `GET` | `/api/v1/staff/ai-datasets/versions/{versionId:guid}/export` | Staff [`CURATE_DATASET`] / Admin | `ExportDatasetVersion` | Tải xuống gói dữ liệu chuẩn hóa `.zip` (`yolo`: `data.yaml` + `labels/*.txt` + `manifest.json`; hoặc `imagefolder`) kèm `MSG-ADM-02` (`S-03`). | Staff / Admin | Đã triển khai |
 
 ---
 
@@ -463,8 +464,8 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 ---
 
 ### DỊCH VỤ THỊ GIÁC MÁY TÍNH CHUYÊN BIỆT (`AIS`: DEDICATED AI VISION SERVICE – FASTAPI PYTHON)
-* **Dịch vụ:** Dedicated AI Vision Microservice (`http://127.0.0.1:8000`) | **Tệp mã nguồn:** [`app.py`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/app.py)
-* **Quy mô:** `11` APIs (9 Đã triển khai, 2 Dự kiến phục vụ `FE-15` Dataset Sync & Model Hot-Reload)
+* **Dịch vụ:** Dedicated AI Vision Microservice (`http://127.0.0.1:8000`) | **Tệp mã nguồn:** [`app.py`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.AiService/app.py)
+* **Quy mô:** `11` APIs (11 Đã triển khai, 0 Dự kiến — đã hoàn tất `FE-15` Dataset Sync & Model Hot-Reload)
 
 | STT | Mã Modul | Phương thức | Tuyến đường Endpoint (Route) | Phân quyền (RBAC) | Action / Function | Mô tả chức năng & Use Case nghiệp vụ | Nhóm RBAC | Trạng thái |
 |:---:|:---:|:---:|:---|:---|:---|:---|:---|:---:|
@@ -477,8 +478,8 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 | **180** | `AIS` | `GET` | `/api/feedback` | Public (Internal) | `get_feedback` | Truy xuất danh sách các mẫu phản hồi nhận diện sai đang lưu trên AI Service (`S-01`). | Public / Guest | Đã triển khai |
 | **181** | `AIS` | `GET` | `/api/stats` | Public (Internal) | `get_stats` | Thống kê tổng lượt quét, tỷ lệ OOD, phân bố nhóm rác nhận diện và độ trễ suy luận (`A-01`). | Public / Guest | Đã triển khai |
 | **182** | `AIS` | `GET` | `/` | Public (Internal) | `root` | Kiểm tra trạng thái hoạt động (Health Check) và thông tin phiên bản của AI Microservice (`SYS`). | Public / Guest | Đã triển khai |
-| **183** | `AIS` | `POST` | `/api/datasets/curate` | Public (Internal) | `curate_verified_dataset` | Đồng bộ tập ảnh đã được Staff gán nhãn chuẩn sang cấu trúc thư mục huấn luyện `train/val/test` không rò rỉ mẫu (`S-03`, `BR-CLS-07`). | Public / Guest | Dự kiến |
-| **184** | `AIS` | `POST` | `/api/models/reload` | Public (Internal) | `reload_models` | Nạp nóng (`Hot-reload`) trọng số mô hình AI phiên bản mới vào RAM sau khi hoàn tất huấn luyện lại mà không gián đoạn dịch vụ (`S-03`). | Public / Guest | Dự kiến |
+| **183** | `AIS` | `POST` | `/api/v1/datasets/curate` | Public (Internal) | `curate_dataset_version` | Đồng bộ tập ảnh đã được Staff gán nhãn chuẩn sang cấu trúc thư mục huấn luyện `train/val/test` không rò rỉ mẫu (`S-03`, `BR-CLS-07`). | Public / Guest | Đã triển khai |
+| **184** | `AIS` | `POST` | `/api/v1/models/reload` | Public (Internal) | `reload_ai_models` | Nạp nóng (`Hot-reload`) trọng số mô hình AI phiên bản mới vào RAM sau khi hoàn tất huấn luyện lại mà không gián đoạn dịch vụ (`S-03`). | Public / Guest | Đã triển khai |
 
 ---
 
@@ -503,4 +504,4 @@ Khi cập nhật tệp **`Report_API List_SEP490_G141`** gồm 2 sheet `Dashboar
    powershell -ExecutionPolicy Bypass -File scripts/scan_api_inventory.ps1
    ```
 3. **Bước 3 – Chuyển trạng thái Endpoint:** Đổi cột `Trạng thái` của các dòng tương ứng từ `Dự kiến` sang `Đã triển khai`, đồng thời cập nhật lại số liệu cột `Đã code` / `Dự kiến` / `Tiến độ` tại **Mục 1.1**, **1.2**, **1.3**.
-4. **Bước 4 – Bổ sung đặc tả Payload chi tiết:** Tạo tệp đặc tả JSON Request/Response tương ứng trong thư mục `documents/api contact/` (hiện đã hoàn thiện đến `09_module_account_staff_system_governance_analytics_api.md` cho `M-15` và `10_module_in_system_service_packages_vietqr_api.md` cho `M-12`; các phân hệ tiếp theo sẽ đánh số từ `11_` trở đi).
+4. **Bước 4 – Bổ sung đặc tả Payload chi tiết:** Tạo tệp đặc tả JSON Request/Response tương ứng trong thư mục `documents/api contact/` (hiện đã hoàn thiện đến [`10_module_in_system_service_packages_vietqr_api.md`](./10_module_in_system_service_packages_vietqr_api.md) cho `M-12` và [`11_module_ai_misclassification_feedback_dataset_curation_api.md`](./11_module_ai_misclassification_feedback_dataset_curation_api.md) cho `M-13`; các phân hệ tiếp theo sẽ đánh số từ `12_` trở đi).
