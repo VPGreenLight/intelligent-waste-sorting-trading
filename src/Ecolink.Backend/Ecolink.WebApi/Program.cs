@@ -50,6 +50,10 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddHostedService<Ecolink.WebApi.Services.HandoverExpirationJob>(); // JOB-03
 builder.Services.AddHostedService<Ecolink.WebApi.Services.ReceiptAutoCompleteJob>(); // JOB-01
 
+
+//  Xử lý Voucher hết hạn .
+builder.Services.AddHostedService<Ecolink.WebApi.Services.VoucherExpirationJob>();
+
 // Cấu hình JWT Bearer Authentication & Authorization (Hỗ trợ cả REST Header và SignalR WebSocket access_token)
 var jwtSecret = builder.Configuration["JwtSettings:SecretKey"]
                 ?? "EcoLink_Super_Secure_Secret_Key_For_JWT_Signing_2026_XYZ987!";

@@ -74,6 +74,7 @@ public static class DependencyInjection
         // Handover Request Management (U-06, U-07, R-03, R-04)
         services.AddScoped<IHandoverRequestService, HandoverRequestService>();
 
+        // Handover Receipt Management
         services.AddScoped<IHandoverReceiptService, HandoverReceiptService>();
 
         // Đăng ký Payment Service (VietQR & Webhook)
@@ -82,7 +83,17 @@ public static class DependencyInjection
         // Đăng ký PayOS Gateway Service (Pay-in & Pay-out)
         services.AddSingleton<IPayOsService, PayOsService>();
 
+        // Đăng ký Blog Post Service
         services.AddScoped<IBlogPostService, BlogPostService>();
+
+        // Gamìication Services: Points, Check-in, Virtual Tree, Gift Redemption, Eco Facts
+        services.AddScoped<IPointsService, PointsService>();
+        services.AddScoped<IGamificationConfigService, GamificationConfigService>();
+        services.AddScoped<ICheckinService, CheckinService>();
+        services.AddScoped<IGiftService, GiftService>();
+        services.AddScoped<IVirtualTreeService, VirtualTreeService>();
+        services.AddScoped<IEcoFactService, EcoFactService>();
+        services.AddScoped<IStaffShiftService, StaffShiftService>();
 
         return services;
     }

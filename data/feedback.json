@@ -1,5 +1,95 @@
 [
   {
+    "id": 48,
+    "predicted_label": "plastic_bottle",
+    "user_reported_label": "glass_bottle",
+    "confidence_score": 0.72,
+    "note": "Automated test: AI misclassified the item",
+    "image_url": "https://example.com/test.jpg",
+    "status": "pending_verification",
+    "created_at": "2026-11-17 16:10:02"
+  },
+  {
+    "id": 47,
+    "predicted_label": "unknown",
+    "user_reported_label": "paper",
+    "confidence_score": 0.0,
+    "note": "",
+    "image_url": "",
+    "status": "pending_verification",
+    "created_at": "2026-11-17 16:10:01"
+  },
+  {
+    "id": 46,
+    "predicted_label": "paper",
+    "user_reported_label": "paper",
+    "confidence_score": 0.6353,
+    "note": "Automated test: classify then feedback flow",
+    "image_url": "",
+    "status": "pending_verification",
+    "created_at": "2026-11-17 16:10:01"
+  },
+  {
+    "id": 45,
+    "predicted_label": "plastic_bottle",
+    "user_reported_label": "glass_bottle",
+    "confidence_score": 0.72,
+    "note": "Automated test: AI misclassified the item",
+    "image_url": "https://example.com/test.jpg",
+    "status": "pending_verification",
+    "created_at": "2026-11-16 22:19:47"
+  },
+  {
+    "id": 44,
+    "predicted_label": "unknown",
+    "user_reported_label": "paper",
+    "confidence_score": 0.0,
+    "note": "",
+    "image_url": "",
+    "status": "pending_verification",
+    "created_at": "2026-11-16 22:19:47"
+  },
+  {
+    "id": 43,
+    "predicted_label": "paper",
+    "user_reported_label": "paper",
+    "confidence_score": 0.6353,
+    "note": "Automated test: classify then feedback flow",
+    "image_url": "",
+    "status": "pending_verification",
+    "created_at": "2026-11-16 22:19:47"
+  },
+  {
+    "id": 42,
+    "predicted_label": "plastic_bottle",
+    "user_reported_label": "glass_bottle",
+    "confidence_score": 0.72,
+    "note": "Automated test: AI misclassified the item",
+    "image_url": "https://example.com/test.jpg",
+    "status": "pending_verification",
+    "created_at": "2026-11-16 22:11:47"
+  },
+  {
+    "id": 41,
+    "predicted_label": "unknown",
+    "user_reported_label": "paper",
+    "confidence_score": 0.0,
+    "note": "",
+    "image_url": "",
+    "status": "pending_verification",
+    "created_at": "2026-11-16 22:11:46"
+  },
+  {
+    "id": 40,
+    "predicted_label": "paper",
+    "user_reported_label": "paper",
+    "confidence_score": 0.6353,
+    "note": "Automated test: classify then feedback flow",
+    "image_url": "",
+    "status": "pending_verification",
+    "created_at": "2026-11-16 22:11:46"
+  },
+  {
     "id": 39,
     "predicted_label": "plastic_bottle",
     "user_reported_label": "glass_bottle",

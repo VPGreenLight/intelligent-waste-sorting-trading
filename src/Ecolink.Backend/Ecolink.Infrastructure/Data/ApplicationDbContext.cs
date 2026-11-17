@@ -42,6 +42,17 @@ public class ApplicationDbContext : DbContext
     public DbSet<TransactionReceipt> TransactionReceipts => Set<TransactionReceipt>();
     public DbSet<WasteCategory> WasteCategories => Set<WasteCategory>();
     public DbSet<AIFeedbackLog> AIFeedbackLogs => Set<AIFeedbackLog>();
+    public DbSet<UserPointWallet> UserPointWallets => Set<UserPointWallet>();
+    public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
+    public DbSet<DailyCheckinLog> DailyCheckinLogs => Set<DailyCheckinLog>();
+    public DbSet<VirtualTreeProgress> VirtualTreeProgresses => Set<VirtualTreeProgress>();
+    public DbSet<Gift> Gifts => Set<Gift>();
+    public DbSet<GiftRedemption> GiftRedemptions => Set<GiftRedemption>();
+    public DbSet<EcoFact> EcoFacts => Set<EcoFact>();
+    public DbSet<GamificationConfig> GamificationConfigs => Set<GamificationConfig>();
+    public DbSet<PointRateRule> PointRateRules => Set<PointRateRule>();
+    public DbSet<TreeLevelThreshold> TreeLevelThresholds => Set<TreeLevelThreshold>();
+    public DbSet<StaffShift> StaffShifts => Set<StaffShift>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
