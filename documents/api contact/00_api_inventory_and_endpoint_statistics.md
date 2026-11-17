@@ -3,7 +3,7 @@
 
 **Dự án:** EcoLink – Intelligent Waste Sorting & Trading Platform (`SEP490_G141`)  
 **Phiên bản tài liệu:** `v2.2.0` (Cập nhật tiến độ sau khi hoàn tất triển khai `FE-14` thuộc Module `M-12`: Gói dịch vụ & VietQR)  
-**Thời điểm cập nhật:** 16/11/2026  
+**Thời điểm cập nhật:** 17/11/2026  
 **Công nghệ Backend:** ASP.NET Core 10 WebApi (Clean Architecture, Npgsql PostGIS, SignalR WebSocket)  
 **Công nghệ AI Service:** Python 3.11 FastAPI (YOLOv8 + MobileNetV3 + EfficientNet)  
 **Tình trạng tài liệu:** **Tài liệu quy hoạch & đối chiếu tổng thể (Master API Inventory)** – Dùng làm nguồn dữ liệu chuẩn để đồng bộ bảng tính `Report_API List_SEP490_G141` trên Google Drive (`Dashboard` & `API Inventory`).
@@ -354,6 +354,7 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 ---
 
 ### PHÂN HỆ 12 (`M-12` / `FE-14`): GÓI DỊCH VỤ NỘI BỘ & TÍCH HỢP VIETQR (IN-SYSTEM SERVICE PACKAGES & VIETQR)
+* **Tài liệu đặc tả chi tiết:** [`10_module_in_system_service_packages_vietqr_api.md`](./10_module_in_system_service_packages_vietqr_api.md)
 * **Use Cases bao phủ:** `U-16` (Citizen Purchase In-System Services via VietQR), `R-07` (Recycler Purchase In-System Services via VietQR), `A-10` (Configure In-System Service Fees), `A-11` (Manage Financial Reconciliation)
 * **Controllers:** `ServicePaymentController`, `ServicePackagesController`, `AdminReconciliationController`
 * **Quy mô:** `15` APIs (15 Đã triển khai, 0 Dự kiến)
@@ -419,6 +420,7 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 ---
 
 ### PHÂN HỆ 15 (`M-15` / `FE-17`, `FE-18`): QUẢN TRỊ TÀI KHOẢN, NHÂN SỰ, THÔNG BÁO & PHÂN TÍCH HỆ THỐNG (GOVERNANCE, STAFF, NOTIFICATIONS & ANALYTICS)
+* **Tài liệu đặc tả chi tiết:** [`09_module_account_staff_system_governance_analytics_api.md`](./09_module_account_staff_system_governance_analytics_api.md)
 * **Use Cases bao phủ:** `A-01` (View Dashboard & Analytics), `A-02` (Export Data Reports & Audit Log), `S-06` (View User & Recycler Accounts), `S-07` (Lock / Delete Accounts), `A-03` (Manage Staff Accounts), `A-04` (Manage Staff Permissions), `S-11` (Staff Daily Check-in), `SU-04` (System In-App Notifications)
 * **Controllers & Hubs:** `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `StaffAttendanceController` *(đã triển khai)*; `NotificationsController`, `NotificationHub` (`/hubs/notifications`) *(dự kiến)*
 * **Quy mô:** `23` APIs = `22` REST + `1` WS Hub (19 Đã triển khai, 4 Dự kiến)
@@ -501,4 +503,4 @@ Khi cập nhật tệp **`Report_API List_SEP490_G141`** gồm 2 sheet `Dashboar
    powershell -ExecutionPolicy Bypass -File scripts/scan_api_inventory.ps1
    ```
 3. **Bước 3 – Chuyển trạng thái Endpoint:** Đổi cột `Trạng thái` của các dòng tương ứng từ `Dự kiến` sang `Đã triển khai`, đồng thời cập nhật lại số liệu cột `Đã code` / `Dự kiến` / `Tiến độ` tại **Mục 1.1**, **1.2**, **1.3**.
-4. **Bước 4 – Bổ sung đặc tả Payload chi tiết:** Tạo tệp đặc tả JSON Request/Response tương ứng trong thư mục `documents/api document/` (ví dụ: `10_module_gamification_and_rewards_api.md` đến `15_module_governance_and_analytics_api.md`).
+4. **Bước 4 – Bổ sung đặc tả Payload chi tiết:** Tạo tệp đặc tả JSON Request/Response tương ứng trong thư mục `documents/api contact/` (hiện đã hoàn thiện đến `09_module_account_staff_system_governance_analytics_api.md` cho `M-15` và `10_module_in_system_service_packages_vietqr_api.md` cho `M-12`; các phân hệ tiếp theo sẽ đánh số từ `11_` trở đi).
