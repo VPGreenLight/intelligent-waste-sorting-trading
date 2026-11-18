@@ -1,15 +1,47 @@
 {
-  "total_scans": 190,
+  "total_scans": 194,
   "categories": {
     "cardboard": 32,
     "metal": 6,
     "glass": 10,
     "plastic": 10,
-    "paper": 84,
+    "paper": 88,
     "trash": 4
   },
   "ood_count": 61,
   "recent": [
+    {
+      "category": "paper",
+      "confidence": 81.2,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 91.75,
+      "timestamp": "2026-11-19 01:04:03"
+    },
+    {
+      "category": "paper",
+      "confidence": 81.2,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 362.98,
+      "timestamp": "2026-11-19 01:04:01"
+    },
+    {
+      "category": "paper",
+      "confidence": 81.2,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 36.42,
+      "timestamp": "2026-11-19 00:56:38"
+    },
+    {
+      "category": "paper",
+      "confidence": 81.2,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 3872.41,
+      "timestamp": "2026-11-19 00:56:36"
+    },
     {
       "category": "plastic",
       "confidence": 92.3,
@@ -177,39 +209,7 @@
       "model": "yolov8_detect",
       "latency_ms": 21.16,
       "timestamp": "2026-11-09 09:16:41"
-    },
-    {
-      "category": "paper",
-      "confidence": 63.5,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 21.21,
-      "timestamp": "2026-11-09 09:16:41"
-    },
-    {
-      "category": "paper",
-      "confidence": 63.5,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 21.55,
-      "timestamp": "2026-11-09 09:16:41"
-    },
-    {
-      "category": "paper",
-      "confidence": 63.5,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 21.7,
-      "timestamp": "2026-11-09 09:16:41"
-    },
-    {
-      "category": "paper",
-      "confidence": 63.5,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 22.83,
-      "timestamp": "2026-11-09 09:16:41"
     }
   ],
-  "avg_latency_ms": 333.44
+  "avg_latency_ms": 349.07
 }
