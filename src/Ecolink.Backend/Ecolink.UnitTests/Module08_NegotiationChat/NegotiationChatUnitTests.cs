@@ -524,5 +524,301 @@ public class NegotiationChatUnitTests
         var unreadForCitizen = await db.ChatMessages.CountAsync(m => m.TradeOrderId == order.Id && m.SenderUserId == recyclerUser.Id && !m.IsRead);
         unreadForCitizen.Should().Be(1);
     }
+
+    [Fact]
+    public async Task UTC021_CreateTradeOrderAsync_WithRecyclerProfileLookup_PersistsOrderForCitizenAndRecycler()
+    {
+        var db = TestDbContextFactory.Create();
+        var citizen = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "citizen_hl",
+            Email = "citizen_hl@ecolink.vn",
+            FullName = "Nguyễn Văn Dân",
+            Role = UserRole.Citizen,
+            Status = UserStatus.Active
+        };
+        var recyclerUser = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "collector_hl1",
+            Email = "collector_hl1@ecolink.vn",
+            FullName = "Đỗ Văn Hùng",
+            Role = UserRole.Recycler,
+            Status = UserStatus.Active
+        };
+        var profile = new RecyclerProfile
+        {
+            UserId = recyclerUser.Id,
+            User = recyclerUser,
+            FacilityName = "Trạm Thu Gom Tái Chế Xanh Hòa Lạc",
+            RepresentativeName = "Đỗ Văn Hùng",
+            BusinessAddress = "Thôn 3, Xã Tân Xã, Thạch Thất, Hà Nội",
+            ContactPhone = "0968112233",
+            Latitude = 21.0182m,
+            Longitude = 105.5345m,
+            VerificationStatus = VerificationStatus.Verified,
+            ActiveStatus = RecyclerActiveStatus.Online
+        };
+        var partner = new CollectionPartner
+        {
+            Id = Guid.NewGuid(),
+            UserId = recyclerUser.Id,
+            FacilityName = profile.FacilityName,
+            Address = profile.BusinessAddress,
+            Latitude = 21.0182,
+            Longitude = 105.5345,
+            OperatingHours = "07:30 - 19:00",
+            ContactPhone = "0968112233",
+            IsVerified = true
+        };
+
+        db.Users.AddRange(citizen, recyclerUser);
+        db.RecyclerProfiles.Add(profile);
+        db.CollectionPartners.Add(partner);
+        await db.SaveChangesAsync();
+
+        var tradeService = new TradeTransactionService(
+            NullLogger<TradeTransactionService>.Instance,
+            new GamificationService(NullLogger<GamificationService>.Instance),
+            db);
+
+        var created = await tradeService.CreateTradeOrderAsync(new CreateTradeOrderRequest
+        {
+            UserId = citizen.Id,
+            PartnerId = recyclerUser.Id,
+            EstimatedWeightKg = 10m,
+            CategoryCode = "plastic",
+            InitialPricePerKg = 5500m,
+            ProposedTimeSlot = "10:00 - 12:00",
+            PickupAddress = "Cổng phụ Khu CNC Hòa Lạc"
+        });
+
+        created.PartnerName.Should().Be("Trạm Thu Gom Tái Chế Xanh Hòa Lạc");
+        created.RecyclerUserId.Should().Be(recyclerUser.Id);
+        created.Status.Should().Be(OrderStatus.Pending.ToString());
+
+        var citizenOrders = await tradeService.GetUserOrdersAsync(citizen.Id);
+        citizenOrders.Should().Contain(o => o.Id == created.Id);
+
+        var recyclerOrders = await tradeService.GetUserOrdersAsync(recyclerUser.Id);
+        recyclerOrders.Should().Contain(o => o.Id == created.Id);
+    }
+
+    [Fact]
+    public async Task UTC022_CreateTradeOrderAsync_IsInquiryDraft_CreatesAndReusesNegotiatingOrder()
+    {
+        var db = TestDbContextFactory.Create();
+        var citizen = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "citizen_draft",
+            Email = "citizen_draft@ecolink.vn",
+            FullName = "Nguyễn Văn Dân",
+            Role = UserRole.Citizen,
+            Status = UserStatus.Active
+        };
+        var recyclerUser = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "collector_hl1_draft",
+            Email = "collector_hl1_draft@ecolink.vn",
+            FullName = "Đỗ Văn Hùng",
+            Role = UserRole.Recycler,
+            Status = UserStatus.Active
+        };
+        var partner = new CollectionPartner
+        {
+            Id = recyclerUser.Id,
+            UserId = recyclerUser.Id,
+            FacilityName = "Trạm Thu Gom Tái Chế Xanh Hòa Lạc",
+            Address = "Tân Xã, Thạch Thất, Hà Nội",
+            Latitude = 21.0182,
+            Longitude = 105.5345,
+            OperatingHours = "07:30 - 19:00",
+            ContactPhone = "0968112233",
+            IsVerified = true
+        };
+
+        db.Users.AddRange(citizen, recyclerUser);
+        db.CollectionPartners.Add(partner);
+        await db.SaveChangesAsync();
+
+        var tradeService = new TradeTransactionService(
+            NullLogger<TradeTransactionService>.Instance,
+            new GamificationService(NullLogger<GamificationService>.Instance),
+            db);
+
+        var first = await tradeService.CreateTradeOrderAsync(new CreateTradeOrderRequest
+        {
+            UserId = citizen.Id,
+            PartnerId = recyclerUser.Id,
+            IsInquiryDraft = true
+        });
+
+        first.Status.Should().Be(OrderStatus.Negotiating.ToString());
+        first.IsInquiryOnly.Should().BeTrue();
+        first.EstimatedWeightKg.Should().Be(0m);
+        first.CategoryCode.Should().BeNull();
+        first.AgreedPricePerKg.Should().BeNull();
+        (await db.HandoverRequests.AnyAsync(h => h.Id == first.Id)).Should().BeFalse();
+
+        var second = await tradeService.CreateTradeOrderAsync(new CreateTradeOrderRequest
+        {
+            UserId = citizen.Id,
+            PartnerId = recyclerUser.Id,
+            IsInquiryDraft = true
+        });
+
+        second.Id.Should().Be(first.Id);
+        (await db.TradeOrders.CountAsync(o => o.UserId == citizen.Id)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task UTC023_SendProposalAsync_WithCategoryAndPickupAddress_UpdatesOrderAndProposalPayload()
+    {
+        var (sut, db, citizen, _, _, order) = await CreateSeededChatSutAsync(OrderStatus.Negotiating);
+
+        var (proposalMsg, _, _, _) = await sut.SendProposalAsync(
+            order.Id,
+            citizen.Id,
+            "Citizen",
+            new SendProposalRequest
+            {
+                ProposedPricePerKg = 24000m,
+                ProposedWeightKg = 6.5m,
+                ProposedTimeSlot = "14:00 - 16:00",
+                CategoryCode = "metal",
+                PickupAddress = "Cổng phụ Khu CNC Hòa Lạc, Thạch Thất, Hà Nội",
+                Note = "Vỏ lon nhôm đã ép dẹp"
+            });
+
+        proposalMsg.Proposal.Should().NotBeNull();
+        proposalMsg.Proposal!.CategoryCode.Should().Be("metal");
+        proposalMsg.Proposal!.PickupAddress.Should().Be("Cổng phụ Khu CNC Hòa Lạc, Thạch Thất, Hà Nội");
+
+        var updatedOrder = await db.TradeOrders.FirstAsync(o => o.Id == order.Id);
+        updatedOrder.CategoryCode.Should().Be("metal");
+        updatedOrder.EstimatedWeightKg.Should().Be(6.5m);
+        updatedOrder.PickupAddress.Should().Be("Cổng phụ Khu CNC Hòa Lạc, Thạch Thất, Hà Nội");
+    }
+
+    [Fact]
+    public async Task UTC024_InquiryOrder_UpgradesToOfficialHandoverWithoutLockingAgreedPriceEarly()
+    {
+        var db = TestDbContextFactory.Create();
+        var citizen = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "citizen_upg",
+            Email = "citizen_upg@ecolink.vn",
+            FullName = "Nguyễn Văn Dân",
+            Role = UserRole.Citizen,
+            Status = UserStatus.Active
+        };
+        var recyclerUser = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "collector_upg",
+            Email = "collector_upg@ecolink.vn",
+            FullName = "Đỗ Văn Hùng",
+            Role = UserRole.Recycler,
+            Status = UserStatus.Active
+        };
+        var plasticCat = new WasteCategory
+        {
+            Id = Guid.NewGuid(),
+            Code = "plastic",
+            Name = "Nhựa tái chế",
+            IsRecyclable = true,
+            Status = "ACTIVE"
+        };
+        var profile = new RecyclerProfile
+        {
+            UserId = recyclerUser.Id,
+            User = recyclerUser,
+            FacilityName = "Trạm Thu Gom Tái Chế Xanh Hòa Lạc",
+            RepresentativeName = "Đỗ Văn Hùng",
+            BusinessAddress = "Thôn 3, Tân Xã",
+            ContactPhone = "0968112233",
+            Latitude = 21.0182m,
+            Longitude = 105.5345m,
+            VerificationStatus = VerificationStatus.Verified,
+            ActiveStatus = RecyclerActiveStatus.Online
+        };
+        var partner = new CollectionPartner
+        {
+            Id = recyclerUser.Id,
+            UserId = recyclerUser.Id,
+            FacilityName = profile.FacilityName,
+            Address = profile.BusinessAddress,
+            Latitude = 21.0182,
+            Longitude = 105.5345,
+            OperatingHours = "07:30 - 19:00",
+            ContactPhone = "0968112233",
+            IsVerified = true
+        };
+        var price = new RecyclerPrice
+        {
+            Id = Guid.NewGuid(),
+            RecyclerId = recyclerUser.Id,
+            WasteCategoryId = plasticCat.Id,
+            PricePerKg = 7200m,
+            MinQuantityKg = 1m,
+            Status = PriceStatus.Active
+        };
+
+        db.Users.AddRange(citizen, recyclerUser);
+        db.WasteCategories.Add(plasticCat);
+        db.RecyclerProfiles.Add(profile);
+        db.CollectionPartners.Add(partner);
+        db.RecyclerPrices.Add(price);
+        await db.SaveChangesAsync();
+
+        var tradeService = new TradeTransactionService(
+            NullLogger<TradeTransactionService>.Instance,
+            new GamificationService(NullLogger<GamificationService>.Instance),
+            db);
+        var chatService = new NegotiationChatService(db, NullLogger<NegotiationChatService>.Instance);
+
+        // 1. Nhắn hỏi giá trước
+        var inquiry = await tradeService.CreateTradeOrderAsync(new CreateTradeOrderRequest
+        {
+            UserId = citizen.Id,
+            PartnerId = recyclerUser.Id,
+            IsInquiryDraft = true
+        });
+        inquiry.IsInquiryOnly.Should().BeTrue();
+
+        var threadBefore = await chatService.GetOrderChatThreadAsync(inquiry.Id, citizen.Id, "Citizen");
+        threadBefore.IsInquiryOnly.Should().BeTrue();
+        threadBefore.AgreedPricePerKg.Should().BeNull();
+
+        // 2. Nâng cấp lên đơn thật qua form Đặt lịch bàn giao
+        var upgraded = await tradeService.CreateTradeOrderAsync(new CreateTradeOrderRequest
+        {
+            UserId = citizen.Id,
+            PartnerId = recyclerUser.Id,
+            EstimatedWeightKg = 10m,
+            CategoryCode = "plastic",
+            InitialPricePerKg = 7200m,
+            ProposedTimeSlot = "10:00 - 12:00",
+            PickupAddress = "Cổng phụ Khu CNC Hòa Lạc",
+            IsInquiryDraft = false
+        });
+
+        upgraded.Id.Should().Be(inquiry.Id);
+        upgraded.IsInquiryOnly.Should().BeFalse();
+        upgraded.Status.Should().Be(OrderStatus.Pending.ToString());
+        upgraded.AgreedPricePerKg.Should().BeNull();
+
+        var handoverItem = await db.HandoverRequestItems.FirstAsync(i => i.RequestId == upgraded.Id);
+        handoverItem.AgreedPricePerKg.Should().BeNull();
+
+        var threadAfter = await chatService.GetOrderChatThreadAsync(upgraded.Id, citizen.Id, "Citizen");
+        threadAfter.IsInquiryOnly.Should().BeFalse();
+        threadAfter.AgreedPricePerKg.Should().BeNull();
+        threadAfter.IsProposalLocked.Should().BeFalse();
+    }
 }
 

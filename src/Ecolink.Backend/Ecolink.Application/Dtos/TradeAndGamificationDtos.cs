@@ -86,6 +86,11 @@ public class CreateTradeOrderRequest
     public double? PickupLatitude { get; set; }
     public double? PickupLongitude { get; set; }
     public List<TradeOrderLineDto>? Lines { get; set; }
+    /// <summary>
+    /// true khi tạo đơn nháp từ luồng Chat trước rồi mới lên đơn/chốt điều khoản (BR-NEG-01).
+    /// Hệ thống sẽ tái sử dụng đơn Pending/Negotiating đang mở giữa cùng người dân và cơ sở nếu đã tồn tại.
+    /// </summary>
+    public bool IsInquiryDraft { get; set; }
 }
 
 public class UpdateTradeOrderStatusRequest
@@ -121,6 +126,7 @@ public class TradeOrderDto
     public string? Note { get; set; }
     public string? CancelReason { get; set; }
     public List<TradeOrderLineDto>? Lines { get; set; }
+    public bool IsInquiryOnly { get; set; }
     public string QrCodeValue { get; set; } = string.Empty;
 }
 

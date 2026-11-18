@@ -198,8 +198,14 @@ internal static class HandoverTradeSyncHelper
                     initialPrice = primaryItem.AgreedPricePerKg;
             }
 
-            var agreedPrice = primaryItem?.AgreedPricePerKg
-                              ?? handover.Items.Select(i => i.AgreedPricePerKg).FirstOrDefault(p => p.HasValue);
+            var isConfirmedOrLater = handover.Status is HandoverStatus.Accepted
+                                     or HandoverStatus.Scheduled
+                                     or HandoverStatus.AwaitingConfirmation
+                                     or HandoverStatus.Completed;
+            var agreedPrice = isConfirmedOrLater
+                ? (primaryItem?.AgreedPricePerKg
+                   ?? handover.Items.Select(i => i.AgreedPricePerKg).FirstOrDefault(p => p.HasValue))
+                : null;
 
             var linesMeta = handover.Items
                 .Select(i => new TradeOrderLineDto
@@ -258,8 +264,18 @@ internal static class HandoverTradeSyncHelper
                 tradeOrder.EstimatedWeightKg = handover.Items.Sum(i => i.EstimatedWeightKg);
                 tradeOrder.CategoryCode = primaryCode;
                 tradeOrder.InitialPricePerKg = initialPrice ?? tradeOrder.InitialPricePerKg;
-                tradeOrder.AgreedPricePerKg = agreedPrice ?? tradeOrder.AgreedPricePerKg;
-                tradeOrder.ProposedTimeSlot = proposedSlotText;
+                if (isConfirmedOrLater)
+                {
+                    tradeOrder.AgreedPricePerKg = agreedPrice ?? tradeOrder.AgreedPricePerKg;
+                }
+                else if (tradeOrder.Status is OrderStatus.Pending or OrderStatus.Negotiating)
+                {
+                    tradeOrder.AgreedPricePerKg = null;
+                }
+                if (string.IsNullOrWhiteSpace(tradeOrder.ProposedTimeSlot) || !string.IsNullOrWhiteSpace(systemChatText))
+                {
+                    tradeOrder.ProposedTimeSlot = proposedSlotText;
+                }
                 if (confirmedSlotText != null)
                     tradeOrder.ConfirmedTimeSlot = confirmedSlotText;
                 if (handover.Status == HandoverStatus.Accepted)
@@ -317,7 +333,15 @@ internal static class HandoverTradeSyncHelper
 
         if (handover != null)
         {
-            await SyncHandoverToTradeOrderAsync(db, orderId, null, null, ct);
+            var existingOrder = await db.TradeOrders
+                .AsNoTracking()
+                .Select(o => new { o.Id, o.Status })
+                .FirstOrDefaultAsync(o => o.Id == orderId, ct);
+
+            if (existingOrder == null || existingOrder.Status != ToOrderStatus(handover.Status))
+            {
+                await SyncHandoverToTradeOrderAsync(db, orderId, null, null, ct);
+            }
         }
 
         return await db.TradeOrders
@@ -352,7 +376,21 @@ internal static class HandoverTradeSyncHelper
 
             var now = DateTime.UtcNow;
             handover.Status = ToHandoverStatus(order.Status);
+            if (!string.IsNullOrWhiteSpace(order.PickupAddress))
+            {
+                handover.PickupAddress = order.PickupAddress.Trim();
+            }
             handover.UpdatedAt = now;
+
+            if (!string.IsNullOrWhiteSpace(order.CategoryCode) && handover.Items.Count == 1)
+            {
+                var categories = await db.WasteCategories.AsNoTracking().ToListAsync(ct);
+                var matchedCat = MatchWasteCategory(categories, order.CategoryCode);
+                if (matchedCat != null)
+                {
+                    handover.Items.First().WasteCategoryId = matchedCat.Id;
+                }
+            }
 
             if (!string.IsNullOrWhiteSpace(timeSlotText))
             {
@@ -450,6 +488,10 @@ internal static class HandoverTradeSyncHelper
                 var suffix = order.Id.ToString("N")[..4].ToUpperInvariant();
                 var code = $"{prefix}{suffix}";
 
+                var lockAgreedPrice = order.Status is OrderStatus.Accepted
+                                      or OrderStatus.Scheduled
+                                      or OrderStatus.AwaitingConfirmation
+                                      or OrderStatus.Completed;
                 var items = await BuildHandoverItemsFromTradeOrderAsync(
                     db,
                     order.Id,
@@ -458,6 +500,7 @@ internal static class HandoverTradeSyncHelper
                     order.EstimatedWeightKg,
                     order.AgreedPricePerKg ?? order.InitialPricePerKg,
                     parsedLines,
+                    lockAgreedPrice,
                     ct);
 
                 if (items.Count == 0) return null;
@@ -659,6 +702,7 @@ internal static class HandoverTradeSyncHelper
         decimal totalEstimatedKg,
         decimal? unitPrice,
         List<TradeOrderLineDto>? parsedLines,
+        bool lockAgreedPrice,
         CancellationToken ct)
     {
         var categories = await db.WasteCategories.AsNoTracking().ToListAsync(ct);
@@ -681,7 +725,9 @@ internal static class HandoverTradeSyncHelper
 
                 if (usedCategoryIds.Add(cat.Id))
                 {
-                    var price = activePrices.TryGetValue(cat.Id, out var lp) ? lp : unitPrice;
+                    var price = lockAgreedPrice
+                        ? (activePrices.TryGetValue(cat.Id, out var lp) ? lp : unitPrice)
+                        : null;
                     result.Add(new HandoverRequestItem
                     {
                         Id = Guid.NewGuid(),
@@ -702,7 +748,9 @@ internal static class HandoverTradeSyncHelper
         if (result.Count == 0)
         {
             var fallbackCat = MatchWasteCategory(categories, categoryCode) ?? categories.First();
-            var price = unitPrice ?? (activePrices.TryGetValue(fallbackCat.Id, out var lp) ? lp : (decimal?)null);
+            var price = lockAgreedPrice
+                ? (unitPrice ?? (activePrices.TryGetValue(fallbackCat.Id, out var lp) ? lp : (decimal?)null))
+                : null;
             result.Add(new HandoverRequestItem
             {
                 Id = Guid.NewGuid(),

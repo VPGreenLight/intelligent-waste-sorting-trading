@@ -27,6 +27,7 @@ public class OrderChatThreadDto
     /// Khi IsProposalLocked = true, hai bên không thể tạo hoặc sửa đổi đề xuất giá/khung giờ mới.
     /// </summary>
     public bool IsProposalLocked { get; set; }
+    public bool IsInquiryOnly { get; set; }
 
     /// <summary>
     /// true ngay cả khi đơn đã Accepted, Scheduled hoặc Completed để hai bên vẫn có thể nhắn tin TEXT/IMAGE hỏi đường (BR-NEG-02).
@@ -70,6 +71,8 @@ public class NegotiationProposalPayloadDto
     public decimal ProposedPricePerKg { get; set; }
     public decimal ProposedWeightKg { get; set; }
     public string ProposedTimeSlot { get; set; } = string.Empty;
+    public string? CategoryCode { get; set; }
+    public string? PickupAddress { get; set; }
     public string? Note { get; set; }
     public string ProposalStatus { get; set; } = "Pending"; // Pending, Accepted, Superseded, Rejected
     public Guid? RespondedByUserId { get; set; }
@@ -95,6 +98,10 @@ public class SendProposalRequest
     public decimal ProposedPricePerKg { get; set; }
     public decimal ProposedWeightKg { get; set; }
     public string ProposedTimeSlot { get; set; } = string.Empty;
+    public string? CategoryCode { get; set; }
+    public string? PickupAddress { get; set; }
+    public double? PickupLatitude { get; set; }
+    public double? PickupLongitude { get; set; }
     public string? Note { get; set; }
 }
 

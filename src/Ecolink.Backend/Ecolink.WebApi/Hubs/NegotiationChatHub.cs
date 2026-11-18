@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using Ecolink.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 
 namespace Ecolink.WebApi.Hubs;
 
@@ -25,6 +27,19 @@ public class NegotiationChatHub : Hub
     }
 
     public static string GetOrderGroupName(Guid orderId) => $"order:{orderId:D}";
+    public static string GetUserGroupName(Guid userId) => $"user:{userId:D}";
+
+    public override async Task OnConnectedAsync()
+    {
+        var claim = Context.User?.FindFirstValue(ClaimTypes.NameIdentifier)
+                    ?? Context.User?.FindFirstValue("sub");
+        if (Guid.TryParse(claim, out var userId) && userId != Guid.Empty)
+        {
+            await Groups.AddToGroupAsync(Context.ConnectionId, GetUserGroupName(userId), Context.ConnectionAborted);
+        }
+
+        await base.OnConnectedAsync();
+    }
 
     /// <summary>
     /// Người dân (U-08) hoặc Cơ sở thu gom (R-05) tham gia vào phòng chat thời gian thực của đơn bàn giao (BR-NEG-01).
@@ -104,28 +119,34 @@ public class NegotiationChatHub : Hub
 public class SignalRNegotiationChatNotifier : INegotiationChatNotifier
 {
     private readonly IHubContext<NegotiationChatHub> _hubContext;
+    private readonly ApplicationDbContext? _db;
 
-    public SignalRNegotiationChatNotifier(IHubContext<NegotiationChatHub> hubContext)
+    public SignalRNegotiationChatNotifier(
+        IHubContext<NegotiationChatHub> hubContext,
+        ApplicationDbContext? db = null)
     {
         _hubContext = hubContext;
+        _db = db;
     }
 
-    public Task NotifyMessageReceivedAsync(
+    public async Task NotifyMessageReceivedAsync(
         Guid orderId,
         ChatMessageDto message,
         string notificationMessage,
         CancellationToken ct = default)
     {
         var groupName = NegotiationChatHub.GetOrderGroupName(orderId);
-        return _hubContext.Clients.Group(groupName).SendAsync("ReceiveChatMessage", new
+        await _hubContext.Clients.Group(groupName).SendAsync("ReceiveChatMessage", new
         {
             orderId,
             message,
             notification = notificationMessage // MSG-NEG-02
         }, ct);
+
+        await NotifyOrderUsersAsync(orderId, "MessageReceived", ct);
     }
 
-    public Task NotifyProposalCreatedAsync(
+    public async Task NotifyProposalCreatedAsync(
         Guid orderId,
         ChatMessageDto proposalMessage,
         IReadOnlyList<Guid> supersededMessageIds,
@@ -133,28 +154,32 @@ public class SignalRNegotiationChatNotifier : INegotiationChatNotifier
         CancellationToken ct = default)
     {
         var groupName = NegotiationChatHub.GetOrderGroupName(orderId);
-        return _hubContext.Clients.Group(groupName).SendAsync("ProposalCreated", new
+        await _hubContext.Clients.Group(groupName).SendAsync("ProposalCreated", new
         {
             orderId,
             proposalMessage,
             supersededMessageIds,
             notification = notificationMessage // MSG-NEG-02
         }, ct);
+
+        await NotifyOrderUsersAsync(orderId, "ProposalCreated", ct);
     }
 
-    public Task NotifyProposalRespondedAsync(
+    public async Task NotifyProposalRespondedAsync(
         Guid orderId,
         ProposalAcceptanceResultDto result,
         string notificationMessage,
         CancellationToken ct = default)
     {
         var groupName = NegotiationChatHub.GetOrderGroupName(orderId);
-        return _hubContext.Clients.Group(groupName).SendAsync("ProposalResponded", new
+        await _hubContext.Clients.Group(groupName).SendAsync("ProposalResponded", new
         {
             orderId,
             result,
             notification = notificationMessage // MSG-NEG-03
         }, ct);
+
+        await NotifyOrderUsersAsync(orderId, "ProposalResponded", ct);
     }
 
     public Task NotifyMessagesReadAsync(
@@ -172,6 +197,49 @@ public class SignalRNegotiationChatNotifier : INegotiationChatNotifier
             markedCount,
             readAtUtc
         }, ct);
+    }
+
+    private async Task NotifyOrderUsersAsync(Guid orderId, string eventType, CancellationToken ct)
+    {
+        if (_db == null) return;
+
+        try
+        {
+            var participants = await _db.TradeOrders
+                .AsNoTracking()
+                .Include(o => o.Partner)
+                .Where(o => o.Id == orderId)
+                .Select(o => new
+                {
+                    o.UserId,
+                    o.RecyclerUserId,
+                    PartnerUserId = o.Partner != null ? (Guid?)o.Partner.UserId : null
+                })
+                .FirstOrDefaultAsync(ct);
+
+            if (participants == null) return;
+
+            var targetUserIds = new HashSet<Guid>();
+            if (participants.UserId != Guid.Empty) targetUserIds.Add(participants.UserId);
+            if (participants.RecyclerUserId.HasValue && participants.RecyclerUserId.Value != Guid.Empty)
+                targetUserIds.Add(participants.RecyclerUserId.Value);
+            if (participants.PartnerUserId.HasValue && participants.PartnerUserId.Value != Guid.Empty)
+                targetUserIds.Add(participants.PartnerUserId.Value);
+
+            foreach (var uid in targetUserIds)
+            {
+                await _hubContext.Clients.Group(NegotiationChatHub.GetUserGroupName(uid)).SendAsync("OrderChatUpdated", new
+                {
+                    orderId,
+                    eventType,
+                    updatedAt = DateTime.UtcNow
+                }, ct);
+            }
+        }
+        catch
+        {
+            // Không làm gián đoạn luồng gửi tin nhắn chính nếu broadcast user group gặp lỗi
+        }
     }
 }
 

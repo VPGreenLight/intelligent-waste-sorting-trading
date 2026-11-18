@@ -99,6 +99,10 @@ public class NegotiationChatService : INegotiationChatService
             ScheduledAt = context.Order.ScheduledAt,
             AcceptedAt = context.Order.AcceptedAt,
             IsProposalLocked = !IsProposalAllowed(context.Order.Status),
+            IsInquiryOnly = !string.IsNullOrWhiteSpace(context.Order.Note)
+                            && context.Order.Note.Contains("[INQUIRY]", StringComparison.Ordinal)
+                            && context.Order.Status == OrderStatus.Negotiating
+                            && !context.Order.AgreedPricePerKg.HasValue,
             IsChatOpen = IsGeneralChatAllowed(context.Order.Status),
             UnreadCount = unreadCount,
             ActiveProposal = activeProposalEntity != null
@@ -205,6 +209,7 @@ public class NegotiationChatService : INegotiationChatService
         var supersededIds = new List<Guid>();
         foreach (var prev in previousPendingProposals)
         {
+            var prevPayload = TryParseProposalPayload(prev.ProposalDataJson);
             prev.ProposalStatus = ProposalStatus.Superseded;
             prev.UpdatedAt = now;
             prev.ProposalDataJson = SerializeProposalPayload(new NegotiationProposalPayloadDto
@@ -212,20 +217,50 @@ public class NegotiationChatService : INegotiationChatService
                 ProposedPricePerKg = prev.ProposedPricePerKg ?? 0m,
                 ProposedWeightKg = prev.ProposedWeightKg ?? context.Order.EstimatedWeightKg,
                 ProposedTimeSlot = prev.ProposedTimeSlot ?? string.Empty,
+                CategoryCode = prevPayload?.CategoryCode,
+                PickupAddress = prevPayload?.PickupAddress,
                 Note = prev.MessageContent,
                 ProposalStatus = ProposalStatus.Superseded.ToString()
             });
             supersededIds.Add(prev.Id);
         }
 
-        // BR-HND-02 & BR-NEG-04: Chuyển trạng thái đơn từ Pending -> Negotiating và cập nhật khung giờ đề xuất mới nhất
+        // BR-HND-02 & BR-NEG-04: Chuyển trạng thái đơn từ Pending -> Negotiating và cập nhật điều khoản đề xuất mới nhất
         if (context.Order.Status == OrderStatus.Pending)
         {
             context.Order.Status = OrderStatus.Negotiating;
         }
 
         var normalizedTimeSlot = request.ProposedTimeSlot.Trim();
+        var normalizedCategoryCode = !string.IsNullOrWhiteSpace(request.CategoryCode)
+            ? request.CategoryCode.Trim().ToLowerInvariant()
+            : context.Order.CategoryCode;
+        var normalizedPickupAddress = !string.IsNullOrWhiteSpace(request.PickupAddress)
+            ? request.PickupAddress.Trim()
+            : context.Order.PickupAddress;
+
+        if (!string.IsNullOrWhiteSpace(context.Order.Note) &&
+            context.Order.Note.Contains("[INQUIRY]", StringComparison.Ordinal))
+        {
+            var cleanedNote = context.Order.Note.Replace("[INQUIRY]", string.Empty, StringComparison.Ordinal).Trim();
+            context.Order.Note = string.IsNullOrEmpty(cleanedNote) ? null : cleanedNote;
+        }
+
         context.Order.ProposedTimeSlot = normalizedTimeSlot;
+        context.Order.EstimatedWeightKg = request.ProposedWeightKg;
+        if (!context.Order.InitialPricePerKg.HasValue || context.Order.InitialPricePerKg.Value <= 0m)
+        {
+            context.Order.InitialPricePerKg = request.ProposedPricePerKg;
+        }
+        context.Order.AgreedPricePerKg = null;
+        if (!string.IsNullOrWhiteSpace(normalizedCategoryCode))
+        {
+            context.Order.CategoryCode = normalizedCategoryCode;
+        }
+        if (!string.IsNullOrWhiteSpace(normalizedPickupAddress))
+        {
+            context.Order.PickupAddress = normalizedPickupAddress;
+        }
         context.Order.UpdatedAt = now;
 
         var payload = new NegotiationProposalPayloadDto
@@ -233,6 +268,8 @@ public class NegotiationChatService : INegotiationChatService
             ProposedPricePerKg = request.ProposedPricePerKg,
             ProposedWeightKg = request.ProposedWeightKg,
             ProposedTimeSlot = normalizedTimeSlot,
+            CategoryCode = normalizedCategoryCode,
+            PickupAddress = normalizedPickupAddress,
             Note = request.Note?.Trim(),
             ProposalStatus = ProposalStatus.Pending.ToString()
         };
@@ -261,7 +298,7 @@ public class NegotiationChatService : INegotiationChatService
             _db,
             context.Order,
             agreedPricePerKg: null,
-            proposedWeightKg: null,
+            proposedWeightKg: request.ProposedWeightKg,
             timeSlotText: normalizedTimeSlot,
             ct);
         await _db.SaveChangesAsync(ct);
@@ -402,11 +439,14 @@ public class NegotiationChatService : INegotiationChatService
             };
         }
 
+        var existingPayload = TryParseProposalPayload(proposalMessage.ProposalDataJson);
         proposalMessage.ProposalDataJson = SerializeProposalPayload(new NegotiationProposalPayloadDto
         {
             ProposedPricePerKg = proposalMessage.ProposedPricePerKg ?? 0m,
             ProposedWeightKg = proposalMessage.ProposedWeightKg ?? context.Order.EstimatedWeightKg,
             ProposedTimeSlot = proposalMessage.ProposedTimeSlot ?? string.Empty,
+            CategoryCode = existingPayload?.CategoryCode ?? context.Order.CategoryCode,
+            PickupAddress = existingPayload?.PickupAddress ?? context.Order.PickupAddress,
             Note = proposalMessage.MessageContent,
             ProposalStatus = proposalMessage.ProposalStatus.Value.ToString(),
             RespondedByUserId = responderUserId,
@@ -761,6 +801,19 @@ public class NegotiationChatService : INegotiationChatService
 
     private static string SerializeProposalPayload(NegotiationProposalPayloadDto payload) =>
         JsonSerializer.Serialize(payload, JsonOptions);
+
+    private static NegotiationProposalPayloadDto? TryParseProposalPayload(string? json)
+    {
+        if (string.IsNullOrWhiteSpace(json)) return null;
+        try
+        {
+            return JsonSerializer.Deserialize<NegotiationProposalPayloadDto>(json, JsonOptions);
+        }
+        catch
+        {
+            return null;
+        }
+    }
 
     private sealed record OrderAccessContext(
         TradeOrder Order,

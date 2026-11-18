@@ -1,15 +1,23 @@
 {
-  "total_scans": 190,
+  "total_scans": 191,
   "categories": {
     "cardboard": 32,
     "metal": 6,
     "glass": 10,
-    "plastic": 10,
+    "plastic": 11,
     "paper": 84,
     "trash": 4
   },
   "ood_count": 61,
   "recent": [
+    {
+      "category": "plastic",
+      "confidence": 65.1,
+      "is_ood": false,
+      "model": "yolov8_detect",
+      "latency_ms": 2233.65,
+      "timestamp": "2026-11-18 22:36:00"
+    },
     {
       "category": "plastic",
       "confidence": 92.3,
@@ -201,15 +209,7 @@
       "model": "yolov8_detect",
       "latency_ms": 21.7,
       "timestamp": "2026-11-09 09:16:41"
-    },
-    {
-      "category": "paper",
-      "confidence": 63.5,
-      "is_ood": false,
-      "model": "yolov8_detect",
-      "latency_ms": 22.83,
-      "timestamp": "2026-11-09 09:16:41"
     }
   ],
-  "avg_latency_ms": 333.44
+  "avg_latency_ms": 343.39
 }
