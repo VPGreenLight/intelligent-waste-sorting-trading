@@ -51,7 +51,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<GamificationConfig> GamificationConfigs => Set<GamificationConfig>();
     public DbSet<PointRateRule> PointRateRules => Set<PointRateRule>();
     public DbSet<TreeLevelThreshold> TreeLevelThresholds => Set<TreeLevelThreshold>();
-    public DbSet<StaffShift> StaffShifts => Set<StaffShift>();
+    public DbSet<LeaderboardCycle> LeaderboardCycles => Set<LeaderboardCycle>();
 
     // ==========================================
     // MODULE M-15: GOVERNANCE, STAFF, ATTENDANCE & AUDIT TRAIL (FE-17, FE-18)

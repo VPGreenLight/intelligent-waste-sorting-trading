@@ -1,27 +1,27 @@
 using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
-using Microsoft.AspNetCore.Authorization;
+using Ecolink.Domain.Constants;
+using Ecolink.WebApi.Security;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Ecolink.WebApi.Controllers;
 
-/// <summary>Staff: kho quà (S-10), Eco Fact (S-09), điểm danh ca làm (6.2). Vai trò Staff (BR-ADM-02).</summary>
+/// <summary>Staff: kho quà (S-10), Eco Fact (S-09). Phân quyền MANAGE_INVENTORY hoặc Admin (BR-ADM-02).</summary>
 [ApiController]
-[Authorize(Roles = "Staff")]
+[HasPermission(StaffPermissions.ManageInventory)]
 [Produces("application/json")]
 public class StaffGamificationController : ControllerBase
 {
     private readonly IGiftService _gifts;
     private readonly IEcoFactService _facts;
-    private readonly IStaffShiftService _shifts;
     private readonly ICurrentUserService _currentUser;
 
-    public StaffGamificationController(IGiftService gifts, IEcoFactService facts, IStaffShiftService shifts, ICurrentUserService currentUser)
+    public StaffGamificationController(IGiftService gifts, IEcoFactService facts, ICurrentUserService currentUser)
     {
         _gifts = gifts;
         _facts = facts;
-        _shifts = shifts;
         _currentUser = currentUser;
     }
 
@@ -53,7 +53,13 @@ public class StaffGamificationController : ControllerBase
     public async Task<IActionResult> Restock(Guid id, [FromBody] RestockGiftRequest request, CancellationToken ct) =>
         Ok(ApiResponse<GiftDto>.Ok(await _gifts.RestockAsync(id, request.Quantity, ct), "Đã cập nhật tồn kho."));
 
-    /// <summary>Đặt ACTIVE / INACTIVE. Quà INACTIVE hoặc hết hàng không thể đổi (MSG-GAM-04).</summary>
+    /// <summary>[STT 095] Nhập hàng loạt mã E-Voucher hoặc số lượng bổ sung vào kho.</summary>
+    [HttpPost("api/v1/staff/gifts/{id:guid}/vouchers/import")]
+    public async Task<IActionResult> ImportVouchers(Guid id, [FromBody] ImportVouchersRequest request, CancellationToken ct) =>
+        Ok(ApiResponse<ImportVouchersResultDto>.Ok(await _gifts.ImportVouchersAsync(id, request, ct), "Đã nhập bổ sung voucher vào kho."));
+
+    /// <summary>[STT 094] Đặt ACTIVE / INACTIVE. Quà INACTIVE hoặc hết hàng không thể đổi (MSG-GAM-04).</summary>
+    [HttpPatch("api/v1/staff/gifts/{id:guid}/status")]
     [HttpPost("api/v1/staff/gifts/{id:guid}/status")]
     public async Task<IActionResult> GiftStatus(Guid id, [FromBody] SetStatusRequest request, CancellationToken ct) =>
         Ok(ApiResponse<GiftDto>.Ok(await _gifts.SetStatusAsync(id, request.Status, ct), "Đã cập nhật trạng thái quà."));
@@ -63,10 +69,28 @@ public class StaffGamificationController : ControllerBase
         [FromQuery] int pageSize = 20, CancellationToken ct = default) =>
         Ok(ApiResponse<GamPagedResult<RedemptionDto>>.Ok(await _gifts.ListGiftRedemptionsAsync(id, status, page, pageSize, ct)));
 
-    /// <summary>Xác nhận đã giao quà hiện vật / đã phát voucher cho người đổi.</summary>
+    /// <summary>[STT 096] Danh sách toàn bộ đơn đổi quà cần xử lý theo dõi.</summary>
+    [HttpGet("api/v1/staff/redemptions")]
+    public async Task<IActionResult> AllRedemptions([FromQuery] string? status, [FromQuery] string? type,
+        [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default) =>
+        Ok(ApiResponse<GamPagedResult<RedemptionDto>>.Ok(
+            await _gifts.ListAllRedemptionsAsync(status, type, search, page, pageSize, ct)));
+
+    /// <summary>[STT 097] Xác nhận đã giao quà hiện vật / phát voucher (Fulfill) hoặc hủy đơn kèm hoàn điểm (Cancel).</summary>
+    [HttpPatch("api/v1/staff/redemptions/{id:guid}/fulfill")]
+    [HttpPost("api/v1/staff/redemptions/{id:guid}/fulfill")]
     [HttpPost("api/v1/staff/gift-redemptions/{id:guid}/fulfill")]
-    public async Task<IActionResult> Fulfill(Guid id, CancellationToken ct) =>
-        Ok(ApiResponse<RedemptionDto>.Ok(await _gifts.FulfillAsync(id, ct), "Đã xác nhận bàn giao quà."));
+    public async Task<IActionResult> Fulfill(
+        Guid id,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] FulfillRedemptionRequest? request = null,
+        CancellationToken ct = default)
+    {
+        var data = await _gifts.FulfillAsync(id, request, ct);
+        var msg = string.Equals(data.Status, "Cancelled", StringComparison.OrdinalIgnoreCase)
+            ? "Đã hủy đơn đổi quà và hoàn điểm."
+            : "Đã xác nhận bàn giao quà.";
+        return Ok(ApiResponse<RedemptionDto>.Ok(data, msg));
+    }
 
     // ---------------- Eco Fact (S-09)
     [HttpGet("api/v1/staff/eco-facts")]
@@ -87,28 +111,16 @@ public class StaffGamificationController : ControllerBase
     public async Task<IActionResult> UpdateFact(Guid id, [FromBody] SaveEcoFactRequest request, CancellationToken ct) =>
         Ok(ApiResponse<EcoFactDto>.Ok(await _facts.UpdateAsync(id, request, ct), "Đã cập nhật Eco Fact."));
 
+    [HttpPatch("api/v1/staff/eco-facts/{id:guid}/status")]
     [HttpPost("api/v1/staff/eco-facts/{id:guid}/status")]
     public async Task<IActionResult> FactStatus(Guid id, [FromBody] SetStatusRequest request, CancellationToken ct) =>
         Ok(ApiResponse<EcoFactDto>.Ok(await _facts.SetStatusAsync(id, request.Status, ct), "Đã cập nhật trạng thái Eco Fact."));
 
-    // ---------------- Ca làm (6.2)
-    [HttpGet("api/v1/staff/shift")]
-    public async Task<IActionResult> ShiftStatus(CancellationToken ct) =>
-        Ok(ApiResponse<ShiftStatusDto>.Ok(await _shifts.GetStatusAsync(StaffId, ct)));
-
-    [HttpPost("api/v1/staff/shift/check-in")]
-    public async Task<IActionResult> ShiftCheckIn(CancellationToken ct)
+    /// <summary>[STT 090] Xóa Eco Fact nháp (hoặc vô hiệu hóa mềm nếu đã có người mở khóa).</summary>
+    [HttpDelete("api/v1/staff/eco-facts/{id:guid}")]
+    public async Task<IActionResult> DeleteFact(Guid id, CancellationToken ct)
     {
-        var data = await _shifts.CheckInAsync(StaffId, ct);
-        return Ok(ApiResponse<ShiftDto>.Ok(data, $"Vào ca thành công! (Chuỗi: {data.StreakCount} ngày).", "MSG-GAM-08"));
+        await _facts.DeleteAsync(id, ct);
+        return Ok(ApiResponse<object>.Ok(new { }, "Đã xóa Eco Fact."));
     }
-
-    [HttpPost("api/v1/staff/shift/check-out")]
-    public async Task<IActionResult> ShiftCheckOut(CancellationToken ct) =>
-        Ok(ApiResponse<ShiftDto>.Ok(await _shifts.CheckOutAsync(StaffId, ct), "Đã ra ca."));
-
-    [HttpGet("api/v1/staff/shift/history")]
-    public async Task<IActionResult> ShiftHistory([FromQuery] int? year, [FromQuery] int? month, [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 31, CancellationToken ct = default) =>
-        Ok(ApiResponse<GamPagedResult<ShiftDto>>.Ok(await _shifts.GetHistoryAsync(StaffId, year, month, page, pageSize, ct)));
 }

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -115,29 +115,6 @@ namespace Ecolink.Infrastructure.Data.Migrations
                 {
                     table.PrimaryKey("pk_point_rate_rules", x => x.rule_id);
                     table.CheckConstraint("ck_point_rate_nonneg", "points_per_kg >= 0");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "staff_shifts",
-                columns: table => new
-                {
-                    shift_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    staff_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    work_date = table.Column<DateOnly>(type: "date", nullable: false),
-                    check_in_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    check_out_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
-                    working_hours = table.Column<decimal>(type: "numeric(6,2)", precision: 6, scale: 2, nullable: true),
-                    streak_count = table.Column<int>(type: "integer", nullable: false, defaultValue: 1)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_staff_shifts", x => x.shift_id);
-                    table.ForeignKey(
-                        name: "fk_staff_shifts_users",
-                        column: x => x.staff_id,
-                        principalTable: "users",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.Restrict);
                 });
 
             migrationBuilder.CreateTable(
@@ -335,12 +312,6 @@ namespace Ecolink.Infrastructure.Data.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "ux_staff_shifts_staff_date",
-                table: "staff_shifts",
-                columns: new[] { "staff_id", "work_date" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
                 name: "ux_user_point_wallets_user",
                 table: "user_point_wallets",
                 column: "user_id",
@@ -373,9 +344,6 @@ namespace Ecolink.Infrastructure.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "point_transactions");
-
-            migrationBuilder.DropTable(
-                name: "staff_shifts");
 
             migrationBuilder.DropTable(
                 name: "tree_level_thresholds");

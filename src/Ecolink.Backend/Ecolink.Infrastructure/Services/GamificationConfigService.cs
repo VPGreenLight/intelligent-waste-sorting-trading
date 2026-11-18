@@ -23,8 +23,13 @@ public class GamificationConfigService : IGamificationConfigService
     };
 
     private readonly ApplicationDbContext _db;
+    private readonly IAuditLogService? _auditLog;
 
-    public GamificationConfigService(ApplicationDbContext db) => _db = db;
+    public GamificationConfigService(ApplicationDbContext db, IAuditLogService? auditLog = null)
+    {
+        _db = db;
+        _auditLog = auditLog;
+    }
 
     public async Task<GamificationConfigDto> GetAsync(CancellationToken ct = default) =>
         ToDto(await GetSettingsAsync(ct), (await _db.GamificationConfigs.AsNoTracking().FirstAsync(c => c.Id == 1, ct)).UpdatedAt);
@@ -49,16 +54,30 @@ public class GamificationConfigService : IGamificationConfigService
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
         await ApplyAsync(adminId, r, rates, ct);
-        _db.AuditLogs.Add(new AuditLog
+        if (_auditLog != null)
         {
-            ActorUserId = adminId,
-            Action = "GAMIFICATION_CONFIG_UPDATE",
-            EntityType = "GamificationConfig",
-            EntityId = "1",
-            OldValues = JsonSerializer.Serialize(before, Json),
-            NewValues = JsonSerializer.Serialize(r, Json)
-        });
-        await _db.SaveChangesAsync(ct);
+            await _auditLog.LogAsync(
+                action: "GAMIFICATION_CONFIG_UPDATE",
+                entityType: "GamificationConfig",
+                entityId: "1",
+                oldValues: before,
+                newValues: r,
+                explicitActorId: adminId,
+                ct: ct);
+        }
+        else
+        {
+            _db.AuditLogs.Add(new AuditLog
+            {
+                ActorUserId = adminId,
+                Action = "GAMIFICATION_CONFIG_UPDATE",
+                EntityType = "GamificationConfig",
+                EntityId = "1",
+                OldValues = JsonSerializer.Serialize(before, Json),
+                NewValues = JsonSerializer.Serialize(r, Json)
+            });
+            await _db.SaveChangesAsync(ct);
+        }
         await tx.CommitAsync(ct);
         return await GetAsync(ct);
     }
@@ -78,16 +97,30 @@ public class GamificationConfigService : IGamificationConfigService
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
         await ApplyAsync(adminId, defaults, rates, ct);
-        _db.AuditLogs.Add(new AuditLog
+        if (_auditLog != null)
         {
-            ActorUserId = adminId,
-            Action = "GAMIFICATION_CONFIG_RESET",
-            EntityType = "GamificationConfig",
-            EntityId = "1",
-            OldValues = JsonSerializer.Serialize(before, Json),
-            NewValues = JsonSerializer.Serialize(defaults, Json)
-        });
-        await _db.SaveChangesAsync(ct);
+            await _auditLog.LogAsync(
+                action: "GAMIFICATION_CONFIG_RESET",
+                entityType: "GamificationConfig",
+                entityId: "1",
+                oldValues: before,
+                newValues: defaults,
+                explicitActorId: adminId,
+                ct: ct);
+        }
+        else
+        {
+            _db.AuditLogs.Add(new AuditLog
+            {
+                ActorUserId = adminId,
+                Action = "GAMIFICATION_CONFIG_RESET",
+                EntityType = "GamificationConfig",
+                EntityId = "1",
+                OldValues = JsonSerializer.Serialize(before, Json),
+                NewValues = JsonSerializer.Serialize(defaults, Json)
+            });
+            await _db.SaveChangesAsync(ct);
+        }
         await tx.CommitAsync(ct);
         return await GetAsync(ct);
     }

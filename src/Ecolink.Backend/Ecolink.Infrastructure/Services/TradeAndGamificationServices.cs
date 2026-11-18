@@ -5,6 +5,7 @@ using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
+using Ecolink.Domain.Exceptions;
 using Ecolink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,55 +15,153 @@ namespace Ecolink.Infrastructure.Services;
 public class GamificationService : IGamificationService
 {
     private readonly ILogger<GamificationService> _logger;
+    private readonly ApplicationDbContext? _db;
+    private readonly ILeaderboardService? _leaderboard;
     private static readonly ConcurrentDictionary<Guid, EcoProfileDto> _profiles = new();
 
-    public GamificationService(ILogger<GamificationService> logger)
+    public GamificationService(
+        ILogger<GamificationService> logger,
+        ApplicationDbContext? db = null,
+        ILeaderboardService? leaderboard = null)
     {
         _logger = logger;
+        _db = db;
+        _leaderboard = leaderboard;
     }
 
-    public Task<EcoProfileDto> GetUserProfileAsync(Guid userId, CancellationToken cancellationToken = default)
+    public async Task<EcoProfileDto> GetUserProfileAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        var profile = _profiles.GetOrAdd(userId, id => new EcoProfileDto
+        if (_db == null)
         {
-            UserId = id,
-            CurrentGreenPoints = 120,
-            TotalLifetimePoints = 350,
-            TreeLevel = 2,
-            TreeExperience = 50,
-            ExperienceToNextLevel = 100,
-            TotalWasteScanned = 15,
-            TotalRecycledKg = 8.5m
-        });
-
-        return Task.FromResult(profile);
-    }
-
-    public Task<EcoProfileDto> AwardPointsForRecyclingAsync(Guid userId, decimal weightKg, CancellationToken cancellationToken = default)
-    {
-        var pointsToAdd = (int)Math.Round(weightKg * 10);
-        var profile = _profiles.GetOrAdd(userId, id => new EcoProfileDto { UserId = id });
-
-        profile.CurrentGreenPoints += pointsToAdd;
-        profile.TotalLifetimePoints += pointsToAdd;
-        profile.TotalRecycledKg += weightKg;
-        profile.TreeExperience += pointsToAdd;
-
-        while (profile.TreeExperience >= 100)
-        {
-            profile.TreeLevel += 1;
-            profile.TreeExperience -= 100;
-            _logger.LogInformation("Người dùng {UserId} đã nâng cấp Cây ảo lên Level {Level}!", userId, profile.TreeLevel);
+            return _profiles.GetOrAdd(userId, id => new EcoProfileDto
+            {
+                UserId = id,
+                CurrentGreenPoints = 120,
+                TotalLifetimePoints = 350,
+                TreeLevel = 2,
+                TreeStageTitle = "Sprout",
+                TreeExperience = 50,
+                ExperienceToNextLevel = 100,
+                TotalWasteScanned = 15,
+                TotalRecycledKg = 8.5m,
+                Co2SavedKg = 15.73
+            });
         }
 
-        profile.ExperienceToNextLevel = 100 - profile.TreeExperience;
-        _logger.LogInformation("Cộng {Points} Điểm Xanh cho User {UserId} từ {Weight}kg rác tái chế", pointsToAdd, userId, weightKg);
+        var userExists = await _db.Users.AsNoTracking().AnyAsync(u => u.Id == userId, cancellationToken);
+        if (!userExists)
+            throw new NotFoundException("Không tìm thấy hồ sơ người dùng.");
 
-        return Task.FromResult(profile);
+        var wallet = await _db.UserPointWallets.AsNoTracking().FirstOrDefaultAsync(w => w.UserId == userId, cancellationToken);
+        var tree = await _db.VirtualTreeProgresses.AsNoTracking().FirstOrDefaultAsync(t => t.UserId == userId, cancellationToken);
+        var eco = await _db.UserEcoProfiles.AsNoTracking().FirstOrDefaultAsync(e => e.UserId == userId, cancellationToken);
+        var thresholds = await _db.TreeLevelThresholds.AsNoTracking().OrderBy(l => l.Level).ToListAsync(cancellationToken);
+
+        var completedRequestIds = await _db.HandoverRequests
+            .AsNoTracking()
+            .Where(h => h.Status == HandoverStatus.Completed && (h.UserId == userId || h.RecyclerId == userId))
+            .Select(h => h.Id)
+            .ToListAsync(cancellationToken);
+
+        var receiptWeightKg = completedRequestIds.Count == 0
+            ? 0m
+            : await _db.HandoverReceipts
+                .AsNoTracking()
+                .Where(r => completedRequestIds.Contains(r.RequestId))
+                .SumAsync(r => r.TotalWeightKg, cancellationToken);
+
+        var scanCount = await _db.AiScanHistories.AsNoTracking().CountAsync(s => s.UserId == userId, cancellationToken);
+
+        var lastCheckin = await _db.DailyCheckinLogs
+            .AsNoTracking()
+            .Where(l => l.UserId == userId)
+            .OrderByDescending(l => l.CheckinDate)
+            .Select(l => new { l.CheckinDate, l.StreakCount })
+            .FirstOrDefaultAsync(cancellationToken);
+
+        var todayIct = GamTime.Today();
+        var currentStreak = lastCheckin != null &&
+                            (lastCheckin.CheckinDate == todayIct || lastCheckin.CheckinDate == todayIct.AddDays(-1))
+            ? lastCheckin.StreakCount
+            : 0;
+
+        var currentPoints = (int)Math.Min(int.MaxValue, wallet?.CurrentBalance ?? eco?.CurrentGreenPoints ?? 0L);
+        var lifetimePoints = (int)Math.Min(int.MaxValue, Math.Max(wallet?.TotalEarned ?? 0L, eco?.TotalLifetimePoints ?? 0));
+        var treeLevel = Math.Max(tree?.TreeLevel ?? 1, eco?.TreeLevel ?? 1);
+        var treeExp = (int)Math.Min(int.MaxValue, Math.Max(tree?.GrowthPoints ?? 0L, eco?.TreeExperience ?? 0));
+
+        var currentStage = thresholds.FirstOrDefault(l => l.Level == treeLevel);
+        var nextStage = thresholds.FirstOrDefault(l => l.Level == treeLevel + 1);
+        var expToNext = nextStage != null ? (int)Math.Min(int.MaxValue, nextStage.RequiredPoints) : 0;
+
+        var totalRecycledKg = Math.Max(receiptWeightKg, eco?.TotalRecycledKg ?? 0m);
+        var totalWasteScanned = Math.Max(scanCount, eco?.TotalWasteScanned ?? 0);
+
+        return new EcoProfileDto
+        {
+            UserId = userId,
+            CurrentGreenPoints = currentPoints,
+            TotalLifetimePoints = lifetimePoints,
+            TreeLevel = treeLevel,
+            TreeStageTitle = currentStage?.Title ?? $"Cấp {treeLevel}",
+            TreeExperience = treeExp,
+            ExperienceToNextLevel = expToNext,
+            TotalWasteScanned = totalWasteScanned,
+            TotalRecycledKg = totalRecycledKg,
+            CurrentStreak = currentStreak,
+            Co2SavedKg = Math.Round((double)totalRecycledKg * 1.85, 2)
+        };
     }
 
-    public Task<IEnumerable<LeaderboardEntryDto>> GetLeaderboardAsync(int top = 10, CancellationToken cancellationToken = default)
+    public async Task<EcoProfileDto> AwardPointsForRecyclingAsync(Guid userId, decimal weightKg, CancellationToken cancellationToken = default)
     {
+        var pointsToAdd = (int)Math.Round(weightKg * 10);
+
+        if (_db == null)
+        {
+            var profile = _profiles.GetOrAdd(userId, id => new EcoProfileDto { UserId = id });
+
+            profile.CurrentGreenPoints += pointsToAdd;
+            profile.TotalLifetimePoints += pointsToAdd;
+            profile.TotalRecycledKg += weightKg;
+            profile.TreeExperience += pointsToAdd;
+
+            while (profile.TreeExperience >= 100)
+            {
+                profile.TreeLevel += 1;
+                profile.TreeExperience -= 100;
+                _logger.LogInformation("Người dùng {UserId} đã nâng cấp Cây ảo lên Level {Level}!", userId, profile.TreeLevel);
+            }
+
+            profile.ExperienceToNextLevel = 100 - profile.TreeExperience;
+            _logger.LogInformation("Cộng {Points} Điểm Xanh cho User {UserId} từ {Weight}kg rác tái chế", pointsToAdd, userId, weightKg);
+
+            return profile;
+        }
+
+        // Chỉ đồng bộ bộ đếm legacy UserEcoProfile; cộng ví điểm chính thức do PointsService.AwardHandoverPointsAsync đảm nhiệm
+        var eco = await _db.UserEcoProfiles.FirstOrDefaultAsync(e => e.UserId == userId, cancellationToken);
+        if (eco != null)
+        {
+            eco.CurrentGreenPoints += pointsToAdd;
+            eco.TotalLifetimePoints += pointsToAdd;
+            eco.TotalRecycledKg += weightKg;
+            eco.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(cancellationToken);
+        }
+
+        _logger.LogInformation("Đồng bộ thống kê tái chế +{Weight}kg ({Points}đ ước tính) cho User {UserId}", weightKg, pointsToAdd, userId);
+        return await GetUserProfileAsync(userId, cancellationToken);
+    }
+
+    public async Task<IEnumerable<LeaderboardEntryDto>> GetLeaderboardAsync(int top = 10, CancellationToken cancellationToken = default)
+    {
+        if (_leaderboard != null)
+        {
+            var view = await _leaderboard.GetLeaderboardViewAsync(top, null, null, null, cancellationToken);
+            return view.Items;
+        }
+
         var mockBoard = new List<LeaderboardEntryDto>
         {
             new() { Rank = 1, FullName = "Nguyễn Văn Xanh", TotalPoints = 1450, TreeLevel = 5 },
@@ -72,7 +171,7 @@ public class GamificationService : IGamificationService
             new() { Rank = 5, FullName = "Hoàng Eco", TotalPoints = 720, TreeLevel = 2 }
         };
 
-        return Task.FromResult<IEnumerable<LeaderboardEntryDto>>(mockBoard.Take(top));
+        return mockBoard.Take(top);
     }
 }
 

@@ -59,9 +59,12 @@ public interface IGiftService
     Task<GiftDto> CreateAsync(SaveGiftRequest request, CancellationToken ct = default);
     Task<GiftDto> UpdateAsync(Guid giftId, SaveGiftRequest request, CancellationToken ct = default);
     Task<GiftDto> RestockAsync(Guid giftId, int quantity, CancellationToken ct = default);
+    Task<ImportVouchersResultDto> ImportVouchersAsync(Guid giftId, ImportVouchersRequest request, CancellationToken ct = default);
     Task<GiftDto> SetStatusAsync(Guid giftId, string status, CancellationToken ct = default);
     Task<GamPagedResult<RedemptionDto>> ListGiftRedemptionsAsync(Guid giftId, string? status, int page, int pageSize, CancellationToken ct = default);
+    Task<GamPagedResult<RedemptionDto>> ListAllRedemptionsAsync(string? status, string? type, string? search, int page, int pageSize, CancellationToken ct = default);
     Task<RedemptionDto> FulfillAsync(Guid redemptionId, CancellationToken ct = default);
+    Task<RedemptionDto> FulfillAsync(Guid redemptionId, FulfillRedemptionRequest? request, CancellationToken ct = default);
 
     /// <summary>JOB-12: đánh dấu Expired các voucher đã quá hạn. Trả số dòng cập nhật.</summary>
     Task<int> ExpireVouchersAsync(CancellationToken ct = default);
@@ -82,12 +85,15 @@ public interface IEcoFactService
     Task<EcoFactDto> CreateAsync(Guid staffId, SaveEcoFactRequest request, CancellationToken ct = default);
     Task<EcoFactDto> UpdateAsync(Guid id, SaveEcoFactRequest request, CancellationToken ct = default);
     Task<EcoFactDto> SetStatusAsync(Guid id, string status, CancellationToken ct = default);
+    Task DeleteAsync(Guid id, CancellationToken ct = default);
 }
 
-public interface IStaffShiftService
+public interface ILeaderboardService
 {
-    Task<ShiftStatusDto> GetStatusAsync(Guid staffId, CancellationToken ct = default);
-    Task<ShiftDto> CheckInAsync(Guid staffId, CancellationToken ct = default);
-    Task<ShiftDto> CheckOutAsync(Guid staffId, CancellationToken ct = default);
-    Task<GamPagedResult<ShiftDto>> GetHistoryAsync(Guid staffId, int? year, int? month, int page, int pageSize, CancellationToken ct = default);
+    Task<List<LeaderboardCycleDto>> GetCyclesAsync(CancellationToken ct = default);
+    Task<LeaderboardCycleDto> CreateCycleAsync(Guid adminId, SaveLeaderboardCycleRequest request, CancellationToken ct = default);
+    Task<LeaderboardCycleDto> UpdateCycleAsync(Guid adminId, Guid cycleId, SaveLeaderboardCycleRequest request, CancellationToken ct = default);
+    Task<LeaderboardCycleDto> ActivateCycleAsync(Guid adminId, Guid cycleId, CancellationToken ct = default);
+    Task<LeaderboardCycleDto> FinalizeCycleAsync(Guid adminId, Guid cycleId, CancellationToken ct = default);
+    Task<LeaderboardViewDto> GetLeaderboardViewAsync(int top = 10, string? periodType = null, Guid? cycleId = null, Guid? viewerUserId = null, CancellationToken ct = default);
 }

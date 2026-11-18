@@ -25,12 +25,19 @@ internal static class GamErrors
 
     private static readonly string[] ImageExt = { ".jpg", ".jpeg", ".png", ".webp" };
 
-    /// <summary>Kiểm tra URL ảnh http(s) và định dạng (MSG-CLS-01); null/rỗng hợp lệ.</summary>
+    /// <summary>Kiểm tra URL ảnh http(s) hoặc đường dẫn nội bộ /assets/ và định dạng (MSG-CLS-01); null/rỗng hợp lệ.</summary>
     public static string? CleanImageUrl(string? url, string rule)
     {
         if (string.IsNullOrWhiteSpace(url)) return null;
         var u = url.Trim();
         if (u.Length > 1000) throw Rule(rule, "MSG-NTF-03", "URL ảnh quá dài.");
+        if (u.StartsWith("/assets/", StringComparison.OrdinalIgnoreCase))
+        {
+            var relExt = Path.GetExtension(u.Split('?')[0]).ToLowerInvariant();
+            if (relExt.Length == 0 || !ImageExt.Contains(relExt))
+                throw Rule(rule, "MSG-CLS-01", "Định dạng ảnh không được hỗ trợ (chỉ JPG, PNG, WEBP).");
+            return u;
+        }
         if (!Uri.TryCreate(u, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
             throw Rule(rule, "MSG-AUTH-02", "URL ảnh không hợp lệ.");
         var ext = Path.GetExtension(uri.AbsolutePath).ToLowerInvariant();

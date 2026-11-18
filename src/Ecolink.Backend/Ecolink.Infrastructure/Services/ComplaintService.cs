@@ -26,19 +26,22 @@ public class ComplaintService : IComplaintService
     private readonly IAuditLogService _auditLogService;
     private readonly IReviewService _reviewService;
     private readonly ILogger<ComplaintService> _logger;
+    private readonly IPointsService? _pointsService;
 
     public ComplaintService(
         ApplicationDbContext db,
         IFileStorageService fileStorage,
         IAuditLogService auditLogService,
         IReviewService reviewService,
-        ILogger<ComplaintService> logger)
+        ILogger<ComplaintService> logger,
+        IPointsService? pointsService = null)
     {
         _db = db;
         _fileStorage = fileStorage;
         _auditLogService = auditLogService;
         _reviewService = reviewService;
         _logger = logger;
+        _pointsService = pointsService;
     }
 
     public Task<RecyclerDocumentUploadResponseDto> UploadEvidenceAsync(
@@ -473,8 +476,8 @@ public class ComplaintService : IComplaintService
                     if (receipt != null && receipt.PointsAwarded > 0)
                     {
                         var revokeAmount = (int)Math.Min(int.MaxValue, receipt.PointsAwarded);
-                        await ClawBackPointsSafeAsync(handover.UserId, revokeAmount, receipt.TotalWeightKg, ct);
-                        await ClawBackPointsSafeAsync(handover.RecyclerId, revokeAmount, receipt.TotalWeightKg, ct);
+                        await ClawBackPointsSafeAsync(handover.UserId, revokeAmount, receipt.TotalWeightKg, complaint.Id, complaint.ComplaintCode, ct);
+                        await ClawBackPointsSafeAsync(handover.RecyclerId, revokeAmount, receipt.TotalWeightKg, complaint.Id, complaint.ComplaintCode, ct);
                         receipt.PointsAwarded = 0;
                         pointsRevoked = true;
                     }
@@ -498,6 +501,10 @@ public class ComplaintService : IComplaintService
                                     MidpointRounding.AwayFromZero);
                             }
                             await _db.SaveChangesAsync(ct);
+                            if (_pointsService != null)
+                            {
+                                await _pointsService.AwardHandoverPointsAsync(receipt.Id, ct);
+                            }
                             await HandoverTradeSyncHelper.SyncReceiptCompletionAsync(_db, receipt, ct);
                         }
                     }
@@ -606,16 +613,56 @@ public class ComplaintService : IComplaintService
         return await LoadComplaintDetailAsync(complaint.Id, ct);
     }
 
-    private async Task ClawBackPointsSafeAsync(Guid userId, int pointsToRevoke, decimal weightKg, CancellationToken ct)
+    private async Task ClawBackPointsSafeAsync(
+        Guid userId,
+        int pointsToRevoke,
+        decimal weightKg,
+        Guid complaintId,
+        string complaintCode,
+        CancellationToken ct)
     {
+        var now = DateTime.UtcNow;
         var ecoProfile = await _db.UserEcoProfiles.FirstOrDefaultAsync(p => p.UserId == userId, ct);
-        if (ecoProfile == null) return;
+        if (ecoProfile != null)
+        {
+            // BR-GAM-03: Điểm hiện có không bao giờ âm sau thu hồi
+            ecoProfile.CurrentGreenPoints = Math.Max(0, ecoProfile.CurrentGreenPoints - pointsToRevoke);
+            ecoProfile.TotalLifetimePoints = Math.Max(0, ecoProfile.TotalLifetimePoints - pointsToRevoke);
+            ecoProfile.TotalRecycledKg = Math.Max(0m, ecoProfile.TotalRecycledKg - weightKg);
+            ecoProfile.UpdatedAt = now;
+        }
 
-        // BR-GAM-03: Điểm hiện có không bao giờ âm sau thu hồi
-        ecoProfile.CurrentGreenPoints = Math.Max(0, ecoProfile.CurrentGreenPoints - pointsToRevoke);
-        ecoProfile.TotalLifetimePoints = Math.Max(0, ecoProfile.TotalLifetimePoints - pointsToRevoke);
-        ecoProfile.TotalRecycledKg = Math.Max(0m, ecoProfile.TotalRecycledKg - weightKg);
-        ecoProfile.UpdatedAt = DateTime.UtcNow;
+        if (pointsToRevoke <= 0) return;
+
+        var wallet = await _db.UserPointWallets.FirstOrDefaultAsync(w => w.UserId == userId, ct);
+        if (wallet == null || wallet.CurrentBalance <= 0) return;
+
+        var idemKey = $"COMPLAINT_CLAWBACK:{complaintId}:{userId}";
+        var alreadyRevoked = await _db.PointTransactions
+            .AsNoTracking()
+            .AnyAsync(t => t.IdempotencyKey == idemKey, ct);
+        if (alreadyRevoked) return;
+
+        // BR-GAM-03: chỉ trừ tối đa bằng số dư khả dụng hiện tại (không bao giờ âm)
+        var actualDeducted = Math.Min(wallet.CurrentBalance, (long)pointsToRevoke);
+        if (actualDeducted <= 0) return;
+
+        wallet.CurrentBalance -= actualDeducted;
+        wallet.TotalEarned = Math.Max(0L, wallet.TotalEarned - actualDeducted);
+        wallet.UpdatedAt = now;
+
+        _db.PointTransactions.Add(new PointTransaction
+        {
+            WalletId = wallet.Id,
+            UserId = userId,
+            Points = -actualDeducted,
+            ActionType = PointActionType.Adjustment,
+            SourceType = "ComplaintClawback",
+            SourceId = complaintId.ToString(),
+            IdempotencyKey = idemKey,
+            Description = $"Thu hồi điểm theo phán quyết khiếu nại #{complaintCode}",
+            CreatedAt = now
+        });
     }
 
     private async Task<ComplaintDetailDto> LoadComplaintDetailAsync(Guid complaintId, CancellationToken ct)

@@ -1,6 +1,5 @@
-﻿using System;
+using System;
 using Microsoft.EntityFrameworkCore.Migrations;
-using NetTopologySuite.Geometries;
 
 #nullable disable
 
@@ -12,42 +11,6 @@ namespace Ecolink.Infrastructure.Data.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropColumn(
-                name: "Id",
-                table: "recycler_profiles");
-
-            migrationBuilder.AlterColumn<Point>(
-                name: "geom",
-                table: "recycler_profiles",
-                type: "geometry(Point, 4326)",
-                nullable: true,
-                oldClrType: typeof(Point),
-                oldType: "geometry(Point, 4326)");
-
-            migrationBuilder.CreateTable(
-                name: "audit_logs",
-                columns: table => new
-                {
-                    audit_id = table.Column<Guid>(type: "uuid", nullable: false),
-                    actor_user_id = table.Column<Guid>(type: "uuid", nullable: true),
-                    action = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: false),
-                    entity_type = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    entity_id = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
-                    old_values = table.Column<string>(type: "jsonb", nullable: true),
-                    new_values = table.Column<string>(type: "jsonb", nullable: true),
-                    created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "NOW()")
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("pk_audit_logs", x => x.audit_id);
-                    table.ForeignKey(
-                        name: "fk_audit_logs_users",
-                        column: x => x.actor_user_id,
-                        principalTable: "users",
-                        principalColumn: "id",
-                        onDelete: ReferentialAction.SetNull);
-                });
-
             migrationBuilder.CreateTable(
                 name: "blog_posts",
                 columns: table => new
@@ -113,21 +76,6 @@ namespace Ecolink.Infrastructure.Data.Migrations
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_audit_logs_actor_user_id",
-                table: "audit_logs",
-                column: "actor_user_id");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_audit_logs_created",
-                table: "audit_logs",
-                column: "created_at");
-
-            migrationBuilder.CreateIndex(
-                name: "ix_audit_logs_entity",
-                table: "audit_logs",
-                columns: new[] { "entity_type", "entity_id" });
-
-            migrationBuilder.CreateIndex(
                 name: "IX_blog_posts_approved_by_admin_id",
                 table: "blog_posts",
                 column: "approved_by_admin_id");
@@ -158,29 +106,10 @@ namespace Ecolink.Infrastructure.Data.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "audit_logs");
-
-            migrationBuilder.DropTable(
                 name: "blog_posts");
 
             migrationBuilder.DropTable(
                 name: "notifications");
-
-            migrationBuilder.AlterColumn<Point>(
-                name: "geom",
-                table: "recycler_profiles",
-                type: "geometry(Point, 4326)",
-                nullable: false,
-                oldClrType: typeof(Point),
-                oldType: "geometry(Point, 4326)",
-                oldNullable: true);
-
-            migrationBuilder.AddColumn<Guid>(
-                name: "Id",
-                table: "recycler_profiles",
-                type: "uuid",
-                nullable: false,
-                defaultValue: new Guid("00000000-0000-0000-0000-000000000000"));
         }
     }
 }

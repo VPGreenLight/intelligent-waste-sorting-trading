@@ -15,10 +15,6 @@ public static class GamRoutes
     public const string EcoFacts = "/api/v1/eco-facts";
     public const string StaffGifts = "/api/v1/staff/gifts";
     public const string StaffFacts = "/api/v1/staff/eco-facts";
-    public const string Shift = "/api/v1/staff/shift";
-    public const string ShiftIn = "/api/v1/staff/shift/check-in";
-    public const string ShiftOut = "/api/v1/staff/shift/check-out";
-    public const string ShiftHistory = "/api/v1/staff/shift/history";
     public const string Config = "/api/v1/admin/gamification/config";
     public const string ConfigReset = "/api/v1/admin/gamification/config/reset";
 
@@ -44,11 +40,11 @@ public static class GamHelper
 {
     private static readonly Lazy<Task<string>> StaffTokenLazy = new(async () =>
     {
-        var user = Environment.GetEnvironmentVariable("ECOLINK_STAFF_USER") ?? "blogstaff";
-        var password = Environment.GetEnvironmentVariable("ECOLINK_STAFF_PASSWORD") ?? "citizen123";
+        var user = Environment.GetEnvironmentVariable("ECOLINK_STAFF_USER") ?? "staff";
+        var password = Environment.GetEnvironmentVariable("ECOLINK_STAFF_PASSWORD") ?? "staff123";
         var r = await Api.PostJsonAsync(Routes.Login, new { usernameOrEmail = user, password });
         if (r.Status != 200)
-            throw new XunitException($"Không đăng nhập được tài khoản Staff '{user}' ({r.Status}). Hãy chạy seed_staff.sql trước. {r.Raw}");
+            throw new XunitException($"Không đăng nhập được tài khoản Staff '{user}' ({r.Status}). {r.Raw}");
         return Api.ExtractToken(r.Body) ?? throw new XunitException("Đăng nhập Staff không trả về token.");
     });
 
@@ -180,8 +176,8 @@ public class GamAccessTests
     [Fact] public async Task GiftStore_AsCitizen_200() => (await Api.GetAsync(GamRoutes.Gifts, await GamHelper.Citizen())).ShouldBe(200);
     [Fact] public async Task GiftStore_AsRecycler_200() => (await Api.GetAsync(GamRoutes.Gifts, await GamHelper.Collector())).ShouldBe(200);
 
-    // Check-in, cây ảo, Eco Fact: chỉ role User (BR-GAM-08)
-    public static TheoryData<string> UserOnlyPaths => new() { GamRoutes.CheckIn, GamRoutes.Tree, GamRoutes.EcoFacts };
+    // Cây ảo, Eco Fact: chỉ role User (BR-GAM-08); Daily Check-in: Citizen & Recycler (STT 078-079)
+    public static TheoryData<string> UserOnlyPaths => new() { GamRoutes.Tree, GamRoutes.EcoFacts };
 
     [Theory, MemberData(nameof(UserOnlyPaths))]
     public async Task UserOnly_AsRecycler_403(string path) => (await Api.GetAsync(path, await GamHelper.Collector())).ShouldBe(403);
@@ -192,17 +188,19 @@ public class GamAccessTests
     [Theory, MemberData(nameof(UserOnlyPaths))]
     public async Task UserOnly_WithoutToken_401(string path) => (await Api.GetAsync(path)).ShouldBe(401);
 
-    [Fact] public async Task Checkin_Post_AsRecycler_403() => (await ApiJson.PostAsync(GamRoutes.CheckIn, null, await GamHelper.Collector())).ShouldBe(403);
+    [Fact] public async Task Checkin_Status_AsRecycler_200() => (await Api.GetAsync(GamRoutes.CheckIn, await GamHelper.Collector())).ShouldBe(200);
+    [Fact] public async Task Checkin_AsStaff_403() => (await Api.GetAsync(GamRoutes.CheckIn, await GamHelper.Staff())).ShouldBe(403);
+    [Fact] public async Task Checkin_WithoutToken_401() => (await Api.GetAsync(GamRoutes.CheckIn)).ShouldBe(401);
     [Fact] public async Task Water_AsRecycler_403() => (await ApiJson.PostAsync(GamRoutes.Water, null, await GamHelper.Collector())).ShouldBe(403);
 
-    // Staff
-    public static TheoryData<string> StaffPaths => new() { GamRoutes.StaffGifts, GamRoutes.StaffFacts, GamRoutes.Shift, GamRoutes.ShiftHistory };
+    // Staff / Admin (BR-ADM-02)
+    public static TheoryData<string> StaffPaths => new() { GamRoutes.StaffGifts, GamRoutes.StaffFacts };
 
     [Theory, MemberData(nameof(StaffPaths))]
     public async Task StaffEndpoints_AsCitizen_403(string path) => (await Api.GetAsync(path, await GamHelper.Citizen())).ShouldBe(403);
 
     [Theory, MemberData(nameof(StaffPaths))]
-    public async Task StaffEndpoints_AsAdmin_403(string path) => (await Api.GetAsync(path, await GamHelper.Admin())).ShouldBe(403);
+    public async Task StaffEndpoints_AsAdmin_200(string path) => (await Api.GetAsync(path, await GamHelper.Admin())).ShouldBe(200);
 
     [Theory, MemberData(nameof(StaffPaths))]
     public async Task StaffEndpoints_WithoutToken_401(string path) => (await Api.GetAsync(path)).ShouldBe(401);
@@ -1407,82 +1405,4 @@ public class GamRedeemTests
         }
         finally { await GamHelper.ResetConfigAsync(); }
     }
-}
-
-// =====================================================================================
-public class GamStaffShiftTests
-{
-    [Fact]
-    public async Task Status_ShowsTodayAndFlags()
-    {
-        var d = (await Api.GetAsync(GamRoutes.Shift, await GamHelper.Staff())).ShouldBe(200).Data();
-        Assert.Equal(DateOnly.FromDateTime(DateTime.UtcNow.AddHours(7)), DateOnly.Parse(d.GS("today")));
-        Assert.Equal(!d.GetProperty("canCheckIn").GetBoolean(), d.GetProperty("todayShift").ValueKind != JsonValueKind.Null);
-    }
-
-    [Fact]
-    public async Task CheckIn_IsOncePerDay()
-    {
-        var staff = await GamHelper.Staff();
-        var first = await ApiJson.PostAsync(GamRoutes.ShiftIn, null, staff);
-        first.GamShouldBeIn(200, 400);                               // 400 nếu hôm nay đã vào ca ở lần chạy trước
-        (await ApiJson.PostAsync(GamRoutes.ShiftIn, null, staff)).ShouldBe(400);
-
-        var d = (await Api.GetAsync(GamRoutes.Shift, staff)).ShouldBe(200).Data();
-        Assert.False(d.GetProperty("canCheckIn").GetBoolean());
-        Assert.True(d.GetProperty("currentStreak").GetInt32() >= 1);
-        Assert.NotEqual(JsonValueKind.Null, d.GetProperty("todayShift").ValueKind);
-    }
-
-    [Fact]
-    public async Task CheckIn_Concurrent_OnlyOneRecordPerDay()
-    {
-        var staff = await GamHelper.Staff();
-        var results = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => ApiJson.PostAsync(GamRoutes.ShiftIn, null, staff)));
-        Assert.True(results.Count(r => r.Status == 200) <= 1);
-        Assert.All(results.Where(r => r.Status != 200), r => r.ShouldBe(400));
-        var today = DateTime.UtcNow.AddHours(7).ToString("yyyy-MM-dd");
-        var rows = (await Api.GetAsync(GamRoutes.ShiftHistory, staff, new Dictionary<string, string> { ["pageSize"] = "50" }))
-            .ShouldBe(200).Data().GetProperty("items").EnumerateArray().Where(i => i.GS("workDate") == today).ToList();
-        Assert.Single(rows);
-    }
-
-    [Fact]
-    public async Task CheckOut_RecordsHours_ThenSecondCheckOutFails()
-    {
-        var staff = await GamHelper.Staff();
-        await ApiJson.PostAsync(GamRoutes.ShiftIn, null, staff);
-        var first = await ApiJson.PostAsync(GamRoutes.ShiftOut, null, staff);
-        first.GamShouldBeIn(200, 400);                               // 400 nếu hôm nay đã ra ca ở lần chạy trước
-        (await ApiJson.PostAsync(GamRoutes.ShiftOut, null, staff)).ShouldBe(400);
-
-        var d = (await Api.GetAsync(GamRoutes.Shift, staff)).ShouldBe(200).Data();
-        Assert.False(d.GetProperty("canCheckOut").GetBoolean());
-        var shift = d.GetProperty("todayShift");
-        Assert.NotEqual(JsonValueKind.Null, shift.GetProperty("checkOutAt").ValueKind);
-        Assert.True(shift.GetProperty("workingHours").GetDecimal() >= 0);
-    }
-
-    [Fact]
-    public async Task History_FilterByMonth_AndInvalidValues()
-    {
-        var staff = await GamHelper.Staff();
-        await ApiJson.PostAsync(GamRoutes.ShiftIn, null, staff);
-        var now = DateTime.UtcNow.AddHours(7);
-        var d = (await Api.GetAsync(GamRoutes.ShiftHistory, staff,
-            new Dictionary<string, string> { ["year"] = now.Year.ToString(), ["month"] = now.Month.ToString() })).ShouldBe(200).Data();
-        Assert.True(d.GetProperty("totalCount").GetInt32() >= 1);
-        Assert.All(d.GetProperty("items").EnumerateArray(), i => Assert.StartsWith($"{now:yyyy-MM}", i.GS("workDate")));
-
-        var far = (await Api.GetAsync(GamRoutes.ShiftHistory, staff,
-            new Dictionary<string, string> { ["year"] = "2010", ["month"] = "1" })).ShouldBe(200).Data();
-        Assert.Equal(0, far.GetProperty("totalCount").GetInt32());
-
-        (await Api.GetAsync(GamRoutes.ShiftHistory, staff, new Dictionary<string, string> { ["year"] = "1900" })).ShouldBe(400);
-        (await Api.GetAsync(GamRoutes.ShiftHistory, staff, new Dictionary<string, string> { ["year"] = "2026", ["month"] = "13" })).ShouldBe(400);
-    }
-
-    [Fact]
-    public async Task CheckIn_AsCitizen_Returns403() =>
-        (await ApiJson.PostAsync(GamRoutes.ShiftIn, null, await GamHelper.Citizen())).ShouldBe(403);
 }

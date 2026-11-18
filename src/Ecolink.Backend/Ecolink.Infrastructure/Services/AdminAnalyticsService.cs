@@ -117,6 +117,10 @@ public class AdminAnalyticsService : IAdminAnalyticsService
 
         var openDisputes = activeComplaintRequestIds.Count + legacyDisputedCount;
 
+        var pendingBlogPosts = await _dbContext.BlogPosts
+            .AsNoTracking()
+            .CountAsync(p => p.Status == BlogPostStatus.PendingApproval, ct);
+
         var aiBenchmark = await BuildAiBenchmarkAsync(ct);
 
         return new ExecutiveKpiSummaryDto
@@ -137,7 +141,7 @@ public class AdminAnalyticsService : IAdminAnalyticsService
                 PendingAiFeedbackCount = pendingAiFeedback,
                 PendingRecyclerKybCount = pendingRecyclerKyb,
                 OpenComplaintsCount = openDisputes,
-                PendingBlogPostsCount = 0
+                PendingBlogPostsCount = pendingBlogPosts
             }
         };
     }

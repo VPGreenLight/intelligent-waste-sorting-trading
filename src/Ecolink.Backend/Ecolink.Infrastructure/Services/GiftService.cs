@@ -193,6 +193,43 @@ public class GiftService : IGiftService
         return await GetInventoryGiftAsync(giftId, ct);
     }
 
+    public async Task<ImportVouchersResultDto> ImportVouchersAsync(Guid giftId, ImportVouchersRequest request, CancellationToken ct = default)
+    {
+        var gift = await _db.Gifts.AsNoTracking().FirstOrDefaultAsync(g => g.Id == giftId, ct)
+                   ?? throw new NotFoundException("Không tìm thấy quà tặng.");
+        if (gift.Type != GiftType.Voucher)
+            throw GamErrors.Rule("BR-GAM-05", "MSG-GEN-01", "Chỉ vật phẩm loại Voucher mới hỗ trợ nhập mã voucher.");
+
+        int importCount;
+        var rawCodes = request.Codes?.Where(c => !string.IsNullOrWhiteSpace(c)).Select(c => c.Trim()).ToList();
+        if (rawCodes is { Count: > 0 })
+        {
+            if (rawCodes.Any(c => c.Length > 80))
+                throw GamErrors.Rule(Rule, "MSG-NTF-03", "Mã voucher tối đa 80 ký tự.");
+            importCount = rawCodes.Distinct(StringComparer.OrdinalIgnoreCase).Count();
+        }
+        else
+        {
+            importCount = request.Quantity ?? 0;
+        }
+
+        if (importCount <= 0 || importCount > 100000)
+            throw GamErrors.Rule(Rule, "MSG-AUTH-02", "Vui lòng cung cấp danh sách mã voucher hoặc số lượng hợp lệ (1–100000).");
+
+        var now = DateTime.UtcNow;
+        await _db.Gifts.Where(g => g.Id == giftId).ExecuteUpdateAsync(s => s
+            .SetProperty(g => g.StockQuantity, g => g.StockQuantity + importCount)
+            .SetProperty(g => g.UpdatedAt, now), ct);
+
+        var updated = await GetInventoryGiftAsync(giftId, ct);
+        return new ImportVouchersResultDto
+        {
+            GiftId = giftId,
+            ImportedCount = importCount,
+            NewStockQuantity = updated.StockQuantity
+        };
+    }
+
     public async Task<GiftDto> SetStatusAsync(Guid giftId, string status, CancellationToken ct = default)
     {
         var st = ParseGiftStatus(status);
@@ -209,6 +246,26 @@ public class GiftService : IGiftService
         var q = _db.GiftRedemptions.AsNoTracking().Include(r => r.Gift).Where(r => r.GiftId == giftId);
         if (!string.IsNullOrWhiteSpace(status)) { var st = ParseStatus(status); q = q.Where(r => r.Status == st); }
 
+        return await PageStaffRedemptionsAsync(q, page, pageSize, ct);
+    }
+
+    public async Task<GamPagedResult<RedemptionDto>> ListAllRedemptionsAsync(string? status, string? type, string? search, int page, int pageSize, CancellationToken ct = default)
+    {
+        var q = _db.GiftRedemptions.AsNoTracking().Include(r => r.Gift).AsQueryable();
+        if (!string.IsNullOrWhiteSpace(status)) { var st = ParseStatus(status); q = q.Where(r => r.Status == st); }
+        if (!string.IsNullOrWhiteSpace(type)) { var t = ParseType(type); q = q.Where(r => r.Gift != null && r.Gift.Type == t); }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var p = GamErrors.Like(search);
+            q = q.Where(r => EF.Functions.ILike(r.RedemptionCode, p)
+                             || (r.Gift != null && EF.Functions.ILike(r.Gift.Name, p)));
+        }
+
+        return await PageStaffRedemptionsAsync(q, page, pageSize, ct);
+    }
+
+    private async Task<GamPagedResult<RedemptionDto>> PageStaffRedemptionsAsync(IQueryable<GiftRedemption> q, int page, int pageSize, CancellationToken ct)
+    {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
         var total = await q.CountAsync(ct);
@@ -222,10 +279,67 @@ public class GiftService : IGiftService
         };
     }
 
-    /// <summary>Staff xác nhận đã giao quà hiện vật (Pending -> Delivered) hoặc đã phát/sử dụng voucher (Redeemed -> Delivered).</summary>
-    public async Task<RedemptionDto> FulfillAsync(Guid redemptionId, CancellationToken ct = default)
+    public Task<RedemptionDto> FulfillAsync(Guid redemptionId, CancellationToken ct = default) =>
+        FulfillAsync(redemptionId, null, ct);
+
+    /// <summary>Staff xác nhận đã giao quà hiện vật / phát voucher (Fulfill) hoặc hủy đơn kèm hoàn điểm + tồn kho (Cancel).</summary>
+    public async Task<RedemptionDto> FulfillAsync(Guid redemptionId, FulfillRedemptionRequest? request, CancellationToken ct = default)
     {
+        var action = request?.Action?.Trim();
+        var isCancel = string.Equals(action, "Cancel", StringComparison.OrdinalIgnoreCase)
+                       || string.Equals(action, "Cancelled", StringComparison.OrdinalIgnoreCase);
+
+        if (!string.IsNullOrEmpty(action)
+            && !isCancel
+            && !string.Equals(action, "Fulfill", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(action, "Fulfilled", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(action, "Delivered", StringComparison.OrdinalIgnoreCase))
+        {
+            throw GamErrors.Rule("BR-GAM-05", "MSG-AUTH-02", "Thao tác xử lý không hợp lệ (Fulfill hoặc Cancel).");
+        }
+
         var now = DateTime.UtcNow;
+        if (isCancel)
+        {
+            var existing = await _db.GiftRedemptions.AsNoTracking().FirstOrDefaultAsync(r => r.Id == redemptionId, ct)
+                           ?? throw new NotFoundException("Không tìm thấy lượt đổi quà.");
+
+            await using var tx = await _db.Database.BeginTransactionAsync(ct);
+            var cancelled = await _db.GiftRedemptions
+                .Where(r => r.Id == redemptionId
+                            && (r.Status == RedemptionStatus.Pending || r.Status == RedemptionStatus.Redeemed))
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(r => r.Status, RedemptionStatus.Cancelled)
+                    .SetProperty(r => r.FulfilledAt, (DateTime?)now), ct);
+            if (cancelled == 0)
+                throw GamErrors.Rule("BR-GAM-05", "MSG-GEN-01", "Lượt đổi quà này đã được xử lý, đã hết hạn hoặc đã bị hủy.");
+
+            await _db.Gifts
+                .Where(g => g.Id == existing.GiftId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(g => g.StockQuantity, g => g.StockQuantity + existing.Quantity)
+                    .SetProperty(g => g.UpdatedAt, now), ct);
+
+            if (existing.PointsSpent > 0)
+            {
+                var note = string.IsNullOrWhiteSpace(request?.Reason)
+                    ? $"Hoàn điểm hủy đơn đổi quà {existing.RedemptionCode}"
+                    : $"Hoàn điểm hủy đơn đổi quà {existing.RedemptionCode}: {request.Reason.Trim()}";
+                await _points.CreditAsync(
+                    existing.UserId,
+                    existing.PointsSpent,
+                    PointActionType.Adjustment,
+                    "GiftRedemptionRefund",
+                    existing.Id.ToString(),
+                    $"REFUND:{existing.Id}",
+                    note,
+                    ct);
+            }
+
+            await tx.CommitAsync(ct);
+            return await LoadRedemptionAsync(redemptionId, ct);
+        }
+
         var n = await _db.GiftRedemptions
             .Where(r => r.Id == redemptionId
                         && (r.Status == RedemptionStatus.Pending

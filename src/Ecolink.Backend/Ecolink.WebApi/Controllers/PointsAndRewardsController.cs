@@ -3,6 +3,7 @@ using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Ecolink.WebApi.Controllers;
 
@@ -27,12 +28,14 @@ public class PointsAndRewardsController : ControllerBase
         _currentUser.UserId ?? throw new UnauthorizedAccessException("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
     /// <summary>Số dư điểm hiện tại.</summary>
+    [HttpGet("api/v1/gamification/points/wallet")]
     [HttpGet("api/v1/points/wallet")]
     [ProducesResponseType(typeof(ApiResponse<WalletDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Wallet(CancellationToken ct) =>
         Ok(ApiResponse<WalletDto>.Ok(await _points.GetWalletAsync(UserId, ct)));
 
-    /// <summary>Lịch sử biến động điểm (lọc theo thời gian, loại sự kiện).</summary>
+    /// <summary>[STT 080] Lịch sử biến động điểm (lọc theo thời gian, loại sự kiện).</summary>
+    [HttpGet("api/v1/gamification/points/ledger")]
     [HttpGet("api/v1/points/transactions")]
     [ProducesResponseType(typeof(ApiResponse<GamPagedResult<PointTransactionDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Transactions([FromQuery] DateTime? from, [FromQuery] DateTime? to,
@@ -40,12 +43,14 @@ public class PointsAndRewardsController : ControllerBase
         Ok(ApiResponse<GamPagedResult<PointTransactionDto>>.Ok(
             await _points.GetTransactionsAsync(UserId, from, to, actionType, page, pageSize, ct)));
 
-    /// <summary>Danh mục quà đang mở bán. type = Physical | Voucher; sort = points_asc | points_desc | newest.</summary>
+    /// <summary>[STT 081] Danh mục quà đang mở bán. type = Physical | Voucher; sort = points_asc | points_desc | newest.</summary>
+    [HttpGet("api/v1/gamification/gifts")]
     [HttpGet("api/v1/gifts")]
     [ProducesResponseType(typeof(ApiResponse<List<GiftDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Gifts([FromQuery] string? type, [FromQuery] string? sort, [FromQuery] string? search, CancellationToken ct) =>
         Ok(ApiResponse<List<GiftDto>>.Ok(await _gifts.ListStoreAsync(type, sort, search, ct)));
 
+    [HttpGet("api/v1/gamification/gifts/{id:guid}")]
     [HttpGet("api/v1/gifts/{id:guid}")]
     [ProducesResponseType(typeof(ApiResponse<GiftDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Gift(Guid id, CancellationToken ct) =>
@@ -54,18 +59,32 @@ public class PointsAndRewardsController : ControllerBase
     /// <summary>Đổi quà: trừ điểm + trừ tồn kho trong một transaction. Voucher trả mã ngay; quà hiện vật cần địa chỉ giao hàng.</summary>
     [HttpPost("api/v1/gifts/{id:guid}/redeem")]
     [ProducesResponseType(typeof(ApiResponse<RedeemResultDto>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> Redeem(Guid id, [FromBody] RedeemGiftRequest? request, CancellationToken ct)
+    public async Task<IActionResult> Redeem(
+        Guid id,
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RedeemGiftRequest? request = null,
+        CancellationToken ct = default)
     {
         var data = await _gifts.RedeemAsync(UserId, id, request ?? new RedeemGiftRequest(), ct);
         return StatusCode(StatusCodes.Status201Created, ApiResponse<RedeemResultDto>.Ok(data, "Đổi quà thành công.", "MSG-GAM-02"));
     }
 
+    /// <summary>[STT 082] Đổi quà nhận giftId từ body request.</summary>
+    [HttpPost("api/v1/gamification/redemptions")]
+    [ProducesResponseType(typeof(ApiResponse<RedeemResultDto>), StatusCodes.Status201Created)]
+    public async Task<IActionResult> RedeemFromBody([FromBody] CreateRedemptionRequest request, CancellationToken ct)
+    {
+        var data = await _gifts.RedeemAsync(UserId, request.GiftId, request, ct);
+        return StatusCode(StatusCodes.Status201Created, ApiResponse<RedeemResultDto>.Ok(data, "Đổi quà thành công.", "MSG-GAM-02"));
+    }
+
+    [HttpGet("api/v1/gamification/redemptions/me")]
     [HttpGet("api/v1/gift-redemptions")]
     [ProducesResponseType(typeof(ApiResponse<GamPagedResult<RedemptionDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> MyRedemptions([FromQuery] string? status, [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20, CancellationToken ct = default) =>
         Ok(ApiResponse<GamPagedResult<RedemptionDto>>.Ok(await _gifts.ListMyRedemptionsAsync(UserId, status, page, pageSize, ct)));
 
+    [HttpGet("api/v1/gamification/redemptions/{id:guid}")]
     [HttpGet("api/v1/gift-redemptions/{id:guid}")]
     [ProducesResponseType(typeof(ApiResponse<RedemptionDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> MyRedemption(Guid id, CancellationToken ct) =>

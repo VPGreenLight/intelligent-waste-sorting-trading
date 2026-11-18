@@ -154,16 +154,26 @@ public class EcoProfileDto
     public int CurrentGreenPoints { get; set; }
     public int TotalLifetimePoints { get; set; }
     public int TreeLevel { get; set; }
+    public string TreeStageTitle { get; set; } = "Seedling";
     public int TreeExperience { get; set; }
     public int ExperienceToNextLevel { get; set; }
     public int TotalWasteScanned { get; set; }
     public decimal TotalRecycledKg { get; set; }
+    public int CurrentStreak { get; set; }
+    public double Co2SavedKg { get; set; }
 }
 
 public class LeaderboardEntryDto
 {
     public int Rank { get; set; }
+    public Guid UserId { get; set; }
     public string FullName { get; set; } = string.Empty;
+    public string Area { get; set; } = string.Empty;
     public int TotalPoints { get; set; }
+    public long PeriodPoints { get; set; }
+    public long SpendablePoints { get; set; }
     public int TreeLevel { get; set; }
+    public decimal TotalRecycledKg { get; set; }
+    public bool IsCurrentUser { get; set; }
+    public long PointsNeededForNextRank { get; set; }
 }

@@ -80,6 +80,28 @@ public class EcoFactService : IEcoFactService
         return await GetAsync(id, ct);
     }
 
+    /// <summary>Xóa cứng nếu chưa có cây nào đạt cấp mở khóa; ngược lại chuyển sang INACTIVE để bảo toàn lịch sử (BR-GAM-06).</summary>
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        var fact = await _db.EcoFacts.AsNoTracking().FirstOrDefaultAsync(f => f.Id == id, ct)
+                   ?? throw new NotFoundException("Không tìm thấy Eco Fact.");
+
+        var hasUnlockedUsers = await _db.VirtualTreeProgresses
+            .AsNoTracking()
+            .AnyAsync(t => t.TreeLevel >= fact.UnlockTreeLevel, ct);
+
+        if (hasUnlockedUsers)
+        {
+            var now = DateTime.UtcNow;
+            await _db.EcoFacts.Where(f => f.Id == id).ExecuteUpdateAsync(s => s
+                .SetProperty(f => f.Status, "INACTIVE")
+                .SetProperty(f => f.UpdatedAt, now), ct);
+            return;
+        }
+
+        await _db.EcoFacts.Where(f => f.Id == id).ExecuteDeleteAsync(ct);
+    }
+
     // ------------------------------------------------------------------
     private async Task<(string Title, string Content, string? Source, string? Image, int Level)> ValidateAsync(SaveEcoFactRequest r, CancellationToken ct)
     {

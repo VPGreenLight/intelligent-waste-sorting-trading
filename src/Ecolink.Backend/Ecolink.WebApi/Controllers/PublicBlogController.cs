@@ -8,7 +8,6 @@ namespace Ecolink.WebApi.Controllers;
 
 /// <summary>Blog công khai cho khách / người dùng: chỉ bài đã Approved và đã đến giờ xuất bản (BR-ADM-08).</summary>
 [ApiController]
-[Route("api/v1/blog-posts")]
 [AllowAnonymous]
 [Produces("application/json")]
 public class PublicBlogController : ControllerBase
@@ -17,7 +16,8 @@ public class PublicBlogController : ControllerBase
 
     public PublicBlogController(IBlogPostService service) => _service = service;
 
-    [HttpGet]
+    [HttpGet("api/v1/blogs")]
+    [HttpGet("api/v1/blog-posts")]
     [ProducesResponseType(typeof(ApiResponse<BlogPagedResult<BlogPostSummaryDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List([FromQuery] string? search, [FromQuery] string? tag,
         [FromQuery] int page = 1, [FromQuery] int pageSize = 12, CancellationToken ct = default)
@@ -26,7 +26,8 @@ public class PublicBlogController : ControllerBase
         return Ok(ApiResponse<BlogPagedResult<BlogPostSummaryDto>>.Ok(data));
     }
 
-    [HttpGet("{slug}")]
+    [HttpGet("api/v1/blogs/{slug}")]
+    [HttpGet("api/v1/blog-posts/{slug}")]
     [ProducesResponseType(typeof(ApiResponse<PublicBlogPostDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetBySlug(string slug, CancellationToken ct)
     {

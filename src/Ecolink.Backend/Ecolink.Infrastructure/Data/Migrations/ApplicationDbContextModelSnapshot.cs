@@ -1702,6 +1702,116 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.LeaderboardCycle", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("CreatedByAdminId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_admin_id");
+
+                    b.Property<DateTime>("EndsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("ends_at");
+
+                    b.Property<DateTime?>("FinalizedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("finalized_at");
+
+                    b.Property<Guid?>("FinalizedByAdminId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("finalized_by_admin_id");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_active");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("name");
+
+                    b.Property<string>("PeriodType")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("period_type");
+
+                    b.Property<DateTime>("StartsAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("starts_at");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Active")
+                        .HasColumnName("status");
+
+                    b.Property<long>("Top1BonusPoints")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(500L)
+                        .HasColumnName("top1_bonus_points");
+
+                    b.Property<long>("Top2BonusPoints")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(300L)
+                        .HasColumnName("top2_bonus_points");
+
+                    b.Property<long>("Top3BonusPoints")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(150L)
+                        .HasColumnName("top3_bonus_points");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("WinnersSnapshotJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("winners_snapshot");
+
+                    b.HasKey("Id")
+                        .HasName("pk_leaderboard_cycles");
+
+                    b.HasIndex("CreatedByAdminId");
+
+                    b.HasIndex("FinalizedByAdminId");
+
+                    b.HasIndex("IsActive")
+                        .IsUnique()
+                        .HasDatabaseName("uq_leaderboard_cycles_single_active")
+                        .HasFilter("is_active = TRUE");
+
+                    b.HasIndex("Status", "StartsAt", "EndsAt")
+                        .HasDatabaseName("idx_leaderboard_cycles_status_dates");
+
+                    b.ToTable("leaderboard_cycles", null, t =>
+                        {
+                            t.HasCheckConstraint("chk_leaderboard_cycles_bonus_nonneg", "top1_bonus_points >= 0 AND top2_bonus_points >= 0 AND top3_bonus_points >= 0");
+
+                            t.HasCheckConstraint("chk_leaderboard_cycles_window", "ends_at > starts_at");
+                        });
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.Notification", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2991,50 +3101,6 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("staff_profiles", (string)null);
                 });
 
-            modelBuilder.Entity("Ecolink.Domain.Entities.StaffShift", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid")
-                        .HasColumnName("shift_id");
-
-                    b.Property<DateTime>("CheckInAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("check_in_at");
-
-                    b.Property<DateTime?>("CheckOutAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("check_out_at");
-
-                    b.Property<Guid>("StaffId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("staff_id");
-
-                    b.Property<int>("StreakCount")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasDefaultValue(1)
-                        .HasColumnName("streak_count");
-
-                    b.Property<DateOnly>("WorkDate")
-                        .HasColumnType("date")
-                        .HasColumnName("work_date");
-
-                    b.Property<decimal?>("WorkingHours")
-                        .HasPrecision(6, 2)
-                        .HasColumnType("numeric(6,2)")
-                        .HasColumnName("working_hours");
-
-                    b.HasKey("Id")
-                        .HasName("pk_staff_shifts");
-
-                    b.HasIndex("StaffId", "WorkDate")
-                        .IsUnique()
-                        .HasDatabaseName("ux_staff_shifts_staff_date");
-
-                    b.ToTable("staff_shifts", (string)null);
-                });
-
             modelBuilder.Entity("Ecolink.Domain.Entities.TradeOrder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -4317,6 +4383,21 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("WasteCategory");
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.LeaderboardCycle", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByAdminId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_leaderboard_cycles_created_by");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("FinalizedByAdminId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_leaderboard_cycles_finalized_by");
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.Notification", b =>
                 {
                     b.HasOne("Ecolink.Domain.Entities.User", null)
@@ -4495,16 +4576,6 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasConstraintName("fk_staff_profiles_users");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Ecolink.Domain.Entities.StaffShift", b =>
-                {
-                    b.HasOne("Ecolink.Domain.Entities.User", null)
-                        .WithMany()
-                        .HasForeignKey("StaffId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired()
-                        .HasConstraintName("fk_staff_shifts_users");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.TradeOrder", b =>

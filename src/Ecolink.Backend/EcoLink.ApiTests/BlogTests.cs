@@ -28,11 +28,11 @@ public static class BlogHelper
 
     private static readonly Lazy<Task<string>> StaffTokenLazy = new(async () =>
     {
-        var user = Environment.GetEnvironmentVariable("ECOLINK_STAFF_USER") ?? "blogstaff";
-        var password = Environment.GetEnvironmentVariable("ECOLINK_STAFF_PASSWORD") ?? "citizen123";
+        var user = Environment.GetEnvironmentVariable("ECOLINK_STAFF_USER") ?? "staff";
+        var password = Environment.GetEnvironmentVariable("ECOLINK_STAFF_PASSWORD") ?? "staff123";
         var r = await Api.PostJsonAsync(Routes.Login, new { usernameOrEmail = user, password });
         if (r.Status != 200)
-            throw new XunitException($"Không đăng nhập được tài khoản Staff '{user}' ({r.Status}). Hãy chạy seed_staff.sql trước. {r.Raw}");
+            throw new XunitException($"Không đăng nhập được tài khoản Staff '{user}' ({r.Status}). {r.Raw}");
         return Api.ExtractToken(r.Body) ?? throw new XunitException("Đăng nhập Staff không trả về token.");
     });
 
@@ -93,12 +93,17 @@ public class BlogAccessTests
         (await Api.GetAsync(BlogRoutes.Staff, await BlogHelper.Citizen())).ShouldBe(403);
 
     [Fact]
-    public async Task Staff_List_AsAdmin_Returns403() =>
-        (await Api.GetAsync(BlogRoutes.Staff, await BlogHelper.Admin())).ShouldBe(403);
+    public async Task Staff_List_AsAdmin_Returns200() =>
+        (await Api.GetAsync(BlogRoutes.Staff, await BlogHelper.Admin())).ShouldBe(200);
 
     [Fact]
-    public async Task Staff_Create_AsAdmin_Returns403() =>
-        (await ApiJson.PostAsync(BlogRoutes.Staff, BlogHelper.Payload(), await BlogHelper.Admin())).ShouldBe(403);
+    public async Task Staff_Create_AsAdmin_Returns201()
+    {
+        var admin = await BlogHelper.Admin();
+        var created = (await ApiJson.PostAsync(BlogRoutes.Staff, BlogHelper.Payload(), admin)).ShouldBe(201);
+        var id = created.Data().GetProperty("id").GetGuid();
+        (await Api.SendAsync(HttpMethod.Delete, BlogRoutes.StaffOne(id), token: admin)).ShouldBe(200);
+    }
 
     [Fact]
     public async Task Admin_Queue_WithoutToken_Returns401() =>

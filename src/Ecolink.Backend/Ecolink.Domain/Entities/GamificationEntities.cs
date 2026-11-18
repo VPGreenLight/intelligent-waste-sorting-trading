@@ -138,14 +138,23 @@ public class TreeLevelThreshold
     public long RequiredPoints { get; set; }
 }
 
-/// <summary>Ca làm của Staff (UC 6.2, màn SCR-STF-09). BẢNG THÊM NGOÀI BÁO CÁO.</summary>
-public class StaffShift
+/// <summary>Chu kỳ bảng xếp hạng thi đua (UC A-08, bảng leaderboard_cycles).</summary>
+public class LeaderboardCycle
 {
     public Guid Id { get; set; } = Guid.NewGuid();
-    public Guid StaffId { get; set; }                               // = users.id của Staff
-    public DateOnly WorkDate { get; set; }
-    public DateTime CheckInAt { get; set; } = DateTime.UtcNow;
-    public DateTime? CheckOutAt { get; set; }
-    public decimal? WorkingHours { get; set; }
-    public int StreakCount { get; set; } = 1;
+    public string Name { get; set; } = string.Empty;
+    public LeaderboardPeriodType PeriodType { get; set; } = LeaderboardPeriodType.Monthly;
+    public DateTime StartsAt { get; set; }
+    public DateTime EndsAt { get; set; }
+    public bool IsActive { get; set; }
+    public LeaderboardCycleStatus Status { get; set; } = LeaderboardCycleStatus.Active;
+    public long Top1BonusPoints { get; set; } = 500;
+    public long Top2BonusPoints { get; set; } = 300;
+    public long Top3BonusPoints { get; set; } = 150;
+    public string? WinnersSnapshotJson { get; set; }
+    public Guid? CreatedByAdminId { get; set; }
+    public Guid? FinalizedByAdminId { get; set; }
+    public DateTime? FinalizedAt { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }

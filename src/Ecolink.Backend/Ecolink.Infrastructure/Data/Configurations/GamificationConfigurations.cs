@@ -240,21 +240,50 @@ public class TreeLevelThresholdConfiguration : IEntityTypeConfiguration<TreeLeve
     }
 }
 
-public class StaffShiftConfiguration : IEntityTypeConfiguration<StaffShift>
+public class LeaderboardCycleConfiguration : IEntityTypeConfiguration<LeaderboardCycle>
 {
-    public void Configure(EntityTypeBuilder<StaffShift> b)
+    public void Configure(EntityTypeBuilder<LeaderboardCycle> b)
     {
-        b.ToTable("staff_shifts");
-        b.HasKey(x => x.Id).HasName("pk_staff_shifts");
-        b.Property(x => x.Id).HasColumnName("shift_id");
-        b.Property(x => x.StaffId).HasColumnName("staff_id").IsRequired();
-        b.Property(x => x.WorkDate).HasColumnName("work_date").HasColumnType("date").IsRequired();
-        b.Property(x => x.CheckInAt).HasColumnName("check_in_at").IsRequired();
-        b.Property(x => x.CheckOutAt).HasColumnName("check_out_at");
-        b.Property(x => x.WorkingHours).HasColumnName("working_hours").HasPrecision(6, 2);
-        b.Property(x => x.StreakCount).HasColumnName("streak_count").HasDefaultValue(1).IsRequired();
-        b.HasIndex(x => new { x.StaffId, x.WorkDate }).IsUnique().HasDatabaseName("ux_staff_shifts_staff_date");
-        b.HasOne<User>().WithMany().HasForeignKey(x => x.StaffId).HasConstraintName("fk_staff_shifts_users")
-            .OnDelete(DeleteBehavior.Restrict);
+        b.ToTable("leaderboard_cycles", t =>
+        {
+            t.HasCheckConstraint("chk_leaderboard_cycles_window", "ends_at > starts_at");
+            t.HasCheckConstraint("chk_leaderboard_cycles_bonus_nonneg",
+                "top1_bonus_points >= 0 AND top2_bonus_points >= 0 AND top3_bonus_points >= 0");
+        });
+        b.HasKey(x => x.Id).HasName("pk_leaderboard_cycles");
+        b.Property(x => x.Id).HasColumnName("id");
+        b.Property(x => x.Name).HasColumnName("name").HasMaxLength(150).IsRequired();
+        b.Property(x => x.PeriodType).HasColumnName("period_type").HasConversion<string>().HasMaxLength(20).IsRequired();
+        b.Property(x => x.StartsAt).HasColumnName("starts_at").IsRequired();
+        b.Property(x => x.EndsAt).HasColumnName("ends_at").IsRequired();
+        b.Property(x => x.IsActive).HasColumnName("is_active").HasDefaultValue(false).IsRequired();
+        b.Property(x => x.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(20)
+            .HasDefaultValue(LeaderboardCycleStatus.Active).IsRequired();
+        b.Property(x => x.Top1BonusPoints).HasColumnName("top1_bonus_points").HasDefaultValue(500L).IsRequired();
+        b.Property(x => x.Top2BonusPoints).HasColumnName("top2_bonus_points").HasDefaultValue(300L).IsRequired();
+        b.Property(x => x.Top3BonusPoints).HasColumnName("top3_bonus_points").HasDefaultValue(150L).IsRequired();
+        b.Property(x => x.WinnersSnapshotJson).HasColumnName("winners_snapshot").HasColumnType("jsonb");
+        b.Property(x => x.CreatedByAdminId).HasColumnName("created_by_admin_id");
+        b.Property(x => x.FinalizedByAdminId).HasColumnName("finalized_by_admin_id");
+        b.Property(x => x.FinalizedAt).HasColumnName("finalized_at");
+        b.Property(x => x.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()").IsRequired();
+        b.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()").IsRequired();
+
+        b.HasIndex(x => x.IsActive)
+            .IsUnique()
+            .HasDatabaseName("uq_leaderboard_cycles_single_active")
+            .HasFilter("is_active = TRUE");
+        b.HasIndex(x => new { x.Status, x.StartsAt, x.EndsAt })
+            .HasDatabaseName("idx_leaderboard_cycles_status_dates");
+
+        b.HasOne<User>().WithMany()
+            .HasForeignKey(x => x.CreatedByAdminId)
+            .HasConstraintName("fk_leaderboard_cycles_created_by")
+            .OnDelete(DeleteBehavior.SetNull);
+
+        b.HasOne<User>().WithMany()
+            .HasForeignKey(x => x.FinalizedByAdminId)
+            .HasConstraintName("fk_leaderboard_cycles_finalized_by")
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

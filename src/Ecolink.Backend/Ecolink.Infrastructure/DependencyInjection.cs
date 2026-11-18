@@ -53,7 +53,7 @@ public static class DependencyInjection
         services.AddScoped<IGeoMatchingService, GeoMatchingService>();
 
         // Đăng ký Gamification & Trade Services
-        services.AddSingleton<IGamificationService, GamificationService>();
+        services.AddScoped<IGamificationService, GamificationService>();
         services.AddScoped<ITradeTransactionService, TradeTransactionService>();
 
         // Đăng ký In-App Real-Time Negotiation Chatbox Service (Module NEG: U-08 & R-05)
@@ -114,7 +114,7 @@ public static class DependencyInjection
         services.AddScoped<IGiftService, GiftService>();
         services.AddScoped<IVirtualTreeService, VirtualTreeService>();
         services.AddScoped<IEcoFactService, EcoFactService>();
-        services.AddScoped<IStaffShiftService, StaffShiftService>();
+        services.AddScoped<ILeaderboardService, LeaderboardService>();
 
         return services;
     }

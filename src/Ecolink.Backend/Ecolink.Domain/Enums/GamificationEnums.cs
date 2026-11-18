@@ -27,3 +27,20 @@ public enum RedemptionStatus
     Expired = 4,
     Cancelled = 5
 }
+
+/// <summary>Chu kỳ bảng xếp hạng thi đua (UC A-08): Weekly, Monthly, Quarterly.</summary>
+public enum LeaderboardPeriodType
+{
+    Weekly = 1,
+    Monthly = 2,
+    Quarterly = 3
+}
+
+/// <summary>Trạng thái chu kỳ bảng xếp hạng (UC A-08): Upcoming, Active, Finalized, Cancelled.</summary>
+public enum LeaderboardCycleStatus
+{
+    Upcoming = 1,
+    Active = 2,
+    Finalized = 3,
+    Cancelled = 4
+}

@@ -86,6 +86,32 @@ public class RedeemGiftRequest
     public string? DeliveryAddress { get; set; }
 }
 
+public class CreateRedemptionRequest : RedeemGiftRequest
+{
+    public Guid GiftId { get; set; }
+}
+
+public class ImportVouchersRequest
+{
+    public List<string>? Codes { get; set; }
+    public int? Quantity { get; set; }
+}
+
+public class ImportVouchersResultDto
+{
+    public Guid GiftId { get; set; }
+    public int ImportedCount { get; set; }
+    public int NewStockQuantity { get; set; }
+}
+
+public class FulfillRedemptionRequest
+{
+    /// <summary>"Fulfill" (mặc định) hoặc "Cancel" (hủy đơn kèm hoàn điểm + hoàn tồn kho).</summary>
+    public string? Action { get; set; }
+    [MaxLength(500)]
+    public string? Reason { get; set; }
+}
+
 public class RedemptionGiftInfoDto
 {
     public Guid Id { get; set; }
@@ -249,26 +275,6 @@ public class GamificationConfigDto
     public DateTime? UpdatedAt { get; set; }
 }
 
-// ============================================================ Ca làm Staff (6.2)
-public class ShiftDto
-{
-    public Guid Id { get; set; }
-    public DateOnly WorkDate { get; set; }
-    public DateTime CheckInAt { get; set; }
-    public DateTime? CheckOutAt { get; set; }
-    public decimal? WorkingHours { get; set; }
-    public int StreakCount { get; set; }
-}
-
-public class ShiftStatusDto
-{
-    public DateOnly Today { get; set; }
-    public bool CanCheckIn { get; set; }
-    public bool CanCheckOut { get; set; }
-    public int CurrentStreak { get; set; }
-    public ShiftDto? TodayShift { get; set; }
-}
-
 /// <summary>Bộ tham số gamification đã nạp (đọc nội bộ giữa các service).</summary>
 public sealed record GamSettings(
     long DailyCap, long CheckinBase, long StreakIncrement, long StreakCap,
@@ -284,4 +290,52 @@ public sealed record GamSettings(
         CheckinBase + Math.Min(Math.Max(0, streak - 1) * StreakIncrement, StreakCap);
 
     public TreeLevelConfigDto? LevelInfo(int level) => Levels.FirstOrDefault(l => l.Level == level);
+}
+
+// ============================================================ Bảng xếp hạng & Chu kỳ (A-08)
+public class LeaderboardWinnerDto
+{
+    public int Rank { get; set; }
+    public Guid UserId { get; set; }
+    public string FullName { get; set; } = string.Empty;
+    public string Area { get; set; } = string.Empty;
+    public long Points { get; set; }
+    public long BonusPointsAwarded { get; set; }
+}
+
+public class LeaderboardCycleDto
+{
+    public Guid Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string PeriodType { get; set; } = string.Empty;
+    public DateTime StartsAt { get; set; }
+    public DateTime EndsAt { get; set; }
+    public bool IsActive { get; set; }
+    public string Status { get; set; } = string.Empty;
+    public long Top1BonusPoints { get; set; }
+    public long Top2BonusPoints { get; set; }
+    public long Top3BonusPoints { get; set; }
+    public DateTime? FinalizedAt { get; set; }
+    public List<LeaderboardWinnerDto> Winners { get; set; } = new();
+    public DateTime CreatedAt { get; set; }
+    public DateTime UpdatedAt { get; set; }
+}
+
+public class SaveLeaderboardCycleRequest
+{
+    public string Name { get; set; } = string.Empty;
+    public string PeriodType { get; set; } = "Monthly";
+    public DateTime StartsAt { get; set; }
+    public DateTime EndsAt { get; set; }
+    public bool IsActive { get; set; }
+    public long Top1BonusPoints { get; set; } = 500;
+    public long Top2BonusPoints { get; set; } = 300;
+    public long Top3BonusPoints { get; set; } = 150;
+}
+
+public class LeaderboardViewDto
+{
+    public LeaderboardCycleDto? ActiveCycle { get; set; }
+    public List<LeaderboardEntryDto> Items { get; set; } = new();
+    public LeaderboardEntryDto? MyEntry { get; set; }
 }

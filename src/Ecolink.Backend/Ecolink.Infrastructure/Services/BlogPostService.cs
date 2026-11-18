@@ -29,11 +29,13 @@ public class BlogPostService : IBlogPostService
 
     private readonly ApplicationDbContext _db;
     private readonly ILogger<BlogPostService> _logger;
+    private readonly IAuditLogService? _auditLog;
 
-    public BlogPostService(ApplicationDbContext db, ILogger<BlogPostService> logger)
+    public BlogPostService(ApplicationDbContext db, ILogger<BlogPostService> logger, IAuditLogService? auditLog = null)
     {
         _db = db;
         _logger = logger;
+        _auditLog = auditLog;
     }
 
     private sealed class PostRow
@@ -230,15 +232,6 @@ public class BlogPostService : IBlogPostService
         if (affected == 0)
             throw StaleDecision();
 
-        _db.AuditLogs.Add(new AuditLog
-        {
-            ActorUserId = adminId,
-            Action = "BLOG_APPROVE",
-            EntityType = "BlogPost",
-            EntityId = postId.ToString(),
-            OldValues = JsonSerializer.Serialize(new { status = "Pending_Approval" }, JsonOptions),
-            NewValues = JsonSerializer.Serialize(new { status = "Approved", publishedAt = now }, JsonOptions)
-        });
         _db.Notifications.Add(new Notification
         {
             UserId = post.AuthorId,
@@ -248,7 +241,30 @@ public class BlogPostService : IBlogPostService
             ReferenceType = "BlogPost",
             ReferenceId = postId
         });
-        await _db.SaveChangesAsync(ct);
+        if (_auditLog != null)
+        {
+            await _auditLog.LogAsync(
+                action: "BLOG_APPROVE",
+                entityType: "BlogPost",
+                entityId: postId.ToString(),
+                oldValues: new { status = "Pending_Approval" },
+                newValues: new { status = "Approved", publishedAt = now },
+                explicitActorId: adminId,
+                ct: ct);
+        }
+        else
+        {
+            _db.AuditLogs.Add(new AuditLog
+            {
+                ActorUserId = adminId,
+                Action = "BLOG_APPROVE",
+                EntityType = "BlogPost",
+                EntityId = postId.ToString(),
+                OldValues = JsonSerializer.Serialize(new { status = "Pending_Approval" }, JsonOptions),
+                NewValues = JsonSerializer.Serialize(new { status = "Approved", publishedAt = now }, JsonOptions)
+            });
+            await _db.SaveChangesAsync(ct);
+        }
         await tx.CommitAsync(ct);
 
         _logger.LogInformation("Admin {AdminId} đã duyệt bài viết {PostId}", adminId, postId);
@@ -276,15 +292,6 @@ public class BlogPostService : IBlogPostService
         if (affected == 0)
             throw StaleDecision();
 
-        _db.AuditLogs.Add(new AuditLog
-        {
-            ActorUserId = adminId,
-            Action = "BLOG_REJECT",
-            EntityType = "BlogPost",
-            EntityId = postId.ToString(),
-            OldValues = JsonSerializer.Serialize(new { status = "Pending_Approval" }, JsonOptions),
-            NewValues = JsonSerializer.Serialize(new { status = "Draft", rejectionReason = feedback }, JsonOptions)
-        });
         _db.Notifications.Add(new Notification
         {
             UserId = post.AuthorId,
@@ -294,7 +301,31 @@ public class BlogPostService : IBlogPostService
             ReferenceType = "BlogPost",
             ReferenceId = postId
         });
-        await _db.SaveChangesAsync(ct);
+        if (_auditLog != null)
+        {
+            await _auditLog.LogAsync(
+                action: "BLOG_REJECT",
+                entityType: "BlogPost",
+                entityId: postId.ToString(),
+                oldValues: new { status = "Pending_Approval" },
+                newValues: new { status = "Draft", rejectionReason = feedback },
+                reason: feedback,
+                explicitActorId: adminId,
+                ct: ct);
+        }
+        else
+        {
+            _db.AuditLogs.Add(new AuditLog
+            {
+                ActorUserId = adminId,
+                Action = "BLOG_REJECT",
+                EntityType = "BlogPost",
+                EntityId = postId.ToString(),
+                OldValues = JsonSerializer.Serialize(new { status = "Pending_Approval" }, JsonOptions),
+                NewValues = JsonSerializer.Serialize(new { status = "Draft", rejectionReason = feedback }, JsonOptions)
+            });
+            await _db.SaveChangesAsync(ct);
+        }
         await tx.CommitAsync(ct);
 
         _logger.LogInformation("Admin {AdminId} đã từ chối bài viết {PostId}", adminId, postId);
@@ -368,11 +399,20 @@ public class BlogPostService : IBlogPostService
         if (!string.IsNullOrWhiteSpace(r.CoverImageUrl))
         {
             cover = r.CoverImageUrl.Trim();
-            if (!Uri.TryCreate(cover, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
-                throw new BusinessRuleException("BR-ADM-08", "MSG-AUTH-02", "URL ảnh bìa không hợp lệ.");
-            var ext = Path.GetExtension(uri.AbsolutePath).ToLowerInvariant();
-            if (ext.Length > 0 && !AllowedImageExtensions.Contains(ext))
-                throw new BusinessRuleException("BR-ADM-08", "MSG-CLS-01", "Định dạng ảnh bìa không được hỗ trợ (chỉ JPG, PNG, WEBP).");
+            if (cover.StartsWith("/assets/", StringComparison.OrdinalIgnoreCase))
+            {
+                var relExt = Path.GetExtension(cover.Split('?')[0]).ToLowerInvariant();
+                if (relExt.Length == 0 || !AllowedImageExtensions.Contains(relExt))
+                    throw new BusinessRuleException("BR-ADM-08", "MSG-CLS-01", "Định dạng ảnh bìa không được hỗ trợ (chỉ JPG, PNG, WEBP).");
+            }
+            else
+            {
+                if (!Uri.TryCreate(cover, UriKind.Absolute, out var uri) || (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps))
+                    throw new BusinessRuleException("BR-ADM-08", "MSG-AUTH-02", "URL ảnh bìa không hợp lệ.");
+                var ext = Path.GetExtension(uri.AbsolutePath).ToLowerInvariant();
+                if (ext.Length > 0 && !AllowedImageExtensions.Contains(ext))
+                    throw new BusinessRuleException("BR-ADM-08", "MSG-CLS-01", "Định dạng ảnh bìa không được hỗ trợ (chỉ JPG, PNG, WEBP).");
+            }
         }
 
         var tags = new List<string>();
@@ -524,6 +564,7 @@ public class BlogPostService : IBlogPostService
     private static BlogPostStatus ParseStatus(string status)
     {
         var key = status.Trim().Replace("_", string.Empty);
+        if (string.Equals(key, "Published", StringComparison.OrdinalIgnoreCase)) return BlogPostStatus.Approved;
         if (Enum.TryParse<BlogPostStatus>(key, true, out var parsed) && Enum.IsDefined(parsed)) return parsed;
         throw new BusinessRuleException("BR-ADM-08", "MSG-GEN-01", "Trạng thái lọc không hợp lệ.");
     }

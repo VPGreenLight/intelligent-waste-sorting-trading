@@ -37,6 +37,24 @@ public class RejectBlogPostRequest
     public string Feedback { get; set; } = string.Empty;
 }
 
+public class ReviewBlogPostRequest
+{
+    /// <summary>"Approve" / "Approved" / "Published" hoặc "Reject" / "Rejected".</summary>
+    public string? Action { get; set; }
+    public bool? Approve { get; set; }
+    [StringLength(2000, ErrorMessage = "Góp ý tối đa 2000 ký tự.")]
+    public string? Feedback { get; set; }
+}
+
+public class BlogMediaUploadResponseDto
+{
+    public string Url { get; set; } = string.Empty;
+    public string FileUrl { get; set; } = string.Empty;
+    public string ObjectKey { get; set; } = string.Empty;
+    public string ContentType { get; set; } = string.Empty;
+    public long SizeBytes { get; set; }
+}
+
 // ============================================================
 // Response
 // ============================================================
