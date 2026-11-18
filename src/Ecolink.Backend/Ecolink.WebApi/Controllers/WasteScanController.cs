@@ -125,10 +125,10 @@ public class WasteScanController : ControllerBase
             AiResult = aiResult
         };
 
-        // Kiểm tra Out-of-Distribution (ảnh hợp lệ nhưng rác lạ hoặc độ tin cậy < 60%)
+        // Kiểm tra Out-of-Distribution (ảnh hợp lệ nhưng rác lạ hoặc chưa đủ ngưỡng khẳng định)
         if (aiResult.IsOutOfDistribution || aiResult.TopPrediction == null || aiResult.TopPrediction.Confidence < aiResult.ConfidenceThreshold)
         {
-            response.Message = "Hệ thống không nhận diện chắc chắn (> 60%) hoặc vật thể không thuộc nhóm rác hỗ trợ. Vui lòng chụp lại hình ảnh ở góc rõ hơn.";
+            response.Message = "Hình ảnh chưa đủ rõ hoặc vật thể không thuộc nhóm rác hỗ trợ nên hệ thống chưa đưa ra kết luận. Vui lòng chụp lại ở góc rõ nét hơn.";
             return Ok(ApiResponse<WasteScanResponseDto>.Ok(response, response.Message, "MSG-CLS-02"));
         }
 
@@ -141,8 +141,8 @@ public class WasteScanController : ControllerBase
 
         response.SortingGuide = ruleGuide;
         response.Message = aiResult.DetectedCount > 1
-            ? $"Phát hiện {aiResult.DetectedCount} vật thể — Ưu tiên #1: {aiResult.TopPrediction.DisplayName} ({Math.Round(aiResult.TopPrediction.Confidence * 100, 1)}%, Mô hình: {model})."
-            : $"Nhận diện thành công loại rác: {aiResult.TopPrediction.DisplayName} với độ tin cậy {Math.Round(aiResult.TopPrediction.Confidence * 100, 1)}% (Mô hình: {model}).";
+            ? $"Đã nhận diện {aiResult.DetectedCount} vật rác trong ảnh — Vật thể chính (#1): {aiResult.TopPrediction.DisplayName}."
+            : $"Kết quả nhận diện: {aiResult.TopPrediction.DisplayName}.";
 
         return Ok(ApiResponse<WasteScanResponseDto>.Ok(response, response.Message, "MSG-CLS-01"));
     }
