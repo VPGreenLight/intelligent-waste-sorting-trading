@@ -189,7 +189,7 @@ public class WasteScanTests
         var ai = result.Body.GetProperty("data").GetProperty("aiResult");
 
         if (!ai.TryGetProperty("topPrediction", out var top) || top.ValueKind != JsonValueKind.Object)
-            return; // không có dự đoán để gửi phản hồi
+            return; 
 
         var token = await CitizenToken();
         var label = top.GetProperty("label").GetString();
@@ -203,14 +203,13 @@ public class WasteScanTests
     }
 
     // ======================= Truy cập ẩn danh =======================
-    // Thực tế các endpoint WasteScan cho phép gọi KHÔNG cần token (kể cả token sai vẫn trả 200).
-    // Nếu sau này team bật xác thực, đổi các test này về kỳ vọng 401.
+
     private static Task<ApiResult> Call(string endpoint, string? token) => endpoint switch
     {
         "models" => Api.GetAsync(Routes.ScanModels, token),
         "rules" => Api.GetAsync(Routes.ScanRules, token),
         "classify" => Api.SendAsync(HttpMethod.Post, Routes.ScanClassify, Multipart(TestImages.Png()), token),
-        "feedback" => Api.PostJsonAsync(Routes.ScanFeedback, new { userReportedLabel = "plastic", note = "anonymous request" }, token),
+        "feedback" => Api.PostJsonAsync(Routes.ScanFeedback, new { note = "anonymous request" }, token),
         _ => throw new ArgumentException(endpoint),
     };
 

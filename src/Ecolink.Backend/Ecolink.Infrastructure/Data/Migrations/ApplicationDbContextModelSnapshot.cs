@@ -855,6 +855,107 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("audit_logs", (string)null);
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.BlogPost", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("post_id");
+
+                    b.Property<DateTime?>("ApprovedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("approved_at");
+
+                    b.Property<Guid?>("ApprovedByAdminId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("approved_by_admin_id");
+
+                    b.Property<Guid>("AuthorId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("author_staff_id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<string>("CoverImageUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("cover_image_url");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("published_at");
+
+                    b.Property<string>("RejectionReason")
+                        .HasColumnType("text")
+                        .HasColumnName("rejection_reason");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(280)
+                        .HasColumnType("character varying(280)")
+                        .HasColumnName("slug");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Draft")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime?>("SubmittedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("submitted_at");
+
+                    b.Property<string>("Summary")
+                        .HasColumnType("text")
+                        .HasColumnName("summary");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("[]")
+                        .HasColumnName("tags");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(250)
+                        .HasColumnType("character varying(250)")
+                        .HasColumnName("title");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("Id")
+                        .HasName("pk_blog_posts");
+
+                    b.HasIndex("ApprovedByAdminId");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("ux_blog_posts_slug");
+
+                    b.HasIndex("AuthorId", "Status")
+                        .HasDatabaseName("ix_blog_posts_author_status");
+
+                    b.HasIndex("Status", "PublishedAt")
+                        .HasDatabaseName("ix_blog_posts_status_published");
+
+                    b.ToTable("blog_posts", (string)null);
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.ChatMessage", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1021,6 +1122,327 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasDatabaseName("uq_collection_partners_user_id");
 
                     b.ToTable("collection_partners", (string)null);
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.DailyCheckinLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("checkin_id");
+
+                    b.Property<DateOnly>("CheckinDate")
+                        .HasColumnType("date")
+                        .HasColumnName("checkin_date");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<long>("PointsAwarded")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("points_awarded");
+
+                    b.Property<int>("StreakCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("streak_count");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_daily_checkin_logs");
+
+                    b.HasIndex("UserId", "CheckinDate")
+                        .IsUnique()
+                        .HasDatabaseName("ux_daily_checkin_user_date");
+
+                    b.ToTable("daily_checkin_logs", (string)null);
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.EcoFact", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("fact_id");
+
+                    b.Property<string>("Content")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("content");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("CreatedByStaffId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by_staff_id");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("image_url");
+
+                    b.Property<string>("SourceUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("source_url");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("ACTIVE")
+                        .HasColumnName("status");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<int>("UnlockTreeLevel")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("unlock_tree_level");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("Id")
+                        .HasName("pk_eco_facts");
+
+                    b.HasIndex("CreatedByStaffId");
+
+                    b.HasIndex("Status", "UnlockTreeLevel")
+                        .HasDatabaseName("ix_eco_facts_status_level");
+
+                    b.ToTable("eco_facts", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_eco_fact_level_min", "unlock_tree_level >= 1");
+                        });
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.GamificationConfig", b =>
+                {
+                    b.Property<int>("Id")
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    b.Property<long>("CheckinBasePoints")
+                        .HasColumnType("bigint")
+                        .HasColumnName("checkin_base_points");
+
+                    b.Property<long>("DailyNonTransactionCap")
+                        .HasColumnType("bigint")
+                        .HasColumnName("daily_non_transaction_cap");
+
+                    b.Property<int>("DailyTreeCareLimit")
+                        .HasColumnType("integer")
+                        .HasColumnName("daily_tree_care_limit");
+
+                    b.Property<long>("DefaultPointsPerKg")
+                        .HasColumnType("bigint")
+                        .HasColumnName("default_points_per_kg");
+
+                    b.Property<long>("StreakBonusCap")
+                        .HasColumnType("bigint")
+                        .HasColumnName("streak_bonus_cap");
+
+                    b.Property<long>("StreakBonusIncrement")
+                        .HasColumnType("bigint")
+                        .HasColumnName("streak_bonus_increment");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid?>("UpdatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("updated_by");
+
+                    b.Property<int>("VoucherValidityDays")
+                        .HasColumnType("integer")
+                        .HasColumnName("voucher_validity_days");
+
+                    b.HasKey("Id")
+                        .HasName("pk_gamification_config");
+
+                    b.ToTable("gamification_config", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_gamification_config_single", "id = 1");
+                        });
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.Gift", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("gift_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("ImageUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("image_url");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)")
+                        .HasColumnName("gift_name");
+
+                    b.Property<long>("PointsRequired")
+                        .HasColumnType("bigint")
+                        .HasColumnName("points_required");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("ACTIVE")
+                        .HasColumnName("status");
+
+                    b.Property<int>("StockQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("stock_quantity");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Physical")
+                        .HasColumnName("gift_type");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.HasKey("Id")
+                        .HasName("pk_gift_inventory");
+
+                    b.HasIndex("Status", "Type")
+                        .HasDatabaseName("ix_gift_inventory_status_type");
+
+                    b.ToTable("gift_inventory", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_gift_points_nonneg", "points_required >= 0");
+
+                            t.HasCheckConstraint("ck_gift_stock_nonneg", "stock_quantity >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.GiftRedemption", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("redemption_id");
+
+                    b.Property<string>("DeliveryAddress")
+                        .HasColumnType("text")
+                        .HasColumnName("delivery_address");
+
+                    b.Property<DateTime?>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<DateTime?>("FulfilledAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("fulfilled_at");
+
+                    b.Property<Guid>("GiftId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("gift_id");
+
+                    b.Property<long>("PointsSpent")
+                        .HasColumnType("bigint")
+                        .HasColumnName("points_spent");
+
+                    b.Property<int>("Quantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("quantity");
+
+                    b.Property<DateTime>("RedeemedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("redeemed_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("RedemptionCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("redemption_code");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Pending")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<string>("VoucherCode")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("voucher_code");
+
+                    b.HasKey("Id")
+                        .HasName("pk_gift_redemptions");
+
+                    b.HasIndex("RedemptionCode")
+                        .IsUnique()
+                        .HasDatabaseName("ux_gift_redemptions_code");
+
+                    b.HasIndex("VoucherCode")
+                        .IsUnique()
+                        .HasDatabaseName("ux_gift_redemptions_voucher");
+
+                    b.HasIndex("GiftId", "RedeemedAt")
+                        .HasDatabaseName("ix_gift_redemptions_gift");
+
+                    b.HasIndex("UserId", "RedeemedAt")
+                        .HasDatabaseName("ix_gift_redemptions_user");
+
+                    b.ToTable("gift_redemptions", (string)null);
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.HandoverReceipt", b =>
@@ -1280,6 +1702,68 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.Notification", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("notification_id");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<bool>("IsRead")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_read");
+
+                    b.Property<string>("Message")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("message");
+
+                    b.Property<string>("NotificationType")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("notification_type");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<Guid?>("ReferenceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reference_id");
+
+                    b.Property<string>("ReferenceType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("reference_type");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("title");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_notifications");
+
+                    b.HasIndex("UserId", "IsRead", "CreatedAt")
+                        .HasDatabaseName("ix_notifications_user_read_created");
+
+                    b.ToTable("notifications", (string)null);
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.PasswordResetToken", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1436,6 +1920,101 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasDatabaseName("idx_payment_webhook_logs_result");
 
                     b.ToTable("payment_webhook_logs", (string)null);
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.PointRateRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("rule_id");
+
+                    b.Property<long>("PointsPerKg")
+                        .HasColumnType("bigint")
+                        .HasColumnName("points_per_kg");
+
+                    b.Property<string>("WasteCategoryCode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("waste_category_code");
+
+                    b.HasKey("Id")
+                        .HasName("pk_point_rate_rules");
+
+                    b.HasIndex("WasteCategoryCode")
+                        .IsUnique()
+                        .HasDatabaseName("ux_point_rate_rules_category");
+
+                    b.ToTable("point_rate_rules", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_point_rate_nonneg", "points_per_kg >= 0");
+                        });
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.PointTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("transaction_id");
+
+                    b.Property<string>("ActionType")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("action_type");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("IdempotencyKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("idempotency_key");
+
+                    b.Property<long>("Points")
+                        .HasColumnType("bigint")
+                        .HasColumnName("points");
+
+                    b.Property<string>("SourceId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("source_id");
+
+                    b.Property<string>("SourceType")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("source_type");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.Property<Guid>("WalletId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("wallet_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_point_transactions");
+
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("ux_point_transactions_idem");
+
+                    b.HasIndex("WalletId");
+
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("ix_point_transactions_user_created");
+
+                    b.ToTable("point_transactions", (string)null);
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.RecyclerPrice", b =>
@@ -2412,6 +2991,50 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("staff_profiles", (string)null);
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.StaffShift", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("shift_id");
+
+                    b.Property<DateTime>("CheckInAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("check_in_at");
+
+                    b.Property<DateTime?>("CheckOutAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("check_out_at");
+
+                    b.Property<Guid>("StaffId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("staff_id");
+
+                    b.Property<int>("StreakCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("streak_count");
+
+                    b.Property<DateOnly>("WorkDate")
+                        .HasColumnType("date")
+                        .HasColumnName("work_date");
+
+                    b.Property<decimal?>("WorkingHours")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)")
+                        .HasColumnName("working_hours");
+
+                    b.HasKey("Id")
+                        .HasName("pk_staff_shifts");
+
+                    b.HasIndex("StaffId", "WorkDate")
+                        .IsUnique()
+                        .HasDatabaseName("ux_staff_shifts_staff_date");
+
+                    b.ToTable("staff_shifts", (string)null);
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.TradeOrder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2867,6 +3490,31 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.TreeLevelThreshold", b =>
+                {
+                    b.Property<int>("Level")
+                        .HasColumnType("integer")
+                        .HasColumnName("level");
+
+                    b.Property<long>("RequiredPoints")
+                        .HasColumnType("bigint")
+                        .HasColumnName("required_points");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("title");
+
+                    b.HasKey("Level")
+                        .HasName("pk_tree_level_thresholds");
+
+                    b.ToTable("tree_level_thresholds", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_tree_threshold_nonneg", "required_points >= 0");
+                        });
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3071,6 +3719,54 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("user_eco_profiles", (string)null);
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.UserPointWallet", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("wallet_id");
+
+                    b.Property<long>("CurrentBalance")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("current_balance");
+
+                    b.Property<long>("TotalEarned")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("total_earned");
+
+                    b.Property<long>("TotalSpent")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("total_spent");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_point_wallets");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_user_point_wallets_user");
+
+                    b.ToTable("user_point_wallets", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_wallet_balance_nonneg", "current_balance >= 0");
+                        });
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.UserSubscription", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3174,6 +3870,68 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("user_subscriptions", null, t =>
                         {
                             t.HasCheckConstraint("chk_user_subscriptions_window", "expires_at > starts_at");
+                        });
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.VirtualTreeProgress", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("progress_id");
+
+                    b.Property<int>("DailyWaterCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("daily_water_count");
+
+                    b.Property<long>("GrowthPoints")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasDefaultValue(0L)
+                        .HasColumnName("growth_points");
+
+                    b.Property<DateOnly?>("LastWaterDate")
+                        .HasColumnType("date")
+                        .HasColumnName("last_water_date");
+
+                    b.Property<DateTime?>("LastWateredAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_watered_at");
+
+                    b.Property<int>("TotalWatered")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("total_watered");
+
+                    b.Property<int>("TreeLevel")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(1)
+                        .HasColumnName("tree_level");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_virtual_tree_progress");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasDatabaseName("ux_virtual_tree_user");
+
+                    b.ToTable("virtual_tree_progress", null, t =>
+                        {
+                            t.HasCheckConstraint("ck_tree_level_min", "tree_level >= 1");
                         });
                 });
 
@@ -3400,6 +4158,22 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("ActorUser");
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.BlogPost", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("ApprovedByAdminId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_blog_posts_approved_by");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("AuthorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_blog_posts_author");
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.ChatMessage", b =>
                 {
                     b.HasOne("Ecolink.Domain.Entities.User", "SenderUser")
@@ -3431,6 +4205,44 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasConstraintName("fk_collection_partners_users");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.DailyCheckinLog", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_daily_checkin_users");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.EcoFact", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByStaffId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_eco_facts_staff");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.GiftRedemption", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.Gift", "Gift")
+                        .WithMany()
+                        .HasForeignKey("GiftId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_gift_redemptions_gift");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_gift_redemptions_users");
+
+                    b.Navigation("Gift");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.HandoverReceipt", b =>
@@ -3505,6 +4317,16 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("WasteCategory");
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_notifications_users");
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.PasswordResetToken", b =>
                 {
                     b.HasOne("Ecolink.Domain.Entities.User", "User")
@@ -3534,6 +4356,23 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("MatchedOrder");
 
                     b.Navigation("ResolverUser");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.PointTransaction", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_point_transactions_users");
+
+                    b.HasOne("Ecolink.Domain.Entities.UserPointWallet", null)
+                        .WithMany()
+                        .HasForeignKey("WalletId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_point_transactions_wallet");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.RecyclerPrice", b =>
@@ -3656,6 +4495,16 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasConstraintName("fk_staff_profiles_users");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.StaffShift", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("StaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_staff_shifts_users");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.TradeOrder", b =>
@@ -3811,6 +4660,16 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.UserPointWallet", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_user_point_wallets_users");
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.UserSubscription", b =>
                 {
                     b.HasOne("Ecolink.Domain.Entities.ServicePackage", "Package")
@@ -3839,6 +4698,16 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("SourceOrder");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.VirtualTreeProgress", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_virtual_tree_users");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.AiDatasetItem", b =>

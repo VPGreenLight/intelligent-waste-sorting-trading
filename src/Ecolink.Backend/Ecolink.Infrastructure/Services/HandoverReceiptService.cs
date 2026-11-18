@@ -42,14 +42,19 @@ public class HandoverReceiptService : IHandoverReceiptService
 
     private readonly ApplicationDbContext _db;
     private readonly IGamificationService _gamification;
+    private readonly IPointsService? _points;
     private readonly ILogger<HandoverReceiptService> _logger;
 
-    public HandoverReceiptService(ApplicationDbContext db, IGamificationService gamification,
-        ILogger<HandoverReceiptService> logger)
+    public HandoverReceiptService(
+        ApplicationDbContext db,
+        IGamificationService gamification,
+        ILogger<HandoverReceiptService> logger,
+        IPointsService? points = null)
     {
         _db = db;
         _gamification = gamification;
         _logger = logger;
+        _points = points;
     }
 
     // ============================================================
@@ -339,12 +344,15 @@ public class HandoverReceiptService : IHandoverReceiptService
             await _db.SaveChangesAsync(ct);
         }
 
-        // BR-GAM-01: cộng điểm cho cả người dân và Recycler. Điểm gốc đã lưu ở points_awarded;
-        // GamificationService hiện là bộ nhớ tạm nên lỗi ở đây không được làm hỏng giao dịch.
+        // BR-GAM-01: cộng điểm cho cả người dân và Recycler.
         try
         {
             await _gamification.AwardPointsForRecyclingAsync(receipt.UserId, receipt.TotalWeightKg, ct);
             await _gamification.AwardPointsForRecyclingAsync(receipt.RecyclerId, receipt.TotalWeightKg, ct);
+            if (_points != null)
+            {
+                await _points.AwardHandoverPointsAsync(receipt.Id, ct);
+            }
         }
         catch (Exception ex)
         {

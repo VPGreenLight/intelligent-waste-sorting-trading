@@ -76,6 +76,7 @@ public static class DependencyInjection
         // Handover Request Management (U-06, U-07, R-03, R-04)
         services.AddScoped<IHandoverRequestService, HandoverRequestService>();
 
+        // Handover Receipt Management
         services.AddScoped<IHandoverReceiptService, HandoverReceiptService>();
 
         // Đăng ký Module M-12: In-System Service Packages & VietQR Payment (FE-14)
@@ -102,6 +103,18 @@ public static class DependencyInjection
         // Đăng ký Module M-11: Rating, Review & Complaint Resolution (FE-10: U-10, U-11, S-05)
         services.AddScoped<IReviewService, ReviewService>();
         services.AddScoped<IComplaintService, ComplaintService>();
+
+        // Đăng ký Module M-14: Blog Content Management (FE-16: S-08, A-09)
+        services.AddScoped<IBlogPostService, BlogPostService>();
+
+        // Đăng ký Module M-10: Gamification & Rewards (Points, Check-in, Virtual Tree, Gifts, Eco Facts)
+        services.AddScoped<IPointsService, PointsService>();
+        services.AddScoped<IGamificationConfigService, GamificationConfigService>();
+        services.AddScoped<ICheckinService, CheckinService>();
+        services.AddScoped<IGiftService, GiftService>();
+        services.AddScoped<IVirtualTreeService, VirtualTreeService>();
+        services.AddScoped<IEcoFactService, EcoFactService>();
+        services.AddScoped<IStaffShiftService, StaffShiftService>();
 
         return services;
     }

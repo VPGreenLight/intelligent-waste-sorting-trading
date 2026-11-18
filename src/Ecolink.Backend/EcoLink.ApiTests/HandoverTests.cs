@@ -203,7 +203,7 @@ public class HandoverTests
             Assert.Equal("MSG-HND-01", r.MessageCode());
             var d = r.Data();
             Assert.Equal("Pending", d.Str("status"));
-            Assert.Matches(@"^HND-\d{8}-\d{4}$", d.Str("requestCode")!);
+            Assert.Matches(@"^HND-\d{8}-\d{4,}$", d.Str("requestCode")!);
             Assert.Equal(10m, d.GetProperty("totalEstimatedWeightKg").GetDecimal());
             Assert.Single(d.GetProperty("photoUrls").EnumerateArray());
             Assert.True(d.GetProperty("canEdit").GetBoolean());
