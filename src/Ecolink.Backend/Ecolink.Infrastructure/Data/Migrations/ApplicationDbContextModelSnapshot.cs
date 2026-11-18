@@ -1521,6 +1521,13 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(20)")
                         .HasColumnName("active_status");
 
+                    b.Property<decimal>("AverageRating")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(3, 2)
+                        .HasColumnType("numeric(3,2)")
+                        .HasDefaultValue(0m)
+                        .HasColumnName("average_rating");
+
                     b.Property<string>("BusinessAddress")
                         .IsRequired()
                         .HasColumnType("text")
@@ -1609,6 +1616,12 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("representative_name");
+
+                    b.Property<int>("TotalReviews")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("total_reviews");
 
                     b.Property<DateTime?>("UpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -2495,6 +2508,176 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.ToTable("trade_orders", (string)null);
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.TransactionComplaint", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<Guid?>("AssignedStaffId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("assigned_staff_id");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("category");
+
+                    b.Property<Guid>("ComplainantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("complainant_id");
+
+                    b.Property<string>("ComplainantRole")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("Citizen")
+                        .HasColumnName("complainant_role");
+
+                    b.Property<string>("ComplaintCode")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("complaint_code");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("System")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("EvidenceUrlsJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("evidence_urls_json")
+                        .HasDefaultValueSql("'[]'::jsonb");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<bool>("PointsRevoked")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("points_revoked");
+
+                    b.Property<Guid?>("ReceiptId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("receipt_id");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_id");
+
+                    b.Property<string>("ResolutionNote")
+                        .HasColumnType("text")
+                        .HasColumnName("resolution_note");
+
+                    b.Property<string>("ResolutionOutcome")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)")
+                        .HasColumnName("resolution_outcome");
+
+                    b.Property<DateTime?>("ResolvedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("resolved_at");
+
+                    b.Property<Guid?>("ResolvedByStaffId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("resolved_by_staff_id");
+
+                    b.Property<Guid>("RespondentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("respondent_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("Open")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime?>("TakenAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("taken_at");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<bool>("WarningLogged")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("warning_logged");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_transaction_complaints");
+
+                    b.HasIndex("AssignedStaffId");
+
+                    b.HasIndex("ComplaintCode")
+                        .IsUnique()
+                        .HasDatabaseName("uq_transaction_complaints_code");
+
+                    b.HasIndex("ReceiptId");
+
+                    b.HasIndex("RequestId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_transaction_complaints_active_request")
+                        .HasFilter("status IN ('Open', 'Investigating') AND is_deleted = FALSE");
+
+                    b.HasIndex("ResolvedByStaffId");
+
+                    b.HasIndex("RespondentId");
+
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("idx_transaction_complaints_status_created")
+                        .HasFilter("is_deleted = FALSE");
+
+                    b.HasIndex("ComplainantId", "RespondentId", "CreatedAt")
+                        .HasDatabaseName("idx_transaction_complaints_parties")
+                        .HasFilter("is_deleted = FALSE");
+
+                    b.ToTable("transaction_complaints", (string)null);
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.TransactionReceipt", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2555,6 +2738,133 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasDatabaseName("uq_transaction_receipts_trade_order_id");
 
                     b.ToTable("transaction_receipts", (string)null);
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.TransactionReview", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<string>("Comment")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasColumnName("comment");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at")
+                        .HasDefaultValueSql("NOW()");
+
+                    b.Property<string>("CreatedBy")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasDefaultValue("System")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateTime?>("DeletedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("deleted_at");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false)
+                        .HasColumnName("is_deleted");
+
+                    b.Property<string>("LastReportReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("last_report_reason");
+
+                    b.Property<DateTime?>("ModeratedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("moderated_at");
+
+                    b.Property<Guid?>("ModeratedByStaffId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("moderated_by_staff_id");
+
+                    b.Property<string>("ModerationReason")
+                        .HasColumnType("text")
+                        .HasColumnName("moderation_reason");
+
+                    b.Property<int>("RatingStars")
+                        .HasColumnType("integer")
+                        .HasColumnName("rating_stars");
+
+                    b.Property<Guid>("RecyclerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("recycler_id");
+
+                    b.Property<int>("ReportCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0)
+                        .HasColumnName("report_count");
+
+                    b.Property<Guid?>("ReportedByUserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reported_by_user_id");
+
+                    b.Property<Guid>("RequestId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("request_id");
+
+                    b.Property<Guid>("ReviewerId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("reviewer_id");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasDefaultValue("Visible")
+                        .HasColumnName("status");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("updated_by");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id")
+                        .HasName("pk_transaction_reviews");
+
+                    b.HasIndex("ModeratedByStaffId");
+
+                    b.HasIndex("ReportedByUserId");
+
+                    b.HasIndex("RequestId", "ReviewerId")
+                        .IsUnique()
+                        .HasDatabaseName("uq_transaction_reviews_request_reviewer");
+
+                    b.HasIndex("ReviewerId", "CreatedAt")
+                        .HasDatabaseName("idx_transaction_reviews_reviewer")
+                        .HasFilter("is_deleted = FALSE");
+
+                    b.HasIndex("RecyclerId", "Status", "CreatedAt")
+                        .HasDatabaseName("idx_transaction_reviews_recycler_status")
+                        .HasFilter("is_deleted = FALSE");
+
+                    b.ToTable("transaction_reviews", null, t =>
+                        {
+                            t.HasCheckConstraint("chk_transaction_reviews_stars", "rating_stars BETWEEN 1 AND 5");
+                        });
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.User", b =>
@@ -3377,6 +3687,60 @@ namespace Ecolink.Infrastructure.Data.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Ecolink.Domain.Entities.TransactionComplaint", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", "AssignedStaff")
+                        .WithMany()
+                        .HasForeignKey("AssignedStaffId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_transaction_complaints_assigned");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", "Complainant")
+                        .WithMany()
+                        .HasForeignKey("ComplainantId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_transaction_complaints_complainant");
+
+                    b.HasOne("Ecolink.Domain.Entities.HandoverReceipt", "Receipt")
+                        .WithMany()
+                        .HasForeignKey("ReceiptId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_transaction_complaints_receipt");
+
+                    b.HasOne("Ecolink.Domain.Entities.HandoverRequest", "Request")
+                        .WithMany()
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_transaction_complaints_request");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", "ResolvedByStaff")
+                        .WithMany()
+                        .HasForeignKey("ResolvedByStaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_transaction_complaints_resolved_by");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", "Respondent")
+                        .WithMany()
+                        .HasForeignKey("RespondentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_transaction_complaints_respondent");
+
+                    b.Navigation("AssignedStaff");
+
+                    b.Navigation("Complainant");
+
+                    b.Navigation("Receipt");
+
+                    b.Navigation("Request");
+
+                    b.Navigation("ResolvedByStaff");
+
+                    b.Navigation("Respondent");
+                });
+
             modelBuilder.Entity("Ecolink.Domain.Entities.TransactionReceipt", b =>
                 {
                     b.HasOne("Ecolink.Domain.Entities.TradeOrder", "TradeOrder")
@@ -3387,6 +3751,52 @@ namespace Ecolink.Infrastructure.Data.Migrations
                         .HasConstraintName("fk_transaction_receipts_trade_orders");
 
                     b.Navigation("TradeOrder");
+                });
+
+            modelBuilder.Entity("Ecolink.Domain.Entities.TransactionReview", b =>
+                {
+                    b.HasOne("Ecolink.Domain.Entities.User", "ModeratedByStaff")
+                        .WithMany()
+                        .HasForeignKey("ModeratedByStaffId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("fk_transaction_reviews_moderator");
+
+                    b.HasOne("Ecolink.Domain.Entities.RecyclerProfile", "Recycler")
+                        .WithMany()
+                        .HasForeignKey("RecyclerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_transaction_reviews_recycler");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", "ReportedByUser")
+                        .WithMany()
+                        .HasForeignKey("ReportedByUserId")
+                        .OnDelete(DeleteBehavior.SetNull)
+                        .HasConstraintName("fk_transaction_reviews_reporter");
+
+                    b.HasOne("Ecolink.Domain.Entities.HandoverRequest", "Request")
+                        .WithMany()
+                        .HasForeignKey("RequestId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_transaction_reviews_request");
+
+                    b.HasOne("Ecolink.Domain.Entities.User", "Reviewer")
+                        .WithMany()
+                        .HasForeignKey("ReviewerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("fk_transaction_reviews_reviewer");
+
+                    b.Navigation("ModeratedByStaff");
+
+                    b.Navigation("Recycler");
+
+                    b.Navigation("ReportedByUser");
+
+                    b.Navigation("Request");
+
+                    b.Navigation("Reviewer");
                 });
 
             modelBuilder.Entity("Ecolink.Domain.Entities.UserEcoProfile", b =>

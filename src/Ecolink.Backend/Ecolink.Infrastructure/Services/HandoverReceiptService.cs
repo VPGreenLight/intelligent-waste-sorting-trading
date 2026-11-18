@@ -212,6 +212,41 @@ public class HandoverReceiptService : IHandoverReceiptService
         entity.Status = HandoverStatus.Disputed;
         entity.CancelReason = reason;
         entity.UpdatedAt = now;
+
+        // Tự động hợp nhất luồng Dispute biên nhận sang hàng đợi S-05 (U-09 -> U-11 -> S-05)
+        var hasActiveComplaint = await _db.TransactionComplaints
+            .AnyAsync(c => c.RequestId == requestId &&
+                           (c.Status == ComplaintStatus.Open || c.Status == ComplaintStatus.Investigating), ct);
+
+        if (!hasActiveComplaint)
+        {
+            var dateTag = now.AddHours(7).ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+            var evidenceJson = JsonSerializer.Serialize(
+                (request.EvidencePhotoUrls ?? new List<string>())
+                    .Where(u => !string.IsNullOrWhiteSpace(u))
+                    .Select(u => u.Trim())
+                    .Take(5)
+                    .ToList(),
+                JsonOptions);
+
+            _db.TransactionComplaints.Add(new TransactionComplaint
+            {
+                Id = Guid.NewGuid(),
+                ComplaintCode = $"CMP-{dateTag}-{Random.Shared.Next(1000, 9999)}",
+                RequestId = entity.Id,
+                ReceiptId = receipt.Id,
+                ComplainantId = userId,
+                ComplainantRole = "Citizen",
+                RespondentId = entity.RecyclerId,
+                Category = ComplaintCategory.ScaleDiscrepancy,
+                Description = reason,
+                EvidenceUrlsJson = evidenceJson,
+                Status = ComplaintStatus.Open,
+                CreatedAt = now,
+                CreatedBy = userId.ToString()
+            });
+        }
+
         await _db.SaveChangesAsync(ct);
 
         var evidenceNote = request.EvidencePhotoUrls is { Count: > 0 }

@@ -1,0 +1,44 @@
+sequenceDiagram
+    autonumber
+    actor Party as Citizen hoac Recycler
+    participant UI as EcoLink Web UI
+    participant CmpCtrl as ComplaintsController
+    participant RcpCtrl as HandoverReceiptController
+    participant CmpSvc as ComplaintService
+    participant RcpSvc as HandoverReceiptService
+    participant R2 as Cloudflare R2 Storage
+    participant DB as PostgreSQL 16
+
+    Note over Party,DB: U-11: Upload anh bang chung R2 va gui phieu khieu nai 2 chieu (hoac qua Dispute bien nhan)
+
+    opt Dinh kem anh bang chung toi da 5 anh (BR-DSP-02)
+        Party->>UI: Chon anh can dien tu / bien lai / diem hen NoShow
+        UI->>CmpCtrl: POST /api/v1/complaints/upload-evidence (multipart/form-data)
+        CmpCtrl->>CmpSvc: UploadEvidenceAsync(stream, fileName, contentType)
+        CmpSvc->>R2: PutObject AWS4-HMAC-SHA256 (complaint-evidences/yyyy/MM/...)
+        R2-->>UI: 200 OK fileUrl & objectKey
+    end
+
+    alt Luong 1: Gui truc tiep qua cong Khieu nai 2 chieu
+        Party->>UI: Chon don, nhom loi & mo ta >= 15 ky tu
+        UI->>CmpCtrl: POST /api/v1/complaints
+        CmpCtrl->>CmpSvc: SubmitComplaintAsync(callerId, request)
+        CmpSvc->>DB: Verify thanh vien don + han 7 ngay + check uq_transaction_complaints_active_request
+        alt Ngoai don (403) / Qua 7 ngay (400) / Trung phieu dang mo (409)
+            CmpSvc-->>UI: Tra ma loi BR-DSP-01 (MSG-DSP-03 hoac MSG-DSP-04)
+        else Hop le
+            CmpSvc->>DB: INSERT transaction_complaints (CMP-yyyyMMdd-XXXX, Open) + Sync Disputed neu Awaiting
+            CmpSvc->>DB: SyncHandoverToTradeOrderAsync (chat he thong)
+            CmpSvc-->>UI: 201 Created MSG-DSP-01
+        end
+    else Luong 2: Citizen khieu nai ngay tren man hinh Bien nhan (U-09)
+        Party->>RcpCtrl: POST /api/v1/handover-requests/{id}/receipt/dispute
+        RcpCtrl->>RcpSvc: DisputeAsync(userId, requestId, request)
+        RcpSvc->>DB: UPDATE handover_requests = Disputed + INSERT transaction_complaints (ScaleDiscrepancy, Open)
+        RcpCtrl-->>UI: 200 OK MSG-DSP-01 (da chuyen hang doi S-05)
+    end
+
+    Party->>UI: Xem lich su "Khieu nai cua toi" (all / submitted / against)
+    UI->>CmpCtrl: GET /api/v1/complaints/me
+    CmpSvc->>DB: Filter ComplainantId == userId OR RespondentId == userId (BR-DSP-06)
+    CmpSvc-->>UI: 200 OK PagedResult ComplaintSummaryDto

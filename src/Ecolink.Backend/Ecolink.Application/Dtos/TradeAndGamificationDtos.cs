@@ -15,6 +15,8 @@ public class CollectionPartnerDto
     public string? BusinessPhotoUrl { get; set; }
     public bool HasVerifiedBadge { get; set; }
     public bool IsFeatured { get; set; }
+    public decimal AverageRating { get; set; }
+    public int TotalReviews { get; set; }
     public List<AcceptedMaterialDto> Materials { get; set; } = new();
 }
 

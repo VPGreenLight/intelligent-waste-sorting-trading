@@ -1,10 +1,10 @@
 # REPORT 5.1 – UNIT TEST SPECIFICATION (TÀI LIỆU ĐẶC TẢ KIỂM THỬ ĐƠN VỊ)
 
 - **Dự án:** Hệ thống Phân loại Rác Thông minh & Giao dịch Phế liệu (**EcoLink**)
-- **Phiên bản:** 1.8
-- **Ngày cập nhật:** 2026-11-17
+- **Phiên bản:** 1.9
+- **Ngày cập nhật:** 2026-11-18
 - **Nhóm thực hiện:** Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức
-- **Phạm vi kiểm thử (11 Core Modules):**
+- **Phạm vi kiểm thử (12 Core Modules):**
   1. **Module 1:** Authentication & Account Management (`AuthService`) — **22 TCs**
   2. **Module 2:** AI Waste Classification & Rule Engine (`AiVisionHttpClient`, `WasteRuleEngineService`, `classify_waste_image`) — **18 TCs**
   3. **Module 3:** Recycler Onboarding & Verification (`RecyclerOnboardingService`, `CloudflareR2StorageService`) — **20 TCs**
@@ -16,7 +16,8 @@
   9. **Module 9:** Account, Staff & System Governance / Analytics (`AdminAnalyticsService`, `AccountGovernanceService`, `StaffManagementService`, `StaffAttendanceService`, `AuditLogService` & `GovernanceValidators` – `A-01..A-04`, `S-06`, `S-07`, `S-11`) — **22 TCs**
   10. **Module 10:** In-System Service Packages & VietQR Integration (`PaymentService`, `ServicePackageService`, `SubscriptionEntitlementService`, `AdminReconciliationService` & `ServicePackageValidators` – `U-16`, `R-07`, `A-10`, `A-11`) — **22 TCs**
   11. **Module 11:** AI Misclassification Feedback & Dataset Curation (`AiFeedbackService`, `AiDatasetCurationService`, `AiDatasetExportBuilder`, `AiCurationValidators` – `U-04`, `S-01`, `S-02`, `S-03`) — **22 TCs**
-- **Tổng số lượng Unit Test Cases:** **234 TCs** (`107 Normal`, `84 Abnormal`, `43 Boundary`)
+  12. **Module 12:** Rating, Review & Complaint Resolution (`ReviewService`, `ComplaintService`, `HandoverReceiptService.DisputeAsync`, `ReviewAndComplaintValidators` – `U-10`, `U-11`, `S-05`) — **22 TCs**
+- **Tổng số lượng Unit Test Cases:** **256 TCs** (`117 Normal`, `92 Abnormal`, `47 Boundary`)
 
 ---
 
@@ -538,3 +539,47 @@
 | **UTC020** | `CreateDatasetVersionRequestValidator` | `70/20/10`, `100/0/0` vs `70/20/5` & semver `"1.0"` | Chấp nhận tổng `= 100%` & SemVer hợp lệ, từ chối biên sai | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên tỷ lệ chia tập |
 | **UTC021** | Tỷ lệ `5:2` (`2.50x`) vs `12:2` (`6.00x`) | `GetDatasetOverviewAsync()` | `2.50x` -> `IsBalanced=true`; `6.00x` -> `IsBalanced=false`, cờ `NeedsMoreSamples` | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Ngưỡng cân bằng `2.50x` |
 | **UTC022** | `BatchAssignLabelsRequestValidator` | Số lượng `1`, `200` vs `0`, `201` phần tử | Chấp nhận `[1..200]`, từ chối `0` và `201` | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Giới hạn Batch `1..200` |
+
+---
+
+## PHẦN 12: MODULE RATING, REVIEW & COMPLAINT RESOLUTION (`ReviewComplaintTests` – `U-10`, `U-11`, `S-05`)
+
+### 12.1. Bảng Tổng hợp Kiểm thử (Summary Table)
+
+| Code Module | `ReviewService`, `ComplaintService`, `HandoverReceiptService.DisputeAsync`, `ReviewAndComplaintValidators` | | |
+| :--- | :---: | :---: | :---: |
+| **Number of TCs** | **22** | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** |
+| *Round 1* | 22 | 0 | 0 |
+| *Round 2* | 0 | 0 | 22 |
+| *Round 3* | 0 | 0 | 22 |
+| **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
+| **Count** | **10** | **8** | **4** |
+
+### 12.2. Chi tiết Các Ca Kiểm thử (Test Cases)
+*(Chi tiết đầy đủ 22 test cases `UTC001` $\rightarrow$ `UTC022` xem tại: [`12_unit_test_rating_review_complaint_resolution.md`](./12_unit_test_rating_review_complaint_resolution.md) / [`ReviewComplaintTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module11_ReviewsComplaints/ReviewComplaintTests.cs))*
+
+| Test Case ID | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :--- |
+| **UTC001** | Đơn `Completed` trong `14 ngày` | `CreateReviewAsync(5, "Cân chuẩn...")` | Lưu `TransactionReview`, `AverageRating=5.00`, `TotalReviews=1` | Normal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-RVW-01` |
+| **UTC002** | Có 1 review `5★` + thêm review `4★` | `CreateReviewAsync(4)` + `GetRecyclerReviewsAsync` | `AverageRating=4.50`, `TotalReviews=2`, phân bố `1..5` sao | Normal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Tính TB nguyên tử |
+| **UTC003** | Tác giả đã đăng đánh giá `3★` | `DeleteMyReviewAsync(citizenId, reviewId)` | `Status="Deleted"`, `AverageRating=0`, `TotalReviews=0` | Normal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-RVW-03` |
+| **UTC004** | Đánh giá `1★` bị báo cáo vi phạm | `ReportAbusiveReview` $\rightarrow$ `ModerateReview("Hide")` | Chuyển `Hidden`, tính lại `AverageRating`, ghi `AuditLog` | Normal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-RVW-03`, `BR-ADM-05` |
+| **UTC005** | Đánh giá `5★` đang ở `Hidden` | `ModerateReviewAsync("Restore")` | Phục hồi `Visible`, `AverageRating=5.00` | Normal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khôi phục bài hợp lệ |
+| **UTC006** | Đơn `AwaitingConfirmation` trong `7 ngày` | `SubmitComplaintAsync("ScaleDiscrepancy", R2 url)` | Tạo `CMP-...`, `Open`, đơn thành `Disputed` | Normal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `U-11` |
+| **UTC007** | Đơn `Accepted` quá giờ hẹn | Recycler gọi `SubmitComplaintAsync("NoShow")` | `ComplainantRole="Recycler"`, `RespondentId=Citizen` | Normal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khiếu nại 2 chiều |
+| **UTC008** | Biên nhận đang chờ xác nhận | `HandoverReceiptService.DisputeAsync` | Đặt `Disputed` & tự tạo phiếu `TransactionComplaint` | Normal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Hợp nhất `M-07` |
+| **UTC009** | Có phiếu `Open`, ảnh cân & chat | `GetStaffComplaintDossierAsync(claim=true)` | Chuyển `Investigating`, trả ảnh cân & `NegotiationMessages` | Normal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Hồ sơ 360° |
+| **UTC010** | Đơn `Completed` (+50đ), có phiếu `Open` | `Resolve("CancelDisputedOrder", warn=true)` | Đơn `Cancelled`, trừ điểm, `WarningCount=1`, `AccountModerationLog` | Normal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-05`, `BR-GAM-01` |
+| **UTC011** | Đơn đang `Accepted` | `CreateReviewAsync(5)` | Ném `BusinessRuleException ("BR-RVW-01")` | Abnormal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chặn đơn chưa xong |
+| **UTC012** | Đơn đã được đánh giá `1` lần | `CreateReviewAsync(4)` lần 2 | Ném `ConflictException ("MSG-RVW-02")` | Abnormal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `1-Đơn / 1-Review` |
+| **UTC013** | Có review thuộc Citizen A | Recycler bị đánh giá gọi `DeleteMyReviewAsync` | Ném `ForbiddenAccessException` | Abnormal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chặn vựa xóa bài |
+| **UTC014** | Người dùng ngoài đơn bàn giao | `SubmitComplaintAsync` | Ném `ForbiddenAccessException` | Abnormal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chống IDOR |
+| **UTC015** | Đơn đã có phiếu `Open` | Bên còn lại gọi `SubmitComplaintAsync` | Ném `ConflictException ("MSG-DSP-04")` | Abnormal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Tối đa 1 phiếu mở |
+| **UTC016** | Đơn hoàn tất cách `8 ngày` (`> 7`) | `SubmitComplaintAsync` | Ném `BusinessRuleException ("MSG-DSP-03")` | Abnormal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Quá hạn 7 ngày |
+| **UTC017** | Phiếu đã chốt `Dismissed` | Gọi `ResolveComplaintAsync` lần 2 | Ném `ConflictException` | Abnormal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khóa đóng lặp |
+| **UTC018** | Đơn hoàn tất cách `15 ngày` (`> 14`) | `CreateReviewAsync` | Ném `BusinessRuleException ("MSG-RVW-02")` | Abnormal | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Quá hạn 14 ngày |
+| **UTC019** | `CreateReviewRequestValidator` | Stars `1, 5` vs `0, 6`; Comment `1000` vs `1001` | Biên hợp lệ `true`; ngoài biên `false` | Boundary | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên sao & độ dài |
+| **UTC020** | `SubmitComplaintRequestValidator` | Mô tả `15/14` ký tự; `5/6` URL ảnh | Đúng biên `>= 15` & `<= 5` ảnh `true`; vi phạm `false` | Boundary | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-DSP-02` |
+| **UTC021** | `ResolveComplaintRequestValidator` | `ResolutionNote` `10` vs `9` ký tự | `10` ký tự `true`; `9` ký tự `false` | Boundary | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-DSP-04` |
+| **UTC022** | Citizen còn `20đ` vs `50đ`; đơn `Disputed` | `CancelDisputedOrder` & `ConfirmReceiptAsIs` | Kẹp `CurrentGreenPoints = 0` (`>= 0`); `Disputed` chốt cộng `50đ` | Boundary | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-GAM-03` Floor 0 |

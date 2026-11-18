@@ -280,6 +280,8 @@ public class GeoMatchingService : IGeoMatchingService
                     ContactPhone = partner.ContactPhone,
                     OperatingHours = partner.OperatingHours,
                     DistanceKm = Math.Round(distance, 2),
+                    AverageRating = partner.AverageRating,
+                    TotalReviews = partner.TotalReviews,
                     Materials = partner.Materials
                 });
             }
@@ -315,6 +317,14 @@ public class GeoMatchingService : IGeoMatchingService
             partners = partners
                 .OrderByDescending(p => p.Materials
                     .FirstOrDefault(m => m.CategoryCode.Equals(cat, StringComparison.OrdinalIgnoreCase))?.PricePerKg ?? 0m)
+                .ThenBy(p => p.DistanceKm)
+                .ToList();
+        }
+        else if (string.Equals(filter.SortBy, "rating_desc", StringComparison.OrdinalIgnoreCase))
+        {
+            partners = partners
+                .OrderByDescending(p => p.AverageRating)
+                .ThenByDescending(p => p.TotalReviews)
                 .ThenBy(p => p.DistanceKm)
                 .ToList();
         }
@@ -431,6 +441,8 @@ public class GeoMatchingService : IGeoMatchingService
             BusinessPhotoUrl = profile.BusinessPhotoUrl,
             HasVerifiedBadge = false,
             IsFeatured = false,
+            AverageRating = profile.AverageRating,
+            TotalReviews = profile.TotalReviews,
             Materials = activeMaterials
         };
     }

@@ -99,6 +99,10 @@ public static class DependencyInjection
         services.AddScoped<IAiFeedbackService, AiFeedbackService>();
         services.AddScoped<IAiDatasetCurationService, AiDatasetCurationService>();
 
+        // Đăng ký Module M-11: Rating, Review & Complaint Resolution (FE-10: U-10, U-11, S-05)
+        services.AddScoped<IReviewService, ReviewService>();
+        services.AddScoped<IComplaintService, ComplaintService>();
+
         return services;
     }
 }

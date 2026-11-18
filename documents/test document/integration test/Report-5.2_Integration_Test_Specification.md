@@ -7,8 +7,8 @@
 | Field | Value | Field | Value |
 | :--- | :--- | :--- | :--- |
 | **Project Name** | Intelligent Waste Sorting and Trading Platform (**EcoLink**) | **Creator** | Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức |
-| **Project Code** | `SEP490_G141` | **Issue Date** | `2026-11-17` |
-| **Document Code** | `SEP490_G141_ITR_v1.3` | **Version** | `1.3` |
+| **Project Code** | `SEP490_G141` | **Issue Date** | `2026-11-18` |
+| **Document Code** | `SEP490_G141_ITR_v1.4` | **Version** | `1.4` |
 
 ### Record of Change
 
@@ -20,6 +20,7 @@
 | `2026-11-16` | `1.1` | Module 09 (`M15_Governance`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-GOV-001` $\rightarrow$ `ITC-GOV-016`) bao phủ 19 REST APIs (`STT 150–168`) của Module Account, Staff & System Governance / Analytics (`GovernanceTests.cs`), nâng tổng số lên **172 TCs**. | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) |
 | `2026-11-17` | `1.2` | Module 10 (`M12_ServicePackages`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-PAY-001` $\rightarrow$ `ITC-PAY-016`) bao phủ 15 REST APIs (`STT 115–129`) của Module In-System Service Packages & VietQR Integration (`ServicePackageTests.cs`), nâng tổng số lên **188 TCs**. | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) |
 | `2026-11-17` | `1.3` | Module 11 (`M13_AiCuration`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-CLS-001` $\rightarrow$ `ITC-CLS-016`) bao phủ 10 Core APIs (`STT 130–139`), nâng cấp `021, 024` và FastAPI (`STT 183–184`) của Module AI Misclassification Feedback & Dataset Curation (`AiCurationTests.cs`), nâng tổng số lên **204 TCs**. | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) |
+| `2026-11-18` | `1.4` | Module 12 (`M11_ReviewsComplaints`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-RVW-001` $\rightarrow$ `ITC-RVW-016`) bao phủ 12 REST APIs (`STT 103–114`) của Module Rating, Review & Complaint Resolution (`ReviewsAndComplaintsTests.cs`), nâng tổng số lên **220 TCs**. | [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) |
 
 *(Ghi chú: `*A` = Added, `D` = Deleted, `M` = Modified)*
 
@@ -84,7 +85,10 @@
 | **45** | Function 11.2: Fine-Grained RBAC & Misclassification Review | `M13_AiCuration` | Phân quyền `[HasPermission]` giữa `REVIEW_AI` và `CURATE_DATASET` (`403 MSG-ADM-04`), duyệt 1 chạm `ApproveAndLabel`, bác bỏ `Reject` (`BR-CLS-06`), cô lập `/feedback/me` (`BR-CLS-08`) & `409` duyệt lặp. | Admin tạo và phân quyền Staff động. | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) |
 | **46** | Function 11.3: Ground-Truth Annotation & Atomic Batch Assign | `M13_AiCuration` | Gán nhãn Ground-Truth đơn lẻ kèm tọa độ YOLO `[0, 1]`, chặn biên ngoài `(0, 1]` và gán hàng loạt nguyên tử (`POST /batch-assign`) rollback khi thiếu ID (`404`). | Có mẫu `Unlabeled` trong `ai_dataset_items`. | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) |
 | **47** | Function 11.4: Sticky Stratified Split 70/20/10, ZIP Export & FastAPI Sync | `M13_AiCuration` | Đóng gói `70/20/10` (`201 MSG-CLS-08`), kiểm định Sticky Split Zero Data Leakage `v1 -> v2` (`BR-CLS-07`), cờ lệch lớp `> 2.50x`, xuất `.zip` `YOLO` (`MSG-ADM-02`) & đồng bộ FastAPI (`SyncedToAi`). | Có mẫu `VerifiedLabeled` trong kho `S-03`. | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) |
-| **48** | Function 12.1: Cross-Module Security & Authorization | `SecurityTest` | Kiểm thử bảo mật tích hợp: Chống rò rỉ dữ liệu, User Enumeration, Brute-Force, Replay Attack, SQLi/XSS, RBAC & IDOR. | Toàn bộ 11 Module đang hoạt động. | [`integration_test_security.md`](./integration_test_security.md) |
+| **48** | Function 12.1: Recycler Rating, Public Discovery & Moderation | `M11_ReviewsComplaints` | Đánh giá `1–5` sao đơn `Completed` trong `14 ngày` (`BR-RVW-01`), tự tính `AverageRating`/`TotalReviews`, chặn sửa sao (`BR-RVW-02`), chỉ tác giả tự xóa & Staff `[HANDLE_COMPLAINT]` ẩn bài báo cáo (`BR-RVW-03`). | Có đơn bàn giao `Completed` & tài khoản Staff. | [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) |
+| **49** | Function 12.2: Bilateral Complaints, R2 Evidence & Receipt Dispute | `M11_ReviewsComplaints` | Tải ảnh Cloudflare R2 (`complaint-evidences`), gửi khiếu nại 2 chiều `Citizen`/`Recycler` (`BR-DSP-01`), hợp nhất `DisputeAsync` từ biên nhận, chặn trùng phiếu active (`409 MSG-DSP-04`) & cô lập `/complaints/me`. | Có giao dịch giữa `Citizen` & `Recycler`. | [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) |
+| **50** | Function 12.3: Staff Arbitration Dossier 360, Clawback & Analytics | `M11_ReviewsComplaints` | Phân quyền `[HasPermission("HANDLE_COMPLAINT")]`, nhận xử lý (`Open -> Investigating`), xem Hồ sơ 360° (ảnh cân + chat bất biến `BR-DSP-06`), thu hồi `GreenPoints` (`>= 0`), cảnh cáo `AccountModerationLog` & đồng bộ KPI Analytics. | Có phiếu khiếu nại `Open` & dữ liệu giao dịch/chat. | [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) |
+| **51** | Function 13.1: Cross-Module Security & Authorization | `SecurityTest` | Kiểm thử bảo mật tích hợp: Chống rò rỉ dữ liệu, User Enumeration, Brute-Force, Replay Attack, SQLi/XSS, RBAC & IDOR. | Toàn bộ 12 Module đang hoạt động. | [`integration_test_security.md`](./integration_test_security.md) |
 
 ---
 
@@ -94,8 +98,8 @@
 | :--- | :--- | :--- | :--- |
 | **Project Name** | Intelligent Waste Sorting and Trading Platform (**EcoLink**) | **Creator** | Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức |
 | **Project Code** | `SEP490_G141` | **Reviewer/Approver** | GVHD / Hội đồng Chấm Đồ án SEP490 |
-| **Document Code** | `SEP490_G141_Test Report_v1.3` | **Issue Date** | `2026-11-17` |
-| **Notes** | Release 1.3 bổ sung Module 11 (`M13_AiCuration`: 10 Core APIs `STT 130–139`, nâng cấp `021/024` & FastAPI `183–184`) nâng tổng phạm vi lên 11 Core Business Modules (`M01_Auth` $\rightarrow$ `M13_AiCuration`) và 1 Sheet Kiểm thử Bảo mật Tích hợp (`SecurityTest`), thực thi tự động qua [`src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj`](../../../src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj). | | |
+| **Document Code** | `SEP490_G141_Test Report_v1.4` | **Issue Date** | `2026-11-18` |
+| **Notes** | Release 1.4 bổ sung Module 12 (`M11_ReviewsComplaints`: 12 REST APIs `STT 103–114`) nâng tổng phạm vi lên 12 Core Business Modules (`M01_Auth` $\rightarrow$ `M11_ReviewsComplaints`) và 1 Sheet Kiểm thử Bảo mật Tích hợp (`SecurityTest`), thực thi tự động qua [`src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj`](../../../src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj). | | |
 
 ### Bảng Thống kê Kết quả Kiểm thử Tích hợp (Integration Test Statistics Table)
 
@@ -112,11 +116,12 @@
 | **9** | `M15_Governance` (Account, Staff & System Governance) | 16 | 0 | 0 | 0 | **16** | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) / [`GovernanceTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/GovernanceTests.cs) |
 | **10** | `M12_ServicePackages` (In-System Service Packages & VietQR) | 16 | 0 | 0 | 0 | **16** | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) / [`ServicePackageTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ServicePackageTests.cs) |
 | **11** | `M13_AiCuration` (AI Feedback & Dataset Curation) | 16 | 0 | 0 | 0 | **16** | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) / [`AiCurationTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/AiCurationTests.cs) |
-| **12** | `SecurityTest` (Cross-Module Security & Authorization) | 16 | 0 | 0 | 0 | **16** | [`integration_test_security.md`](./integration_test_security.md) |
-| | **Sub total** | **204** | **0** | **0** | **0** | **204** | **284 Automated Test Methods** |
+| **12** | `M11_ReviewsComplaints` (Rating, Review & Complaint Resolution) | 16 | 0 | 0 | 0 | **16** | [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) / [`ReviewsAndComplaintsTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ReviewsAndComplaintsTests.cs) |
+| **13** | `SecurityTest` (Cross-Module Security & Authorization) | 16 | 0 | 0 | 0 | **16** | [`integration_test_security.md`](./integration_test_security.md) |
+| | **Sub total** | **220** | **0** | **0** | **0** | **220** | **300 Automated Test Methods** |
 
-- **Test coverage:** `100,00 %` (`204 / 204` Test Cases Executed)
-- **Test successful coverage:** `100,00 %` (`204 / 204` Test Cases Passed)
+- **Test coverage:** `100,00 %` (`220 / 220` Test Cases Executed)
+- **Test successful coverage:** `100,00 %` (`220 / 220` Test Cases Passed)
 
 ---
 
@@ -538,7 +543,39 @@
 
 ---
 
-## SHEET 15: `SecurityTest` – CROSS-MODULE SECURITY & AUTHORIZATION INTEGRATION
+## SHEET 15: `M11_ReviewsComplaints` – RATING, REVIEW & COMPLAINT RESOLUTION
+*(Chi tiết đầy đủ xem tại: [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) / [`ReviewsAndComplaintsTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ReviewsAndComplaintsTests.cs))*
+
+| Feature | `Rating, Review & Complaint Resolution (M11_ReviewsComplaints)` | | | |
+| :--- | :--- | :---: | :---: | :---: |
+| **Number of TCs** | **16** | | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
+| *Round 1* | 16 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 16 | 0 |
+| *Round 3* | 0 | 0 | 16 | 0 |
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **ITC-RVW-001** | Đánh giá `5★` đơn `Completed` & tự cập nhật `AverageRating` lên Discovery. | 1. Hoàn tất đơn -> `POST /reviews` (`5` sao).<br>2. Kiểm tra `/recyclers/{id}/reviews` & `/recyclers/{id}`. | `201 MSG-RVW-01`, `averageRating=5.0`, `totalReviews=1`. | Có đơn `Completed`. | Passed | Pending | Pending | N/A | `RVW01` |
+| **ITC-RVW-002** | Chặn review đơn chưa hoàn tất (`400`) & chặn trùng review (`409`). | 1. Review đơn `Accepted` (`400`).<br>2. Review đơn `Completed` 2 lần (`409`). | Trả đúng `400 MSG-RVW-02` & `409 MSG-RVW-02`. | Có đơn hợp lệ. | Passed | Pending | Pending | N/A | `RVW02` |
+| **ITC-RVW-003** | Bất biến sao (`BR-RVW-02`) & chặn Recycler/người ngoài xóa bài (`403`). | 1. Thử `PUT /reviews/{id}` (`404/405`).<br>2. Recycler & Outsider gọi `DELETE`. | Cấm sửa sao; Recycler/Outsider bị chặn `403`. | Đã đăng review. | Passed | Pending | Pending | N/A | `RVW03` |
+| **ITC-RVW-004** | Tác giả tự xóa review làm tính lại `AverageRating` tức thời (`MSG-RVW-03`). | 1. Tạo `5★` & `3★` (TB `4.0`).<br>2. Tác giả xóa bài `3★`. | `200 MSG-RVW-03`, điểm TB quay về `5.0`, `totalReviews=1`. | Có 2 review trên vựa. | Passed | Pending | Pending | N/A | `RVW04` |
+| **ITC-RVW-005** | Báo cáo review spam & Staff `[HANDLE_COMPLAINT]` ẩn bài ghi `AuditLog`. | 1. Recycler `POST /report` -> Staff `PATCH /moderate` (`Hide`).<br>2. Kiểm tra `/admin/audit-logs`. | Ẩn khỏi public, `averageRating=0`, có `MODERATE_REVIEW` trong `AuditLog`. | Staff có `HANDLE_COMPLAINT`. | Passed | Pending | Pending | N/A | `RVW05` |
+| **ITC-RVW-006** | Upload ảnh R2 (`complaint-evidences`) & nộp phiếu khiếu nại Citizen. | 1. `POST /upload-evidence` PNG.<br>2. `POST /complaints` (`ScaleDiscrepancy`). | Upload trả URL `complaint-evidences`; tạo `201 MSG-DSP-01`, `CMP-...`. | Đã đăng nhập Citizen. | Passed | Pending | Pending | N/A | `RVW06` |
+| **ITC-RVW-007** | Khiếu nại 2 chiều từ phía `Recycler` cho sự cố `NoShow`. | 1. Recycler gửi `POST /complaints` (`NoShow`) trên đơn `Accepted`. | `201 Created`, `complainantRole="Recycler"`, `respondentId=Citizen`. | Có đơn `Accepted`. | Passed | Pending | Pending | N/A | `RVW07` |
+| **ITC-RVW-008** | Hợp nhất `POST /receipt/dispute` tự động sinh phiếu `Open` cho Staff. | 1. Citizen dispute biên nhận.<br>2. Staff gọi `GET /staff/complaints`. | Đơn sang `Disputed` kèm phiếu `ScaleDiscrepancy` trong hàng đợi. | Đơn `AwaitingConfirmation`. | Passed | Pending | Pending | N/A | `RVW08` |
+| **ITC-RVW-009** | Chặn tạo 2 khiếu nại đang hoạt động trên cùng đơn (`409 MSG-DSP-04`). | 1. Citizen gửi phiếu 1 -> Recycler gửi phiếu 2 cùng `requestId`. | Lần 2 bị chặn `409 Conflict` (`MSG-DSP-04`). | Đã có phiếu `Open`. | Passed | Pending | Pending | N/A | `RVW09` |
+| **ITC-RVW-010** | Chống Outsider nộp hộ (`403`) & cô lập `/complaints/me` (`BR-DSP-06`). | 1. Outsider `POST /complaints` (`403`).<br>2. Check `/complaints/me` 3 user. | Outsider không tạo được & không thấy phiếu của A-B. | Có đơn A-B & user C. | Passed | Pending | Pending | N/A | `RVW10` |
+| **ITC-RVW-011** | Kiểm soát `[HasPermission(HANDLE_COMPLAINT)]` (`401`/`403` vs `200`). | 1. Anonymous (`401`), Citizen (`403`), Staff `REVIEW_AI` (`403`).<br>2. Staff `HANDLE_COMPLAINT` (`200`). | Chỉ đúng quyền `HANDLE_COMPLAINT` hoặc Admin truy cập được. | Đã cấp RBAC Staff. | Passed | Pending | Pending | N/A | `RVW11` |
+| **ITC-RVW-012** | Hồ sơ Trọng tài 360° (`?claim=true`): ảnh cân + lịch sử chat bất biến. | 1. Gửi chat, lập biên nhận, mở phiếu -> Staff `GET /complaints/{id}?claim=true`. | Chuyển `Investigating`, trả đủ `scaleProofPhotoUrls` & `negotiationMessages`. | Có chat & biên nhận. | Passed | Pending | Pending | N/A | `RVW12` |
+| **ITC-RVW-013** | Validation biên bản `>= 10` ký tự (`400`) & chặn đóng lặp (`409`). | 1. Gửi note `"OK xong"` (`400`).<br>2. Chốt `Dismissed` (`200`) rồi gọi lại (`409`). | Note ngắn `400`; đóng hợp lệ `200 MSG-DSP-02`; đóng lặp `409`. | Có phiếu `Open`. | Passed | Pending | Pending | N/A | `RVW13` |
+| **ITC-RVW-014** | Phán quyết `CancelDisputedOrder` thu hồi `GreenPoints` & cảnh cáo `WARN`. | 1. Hoàn tất đơn (+50đ) -> Staff chốt `CancelDisputedOrder` + cảnh cáo. | Đơn `Cancelled`, trừ đúng `50đ`, `WarningCount=1`, có `AccountModerationLog`. | Đơn đã cộng điểm. | Passed | Pending | Pending | N/A | `RVW14` |
+| **ITC-RVW-015** | Phán quyết `ConfirmReceiptAsIs` khôi phục `Disputed` -> `Completed` & cộng điểm. | 1. Dispute biên nhận 5kg -> Staff chốt `ConfirmReceiptAsIs`. | Đơn về `Completed`, cộng bù `+50` `currentGreenPoints`. | Đơn đang `Disputed`. | Passed | Pending | Pending | N/A | `RVW15` |
+| **ITC-RVW-016** | Biên tối đa `5` ảnh chứng cứ (`BR-DSP-02`), bộ lọc & KPI Analytics. | 1. Gửi `6` ảnh (`400`) vs `5` ảnh (`201`).<br>2. Check bộ lọc & `kpi-summary`. | `6` ảnh `400`; `5` ảnh `201`; `openComplaintsCount >= 1`. | Có ít nhất 1 khiếu nại mở. | Passed | Pending | Pending | N/A | `RVW16` |
+
+---
+
+## SHEET 16: `SecurityTest` – CROSS-MODULE SECURITY & AUTHORIZATION INTEGRATION
 *(Chi tiết đầy đủ xem tại: [`integration_test_security.md`](./integration_test_security.md))*
 
 | Test Case ID | Scenario Name | Role / Session | Coverage Technique | Given | When | Then (Expected: HTTP Status / Visibility) | Status | Defect ID | Notes |

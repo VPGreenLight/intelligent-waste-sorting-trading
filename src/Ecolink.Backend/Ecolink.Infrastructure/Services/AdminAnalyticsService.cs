@@ -104,9 +104,18 @@ public class AdminAnalyticsService : IAdminAnalyticsService
             .AsNoTracking()
             .CountAsync(r => r.VerificationStatus == VerificationStatus.Pending, ct);
 
-        var openDisputes = await _dbContext.HandoverRequests
+        var activeComplaintRequestIds = await _dbContext.TransactionComplaints
             .AsNoTracking()
-            .CountAsync(h => h.Status == HandoverStatus.Disputed, ct);
+            .Where(c => c.Status == ComplaintStatus.Open || c.Status == ComplaintStatus.Investigating)
+            .Select(c => c.RequestId)
+            .Distinct()
+            .ToListAsync(ct);
+
+        var legacyDisputedCount = await _dbContext.HandoverRequests
+            .AsNoTracking()
+            .CountAsync(h => h.Status == HandoverStatus.Disputed && !activeComplaintRequestIds.Contains(h.Id), ct);
+
+        var openDisputes = activeComplaintRequestIds.Count + legacyDisputedCount;
 
         var aiBenchmark = await BuildAiBenchmarkAsync(ct);
 

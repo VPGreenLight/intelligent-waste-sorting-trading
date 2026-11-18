@@ -166,3 +166,37 @@ public enum DatasetVersionStatus
     SyncedToAi = 2,
     Archived = 3
 }
+
+public enum ReviewStatus
+{
+    Visible = 1,
+    Reported = 2,
+    Hidden = 3,
+    Deleted = 4
+}
+
+public enum ComplaintCategory
+{
+    ScaleDiscrepancy = 1,
+    PaymentIssue = 2,
+    NoShow = 3,
+    Misconduct = 4,
+    Other = 5
+}
+
+public enum ComplaintStatus
+{
+    Open = 1,
+    Investigating = 2,
+    Resolved = 3,
+    Dismissed = 4
+}
+
+public enum ComplaintResolutionOutcome
+{
+    ConfirmReceiptAsIs = 1,
+    CompensateUser = 2,
+    UpholdComplainant = 3,
+    CancelDisputedOrder = 4,
+    Dismissed = 5
+}

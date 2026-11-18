@@ -34,6 +34,8 @@ public sealed class TestApplicationDbContext : ApplicationDbContext
         DisableInMemoryXmin<ServiceOrder>(modelBuilder);
         DisableInMemoryXmin<AIFeedbackLog>(modelBuilder);
         DisableInMemoryXmin<AiDatasetItem>(modelBuilder);
+        DisableInMemoryXmin<TransactionReview>(modelBuilder);
+        DisableInMemoryXmin<TransactionComplaint>(modelBuilder);
     }
 
     private static void DisableInMemoryXmin<TEntity>(ModelBuilder modelBuilder) where TEntity : class

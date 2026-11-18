@@ -63,6 +63,12 @@ public class ApplicationDbContext : DbContext
     public DbSet<AiDatasetVersion> AiDatasetVersions => Set<AiDatasetVersion>();
     public DbSet<AiDatasetVersionItem> AiDatasetVersionItems => Set<AiDatasetVersionItem>();
 
+    // ==========================================
+    // MODULE M-11: RATING, REVIEW & COMPLAINT RESOLUTION (FE-10)
+    // ==========================================
+    public DbSet<TransactionReview> TransactionReviews => Set<TransactionReview>();
+    public DbSet<TransactionComplaint> TransactionComplaints => Set<TransactionComplaint>();
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         base.OnConfiguring(optionsBuilder);

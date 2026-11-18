@@ -2,8 +2,8 @@
 ## (FULL-SCOPE API INVENTORY, FORECAST & STATISTICAL DASHBOARD)
 
 **Dự án:** EcoLink – Intelligent Waste Sorting & Trading Platform (`SEP490_G141`)  
-**Phiên bản tài liệu:** `v2.3.0` (Cập nhật tiến độ sau khi hoàn tất triển khai `FE-15` thuộc Module `M-13` & `AIS`: Phản hồi lỗi AI & Quản trị Dataset)  
-**Thời điểm cập nhật:** 17/11/2026  
+**Phiên bản tài liệu:** `v2.4.0` (Cập nhật tiến độ sau khi hoàn tất triển khai `FE-10` thuộc Module `M-11`: Đánh giá uy tín, Báo cáo vi phạm & Giải quyết khiếu nại 2 chiều `360°`)  
+**Thời điểm cập nhật:** 18/11/2026  
 **Công nghệ Backend:** ASP.NET Core 10 WebApi (Clean Architecture, Npgsql PostGIS, SignalR WebSocket)  
 **Công nghệ AI Service:** Python 3.11 FastAPI (YOLOv8 + MobileNetV3 + EfficientNet)  
 **Tình trạng tài liệu:** **Tài liệu quy hoạch & đối chiếu tổng thể (Master API Inventory)** – Dùng làm nguồn dữ liệu chuẩn để đồng bộ bảng tính `Report_API List_SEP490_G141` trên Google Drive (`Dashboard` & `API Inventory`).
@@ -18,27 +18,27 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
   * **173 Endpoints thuộc Core Backend (`Ecolink.WebApi` - .NET 10):** gồm **171 REST APIs** và **2 SignalR WebSocket Hubs** (`/hubs/negotiation-chat`, `/hubs/notifications`).
   * **11 REST Endpoints thuộc Dedicated AI Vision Service (`FastAPI` - Python 3.11):** phục vụ nhận diện đa mô hình, Rule Engine, đồng bộ tập dữ liệu huấn luyện và nạp nóng mô hình.
 * **Tiến độ triển khai thực tế trên nhánh hiện tại:**
-  * **Đã triển khai (`127 Endpoints` – đạt `69.0%`):** gồm `115` Core REST APIs + `1` SignalR Hub + `11` AI FastAPI APIs (`100% AIS`).
-  * **Dự kiến bổ sung (`57 Endpoints` – chiếm `31.0%`):** gồm `56` Core REST APIs + `1` SignalR Hub + `0` AI FastAPI APIs trải đều trên các phân hệ `FE-03 (Admin Rules)`, `FE-10`, `FE-13`, `FE-16` và `SU-04`.
+  * **Đã triển khai (`139 Endpoints` – đạt `75.5%`):** gồm `127` Core REST APIs + `1` SignalR Hub + `11` AI FastAPI APIs (`100% AIS`).
+  * **Dự kiến bổ sung (`45 Endpoints` – chiếm `24.5%`):** gồm `44` Core REST APIs + `1` SignalR Hub + `0` AI FastAPI APIs trải đều trên các phân hệ `FE-03 (Admin Rules)`, `FE-13`, `FE-16` và `SU-04`.
 
 ```text
 +--------------------------------------------------------------------------------------------------+
 |                      TỔNG QUY MÔ API TOÀN HỆ THỐNG ECOLINK (FULL SRS SCOPE)                      |
 |                                          184 ENDPOINTS                                           |
-|                    [ Đã triển khai: 127 (69.0%)  |  Dự kiến bổ sung: 57 (31.0%) ]                |
+|                    [ Đã triển khai: 139 (75.5%)  |  Dự kiến bổ sung: 45 (24.5%) ]                |
 +---------------------------------------------------+----------------------------------------------+
 |        Core .NET 10 WebApi: 173 Endpoints         |     Dedicated AI Service: 11 Endpoints       |
 |     (171 REST APIs + 2 SignalR WebSocket Hubs)    |            (FastAPI Python 3.11)             |
-|       [ Đã có: 116 |  Dự kiến bổ sung: 57 ]       |        [ Đã có: 11 |  Dự kiến thêm: 0 ]      |
+|       [ Đã có: 128 |  Dự kiến bổ sung: 45 ]       |        [ Đã có: 11 |  Dự kiến thêm: 0 ]      |
 +---------------------------------------------------+----------------------------------------------+
 ```
 
 ### Bảng chỉ số KPI đầu trang cho Sheet `API Inventory` & `Dashboard` (Google Drive)
 
-| Chỉ số KPI trên Google Sheet | Hiện trạng Code (`v2.3.0`) | Dự kiến mở rộng (Planned) | Tổng quy mô Toàn dự án (`v2.3.0`) |
+| Chỉ số KPI trên Google Sheet | Hiện trạng Code (`v2.4.0`) | Dự kiến mở rộng (Planned) | Tổng quy mô Toàn dự án (`v2.4.0`) |
 |:---|:---:|:---:|:---:|
-| **Tổng Endpoint** | 127 | +57 | **184** |
-| **Core .NET 10** *(REST + WS)* | 116 | +57 | **173** |
+| **Tổng Endpoint** | 139 | +45 | **184** |
+| **Core .NET 10** *(REST + WS)* | 128 | +45 | **173** |
 | **AI FastAPI** | 11 | +0 | **11** |
 | **WebSocket (SignalR Hub)** | 1 | +1 | **2** |
 
@@ -58,14 +58,14 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 | **M-08** | `FE-08` | **In-App Real-Time Negotiation Chatbox** | `NegotiationChatController`, `NegotiationChatHub` | 8 | 0 | 7 | 1 | **8** | 4.3% | 100.0% |
 | **M-09** | `FE-07/09` | **Direct Trade Orders & QR Confirmation** | `TradeController` | 5 | 0 | 5 | 0 | **5** | 2.7% | 100.0% |
 | **M-10** | `FE-13` | **Gamification, Virtual Tree & Rewards** | `GamificationController`, `StaffGamificationController` *(dự kiến)*, `AdminGamificationController` *(dự kiến)* | 2 | 25 | 27 | 0 | **27** | 14.7% | 7.4% |
-| **M-11** | `FE-10` | **Rating, Review & Complaint Resolution** | `ReviewsController` *(dự kiến)*, `ComplaintsController` *(dự kiến)*, `StaffComplaintsController` *(dự kiến)* | 0 | 12 | 12 | 0 | **12** | 6.5% | 0.0% |
+| **M-11** | `FE-10` | **Rating, Review & Complaint Resolution** | `ReviewsController`, `ComplaintsController`, `StaffComplaintsController` | 12 | 0 | 12 | 0 | **12** | 6.5% | 100.0% |
 | **M-12** | `FE-14` | **In-System Service Packages & VietQR** | `ServicePaymentController`, `ServicePackagesController`, `AdminReconciliationController` | 15 | 0 | 15 | 0 | **15** | 8.2% | 100.0% |
 | **M-13** | `FE-15` | **AI Misclassification & Dataset Curation** | `StaffAiFeedbackController`, `StaffDatasetCurationController` | 10 | 0 | 10 | 0 | **10** | 5.4% | 100.0% |
 | **M-14** | `FE-16` | **Blog & Content Management** | `BlogsController` *(dự kiến)*, `StaffBlogsController` *(dự kiến)*, `AdminBlogsController` *(dự kiến)* | 0 | 10 | 10 | 0 | **10** | 5.4% | 0.0% |
 | **M-15** | `FE-17..18` | **Account, Staff, Governance & Analytics** | `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `StaffAttendanceController`, `NotificationsController` *(dự kiến)*, `NotificationHub` *(dự kiến)* | 19 | 4 | 22 | 1 | **23** | 12.5% | 82.6% |
 | **SYS** | `INFRA` | **System Infrastructure & Health** | Minimal API (`Program.cs`) | 1 | 0 | 1 | 0 | **1** | 0.5% | 100.0% |
 | **AIS** | `FE-03/15` | **Dedicated AI Vision Service (Python)** | FastAPI (`app.py`) | 11 | 0 | 11 | 0 | **11** | 6.0% | 100.0% |
-| **TỔNG** | **ALL SRS** | **TOÀN BỘ HỆ THỐNG ECOLINK** | **Core .NET 10 (173) + FastAPI Python (11)** | **127** | **57** | **182** | **2** | **184** | **100.0%** | **69.0%** |
+| **TỔNG** | **ALL SRS** | **TOÀN BỘ HỆ THỐNG ECOLINK** | **Core .NET 10 (173) + FastAPI Python (11)** | **139** | **45** | **182** | **2** | **184** | **100.0%** | **75.5%** |
 
 ---
 
@@ -82,13 +82,13 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 
 | Phương thức HTTP / Giao thức | Ý nghĩa sử dụng chính trong dự án | Đã triển khai | Dự kiến bổ sung | Tổng quy mô | Tỷ lệ (%) |
 |:---|:---|:---:|:---:|:---:|:---:|
-| **GET** | Truy vấn danh sách, tìm kiếm PostGIS, đọc hồ sơ/khiếu nại, KPI Dashboard, Audit Log, xuất báo cáo CSV/XLSX | 59 | 22 | **81** | 44.0% |
-| **POST** | Đăng ký/đăng nhập, quét rác AI, tạo đơn thu gom, biên nhận, điểm danh, đổi quà, khiếu nại, VietQR, đóng gói Dataset | 46 | 16 | **62** | 33.7% |
+| **GET** | Truy vấn danh sách, tìm kiếm PostGIS, đọc hồ sơ/khiếu nại, KPI Dashboard, Audit Log, xuất báo cáo CSV/XLSX | 64 | 17 | **81** | 44.0% |
+| **POST** | Đăng ký/đăng nhập, quét rác AI, tạo đơn thu gom, biên nhận, điểm danh, đổi quà, khiếu nại, VietQR, đóng gói Dataset | 50 | 12 | **62** | 33.7% |
 | **PUT** | Cập nhật toàn phần hồ sơ, cấu hình bảng giá, cấu hình Gamification, gán nhãn ảnh chuẩn, phân quyền RBAC Staff | 12 | 7 | **19** | 10.3% |
-| **PATCH** | Chuyển trạng thái nghiệp vụ tức thời: duyệt khiếu nại, duyệt blog, khóa tài khoản, đối soát giao dịch, ẩn/mở danh mục | 8 | 8 | **16** | 8.7% |
-| **DELETE** | Xóa đánh giá của chính tác giả (`BR-RVW-03`), xóa thẻ Eco Fact nháp, xóa bài Blog nháp, vô hiệu hóa mềm tài khoản | 1 | 3 | **4** | 2.2% |
+| **PATCH** | Chuyển trạng thái nghiệp vụ tức thời: duyệt khiếu nại, duyệt blog, khóa tài khoản, đối soát giao dịch, ẩn/mở danh mục | 10 | 6 | **16** | 8.7% |
+| **DELETE** | Xóa đánh giá của chính tác giả (`BR-RVW-03`), xóa thẻ Eco Fact nháp, xóa bài Blog nháp, vô hiệu hóa mềm tài khoản | 2 | 2 | **4** | 2.2% |
 | **WebSocket (`WS`)** | Kết nối SignalR song công thời gian thực cho phòng Chat thương lượng giá và kênh Đẩy thông báo hệ thống | 1 | 1 | **2** | 1.1% |
-| **Tổng cộng** | | **127** | **57** | **184** | **100.0%** |
+| **Tổng cộng** | | **139** | **45** | **184** | **100.0%** |
 
 ---
 
@@ -98,12 +98,12 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 
 | Nhóm RBAC chuẩn | Đối tượng được phép truy cập | Đã triển khai | Dự kiến bổ sung | Tổng API | Tỷ lệ (%) | Ví dụ nghiệp vụ tiêu biểu |
 |:---|:---|:---:|:---:|:---:|:---:|:---|
-| **Public / Guest** | Mọi người dùng (kể cả chưa đăng nhập, Webhook Gateway & Internal AI) | 32 | 3 | **35** | 19.0% | Đăng ký/đăng nhập, quét rác AI, tìm vựa GPS, bảng xếp hạng, đọc Blog, xem Review vựa, Webhook VietQR, Internal AI Curate/Reload |
-| **Citizen (User)** | Người dân đã xác thực tài khoản (`Role = Citizen`) | 12 | 7 | **19** | 10.3% | Nộp đơn mở vựa, đặt lịch thu gom, xác nhận biên nhận, nuôi Cây Ảo, mở Eco Fact, theo dõi báo cáo AI sai, gửi/xóa đánh giá sao |
+| **Public / Guest** | Mọi người dùng (kể cả chưa đăng nhập, Webhook Gateway & Internal AI) | 33 | 2 | **35** | 19.0% | Đăng ký/đăng nhập, quét rác AI, tìm vựa GPS, bảng xếp hạng, đọc Blog, xem Review vựa, Webhook VietQR, Internal AI Curate/Reload |
+| **Citizen (User)** | Người dân đã xác thực tài khoản (`Role = Citizen`) | 15 | 4 | **19** | 10.3% | Nộp đơn mở vựa, đặt lịch thu gom, xác nhận biên nhận, nuôi Cây Ảo, mở Eco Fact, theo dõi báo cáo AI sai, gửi/xóa đánh giá sao |
 | **Recycler (Collector)** | Đối tác cơ sở thu gom đã được xác minh (`Role = Recycler`) | 19 | 0 | **19** | 10.3% | Hồ sơ vựa, cấu hình bảng giá thu mua, lịch mở cửa, nhận/từ chối đơn, phát hành biên nhận cân điện tử |
-| **Staff / Admin** | Nhân viên vận hành (`Staff`) và Quản trị viên hệ thống (`Admin`) | 38 | 33 | **71** | 38.6% | Duyệt vựa, xử lý khiếu nại, kho quà & Eco Fact, gán nhãn & đóng gói Dataset AI, biên tập/duyệt Blog, đối soát VietQR, KPI & RBAC |
-| **Authenticated (All)** | Nhiều vai trò đã đăng nhập (`Citizen / Recycler` hoặc mọi User hợp lệ) | 26 | 14 | **40** | 21.7% | Hồ sơ cá nhân, chat thương lượng, điểm danh Streak, đổi quà, gửi khiếu nại, mua gói dịch vụ VietQR, nhận thông báo |
-| **Tổng cộng** | | **127** | **57** | **184** | **100.0%** | |
+| **Staff / Admin** | Nhân viên vận hành (`Staff`) và Quản trị viên hệ thống (`Admin`) | 42 | 29 | **71** | 38.6% | Duyệt vựa, xử lý khiếu nại, kho quà & Eco Fact, gán nhãn & đóng gói Dataset AI, biên tập/duyệt Blog, đối soát VietQR, KPI & RBAC |
+| **Authenticated (All)** | Nhiều vai trò đã đăng nhập (`Citizen / Recycler` hoặc mọi User hợp lệ) | 30 | 10 | **40** | 21.7% | Hồ sơ cá nhân, chat thương lượng, điểm danh Streak, đổi quà, gửi khiếu nại, mua gói dịch vụ VietQR, nhận thông báo |
+| **Tổng cộng** | | **139** | **45** | **184** | **100.0%** | |
 
 #### B. Phân rã chi tiết nội bộ nhóm Quản trị & Vận hành (`Staff / Admin` – `71 APIs`)
 
@@ -332,24 +332,25 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 ---
 
 ### PHÂN HỆ 11 (`M-11` / `FE-10`): ĐÁNH GIÁ UY TÍN & GIẢI QUYẾT KHIẾU NẠI (RATING, REVIEW & COMPLAINT RESOLUTION)
+* **Tài liệu đặc tả chi tiết:** [`12_module_rating_review_complaint_resolution_api.md`](./12_module_rating_review_complaint_resolution_api.md)
 * **Use Cases bao phủ:** `U-10` (Rate Recycler), `U-11` (Submit Complaint), `S-05` (Handle Complaints)
-* **Controllers dự kiến:** `ReviewsController`, `ComplaintsController`, `StaffComplaintsController`
-* **Quy mô:** `12` APIs (0 Đã triển khai, 12 Dự kiến)
+* **Controllers:** `ReviewsController`, `ComplaintsController`, `StaffComplaintsController`
+* **Quy mô:** `12` APIs (12 Đã triển khai, 0 Dự kiến)
 
 | STT | Mã Modul | Phương thức | Tuyến đường Endpoint (Route) | Phân quyền (RBAC) | Action / Function | Mô tả chức năng & Use Case nghiệp vụ | Nhóm RBAC | Trạng thái |
 |:---:|:---:|:---:|:---|:---|:---|:---|:---|:---:|
-| **103** | `M-11` | `POST` | `/api/v1/handover-requests/{requestId:guid}/reviews` | Citizen (User) | `CreateReview` | Người dân gửi đánh giá 1–5 sao và nhận xét cho cơ sở thu gom sau khi hoàn tất bàn giao (1 đánh giá duy nhất/đơn theo `BR-RVW-01`) (`U-10`). | Citizen (User) | Dự kiến |
-| **104** | `M-11` | `GET` | `/api/v1/recyclers/{recyclerId:guid}/reviews` | Public (All) | `GetRecyclerReviews` | Xem danh sách nhận xét công khai, thống kê phân bố 1–5 sao và điểm uy tín trung bình của cơ sở thu gom (`U-10`, `BR-RVW-04`). | Public / Guest | Dự kiến |
-| **105** | `M-11` | `GET` | `/api/v1/reviews/me` | Citizen (User) | `GetMyReviews` | Người dân tra cứu danh sách các đánh giá chất lượng đã gửi sau các lần giao dịch bán phế liệu (`U-10`). | Citizen (User) | Dự kiến |
-| **106** | `M-11` | `DELETE` | `/api/v1/reviews/{reviewId:guid}` | Citizen (User) | `DeleteMyReview` | Người viết tự xóa bài đánh giá của mình và tính lại điểm sao trung bình của vựa (không cho phép sửa sao theo `BR-RVW-02`, `BR-RVW-03`) (`U-10`). | Citizen (User) | Dự kiến |
-| **107** | `M-11` | `POST` | `/api/v1/reviews/{reviewId:guid}/report` | Authenticated | `ReportAbusiveReview` | Báo cáo bài đánh giá chứa nội dung xúc phạm, bôi nhọ hoặc spam để Nhân viên vận hành kiểm duyệt (`U-10`, `BR-RVW-03`). | Authenticated (All) | Dự kiến |
-| **108** | `M-11` | `PATCH` | `/api/v1/staff/reviews/{reviewId:guid}/moderate` | Staff / Admin | `ModerateReview` | Nhân viên/Admin ẩn hoặc gỡ bỏ đánh giá vi phạm quy tắc cộng đồng kèm ghi chú lý do kiểm duyệt (`U-10`, `BR-RVW-03`). | Staff / Admin | Dự kiến |
-| **109** | `M-11` | `POST` | `/api/v1/complaints/upload-evidence` | Citizen / Recycler | `UploadComplaintEvidence` | Tải ảnh chụp mặt cân, ảnh hiện trường hoặc biên lai thanh toán lên Cloudflare R2 làm bằng chứng khiếu nại (`U-11`, `BR-DSP-02`). | Authenticated (All) | Dự kiến |
-| **110** | `M-11` | `POST` | `/api/v1/complaints` | Citizen / Recycler | `SubmitComplaint` | Người dân hoặc Cơ sở gửi phiếu khiếu nại chính thức (sai lệch cân, thanh toán, bỏ hẹn) trong thời hạn cho phép (`BR-DSP-01`) (`U-11`). | Authenticated (All) | Dự kiến |
-| **111** | `M-11` | `GET` | `/api/v1/complaints/me` | Citizen / Recycler | `GetMyComplaints` | Tra cứu danh sách các phiếu khiếu nại đã gửi hoặc bị khiếu nại cùng trạng thái xử lý và kết luận của Staff (`U-11`). | Authenticated (All) | Dự kiến |
-| **112** | `M-11` | `GET` | `/api/v1/staff/complaints` | Staff / Admin | `GetComplaintQueue` | Nhân viên xem hàng đợi toàn bộ phiếu khiếu nại tranh chấp (lọc theo trạng thái `Open`, `Investigating`, `Resolved`, loại lỗi) (`S-05`). | Staff / Admin | Dự kiến |
-| **113** | `M-11` | `GET` | `/api/v1/staff/complaints/{complaintId:guid}` | Staff / Admin | `GetComplaintDossier` | Nhân viên mở hồ sơ trọng tài: đối chiếu ảnh bằng chứng hai bên, biên nhận cân điện tử và toàn bộ lịch sử chat bất biến (`S-05`, `BR-DSP-04`). | Staff / Admin | Dự kiến |
-| **114** | `M-11` | `PATCH` | `/api/v1/staff/complaints/{complaintId:guid}/resolve` | Staff / Admin | `ResolveComplaint` | Nhân viên ghi nhận biên bản phân xử chính thức, chốt kết quả giao dịch/điểm thưởng và cộng mốc cảnh cáo nếu có vi phạm (`S-05`, `BR-DSP-05`, `BR-DSP-06`). | Staff / Admin | Dự kiến |
+| **103** | `M-11` | `POST` | `/api/v1/handover-requests/{requestId:guid}/reviews` | Citizen (User) | `CreateReview` | Người dân gửi đánh giá 1–5 sao và nhận xét cho cơ sở thu gom sau khi hoàn tất bàn giao (1 đánh giá duy nhất/đơn trong 14 ngày theo `BR-RVW-01`) (`U-10`). | Citizen (User) | Đã triển khai |
+| **104** | `M-11` | `GET` | `/api/v1/recyclers/{recyclerId:guid}/reviews` | Public (All) | `GetRecyclerReviews` | Xem danh sách nhận xét công khai, thống kê phân bố 1–5 sao và điểm uy tín trung bình của cơ sở thu gom (`U-10`). | Public / Guest | Đã triển khai |
+| **105** | `M-11` | `GET` | `/api/v1/reviews/me` | Citizen (User) | `GetMyReviews` | Người dân tra cứu danh sách các đánh giá chất lượng đã gửi sau các lần giao dịch bán phế liệu (`U-10`). | Citizen (User) | Đã triển khai |
+| **106** | `M-11` | `DELETE` | `/api/v1/reviews/{reviewId:guid}` | Citizen (User) | `DeleteMyReview` | Tác giả tự xóa vĩnh viễn bài đánh giá của mình và tính lại điểm sao trung bình của vựa (không cho phép sửa sao theo `BR-RVW-02`, `BR-RVW-03`) (`U-10`). | Citizen (User) | Đã triển khai |
+| **107** | `M-11` | `POST` | `/api/v1/reviews/{reviewId:guid}/report` | Authenticated | `ReportReview` | Báo cáo bài đánh giá chứa nội dung xúc phạm, bôi nhọ hoặc spam để Nhân viên vận hành kiểm duyệt (`U-10`, `BR-RVW-03`). | Authenticated (All) | Đã triển khai |
+| **108** | `M-11` | `PATCH` | `/api/v1/staff/reviews/{reviewId:guid}/moderate` | Staff / Admin | `ModerateReview` | Nhân viên `[HANDLE_COMPLAINT]` / Admin ẩn hoặc khôi phục đánh giá vi phạm quy tắc cộng đồng kèm lý do & ghi `AuditLog` (`U-10`, `BR-RVW-03`). | Staff / Admin | Đã triển khai |
+| **109** | `M-11` | `POST` | `/api/v1/complaints/upload-evidence` | Citizen / Recycler | `UploadEvidence` | Tải ảnh chụp mặt cân, ảnh hiện trường hoặc biên lai thanh toán lên Cloudflare R2 (`complaint-evidences`) làm bằng chứng khiếu nại (`U-11`, `BR-DSP-02`). | Authenticated (All) | Đã triển khai |
+| **110** | `M-11` | `POST` | `/api/v1/complaints` | Citizen / Recycler | `SubmitComplaint` | Người dân hoặc Cơ sở gửi phiếu khiếu nại 2 chiều chính thức (sai lệch cân, thanh toán, bỏ hẹn) trong thời hạn 7 ngày (`BR-DSP-01`) (`U-11`). | Authenticated (All) | Đã triển khai |
+| **111** | `M-11` | `GET` | `/api/v1/complaints/me` | Citizen / Recycler | `GetMyComplaints` | Tra cứu danh sách các phiếu khiếu nại đã gửi hoặc bị khiếu nại (cô lập cứng 2 bên) cùng kết quả phân xử của Staff (`U-11`, `BR-DSP-06`). | Authenticated (All) | Đã triển khai |
+| **112** | `M-11` | `GET` | `/api/v1/staff/complaints` | Staff / Admin | `GetComplaintQueue` | Nhân viên `[HANDLE_COMPLAINT]` xem hàng đợi phiếu khiếu nại (`Open`, `Investigating`, `Resolved`, `Dismissed`) kèm đánh giá bị báo cáo (`S-05`). | Staff / Admin | Đã triển khai |
+| **113** | `M-11` | `GET` | `/api/v1/staff/complaints/{complaintId:guid}` | Staff / Admin | `GetComplaintDossier` | Nhân viên mở Hồ sơ Trọng tài 360°: đối chiếu ảnh bằng chứng hai bên, biên nhận cân điện tử và toàn bộ lịch sử chat bất biến (`S-05`, `BR-DSP-06`). | Staff / Admin | Đã triển khai |
+| **114** | `M-11` | `PATCH` | `/api/v1/staff/complaints/{complaintId:guid}/resolve` | Staff / Admin | `ResolveComplaint` | Nhân viên ghi nhận phán quyết trọng tài chính thức, thu hồi điểm `GreenPoints` (`>= 0`, `BR-GAM-01/03`) và cảnh cáo `AccountModerationLog` (`S-05`, `BR-DSP-04`). | Staff / Admin | Đã triển khai |
 
 ---
 

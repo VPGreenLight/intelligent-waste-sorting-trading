@@ -1,0 +1,149 @@
+classDiagram
+    direction TB
+
+    namespace Presentation_WebApi {
+        class ReviewsController {
+            -IReviewService _reviewService
+            -ICurrentUserService _currentUser
+            +CreateReview(Guid requestId, CreateReviewRequest) Task~ActionResult~
+            +GetRecyclerReviews(Guid recyclerId, RecyclerReviewFilterRequest) Task~ActionResult~
+            +GetMyReviews(int, int) Task~ActionResult~
+            +DeleteMyReview(Guid reviewId) Task~ActionResult~
+            +ReportReview(Guid reviewId, ReportReviewRequest) Task~ActionResult~
+        }
+
+        class ComplaintsController {
+            -IComplaintService _complaintService
+            -ICurrentUserService _currentUser
+            +UploadEvidence(IFormFile? file) Task~ActionResult~
+            +SubmitComplaint(SubmitComplaintRequest) Task~ActionResult~
+            +GetMyComplaints(MyComplaintFilterRequest) Task~ActionResult~
+        }
+
+        class StaffComplaintsController {
+            -IReviewService _reviewService
+            -IComplaintService _complaintService
+            +ModerateReview(Guid reviewId, ModerateReviewRequest) Task~ActionResult~
+            +GetComplaintQueue(StaffComplaintFilterRequest) Task~ActionResult~
+            +GetComplaintDossier(Guid complaintId, bool claim) Task~ActionResult~
+            +ResolveComplaint(Guid complaintId, ResolveComplaintRequest) Task~ActionResult~
+        }
+    }
+
+    namespace Application_Layer {
+        class IReviewService {
+            <<interface>>
+            +CreateReviewAsync(Guid, Guid, CreateReviewRequest) Task~TransactionReviewDto~
+            +GetRecyclerReviewsAsync(Guid, RecyclerReviewFilterRequest) Task~RecyclerReviewsSummaryDto~
+            +GetMyReviewsAsync(Guid, int, int) Task~PagedResult~
+            +DeleteMyReviewAsync(Guid, Guid) Task~TransactionReviewDto~
+            +ReportAbusiveReviewAsync(Guid, Guid, ReportReviewRequest) Task~TransactionReviewDto~
+            +ModerateReviewAsync(Guid, Guid, ModerateReviewRequest) Task~TransactionReviewDto~
+            +GetReportedReviewsForStaffAsync() Task~List~
+        }
+
+        class IComplaintService {
+            <<interface>>
+            +UploadEvidenceAsync(Stream, string, string) Task~RecyclerDocumentUploadResponseDto~
+            +SubmitComplaintAsync(Guid, SubmitComplaintRequest) Task~ComplaintDetailDto~
+            +GetMyComplaintsAsync(Guid, MyComplaintFilterRequest) Task~PagedResult~
+            +GetStaffComplaintQueueAsync(StaffComplaintFilterRequest) Task~StaffComplaintQueueResponseDto~
+            +GetStaffComplaintDossierAsync(Guid, Guid, bool) Task~StaffComplaintDossierDto~
+            +ResolveComplaintAsync(Guid, Guid, ResolveComplaintRequest) Task~ComplaintDetailDto~
+        }
+
+        class ReviewAndComplaintValidators {
+            +CreateReviewRequestValidator
+            +ReportReviewRequestValidator
+            +ModerateReviewRequestValidator
+            +SubmitComplaintRequestValidator
+            +ResolveComplaintRequestValidator
+        }
+    }
+
+    namespace Infrastructure_Layer {
+        class ReviewService {
+            -ApplicationDbContext _db
+            -IAuditLogService _auditLogService
+            +RecalculateRecyclerRatingAsync(Guid recyclerId) Task
+        }
+
+        class ComplaintService {
+            -ApplicationDbContext _db
+            -IFileStorageService _fileStorage
+            -IAuditLogService _auditLogService
+            -IReviewService _reviewService
+            -ClawBackPointsSafeAsync(Guid, int, decimal) Task
+        }
+
+        class HandoverReceiptService {
+            +DisputeAsync(Guid, Guid, DisputeReceiptRequest) Task~ReceiptDto~
+        }
+
+        class GeoMatchingService {
+            +FindNearestPartnersAsync(...) Task~IEnumerable~
+            +SearchNearbyRecyclersAsync(...) Task~NearbyRecyclerSearchResponseDto~
+        }
+    }
+
+    namespace Domain_Entities {
+        class RecyclerProfile {
+            +Guid UserId
+            +string FacilityName
+            +decimal AverageRating
+            +int TotalReviews
+        }
+
+        class TransactionReview {
+            +Guid Id
+            +Guid RequestId
+            +Guid ReviewerId
+            +Guid RecyclerId
+            +int RatingStars
+            +string? Comment
+            +ReviewStatus Status
+            +int ReportCount
+            +Guid? ModeratedByStaffId
+        }
+
+        class TransactionComplaint {
+            +Guid Id
+            +string ComplaintCode
+            +Guid RequestId
+            +Guid? ReceiptId
+            +Guid ComplainantId
+            +string ComplainantRole
+            +Guid RespondentId
+            +ComplaintCategory Category
+            +string Description
+            +string EvidenceUrlsJson
+            +ComplaintStatus Status
+            +ComplaintResolutionOutcome? ResolutionOutcome
+            +string? ResolutionNote
+            +bool PointsRevoked
+            +bool WarningLogged
+        }
+
+        class AccountModerationLog {
+            +Guid Id
+            +Guid TargetUserId
+            +string ActionType
+            +string Reason
+            +Guid? RelatedComplaintId
+        }
+    }
+
+    ReviewsController --> IReviewService : uses
+    ComplaintsController --> IComplaintService : uses
+    StaffComplaintsController --> IReviewService : moderates
+    StaffComplaintsController --> IComplaintService : arbitrates
+
+    ReviewService ..|> IReviewService : implements
+    ComplaintService ..|> IComplaintService : implements
+    ComplaintService --> IReviewService : reported queue
+    HandoverReceiptService ..> TransactionComplaint : auto-creates ticket
+    GeoMatchingService ..> RecyclerProfile : reads O1 rating
+    ReviewAndComplaintValidators ..> Application_Layer : validates
+
+    RecyclerProfile "1" <-- "0..*" TransactionReview : rated in
+    TransactionComplaint "0..1" <-- "0..*" AccountModerationLog : triggers WARN

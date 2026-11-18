@@ -1,6 +1,6 @@
 # TỔNG QUAN KIẾN TRÚC API, KHUNG PHẢN HỒI CHUẨN & HỆ THỐNG MÃ THÔNG BÁO
 **Dự án:** EcoLink – Intelligent Waste Sorting & Trading Platform  
-**Phiên bản API:** `v1` (`/api/v1/...`) | **Phiên bản tài liệu:** `v2.3.0` (`2026-11-17`)  
+**Phiên bản API:** `v1` (`/api/v1/...`) | **Phiên bản tài liệu:** `v2.4.0` (`2026-11-18`)  
 **Chuẩn thiết kế:** RESTful API + SignalR WebSocket + Clean Architecture (`ApiResponse<T>`, `PagedResult<T>`)  
 
 ---
@@ -11,7 +11,7 @@ Tài liệu đặc tả hợp đồng API của hệ thống EcoLink được ch
 
 | STT | File Tài liệu | Module / Phân hệ | Base Route | Mô tả chính |
 |:---:|:---|:---|:---|:---|
-| **STAT** | [`00_api_inventory_and_endpoint_statistics.md`](./00_api_inventory_and_endpoint_statistics.md) | **API Inventory & Statistical Dashboard** | `All Routes` | Bảng tổng hợp quy mô **184 API endpoints** (**127 đã triển khai – 69.0%**, 57 dự kiến mở rộng), thống kê HTTP Method và ma trận RBAC toàn hệ thống. |
+| **STAT** | [`00_api_inventory_and_endpoint_statistics.md`](./00_api_inventory_and_endpoint_statistics.md) | **API Inventory & Statistical Dashboard** | `All Routes` | Bảng tổng hợp quy mô **184 API endpoints** (**139 đã triển khai – 75.5%**, 45 dự kiến mở rộng), thống kê HTTP Method và ma trận RBAC toàn hệ thống. |
 | **00** | [`00_api_overview_and_response_contract.md`](./00_api_overview_and_response_contract.md) | **Overview & Response Contract** | `/api/v1/*` | Khung JSON `ApiResponse<T>`, phân trang `PagedResult<T>`, xuất CSV/XLSX ẩn danh PII, xác thực JWT / `[HasPermission]` / Webhook, HTTP Status Codes và bảng tra cứu `MSG-*` / `BR-*`. |
 | **01** | [`01_module_authentication_api.md`](./01_module_authentication_api.md) | **Module 1: Authentication & Account (`M-01` / `AUTH`)** | `/api/v1/auth` | **14 APIs (`STT 001–014`):** Đăng ký `Citizen`/`Recycler`, Đăng nhập (chống Brute-force), Google OAuth 2.0, Làm mới Token (chống Replay Attack), Quên & Đặt lại mật khẩu OTP qua Gmail SMTP và `/vietqr-token`. |
 | **02** | [`02_module_recycler_onboarding_api.md`](./02_module_recycler_onboarding_api.md) | **Module 2: Recycler Onboarding & Verification (`M-02` / `U-17` & `S-04`)** | `/api/v1/recycler-applications` | **6 APIs (`STT 015–020`):** Tải chứng từ/ảnh cơ sở lên Cloudflare R2, Người dân (`Citizen`) nộp đơn nâng cấp lên Cơ sở thu gom (`Recycler`) kèm tọa độ PostGIS, `Staff/Admin` thẩm định (Duyệt / Từ chối). |
@@ -24,6 +24,7 @@ Tài liệu đặc tả hợp đồng API của hệ thống EcoLink được ch
 | **09** | [`09_module_account_staff_system_governance_analytics_api.md`](./09_module_account_staff_system_governance_analytics_api.md) | **Module 9: Account, Staff & System Governance / Analytics (`M-15` / `FE-17`, `FE-18`)** | `/api/v1/admin/analytics`<br>`/api/v1/admin/staff`<br>`/api/v1/staff/accounts`<br>`/api/v1/staff/attendance` | **19 Core APIs đã code (`STT 150–168`):** KPI điều hành & biểu đồ (`BR-ADM-07`), xuất báo cáo CSV/XLSX ẩn danh PII (`BR-ADM-06`), Audit Trail bất biến (`BR-ADM-05`), khóa/vô hiệu hóa mềm tài khoản (`BR-ADM-03`, `BR-ADM-04`), quản trị Staff & 7 mã quyền RBAC (`BR-ADM-01`, `BR-ADM-02`), chấm công ca trực tách biệt ví điểm (`BR-GAM-09`). |
 | **10** | [`10_module_in_system_service_packages_vietqr_api.md`](./10_module_in_system_service_packages_vietqr_api.md) | **Module 10: In-System Service Packages & VietQR (`M-12` / `FE-14`)** | `/api/v1/service-packages`<br>`/api/v1/service-payments`<br>`/api/v1/admin/service-packages`<br>`/api/v1/admin/reconciliations` | **15 APIs (`STT 115–129`):** Danh mục 3 gói chuẩn (`BASIC` 0đ, `PREMIUM` 59k/30d, `PRO` 1tr/365d yêu cầu KYB `Verified`), tạo VietQR động 15p & hủy đơn chờ, Webhook idempotent + phân loại 5 kịch bản bất thường (`BR-PAY-02`, `BR-PAY-06`), cộng dồn & nâng bậc tức thì (`BR-PAY-04`), quản trị giá & Grandfathering (`BR-PAY-05`), đối soát & xuất CSV/XLSX ẩn danh PII. |
 | **11** | [`11_module_ai_misclassification_feedback_dataset_curation_api.md`](./11_module_ai_misclassification_feedback_dataset_curation_api.md) | **Module 11: AI Misclassification Feedback & Dataset Curation (`M-13` / `FE-15`)** | `/api/v1/waste-scan`<br>`/api/v1/staff/ai-feedback`<br>`/api/v1/staff/ai-labeling`<br>`/api/v1/staff/ai-datasets` | **10 Core + 2 AI APIs (`STT 130–139`, `183–184`, nâng cấp `021, 024`):** Lưu vết phiên quét `SHA-256` + tự động thu thập ca OOD `< 60%`, báo cáo phân loại sai có liên kết `scanId` & lịch sử cá nhân (`U-04`), Staff thẩm định 1 chạm `ApproveAndLabel` / `ApproveToQueue` / `Reject` (`S-01`), gán nhãn YOLO & hàng loạt nguyên tử (`S-02`), đóng gói phiên bản Dataset **Sticky Stratified Split 70/20/10** chống rò rỉ (`BR-CLS-07`), xuất ZIP `YOLO`/`ImageFolder` & đồng bộ nạp nóng FastAPI (`S-03`). |
+| **12** | [`12_module_rating_review_complaint_resolution_api.md`](./12_module_rating_review_complaint_resolution_api.md) | **Module 12: Rating, Review & Complaint Resolution (`M-11` / `FE-10`)** | `/api/v1/handover-requests/{id}/reviews`<br>`/api/v1/recyclers/{id}/reviews`<br>`/api/v1/reviews`<br>`/api/v1/complaints`<br>`/api/v1/staff/complaints` | **12 APIs (`STT 103–114`):** Đánh giá `1–5` sao don `Completed` trong `14 ngày` (`BR-RVW-01`), tự xóa vĩnh viễn (`BR-RVW-03`), báo cáo & kiểm duyệt đánh giá vi phạm + tính lại `AverageRating` tức thì; khiếu nại 2 chiều `Citizen`/`Recycler` (`BR-DSP-01`), tải bằng chứng R2 (`0..5` ảnh), hợp nhất `DisputeAsync`, Hồ sơ Trọng tài 360° (`ScaleProofPhotoUrls` + chat bất biến `BR-DSP-06`), thu hồi `GreenPoints` (`>= 0`) & cảnh cáo `AccountModerationLog` (`BR-ADM-05`). |
 
 ---
 
@@ -212,6 +213,13 @@ Các API xuất báo cáo quản trị (`/api/v1/admin/reports/export` và `/api
 | **`MSG-CLS-06`** | Phản hồi Lỗi AI (`U-04`) | Toast / Inline | Cảm ơn bạn đã phản hồi! Dữ liệu đã được chuyển tới Nhân viên vận hành để kiểm chứng và cải thiện mô hình AI. |
 | **`MSG-CLS-07`** | Thẩm định & Gán nhãn (`S-01`, `S-02`) | Toast (Staff) | Đã cập nhật kết quả thẩm định và chuẩn hóa nhãn Ground-Truth cho mẫu ảnh AI. |
 | **`MSG-CLS-08`** | Đóng gói Dataset (`S-03`) | Toast (Staff) | Đã đóng gói phiên bản Dataset `'vX.Y.Z'` theo thuật toán Sticky Stratified Split `70/20/10` (`BR-CLS-07`). |
+| **`MSG-RVW-01`** | Đánh giá Cơ sở (`U-10`) | Toast | Cảm ơn bạn đã đánh giá! Điểm uy tín của cơ sở thu mua đã được cập nhật. |
+| **`MSG-RVW-02`** | Đánh giá Cơ sở (`U-10`) | Inline / Guard | Bạn chỉ có thể đánh giá mỗi đơn giao dịch hoàn tất một lần trong thời hạn quy định (`BR-RVW-01`). |
+| **`MSG-RVW-03`** | Xóa / Kiểm duyệt Đánh giá (`U-10`) | Toast | Đánh giá đã được cập nhật trạng thái và tính lại điểm sao trung bình của cơ sở (`BR-RVW-03`). |
+| **`MSG-DSP-01`** | Nộp Khiếu nại (`U-11`) | Toast | Khiếu nại của bạn đã được gửi và đang được xem xét (`BR-DSP-01`). |
+| **`MSG-DSP-02`** | Trọng tài Khiếu nại (`S-05`) | Toast / Notify | Khiếu nại của bạn đã được giải quyết: `{resolutionOutcome}` (`BR-DSP-04`). |
+| **`MSG-DSP-03`** | Nộp Khiếu nại (`U-11`) | Inline / Guard | Bạn không thể khiếu nại giao dịch này nữa (quá thời hạn 7 ngày hoặc trạng thái không hợp lệ). |
+| **`MSG-DSP-04`** | Chống trùng / Đóng lặp (`U-11`, `S-05`) | Inline (`409`) | Đã có một khiếu nại đang mở hoặc đang xử lý cho giao dịch này / Phiếu đã giải quyết trước đó. |
 | **`MSG-ADM-01`** | Quản trị Hệ thống (`ADM`) | Toast (Staff/Admin) | Cập nhật trạng thái tài khoản / phân quyền RBAC thành công. |
 | **`MSG-ADM-02`** | Quản trị Hệ thống (`ADM`) | Header / Toast (Admin) | Xuất báo cáo hệ thống / bảng kê đối soát thành công (`X-EcoLink-Message-Code: MSG-ADM-02`). |
 | **`MSG-ADM-03`** | Quản trị Hệ thống (`ADM`) | Toast (Admin) | Tạo tài khoản nhân viên hoặc vô hiệu hóa mềm tài khoản thành công. |
