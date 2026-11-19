@@ -377,12 +377,13 @@ public class HandoverReceiptService : IHandoverReceiptService
                           .Include(h => h.Items).ThenInclude(i => i.WasteCategory)
                           .FirstOrDefaultAsync(h => h.Id == requestId && h.RecyclerId == recyclerId, ct);
 
-        if (request == null)
+        if (request == null || request.Status is HandoverStatus.Pending or HandoverStatus.Negotiating)
         {
             var legacyTradeOrder = await _db.TradeOrders
                 .Include(o => o.Partner)
                 .FirstOrDefaultAsync(o => o.Id == requestId, ct);
-            if (legacyTradeOrder != null)
+            if (legacyTradeOrder != null &&
+                (request == null || legacyTradeOrder.Status is OrderStatus.Accepted or OrderStatus.Scheduled))
             {
                 await HandoverTradeSyncHelper.EnsureHandoverFromTradeOrderAsync(_db, legacyTradeOrder, ct);
                 request = await _db.HandoverRequests
@@ -413,6 +414,7 @@ public class HandoverReceiptService : IHandoverReceiptService
 
         var existingById = request.Items.ToDictionary(i => i.Id);
         var requestCategories = request.Items.Select(i => i.WasteCategoryId).ToHashSet();
+        var explicitRequestedItemIds = req.Items.Where(x => x.ItemId.HasValue).Select(x => x.ItemId!.Value).ToHashSet();
         var seenItems = new HashSet<Guid>();
         var seenExtras = new HashSet<Guid>();
         var raw = new List<(HandoverRequestItem? Item, Guid Category, decimal Weight)>();
@@ -433,6 +435,30 @@ public class HandoverReceiptService : IHandoverReceiptService
             }
             else
             {
+                HandoverRequestItem? matchedExisting = null;
+                if (it.WasteCategoryId.HasValue)
+                {
+                    matchedExisting = request.Items.FirstOrDefault(x =>
+                        x.WasteCategoryId == it.WasteCategoryId.Value &&
+                        !seenItems.Contains(x.Id) &&
+                        !explicitRequestedItemIds.Contains(x.Id));
+                }
+                else if (request.Items.Count == 1 && req.Items.Count == 1)
+                {
+                    var only = request.Items.First();
+                    if (!seenItems.Contains(only.Id) && !explicitRequestedItemIds.Contains(only.Id))
+                    {
+                        matchedExisting = only;
+                    }
+                }
+
+                if (matchedExisting != null)
+                {
+                    seenItems.Add(matchedExisting.Id);
+                    raw.Add((matchedExisting, matchedExisting.WasteCategoryId, w));
+                    continue;
+                }
+
                 if (!it.WasteCategoryId.HasValue)
                     throw new BusinessRuleException("BR-HND-05", "MSG-AUTH-02", "Dòng phát sinh cần chọn loại phế liệu.");
                 var cat = it.WasteCategoryId.Value;

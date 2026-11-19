@@ -149,8 +149,11 @@ public class HandoverRequestService : IHandoverRequestService
         return await PageAsync(query, status, page, pageSize, viewerIsRecycler: false, ct);
     }
 
-    public Task<HandoverRequestDto> GetUserRequestAsync(Guid userId, Guid requestId, CancellationToken ct = default) =>
-        GetOwnedAsync(h => h.Id == requestId && h.UserId == userId, false, ct);
+    public async Task<HandoverRequestDto> GetUserRequestAsync(Guid userId, Guid requestId, CancellationToken ct = default)
+    {
+        await SyncSingleTradeOrderForViewerAsync(requestId, userId, isRecycler: false, ct);
+        return await GetOwnedAsync(h => h.Id == requestId && h.UserId == userId, false, ct);
+    }
 
     // ============================================================
     // Recycler
@@ -163,19 +166,45 @@ public class HandoverRequestService : IHandoverRequestService
         return await PageAsync(query, status, page, pageSize, viewerIsRecycler: true, ct);
     }
 
-    private async Task SyncUnsyncedTradeOrdersForUserAsync(Guid userId, bool isRecycler, CancellationToken ct)
+    private static bool ShouldSyncTradeOrderIntoHandover(HandoverStatus? currentStatus, TradeOrder order)
+    {
+        if (!currentStatus.HasValue)
+        {
+            return true;
+        }
+
+        var targetStatus = HandoverTradeSyncHelper.ToHandoverStatus(order.Status);
+        if (currentStatus.Value is HandoverStatus.Pending or HandoverStatus.Negotiating)
+        {
+            return targetStatus != currentStatus.Value || order.AgreedPricePerKg.HasValue;
+        }
+
+        if (currentStatus.Value is HandoverStatus.Accepted or HandoverStatus.Scheduled)
+        {
+            return targetStatus is HandoverStatus.Cancelled or HandoverStatus.Completed;
+        }
+
+        return false;
+    }
+
+    private async Task SyncSingleTradeOrderForViewerAsync(Guid requestId, Guid viewerId, bool isRecycler, CancellationToken ct)
     {
         try
         {
-            var ordersQuery = isRecycler
-                ? _db.TradeOrders.Include(o => o.Partner).Where(o =>
-                    (o.RecyclerUserId == userId || o.PartnerId == userId || (o.Partner != null && o.Partner.UserId == userId)) &&
-                    !_db.HandoverRequests.Any(h => h.Id == o.Id))
-                : _db.TradeOrders.Include(o => o.Partner).Where(o =>
-                    o.UserId == userId && !_db.HandoverRequests.Any(h => h.Id == o.Id));
+            var existingStatus = await _db.HandoverRequests
+                .AsNoTracking()
+                .Where(h => h.Id == requestId)
+                .Select(h => (HandoverStatus?)h.Status)
+                .FirstOrDefaultAsync(ct);
 
-            var unsynced = await ordersQuery.ToListAsync(ct);
-            foreach (var order in unsynced)
+            var orderQuery = isRecycler
+                ? _db.TradeOrders.Include(o => o.Partner).Where(o =>
+                    o.Id == requestId &&
+                    (o.RecyclerUserId == viewerId || o.PartnerId == viewerId || (o.Partner != null && o.Partner.UserId == viewerId)))
+                : _db.TradeOrders.Include(o => o.Partner).Where(o => o.Id == requestId && o.UserId == viewerId);
+
+            var order = await orderQuery.FirstOrDefaultAsync(ct);
+            if (order != null && ShouldSyncTradeOrderIntoHandover(existingStatus, order))
             {
                 await HandoverTradeSyncHelper.EnsureHandoverFromTradeOrderAsync(_db, order, ct);
             }
@@ -183,8 +212,44 @@ public class HandoverRequestService : IHandoverRequestService
         catch { /* ignore in isolated tests */ }
     }
 
-    public Task<HandoverRequestDto> GetRecyclerRequestAsync(Guid recyclerId, Guid requestId, CancellationToken ct = default) =>
-        GetOwnedAsync(h => h.Id == requestId && h.RecyclerId == recyclerId, true, ct);
+    private async Task SyncUnsyncedTradeOrdersForUserAsync(Guid userId, bool isRecycler, CancellationToken ct)
+    {
+        try
+        {
+            var ordersQuery = isRecycler
+                ? _db.TradeOrders.Include(o => o.Partner).Where(o =>
+                    o.RecyclerUserId == userId || o.PartnerId == userId || (o.Partner != null && o.Partner.UserId == userId))
+                : _db.TradeOrders.Include(o => o.Partner).Where(o => o.UserId == userId);
+
+            var orders = await ordersQuery.ToListAsync(ct);
+            if (orders.Count == 0) return;
+
+            var orderIds = orders.Select(o => o.Id).ToList();
+            var existingHandovers = await _db.HandoverRequests
+                .AsNoTracking()
+                .Where(h => orderIds.Contains(h.Id))
+                .Select(h => new { h.Id, h.Status })
+                .ToDictionaryAsync(h => h.Id, h => h.Status, ct);
+
+            foreach (var order in orders)
+            {
+                HandoverStatus? currentStatus = existingHandovers.TryGetValue(order.Id, out var foundStatus)
+                    ? foundStatus
+                    : null;
+                if (ShouldSyncTradeOrderIntoHandover(currentStatus, order))
+                {
+                    await HandoverTradeSyncHelper.EnsureHandoverFromTradeOrderAsync(_db, order, ct);
+                }
+            }
+        }
+        catch { /* ignore in isolated tests */ }
+    }
+
+    public async Task<HandoverRequestDto> GetRecyclerRequestAsync(Guid recyclerId, Guid requestId, CancellationToken ct = default)
+    {
+        await SyncSingleTradeOrderForViewerAsync(requestId, recyclerId, isRecycler: true, ct);
+        return await GetOwnedAsync(h => h.Id == requestId && h.RecyclerId == recyclerId, true, ct);
+    }
 
     public async Task<HandoverRequestDto> AcceptAsync(Guid recyclerId, Guid requestId, string? note, CancellationToken ct = default)
     {

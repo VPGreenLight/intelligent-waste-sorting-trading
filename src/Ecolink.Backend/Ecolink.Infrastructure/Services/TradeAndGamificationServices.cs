@@ -594,16 +594,29 @@ public class TradeTransactionService : ITradeTransactionService
         {
             try
             {
-                var unsyncedHandoverIds = await _dbContext.HandoverRequests
+                var handoversForUser = await _dbContext.HandoverRequests
                     .AsNoTracking()
-                    .Where(h => (h.UserId == userId || h.RecyclerId == userId) &&
-                                !_dbContext.TradeOrders.Any(o => o.Id == h.Id))
-                    .Select(h => h.Id)
+                    .Where(h => h.UserId == userId || h.RecyclerId == userId)
+                    .Select(h => new { h.Id, h.Status })
                     .ToListAsync(cancellationToken);
 
-                foreach (var hid in unsyncedHandoverIds)
+                var existingOrders = await _dbContext.TradeOrders
+                    .AsNoTracking()
+                    .Where(o =>
+                        o.UserId == userId ||
+                        o.RecyclerUserId == userId ||
+                        o.PartnerId == userId ||
+                        (o.Partner != null && o.Partner.UserId == userId))
+                    .Select(o => new { o.Id, o.Status })
+                    .ToDictionaryAsync(o => o.Id, o => o.Status, cancellationToken);
+
+                foreach (var h in handoversForUser)
                 {
-                    await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(_dbContext, hid, null, null, cancellationToken);
+                    if (!existingOrders.TryGetValue(h.Id, out var existingStatus) ||
+                        HandoverTradeSyncHelper.ToOrderStatus(h.Status) != existingStatus)
+                    {
+                        await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(_dbContext, h.Id, null, null, cancellationToken);
+                    }
                 }
 
                 var rawOrders = await _dbContext.TradeOrders

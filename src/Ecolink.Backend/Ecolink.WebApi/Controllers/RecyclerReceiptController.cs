@@ -13,17 +13,69 @@ namespace Ecolink.WebApi.Controllers;
 [Produces("application/json")]
 public class RecyclerReceiptController : ControllerBase
 {
+    private static readonly string[] AllowedProofExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
     private readonly IHandoverReceiptService _service;
     private readonly ICurrentUserService _currentUser;
+    private readonly IFileStorageService? _fileStorage;
 
-    public RecyclerReceiptController(IHandoverReceiptService service, ICurrentUserService currentUser)
+    public RecyclerReceiptController(
+        IHandoverReceiptService service,
+        ICurrentUserService currentUser,
+        IFileStorageService? fileStorage = null)
     {
         _service = service;
         _currentUser = currentUser;
+        _fileStorage = fileStorage;
     }
 
     private Guid RecyclerId =>
         _currentUser.UserId ?? throw new UnauthorizedAccessException("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
+
+    /// <summary>Tải ảnh bằng chứng cân phế liệu lên Cloudflare R2 trước khi lập biên nhận (BR-HND-04).</summary>
+    [HttpPost("upload-proof")]
+    [Consumes("multipart/form-data")]
+    [RequestSizeLimit(12 * 1024 * 1024)]
+    [ProducesResponseType(typeof(ApiResponse<RecyclerDocumentUploadResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<ActionResult<ApiResponse<RecyclerDocumentUploadResponseDto>>> UploadProof(
+        Guid requestId,
+        IFormFile? file,
+        CancellationToken ct)
+    {
+        if (file == null || file.Length == 0)
+        {
+            return BadRequest(ApiResponse<object>.Fail("Vui lòng chọn tệp ảnh bằng chứng cân hợp lệ.", "MSG-GEN-01"));
+        }
+
+        if (file.Length > 10 * 1024 * 1024)
+        {
+            return BadRequest(ApiResponse<object>.Fail("Dung lượng ảnh bằng chứng cân tối đa 10 MB.", "MSG-GEN-01"));
+        }
+
+        var ext = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+        if (string.IsNullOrEmpty(ext) || !AllowedProofExtensions.Contains(ext))
+        {
+            return BadRequest(ApiResponse<object>.Fail("Chỉ hỗ trợ ảnh định dạng JPG, PNG hoặc WEBP.", "MSG-CLS-01"));
+        }
+
+        if (_fileStorage == null)
+        {
+            return BadRequest(ApiResponse<object>.Fail("Dịch vụ lưu trữ ảnh hiện chưa được cấu hình.", "MSG-GEN-01"));
+        }
+
+        await using var stream = file.OpenReadStream();
+        var uploaded = await _fileStorage.UploadRecyclerDocumentAsync(
+            stream,
+            file.FileName,
+            file.ContentType,
+            $"receipt-proofs/{requestId:N}",
+            ct);
+
+        return Ok(ApiResponse<RecyclerDocumentUploadResponseDto>.Ok(
+            uploaded,
+            "Tải ảnh bằng chứng cân thành công.",
+            "MSG-GEN-01"));
+    }
 
     /// <summary>Xem trước biên nhận (không lưu): tổng khối lượng, tổng tiền theo đơn giá đã chốt, độ lệch so với ước tính.</summary>
     [HttpPost("preview")]

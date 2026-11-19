@@ -546,4 +546,61 @@ public class HandoverReceiptUnitTests
         confirmed.TotalAmountCash.Should().Be(8751m);
         confirmed.Points.Should().Be(13);
     }
+
+    [Fact]
+    public async Task UTC025_CreateAsync_TradeOrderSyncedAndCategoryGuidFallback_CreatesReceiptCleanly()
+    {
+        var (sut, db, _, citizen, recyclerUser, plastic, _, _, _) = await CreateAcceptedHandoverSutAsync(10.0m, 5500m);
+
+        // Giả lập đơn tạo qua TradeOrder (Accepted từ Chat/Requests) chưa có dòng HandoverRequest trước đó
+        var orderId = Guid.NewGuid();
+        var partner = new CollectionPartner
+        {
+            Id = recyclerUser.Id,
+            UserId = recyclerUser.Id,
+            FacilityName = "Trạm Tái Chế Hòa Lạc",
+            Address = "Tân Xã, Thạch Thất",
+            Latitude = 21.0182,
+            Longitude = 105.5345,
+            ContactPhone = "0968112233",
+            IsVerified = true
+        };
+        var tradeOrder = new TradeOrder
+        {
+            Id = orderId,
+            UserId = citizen.Id,
+            PartnerId = partner.Id,
+            RecyclerUserId = recyclerUser.Id,
+            Status = OrderStatus.Accepted,
+            ScheduledAt = DateTime.UtcNow.AddHours(3),
+            EstimatedWeightKg = 10.0m,
+            CategoryCode = "plastic",
+            InitialPricePerKg = 5500m,
+            AgreedPricePerKg = 6000m,
+            ProposedTimeSlot = "19/11/2026 (13:30 - 15:30)",
+            ConfirmedTimeSlot = "19/11/2026 (13:30 - 15:30)",
+            PickupAddress = "Cổng phụ Khu CNC Hòa Lạc"
+        };
+        db.CollectionPartners.Add(partner);
+        db.TradeOrders.Add(tradeOrder);
+        await db.SaveChangesAsync();
+
+        // Kể cả khi client chỉ gửi WasteCategoryId (Guid) chưa kịp truyền ItemId, hệ thống tự khớp đúng dòng có sẵn
+        var receipt = await sut.CreateAsync(recyclerUser.Id, orderId, new CreateReceiptRequest
+        {
+            Items = new List<ReceiptItemRequest>
+            {
+                new() { ItemId = null, WasteCategoryId = plastic.Id, ActualWeightKg = 9.0m }
+            },
+            ScaleProofPhotoUrls = new List<string> { "https://cdn.ecolink.test/scale_trade_sync.jpg" }
+        });
+
+        receipt.ReceiptCode.Should().StartWith("RCP-");
+        receipt.RequestStatus.Should().Be(HandoverStatus.AwaitingConfirmation.ToString());
+        receipt.TotalWeightKg.Should().Be(9.0m);
+        receipt.TotalAmountCash.Should().Be(54000m);
+
+        var updatedTradeOrder = await db.TradeOrders.FirstAsync(o => o.Id == orderId);
+        updatedTradeOrder.Status.Should().Be(OrderStatus.AwaitingConfirmation);
+    }
 }
