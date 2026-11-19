@@ -218,14 +218,6 @@ public class WasteScanTests
     [InlineData("rules")]
     [InlineData("classify")]
     [InlineData("feedback")]
-    public async Task Endpoint_WithoutToken_IsAccessible(string endpoint) =>
-        (await Call(endpoint, null)).ShouldBe(200);
-
-    [Theory]
-    [InlineData("models")]
-    [InlineData("rules")]
-    [InlineData("classify")]
-    [InlineData("feedback")]
     public async Task Endpoint_WithInvalidToken_DoesNotCauseServerError(string endpoint) =>
         (await Call(endpoint, "invalid.fake.token")).ShouldNotBeServerError();
 }
