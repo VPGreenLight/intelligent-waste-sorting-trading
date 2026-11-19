@@ -52,6 +52,11 @@ classDiagram
             +ResolveComplaintAsync(Guid, Guid, ResolveComplaintRequest) Task~ComplaintDetailDto~
         }
 
+        class IPointsService {
+            <<interface>>
+            +AwardHandoverPointsAsync(Guid receiptId) Task~long~
+        }
+
         class ReviewAndComplaintValidators {
             +CreateReviewRequestValidator
             +ReportReviewRequestValidator
@@ -73,7 +78,8 @@ classDiagram
             -IFileStorageService _fileStorage
             -IAuditLogService _auditLogService
             -IReviewService _reviewService
-            -ClawBackPointsSafeAsync(Guid, int, decimal) Task
+            -IPointsService? _pointsService
+            -ClawBackPointsSafeAsync(Guid, int, decimal, Guid, string) Task
         }
 
         class HandoverReceiptService {
@@ -131,6 +137,21 @@ classDiagram
             +string Reason
             +Guid? RelatedComplaintId
         }
+
+        class UserPointWallet {
+            +Guid Id
+            +Guid UserId
+            +long CurrentBalance
+            +long TotalEarned
+        }
+
+        class PointTransaction {
+            +Guid Id
+            +Guid WalletId
+            +long Points
+            +string? SourceType
+            +string? IdempotencyKey
+        }
     }
 
     ReviewsController --> IReviewService : uses
@@ -141,6 +162,9 @@ classDiagram
     ReviewService ..|> IReviewService : implements
     ComplaintService ..|> IComplaintService : implements
     ComplaintService --> IReviewService : reported queue
+    ComplaintService --> IPointsService : awards verified receipt points
+    ComplaintService ..> UserPointWallet : claws back balance >= 0
+    ComplaintService ..> PointTransaction : writes ComplaintClawback entry
     HandoverReceiptService ..> TransactionComplaint : auto-creates ticket
     GeoMatchingService ..> RecyclerProfile : reads O1 rating
     ReviewAndComplaintValidators ..> Application_Layer : validates

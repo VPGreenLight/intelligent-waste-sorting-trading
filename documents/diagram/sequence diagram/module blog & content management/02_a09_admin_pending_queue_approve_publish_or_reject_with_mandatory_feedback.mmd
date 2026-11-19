@@ -1,0 +1,49 @@
+sequenceDiagram
+    autonumber
+    actor Admin as Administrator
+    participant UI as Admin Blog Review Console
+    participant Ctrl as AdminBlogController
+    participant Svc as BlogPostService
+    participant AuditSvc as AuditLogService
+    participant DB as PostgreSQL 16
+
+    Note over Admin,DB: A-09: Quan tri vien kiem duyet hang doi, phe duyet xuat ban hoac tu choi kem gop y (BR-ADM-05, BR-ADM-08)
+
+    Admin->>UI: Mo danh sach bai cho duyet /admin/blogs
+    UI->>Ctrl: GET /api/v1/admin/blogs/pending?sort=oldest&page=1
+    Ctrl->>Svc: ListQueueAsync(search, sort, page, pageSize)
+    Svc->>DB: SELECT blog_posts JOIN users WHERE status = PendingApproval ORDER BY submitted_at ASC
+    Ctrl-->>UI: 200 OK BlogPagedResult (Queue danh sach cho duyet)
+
+    Admin->>UI: Bam vao bai viet xem chi tiet noi dung & anh bia
+    UI->>Ctrl: GET /api/v1/admin/blogs/{postId}
+    Ctrl->>Svc: GetForReviewAsync(postId)
+    Ctrl-->>UI: 200 OK BlogPostDto (Content day du + Tags)
+
+    alt Admin Phe duyet & Xuat ban
+        Admin->>UI: Nhan Duyet & Xuat ban
+        UI->>Ctrl: PATCH /api/v1/admin/blogs/{postId}/review { action: "Approve" }
+        Ctrl->>Svc: ApproveAsync(adminId, postId)
+        Svc->>DB: BeginTransaction -> UPDATE Status = Approved, ApprovedByAdminId, PublishedAt = NOW() WHERE Status = PendingApproval
+        alt affected == 0 (Staff da thu hoi hoac Admin khac da xu ly)
+            Svc-->>Ctrl: BusinessRuleException (BR-ADM-08, MSG-GEN-01)
+        else Cap nhat thanh cong
+            Svc->>DB: INSERT notifications (gui Staff tac gia: "Bai viet da duoc duyet")
+            Svc->>AuditSvc: LogAsync("BLOG_APPROVE", oldValues, newValues)
+            Svc->>DB: Commit Transaction
+            Ctrl-->>UI: 200 OK MSG-ADM-05 (Status = Approved)
+        end
+    else Admin Tu choi kem gop y bat buoc
+        Admin->>UI: Nhap gop y chinh sua & bam Tu choi
+        UI->>Ctrl: PATCH /api/v1/admin/blogs/{postId}/review { action: "Reject", feedback }
+        Ctrl->>Svc: RejectAsync(adminId, postId, feedback)
+        alt Feedback rong / chi co khoang trang
+            Svc-->>Ctrl: BusinessRuleException (BR-ADM-08, MSG-AUTH-02)
+        else Feedback hop le
+            Svc->>DB: BeginTransaction -> UPDATE Status = Draft, RejectionReason = feedback, SubmittedAt = NULL
+            Svc->>DB: INSERT notifications (gui Staff tac gia kem noi dung gop y)
+            Svc->>AuditSvc: LogAsync("BLOG_REJECT", reason = feedback)
+            Svc->>DB: Commit Transaction
+            Ctrl-->>UI: 200 OK (Status = Draft, CanEdit = true)
+        end
+    end

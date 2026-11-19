@@ -186,26 +186,82 @@ public class GamificationConfigService : IGamificationConfigService
     private async Task ApplyAsync(Guid adminId, GamificationConfigDto r, List<PointRateDto> rates, CancellationToken ct)
     {
         var now = DateTime.UtcNow;
-        await _db.GamificationConfigs.Where(c => c.Id == 1).ExecuteUpdateAsync(s => s
-            .SetProperty(c => c.DailyNonTransactionCap, r.DailyNonTransactionCap)
-            .SetProperty(c => c.CheckinBasePoints, r.CheckinBasePoints)
-            .SetProperty(c => c.StreakBonusIncrement, r.StreakBonusIncrement)
-            .SetProperty(c => c.StreakBonusCap, r.StreakBonusCap)
-            .SetProperty(c => c.DailyTreeCareLimit, r.DailyTreeCareLimit)
-            .SetProperty(c => c.VoucherValidityDays, r.VoucherValidityDays)
-            .SetProperty(c => c.DefaultPointsPerKg, r.DefaultPointsPerKg)
-            .SetProperty(c => c.UpdatedAt, now)
-            .SetProperty(c => c.UpdatedBy, (Guid?)adminId), ct);
+        if (_db.Database.IsRelational())
+        {
+            await _db.GamificationConfigs.Where(c => c.Id == 1).ExecuteUpdateAsync(s => s
+                .SetProperty(c => c.DailyNonTransactionCap, r.DailyNonTransactionCap)
+                .SetProperty(c => c.CheckinBasePoints, r.CheckinBasePoints)
+                .SetProperty(c => c.StreakBonusIncrement, r.StreakBonusIncrement)
+                .SetProperty(c => c.StreakBonusCap, r.StreakBonusCap)
+                .SetProperty(c => c.DailyTreeCareLimit, r.DailyTreeCareLimit)
+                .SetProperty(c => c.VoucherValidityDays, r.VoucherValidityDays)
+                .SetProperty(c => c.DefaultPointsPerKg, r.DefaultPointsPerKg)
+                .SetProperty(c => c.UpdatedAt, now)
+                .SetProperty(c => c.UpdatedBy, (Guid?)adminId), ct);
 
-        await _db.PointRateRules.ExecuteDeleteAsync(ct);
-        await _db.TreeLevelThresholds.ExecuteDeleteAsync(ct);
+            await _db.PointRateRules.ExecuteDeleteAsync(ct);
+            await _db.TreeLevelThresholds.ExecuteDeleteAsync(ct);
+        }
+        else
+        {
+            var cfg = await _db.GamificationConfigs.FirstAsync(c => c.Id == 1, ct);
+            cfg.DailyNonTransactionCap = r.DailyNonTransactionCap;
+            cfg.CheckinBasePoints = r.CheckinBasePoints;
+            cfg.StreakBonusIncrement = r.StreakBonusIncrement;
+            cfg.StreakBonusCap = r.StreakBonusCap;
+            cfg.DailyTreeCareLimit = r.DailyTreeCareLimit;
+            cfg.VoucherValidityDays = r.VoucherValidityDays;
+            cfg.DefaultPointsPerKg = r.DefaultPointsPerKg;
+            cfg.UpdatedAt = now;
+            cfg.UpdatedBy = adminId;
+
+            _db.PointRateRules.RemoveRange(await _db.PointRateRules.ToListAsync(ct));
+            _db.TreeLevelThresholds.RemoveRange(await _db.TreeLevelThresholds.ToListAsync(ct));
+            await _db.SaveChangesAsync(ct);
+        }
+
         _db.PointRateRules.AddRange(rates.Select(x => new PointRateRule { WasteCategoryCode = x.CategoryCode, PointsPerKg = x.PointsPerKg }));
         _db.TreeLevelThresholds.AddRange(r.TreeLevels.Select(l => new TreeLevelThreshold
             { Level = l.Level, Title = l.Title.Trim(), RequiredPoints = l.RequiredPoints }));
+        if (!_db.Database.IsRelational())
+            await _db.SaveChangesAsync(ct);
     }
 
     private async Task EnsureDefaultsAsync(CancellationToken ct)
     {
+        if (!_db.Database.IsRelational())
+        {
+            if (!await _db.GamificationConfigs.AnyAsync(c => c.Id == 1, ct))
+            {
+                _db.GamificationConfigs.Add(new GamificationConfig
+                {
+                    Id = 1,
+                    DailyNonTransactionCap = 50,
+                    CheckinBasePoints = 5,
+                    StreakBonusIncrement = 1,
+                    StreakBonusCap = 20,
+                    DailyTreeCareLimit = 3,
+                    VoucherValidityDays = 30,
+                    DefaultPointsPerKg = 10,
+                    UpdatedAt = DateTime.UtcNow
+                });
+            }
+
+            if (!await _db.TreeLevelThresholds.AnyAsync(ct))
+            {
+                _db.TreeLevelThresholds.AddRange(DefaultLevels.Select(l => new TreeLevelThreshold
+                {
+                    Level = l.Level,
+                    Title = l.Title,
+                    RequiredPoints = l.Points
+                }));
+            }
+
+            if (_db.ChangeTracker.HasChanges())
+                await _db.SaveChangesAsync(ct);
+            return;
+        }
+
         // INSERT ... ON CONFLICT DO NOTHING: an toàn khi nhiều request cùng khởi tạo lần đầu
         await _db.Database.ExecuteSqlInterpolatedAsync($@"
             INSERT INTO gamification_config (id, daily_non_transaction_cap, checkin_base_points, streak_bonus_increment,

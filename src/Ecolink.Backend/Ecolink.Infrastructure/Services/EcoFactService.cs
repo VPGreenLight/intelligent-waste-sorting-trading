@@ -32,7 +32,19 @@ public class EcoFactService : IEcoFactService
         var q = _db.EcoFacts.AsNoTracking().AsQueryable();
         if (treeLevel.HasValue) q = q.Where(f => f.UnlockTreeLevel == treeLevel.Value);
         if (!string.IsNullOrWhiteSpace(status)) { var st = ParseStatus(status); q = q.Where(f => f.Status == st); }
-        if (!string.IsNullOrWhiteSpace(search)) { var p = GamErrors.Like(search); q = q.Where(f => EF.Functions.ILike(f.Title, p)); }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            if (_db.Database.IsRelational())
+            {
+                var p = GamErrors.Like(search);
+                q = q.Where(f => EF.Functions.ILike(f.Title, p));
+            }
+            else
+            {
+                var kw = search.Trim();
+                q = q.Where(f => f.Title.Contains(kw, StringComparison.OrdinalIgnoreCase));
+            }
+        }
 
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
@@ -74,10 +86,20 @@ public class EcoFactService : IEcoFactService
     {
         var st = ParseStatus(status);
         var now = DateTime.UtcNow;
-        var n = await _db.EcoFacts.Where(f => f.Id == id).ExecuteUpdateAsync(s => s
-            .SetProperty(f => f.Status, st).SetProperty(f => f.UpdatedAt, now), ct);
-        if (n == 0) throw new NotFoundException("Không tìm thấy Eco Fact.");
-        return await GetAsync(id, ct);
+        if (_db.Database.IsRelational())
+        {
+            var n = await _db.EcoFacts.Where(f => f.Id == id).ExecuteUpdateAsync(s => s
+                .SetProperty(f => f.Status, st).SetProperty(f => f.UpdatedAt, now), ct);
+            if (n == 0) throw new NotFoundException("Không tìm thấy Eco Fact.");
+            return await GetAsync(id, ct);
+        }
+
+        var tracked = await _db.EcoFacts.FirstOrDefaultAsync(f => f.Id == id, ct)
+                      ?? throw new NotFoundException("Không tìm thấy Eco Fact.");
+        tracked.Status = st;
+        tracked.UpdatedAt = now;
+        await _db.SaveChangesAsync(ct);
+        return ToDto(tracked);
     }
 
     /// <summary>Xóa cứng nếu chưa có cây nào đạt cấp mở khóa; ngược lại chuyển sang INACTIVE để bảo toàn lịch sử (BR-GAM-06).</summary>
@@ -90,16 +112,32 @@ public class EcoFactService : IEcoFactService
             .AsNoTracking()
             .AnyAsync(t => t.TreeLevel >= fact.UnlockTreeLevel, ct);
 
-        if (hasUnlockedUsers)
+        if (_db.Database.IsRelational())
         {
-            var now = DateTime.UtcNow;
-            await _db.EcoFacts.Where(f => f.Id == id).ExecuteUpdateAsync(s => s
-                .SetProperty(f => f.Status, "INACTIVE")
-                .SetProperty(f => f.UpdatedAt, now), ct);
+            if (hasUnlockedUsers)
+            {
+                var now = DateTime.UtcNow;
+                await _db.EcoFacts.Where(f => f.Id == id).ExecuteUpdateAsync(s => s
+                    .SetProperty(f => f.Status, "INACTIVE")
+                    .SetProperty(f => f.UpdatedAt, now), ct);
+                return;
+            }
+
+            await _db.EcoFacts.Where(f => f.Id == id).ExecuteDeleteAsync(ct);
             return;
         }
 
-        await _db.EcoFacts.Where(f => f.Id == id).ExecuteDeleteAsync(ct);
+        var tracked = await _db.EcoFacts.FirstAsync(f => f.Id == id, ct);
+        if (hasUnlockedUsers)
+        {
+            tracked.Status = "INACTIVE";
+            tracked.UpdatedAt = DateTime.UtcNow;
+        }
+        else
+        {
+            _db.EcoFacts.Remove(tracked);
+        }
+        await _db.SaveChangesAsync(ct);
     }
 
     // ------------------------------------------------------------------

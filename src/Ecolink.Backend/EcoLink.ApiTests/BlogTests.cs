@@ -756,3 +756,66 @@ public class BlogPublicTests
     public async Task Public_List_AcceptsAuthenticatedUsersToo() =>
         (await Api.GetAsync(BlogRoutes.Public, await BlogHelper.Citizen())).ShouldBe(200);
 }
+
+/// <summary>
+/// Kiểm thử tích hợp cho Canonical Routes (STT 140–149) và Upload ảnh Cloudflare R2 (POST /api/v1/staff/blogs/upload-media).
+/// </summary>
+public class BlogCanonicalRoutesAndMediaUploadTests
+{
+    [Fact]
+    public async Task Staff_UploadMedia_RejectsInvalidOrMissingFile_AndAcceptsValidPng()
+    {
+        var staff = await BlogHelper.Staff();
+        var citizen = await BlogHelper.Citizen();
+
+        (await Api.SendAsync(HttpMethod.Post, "/api/v1/staff/blogs/upload-media", null, null)).ShouldBe(401);
+        (await Api.SendAsync(HttpMethod.Post, "/api/v1/staff/blogs/upload-media", null, citizen)).ShouldBe(403);
+        (await Api.SendAsync(HttpMethod.Post, "/api/v1/staff/blogs/upload-media", null, staff)).ShouldBe(400);
+
+        using var badForm = new MultipartFormDataContent();
+        var exeContent = new ByteArrayContent(new byte[] { 0x4D, 0x5A });
+        exeContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+        badForm.Add(exeContent, "file", "malware.exe");
+        (await Api.SendAsync(HttpMethod.Post, "/api/v1/staff/blogs/upload-media", badForm, staff)).ShouldBe(400);
+
+        using var okForm = new MultipartFormDataContent();
+        var pngContent = new ByteArrayContent(TestImages.Png(32, 32));
+        pngContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/png");
+        okForm.Add(pngContent, "file", "cover.png");
+        var uploadRes = (await Api.SendAsync(HttpMethod.Post, "/api/v1/staff/blogs/upload-media", okForm, staff)).ShouldBe(200).Data();
+        Assert.False(string.IsNullOrWhiteSpace(uploadRes.GetProperty("fileUrl").GetString()));
+    }
+
+    [Fact]
+    public async Task CanonicalRoutes_CreateSubmitAdminPendingReviewAndPublicRead_WorkEndToEnd()
+    {
+        var staff = await BlogHelper.Staff();
+        var admin = await BlogHelper.Admin();
+        var title = BlogHelper.UniqueTitle("Chuẩn hóa đường dẫn Blog");
+
+        var draft = (await ApiJson.PostAsync("/api/v1/staff/blogs", BlogHelper.Payload(title, submit: false), staff))
+            .ShouldBe(201).Data();
+        var postId = draft.GetProperty("id").GetGuid();
+        var slug = draft.S("slug");
+
+        (await ApiJson.PutAsync($"/api/v1/staff/blogs/{postId}",
+            BlogHelper.Payload(title + " cập nhật", submit: false), staff)).ShouldBe(200);
+        (await ApiJson.PostAsync($"/api/v1/staff/blogs/{postId}/submit", null, staff)).ShouldBe(200);
+
+        var pending = (await Api.GetAsync("/api/v1/admin/blogs/pending", admin,
+            query: new Dictionary<string, string> { ["search"] = title })).ShouldBe(200).Data();
+        Assert.True(pending.GetProperty("totalCount").GetInt32() >= 1);
+
+        var reviewed = (await ApiJson.PatchAsync($"/api/v1/admin/blogs/{postId}/review",
+            new { action = "Approve" }, admin)).ShouldBe(200).Data();
+        Assert.Equal("Approved", reviewed.S("status"));
+        slug = reviewed.S("slug");
+
+        var pubList = (await Api.GetAsync("/api/v1/blogs",
+            query: new Dictionary<string, string> { ["search"] = title })).ShouldBe(200).Data();
+        Assert.True(pubList.GetProperty("totalCount").GetInt32() >= 1);
+
+        var detail = (await Api.GetAsync($"/api/v1/blogs/{Uri.EscapeDataString(slug)}")).ShouldBe(200).Data();
+        Assert.Equal(postId, detail.GetProperty("id").GetGuid());
+    }
+}

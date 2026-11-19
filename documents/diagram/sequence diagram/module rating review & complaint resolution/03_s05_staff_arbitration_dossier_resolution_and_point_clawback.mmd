@@ -4,6 +4,7 @@ sequenceDiagram
     participant UI as Staff Complaints Console
     participant StfCtrl as StaffComplaintsController
     participant CmpSvc as ComplaintService
+    participant PtsSvc as PointsService
     participant AuditSvc as AuditLogService
     participant DB as PostgreSQL 16
 
@@ -30,10 +31,13 @@ sequenceDiagram
     StfCtrl->>CmpSvc: ResolveComplaintAsync(staffId, complaintId, request)
     CmpSvc->>DB: BeginTransaction: Check status != Resolved/Dismissed (else 409)
     alt ResolutionOutcome == CancelDisputedOrder
-        CmpSvc->>DB: UPDATE handover_requests = Cancelled
+        CmpSvc->>DB: UPDATE handover_requests = Cancelled & handover_receipts.points_awarded = 0
         CmpSvc->>DB: ClawBack GreenPoints tren user_eco_profiles (Math.Max(0, balance - pts) BR-GAM-03)
+        CmpSvc->>DB: Tru user_point_wallets >= 0 & INSERT point_transactions (ComplaintClawback, idemKey duy nhat)
     else ResolutionOutcome == ConfirmReceiptAsIs hoac CompensateUser
-        CmpSvc->>DB: UPDATE handover_requests = Completed + Cong diem chuan neu chua cong
+        CmpSvc->>DB: UPDATE handover_requests = Completed + SaveChanges
+        CmpSvc->>PtsSvc: AwardHandoverPointsAsync(receipt.Id)
+        PtsSvc->>DB: Credit User & Recycler user_point_wallets + SyncReceiptCompletionAsync
     else ResolutionOutcome == Dismissed
         CmpSvc->>DB: Khoi phuc trang thai don truoc khi tranh chap
     end

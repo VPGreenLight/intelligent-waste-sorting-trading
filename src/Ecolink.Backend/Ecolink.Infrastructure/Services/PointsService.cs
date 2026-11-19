@@ -89,10 +89,21 @@ public class PointsService : IPointsService
             }
 
             var now = DateTime.UtcNow;
-            await _db.UserPointWallets.Where(w => w.Id == walletId).ExecuteUpdateAsync(s => s
-                .SetProperty(w => w.CurrentBalance, w => w.CurrentBalance + points)
-                .SetProperty(w => w.TotalEarned, w => w.TotalEarned + points)
-                .SetProperty(w => w.UpdatedAt, now), ct);
+            if (_db.Database.IsRelational())
+            {
+                await _db.UserPointWallets.Where(w => w.Id == walletId).ExecuteUpdateAsync(s => s
+                    .SetProperty(w => w.CurrentBalance, w => w.CurrentBalance + points)
+                    .SetProperty(w => w.TotalEarned, w => w.TotalEarned + points)
+                    .SetProperty(w => w.UpdatedAt, now), ct);
+            }
+            else
+            {
+                var wallet = await _db.UserPointWallets.FirstAsync(w => w.Id == walletId, ct);
+                wallet.CurrentBalance += points;
+                wallet.TotalEarned += points;
+                wallet.UpdatedAt = now;
+                await _db.SaveChangesAsync(ct);
+            }
             return points;
         }, ct);
     }
@@ -105,13 +116,24 @@ public class PointsService : IPointsService
         {
             var walletId = await EnsureWalletAsync(userId, ct);
             var now = DateTime.UtcNow;
-            var affected = await _db.UserPointWallets
-                .Where(w => w.Id == walletId && w.CurrentBalance >= points)      // BR-GAM-03: không âm
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(w => w.CurrentBalance, w => w.CurrentBalance - points)
-                    .SetProperty(w => w.TotalSpent, w => w.TotalSpent + points)
-                    .SetProperty(w => w.UpdatedAt, now), ct);
-            if (affected == 0) return false;
+            if (_db.Database.IsRelational())
+            {
+                var affected = await _db.UserPointWallets
+                    .Where(w => w.Id == walletId && w.CurrentBalance >= points)      // BR-GAM-03: không âm
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(w => w.CurrentBalance, w => w.CurrentBalance - points)
+                        .SetProperty(w => w.TotalSpent, w => w.TotalSpent + points)
+                        .SetProperty(w => w.UpdatedAt, now), ct);
+                if (affected == 0) return false;
+            }
+            else
+            {
+                var wallet = await _db.UserPointWallets.FirstOrDefaultAsync(w => w.Id == walletId && w.CurrentBalance >= points, ct);
+                if (wallet == null) return false;
+                wallet.CurrentBalance -= points;
+                wallet.TotalSpent += points;
+                wallet.UpdatedAt = now;
+            }
 
             _db.PointTransactions.Add(new PointTransaction
             {
@@ -150,8 +172,22 @@ public class PointsService : IPointsService
             $"HANDOVER:{receipt.Id}:RECYCLER", desc, ct);
 
         if (receipt.PointsAwarded != points)
-            await _db.HandoverReceipts.Where(r => r.Id == receiptId)
-                .ExecuteUpdateAsync(s => s.SetProperty(r => r.PointsAwarded, points), ct);
+        {
+            if (_db.Database.IsRelational())
+            {
+                await _db.HandoverReceipts.Where(r => r.Id == receiptId)
+                    .ExecuteUpdateAsync(s => s.SetProperty(r => r.PointsAwarded, points), ct);
+            }
+            else
+            {
+                var tracked = await _db.HandoverReceipts.FirstOrDefaultAsync(r => r.Id == receiptId, ct);
+                if (tracked != null)
+                {
+                    tracked.PointsAwarded = points;
+                    await _db.SaveChangesAsync(ct);
+                }
+            }
+        }
 
         _logger.LogInformation("Cộng {Points} điểm cho biên nhận {Receipt} (người dân + Recycler).", points, receipt.ReceiptCode);
         return points;
@@ -166,6 +202,22 @@ public class PointsService : IPointsService
         if (existing.HasValue) return existing.Value;
 
         var newId = Guid.NewGuid();
+        if (!_db.Database.IsRelational())
+        {
+            var wallet = new UserPointWallet
+            {
+                Id = newId,
+                UserId = userId,
+                CurrentBalance = 0,
+                TotalEarned = 0,
+                TotalSpent = 0,
+                UpdatedAt = DateTime.UtcNow
+            };
+            _db.UserPointWallets.Add(wallet);
+            await _db.SaveChangesAsync(ct);
+            return wallet.Id;
+        }
+
         await _db.Database.ExecuteSqlInterpolatedAsync($@"
             INSERT INTO user_point_wallets (wallet_id, user_id, current_balance, total_earned, total_spent, updated_at)
             VALUES ({newId}, {userId}, 0, 0, 0, NOW()) ON CONFLICT (user_id) DO NOTHING", ct);

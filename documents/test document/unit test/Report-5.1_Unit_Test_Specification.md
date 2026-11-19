@@ -1,10 +1,10 @@
 # REPORT 5.1 – UNIT TEST SPECIFICATION (TÀI LIỆU ĐẶC TẢ KIỂM THỬ ĐƠN VỊ)
 
 - **Dự án:** Hệ thống Phân loại Rác Thông minh & Giao dịch Phế liệu (**EcoLink**)
-- **Phiên bản:** 1.9
-- **Ngày cập nhật:** 2026-11-18
+- **Phiên bản:** 2.0
+- **Ngày cập nhật:** 2026-11-19
 - **Nhóm thực hiện:** Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức
-- **Phạm vi kiểm thử (12 Core Modules):**
+- **Phạm vi kiểm thử (14 Core Modules):**
   1. **Module 1:** Authentication & Account Management (`AuthService`) — **22 TCs**
   2. **Module 2:** AI Waste Classification & Rule Engine (`AiVisionHttpClient`, `WasteRuleEngineService`, `classify_waste_image`) — **18 TCs**
   3. **Module 3:** Recycler Onboarding & Verification (`RecyclerOnboardingService`, `CloudflareR2StorageService`) — **20 TCs**
@@ -17,7 +17,9 @@
   10. **Module 10:** In-System Service Packages & VietQR Integration (`PaymentService`, `ServicePackageService`, `SubscriptionEntitlementService`, `AdminReconciliationService` & `ServicePackageValidators` – `U-16`, `R-07`, `A-10`, `A-11`) — **22 TCs**
   11. **Module 11:** AI Misclassification Feedback & Dataset Curation (`AiFeedbackService`, `AiDatasetCurationService`, `AiDatasetExportBuilder`, `AiCurationValidators` – `U-04`, `S-01`, `S-02`, `S-03`) — **22 TCs**
   12. **Module 12:** Rating, Review & Complaint Resolution (`ReviewService`, `ComplaintService`, `HandoverReceiptService.DisputeAsync`, `ReviewAndComplaintValidators` – `U-10`, `U-11`, `S-05`) — **22 TCs**
-- **Tổng số lượng Unit Test Cases:** **256 TCs** (`117 Normal`, `92 Abnormal`, `47 Boundary`)
+  13. **Module 13:** Gamification & Rewards (`LeaderboardService`, `CheckinService`, `PointsService`, `GiftService`, `VirtualTreeService`, `EcoFactService`, `GamificationConfigService`, `GamificationService`, `ComplaintService` clawback & `Validators` – `U-13..U-15`, `S-09..S-10`, `A-07..A-08`) — **22 TCs**
+  14. **Module 14:** Blog & Content Management (`BlogPostService` & `BlogValidators` – `G-01`, `S-08`, `A-09`) — **20 TCs**
+- **Tổng số lượng Unit Test Cases:** **298 TCs** (`136 Normal`, `107 Abnormal`, `55 Boundary`) *(Thực thi tự động `302 / 302 Passed` trên `Ecolink.UnitTests.csproj` bao gồm cả các biến thể tham số hóa)*
 
 ---
 
@@ -583,3 +585,89 @@
 | **UTC020** | `SubmitComplaintRequestValidator` | Mô tả `15/14` ký tự; `5/6` URL ảnh | Đúng biên `>= 15` & `<= 5` ảnh `true`; vi phạm `false` | Boundary | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-DSP-02` |
 | **UTC021** | `ResolveComplaintRequestValidator` | `ResolutionNote` `10` vs `9` ký tự | `10` ký tự `true`; `9` ký tự `false` | Boundary | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-DSP-04` |
 | **UTC022** | Citizen còn `20đ` vs `50đ`; đơn `Disputed` | `CancelDisputedOrder` & `ConfirmReceiptAsIs` | Kẹp `CurrentGreenPoints = 0` (`>= 0`); `Disputed` chốt cộng `50đ` | Boundary | Passed | 2026-11-18 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-GAM-03` Floor 0 |
+
+---
+
+## PHẦN 13: MODULE GAMIFICATION & REWARDS (`GamificationAndBlogUnitTests` – `M-10`)
+
+### 13.1. Bảng Tổng hợp Kiểm thử (Summary Table)
+
+| Code Module | `LeaderboardService`, `CheckinService`, `PointsService`, `GiftService`, `VirtualTreeService`, `EcoFactService`, `GamificationConfigService`, `GamificationService`, `ComplaintService` | | |
+| :--- | :---: | :---: | :---: |
+| **Number of TCs** | **22** | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** |
+| *Round 1* | 22 | 0 | 0 |
+| *Round 2* | 0 | 0 | 22 |
+| *Round 3* | 0 | 0 | 22 |
+| **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
+| **Count** | **10** | **8** | **4** |
+
+### 13.2. Chi tiết Các Ca Kiểm thử (`UTC001` – `UTC022`)
+*(Chi tiết đầy đủ xem tại: [`13_unit_test_gamification_and_rewards.md`](./13_unit_test_gamification_and_rewards.md) / [`GamificationAndBlogUnitTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module10_GamificationAndBlog/GamificationAndBlogUnitTests.cs))*
+
+| Test Case ID | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :--- |
+| **UTC001** | Có Admin trong DB | `CreateCycleAsync(IsActive=true)` lần 1 & 2 | Chỉ chu kỳ 2 bật, chu kỳ 1 tắt, ghi `2` AuditLog | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `A-08` Active Cycle |
+| **UTC002** | DbContext sạch | `CreateCycleAsync` với `EndsAt < StartsAt` | Ném `BusinessRuleException ("MSG-AUTH-02")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chặn mốc ngày ngược |
+| **UTC003** | DbContext sạch | `PeriodType="Yearly"` & `Top1 < Top2` | Đều ném `BusinessRuleException ("MSG-AUTH-02")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kiểm định `A-08` |
+| **UTC004** | Có `2` chu kỳ (Tuần bật, Tháng tắt) | `ActivateCycleAsync(month.Id)` | Tháng bật, Tuần tắt, ghi `LEADERBOARD_CYCLE_ACTIVATE` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chuyển chu kỳ |
+| **UTC005** | `2` Citizen & `1` Recycler có điểm | `GetLeaderboardViewAsync("Weekly")` | Loại Recycler; xếp đúng theo `PeriodPoints`, không phạt đổi quà | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-GAM-07`, `08` |
+| **UTC006** | Chu kỳ Active + 3 Citizen | `FinalizeCycleAsync(cycle.Id)` | Chốt `Finalized`, thưởng `+500/+300/+150`, ghi AuditLog | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Top 3 Bonus |
+| **UTC007** | Chu kỳ đã `Finalized` | `ActivateCycle` & `FinalizeCycle` | Đều ném `BusinessRuleException ("MSG-GEN-01")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khóa chốt/bật lặp |
+| **UTC008** | Citizen có ví, cây, AI scan & check-in | `GetUserProfileAsync(citizen.Id)` | Tổng hợp đúng `240đ`, cấp `2`, `10kg`, `CO2=18.5` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Profile thật `STT 076` |
+| **UTC009** | Đơn `Completed` (+50đ) & phiếu khiếu nại | `Resolve("CancelDisputedOrder")` | Trừ cả `UserEcoProfile` & `UserPointWallet`, ghi `-50` ledger | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Clawback `M-11` |
+| **UTC010** | Ví Citizen còn `15đ` (< `50đ` thu hồi) | `Resolve("CancelDisputedOrder")` | Kẹp sàn `CurrentBalance=0` (`>= 0`), ghi `-15đ` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-GAM-03` Floor 0 |
+| **UTC011** | User liên tiếp vs bỏ lỡ `3 ngày` ICT | `GetStatusAsync` & `CheckInAsync` | User A lên chuỗi `4` (`+8đ`); User B reset về chuỗi `1` (`+5đ`) | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `U-13` Streak `ICT` |
+| **UTC012** | Đã check-in trong ngày | `CheckInAsync` lần 2 trong ngày | Ném `BusinessRuleException ("BR-GAM-09", "MSG-GEN-01")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chặn điểm danh đúp |
+| **UTC013** | Còn dư địa `3đ` & `0đ` trong trần `50đ` | `CheckInAsync(uClamp)` & `(uFull)` | U1 kẹp nhận `3đ` (`LimitedByDailyCap=true`); U2 ném `MSG-GAM-05` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-GAM-02` Daily Cap |
+| **UTC014** | User `500đ`; có Voucher & Physical | `RedeemAsync` Voucher & Physical | Sinh mã `ECO-...`, Physical `Pending`, trừ đúng `350đ` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `U-14`, `BR-GAM-04` |
+| **UTC015** | User `20đ`; quà `200đ` & quà hết hàng | `RedeemAsync` trên từng quà | Ném `MSG-GAM-03` (giữ tồn kho) & `MSG-GAM-04` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kiểm soát số dư/kho |
+| **UTC016** | Có Voucher & đơn đổi `120đ` Physical | `ImportVouchers` (`3` mã + `1` trùng) & `Cancel` | Nhập `3` mã mới; hủy đơn hoàn đủ `120đ` & tồn kho | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-10` Import & Refund |
+| **UTC017** | Voucher quá hạn `-1s` & còn hạn `+24h` | `ExpireVouchersAsync()` | Chuyển đúng `1` voucher quá hạn sang `Expired` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên `ExpiresAt` |
+| **UTC018** | User `250đ` cấp `1` & EcoFact cấp `2` | `WaterAndUpgradeAsync(user.Id)` | Trừ `100đ`, lên cấp `2`, mở khóa EcoFact cấp `2` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `U-15` Nâng cấp cây |
+| **UTC019** | User `0đ` & User đạt giới hạn `3/3` ngày | `WaterAndUpgradeAsync` | Ném `MSG-GAM-03` & `MSG-GEN-01` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Bảo vệ giới hạn chăm |
+| **UTC020** | Có User cấp `2`, chưa ai cấp `4` | `DeleteAsync` Fact cấp `2` & cấp `4` | Fact cấp `2` thành `INACTIVE`; Fact cấp `4` xóa cứng | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-09`, `BR-GAM-06` |
+| **UTC021** | Có `EcoFact ACTIVE` cấp `4` | `Config.UpdateAsync` cắt xuống `2` cấp | Ném `BusinessRuleException ("BR-GAM-06", "MSG-AUTH-02")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khóa cấp đang dùng |
+| **UTC022** | 4 Validators & `GamSettings` | Input sai chuẩn & Streak `20` ngày | Validators chặn input sai; CheckinReward kẹp trần `15đ` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | FluentValidation `M-10` |
+
+---
+
+## PHẦN 14: MODULE BLOG & CONTENT MANAGEMENT (`BlogContentUnitTests` – `M-14`)
+
+### 14.1. Bảng Tổng hợp Kiểm thử (Summary Table)
+
+| Code Module | `BlogPostService`, `SaveBlogPostRequestValidator`, `RejectBlogPostRequestValidator`, `ReviewBlogPostRequestValidator` | | |
+| :--- | :---: | :---: | :---: |
+| **Number of TCs** | **20** | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** |
+| *Round 1* | 20 | 0 | 0 |
+| *Round 2* | 0 | 0 | 20 |
+| *Round 3* | 0 | 0 | 20 |
+| **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
+| **Count** | **9** | **7** | **4** |
+
+### 14.2. Chi tiết Các Ca Kiểm thử (`UTC001` – `UTC020`)
+*(Chi tiết đầy đủ xem tại: [`14_unit_test_blog_and_content_management.md`](./14_unit_test_blog_and_content_management.md) / [`BlogContentUnitTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module14_BlogContent/BlogContentUnitTests.cs))*
+
+| Test Case ID | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :--- |
+| **UTC001** | Staff tồn tại | `CreateAsync` tiêu đề tiếng Việt & tag trùng | `Status="Draft"`, slug không dấu, còn `2` thẻ duy nhất | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-08` Slugify |
+| **UTC002** | Đã có bài trùng tiêu đề; tiêu đề `150` ký tự | `CreateAsync` bài 2 & bài `150` ký tự | Bài 2 sinh hậu tố `-2`; slug tối đa `<= 200` ký tự | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên Slug |
+| **UTC003** | Staff & Admin tồn tại | `CreateAsync(..., submit: true)` | `Status="Pending_Approval"`, thông báo Admin | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Nộp duyệt ngay |
+| **UTC004** | Staff tồn tại | `CreateAsync(submit: true)` thiếu bìa/nội dung | Đều ném `BusinessRuleException ("MSG-AUTH-02")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `EnsureSubmittable` |
+| **UTC005** | Bài `Draft` thuộc Staff | `UpdateAsync` tiêu đề & nội dung mới | Cập nhật trường và tái sinh slug | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Sửa nháp |
+| **UTC006** | Bài `PendingApproval` & `Approved` | `UpdateAsync` trên 2 trạng thái | Đều ném `BusinessRuleException ("MSG-GEN-01")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-ADM-08` |
+| **UTC007** | `AuthorA` đã tạo bài nháp | `AuthorB` gọi `GetMine` & `Update` | Ném `NotFoundException` (cô lập tác giả) | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chống IDOR Staff |
+| **UTC008** | Bài `Draft` hợp lệ; có Admin | `SubmitAsync(staff.Id, draft.Id)` | Chuyển `Pending_Approval`, thông báo Admin | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-08` Nộp nháp |
+| **UTC009** | Bài đã `Approved` | `SubmitAsync` lặp lại | Ném `BusinessRuleException ("MSG-GEN-01")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khóa nộp bài đăng |
+| **UTC010** | Bài `Pending_Approval` | `RecallAsync(staff.Id, pending.Id)` | Quay về `Draft`, `SubmittedAt=null`, báo Admin | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-08` Thu hồi |
+| **UTC011** | Bài đã `Approved` | `RecallAsync` | Ném `BusinessRuleException ("MSG-GEN-01")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khóa thu hồi |
+| **UTC012** | Bài `Draft` thuộc Staff | `DeleteAsync(staff.Id, draft.Id)` | Xóa hoàn toàn khỏi `blog_posts` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Xóa nháp |
+| **UTC013** | Bài `PendingApproval` & `Approved` | `DeleteAsync` trên 2 trạng thái | Ném `BusinessRuleException ("MSG-GEN-01")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Bảo vệ bài chờ/đăng |
+| **UTC014** | `1` nháp + `2` chờ duyệt | `ListQueueAsync("oldest")` & `("newest")` | Bỏ qua nháp, sắp xếp đúng theo ngày nộp & tìm kiếm | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `A-09` Hàng đợi |
+| **UTC015** | Bài `Pending_Approval` | `ApproveAsync(admin.Id, pending.Id)` | `Approved`, `PublishedAt != null`, thông báo + `BLOG_APPROVE` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `A-09`, `MSG-ADM-05` |
+| **UTC016** | Bài `Pending_Approval` | `RejectAsync` kèm góp ý hợp lệ | Quay về `Draft` kèm `RejectionReason`, thông báo + `BLOG_REJECT` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Trả về sửa lại |
+| **UTC017** | Bài `Pending_Approval` | `RejectAsync` với góp ý `"   "` | Ném `BusinessRuleException ("MSG-AUTH-02")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Góp ý bắt buộc |
+| **UTC018** | `1` Draft, `1` tag `"nhua"`, `1` tag `"nhua-pet"` | `ListPublishedAsync(tag="nhua")` | Chỉ trả về đúng bài mang nguyên thẻ `"nhua"` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Lọc nguyên thẻ |
+| **UTC019** | `1` Draft + `1` Approved | `ListMineAsync("Published", page=-1, size=9999)` | Kẹp `Page=1, PageSize=50`, lọc đúng bài `Approved` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên phân trang |
+| **UTC020** | Nháp vs Approved + 3 Validators | `GetPublishedBySlug` & Check biên `9/10`, `6` tags, `2001` | Nháp ném `NotFoundException`; Validator chặn đúng các biên | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `G-01` & Validators |

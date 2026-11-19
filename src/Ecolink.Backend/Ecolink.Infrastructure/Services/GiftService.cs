@@ -35,7 +35,19 @@ public class GiftService : IGiftService
     {
         var q = _db.Gifts.AsNoTracking().Where(g => g.Status == "ACTIVE");
         if (!string.IsNullOrWhiteSpace(type)) { var t = ParseType(type); q = q.Where(g => g.Type == t); }
-        if (!string.IsNullOrWhiteSpace(search)) { var p = GamErrors.Like(search); q = q.Where(g => EF.Functions.ILike(g.Name, p)); }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            if (_db.Database.IsRelational())
+            {
+                var p = GamErrors.Like(search);
+                q = q.Where(g => EF.Functions.ILike(g.Name, p));
+            }
+            else
+            {
+                var kw = search.Trim();
+                q = q.Where(g => g.Name.Contains(kw, StringComparison.OrdinalIgnoreCase));
+            }
+        }
 
         q = (sort ?? string.Empty).Trim().ToLowerInvariant() switch
         {
@@ -80,14 +92,30 @@ public class GiftService : IGiftService
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
-        // 1) Giảm tồn kho nguyên tử: chỉ khi quà còn ACTIVE và đủ hàng (BR-GAM-04)
-        var stockOk = await _db.Gifts
-            .Where(g => g.Id == giftId && g.Status == "ACTIVE" && g.StockQuantity >= qty)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(g => g.StockQuantity, g => g.StockQuantity - qty)
-                .SetProperty(g => g.UpdatedAt, now), ct);
-        if (stockOk == 0)
-            throw GamErrors.Rule(Rule, "MSG-GAM-04", "Quà này đã hết hàng hoặc không còn khả dụng.");
+        if (_db.Database.IsRelational())
+        {
+            // 1) Giảm tồn kho nguyên tử: chỉ khi quà còn ACTIVE và đủ hàng (BR-GAM-04)
+            var stockOk = await _db.Gifts
+                .Where(g => g.Id == giftId && g.Status == "ACTIVE" && g.StockQuantity >= qty)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(g => g.StockQuantity, g => g.StockQuantity - qty)
+                    .SetProperty(g => g.UpdatedAt, now), ct);
+            if (stockOk == 0)
+                throw GamErrors.Rule(Rule, "MSG-GAM-04", "Quà này đã hết hàng hoặc không còn khả dụng.");
+        }
+        else
+        {
+            // Trên EF Core InMemory (không có rollback transaction thật), kiểm tra đủ điểm trước khi trừ tồn kho
+            var balance = (await _points.GetWalletAsync(userId, ct)).Balance;
+            if (balance < cost)
+                throw GamErrors.Rule("BR-GAM-03", "MSG-GAM-03", "Bạn không đủ điểm để đổi quà này.");
+
+            var trackedGift = await _db.Gifts
+                .FirstOrDefaultAsync(g => g.Id == giftId && g.Status == "ACTIVE" && g.StockQuantity >= qty, ct)
+                ?? throw GamErrors.Rule(Rule, "MSG-GAM-04", "Quà này đã hết hàng hoặc không còn khả dụng.");
+            trackedGift.StockQuantity -= qty;
+            trackedGift.UpdatedAt = now;
+        }
 
         var redemption = new GiftRedemption
         {
@@ -145,7 +173,19 @@ public class GiftService : IGiftService
         var q = _db.Gifts.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(type)) { var t = ParseType(type); q = q.Where(g => g.Type == t); }
         if (!string.IsNullOrWhiteSpace(status)) { var st = ParseGiftStatus(status); q = q.Where(g => g.Status == st); }
-        if (!string.IsNullOrWhiteSpace(search)) { var p = GamErrors.Like(search); q = q.Where(g => EF.Functions.ILike(g.Name, p)); }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            if (_db.Database.IsRelational())
+            {
+                var p = GamErrors.Like(search);
+                q = q.Where(g => EF.Functions.ILike(g.Name, p));
+            }
+            else
+            {
+                var kw = search.Trim();
+                q = q.Where(g => g.Name.Contains(kw, StringComparison.OrdinalIgnoreCase));
+            }
+        }
 
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
@@ -186,11 +226,21 @@ public class GiftService : IGiftService
     {
         if (quantity <= 0) throw GamErrors.Rule(Rule, "MSG-AUTH-02", "Số lượng nhập thêm phải lớn hơn 0.");
         var now = DateTime.UtcNow;
-        var n = await _db.Gifts.Where(g => g.Id == giftId).ExecuteUpdateAsync(s => s
-            .SetProperty(g => g.StockQuantity, g => g.StockQuantity + quantity)
-            .SetProperty(g => g.UpdatedAt, now), ct);
-        if (n == 0) throw new NotFoundException("Không tìm thấy quà tặng.");
-        return await GetInventoryGiftAsync(giftId, ct);
+        if (_db.Database.IsRelational())
+        {
+            var n = await _db.Gifts.Where(g => g.Id == giftId).ExecuteUpdateAsync(s => s
+                .SetProperty(g => g.StockQuantity, g => g.StockQuantity + quantity)
+                .SetProperty(g => g.UpdatedAt, now), ct);
+            if (n == 0) throw new NotFoundException("Không tìm thấy quà tặng.");
+            return await GetInventoryGiftAsync(giftId, ct);
+        }
+
+        var tracked = await _db.Gifts.FirstOrDefaultAsync(g => g.Id == giftId, ct)
+                      ?? throw new NotFoundException("Không tìm thấy quà tặng.");
+        tracked.StockQuantity += quantity;
+        tracked.UpdatedAt = now;
+        await _db.SaveChangesAsync(ct);
+        return ToDto(tracked);
     }
 
     public async Task<ImportVouchersResultDto> ImportVouchersAsync(Guid giftId, ImportVouchersRequest request, CancellationToken ct = default)
@@ -217,9 +267,19 @@ public class GiftService : IGiftService
             throw GamErrors.Rule(Rule, "MSG-AUTH-02", "Vui lòng cung cấp danh sách mã voucher hoặc số lượng hợp lệ (1–100000).");
 
         var now = DateTime.UtcNow;
-        await _db.Gifts.Where(g => g.Id == giftId).ExecuteUpdateAsync(s => s
-            .SetProperty(g => g.StockQuantity, g => g.StockQuantity + importCount)
-            .SetProperty(g => g.UpdatedAt, now), ct);
+        if (_db.Database.IsRelational())
+        {
+            await _db.Gifts.Where(g => g.Id == giftId).ExecuteUpdateAsync(s => s
+                .SetProperty(g => g.StockQuantity, g => g.StockQuantity + importCount)
+                .SetProperty(g => g.UpdatedAt, now), ct);
+        }
+        else
+        {
+            var tracked = await _db.Gifts.FirstAsync(g => g.Id == giftId, ct);
+            tracked.StockQuantity += importCount;
+            tracked.UpdatedAt = now;
+            await _db.SaveChangesAsync(ct);
+        }
 
         var updated = await GetInventoryGiftAsync(giftId, ct);
         return new ImportVouchersResultDto
@@ -234,10 +294,20 @@ public class GiftService : IGiftService
     {
         var st = ParseGiftStatus(status);
         var now = DateTime.UtcNow;
-        var n = await _db.Gifts.Where(g => g.Id == giftId).ExecuteUpdateAsync(s => s
-            .SetProperty(g => g.Status, st).SetProperty(g => g.UpdatedAt, now), ct);
-        if (n == 0) throw new NotFoundException("Không tìm thấy quà tặng.");
-        return await GetInventoryGiftAsync(giftId, ct);
+        if (_db.Database.IsRelational())
+        {
+            var n = await _db.Gifts.Where(g => g.Id == giftId).ExecuteUpdateAsync(s => s
+                .SetProperty(g => g.Status, st).SetProperty(g => g.UpdatedAt, now), ct);
+            if (n == 0) throw new NotFoundException("Không tìm thấy quà tặng.");
+            return await GetInventoryGiftAsync(giftId, ct);
+        }
+
+        var tracked = await _db.Gifts.FirstOrDefaultAsync(g => g.Id == giftId, ct)
+                      ?? throw new NotFoundException("Không tìm thấy quà tặng.");
+        tracked.Status = st;
+        tracked.UpdatedAt = now;
+        await _db.SaveChangesAsync(ct);
+        return ToDto(tracked);
     }
 
     public async Task<GamPagedResult<RedemptionDto>> ListGiftRedemptionsAsync(Guid giftId, string? status, int page, int pageSize, CancellationToken ct = default)
@@ -256,9 +326,18 @@ public class GiftService : IGiftService
         if (!string.IsNullOrWhiteSpace(type)) { var t = ParseType(type); q = q.Where(r => r.Gift != null && r.Gift.Type == t); }
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var p = GamErrors.Like(search);
-            q = q.Where(r => EF.Functions.ILike(r.RedemptionCode, p)
-                             || (r.Gift != null && EF.Functions.ILike(r.Gift.Name, p)));
+            if (_db.Database.IsRelational())
+            {
+                var p = GamErrors.Like(search);
+                q = q.Where(r => EF.Functions.ILike(r.RedemptionCode, p)
+                                 || (r.Gift != null && EF.Functions.ILike(r.Gift.Name, p)));
+            }
+            else
+            {
+                var kw = search.Trim();
+                q = q.Where(r => r.RedemptionCode.Contains(kw, StringComparison.OrdinalIgnoreCase)
+                                 || (r.Gift != null && r.Gift.Name.Contains(kw, StringComparison.OrdinalIgnoreCase)));
+            }
         }
 
         return await PageStaffRedemptionsAsync(q, page, pageSize, ct);
@@ -305,20 +384,40 @@ public class GiftService : IGiftService
                            ?? throw new NotFoundException("Không tìm thấy lượt đổi quà.");
 
             await using var tx = await _db.Database.BeginTransactionAsync(ct);
-            var cancelled = await _db.GiftRedemptions
-                .Where(r => r.Id == redemptionId
-                            && (r.Status == RedemptionStatus.Pending || r.Status == RedemptionStatus.Redeemed))
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(r => r.Status, RedemptionStatus.Cancelled)
-                    .SetProperty(r => r.FulfilledAt, (DateTime?)now), ct);
-            if (cancelled == 0)
-                throw GamErrors.Rule("BR-GAM-05", "MSG-GEN-01", "Lượt đổi quà này đã được xử lý, đã hết hạn hoặc đã bị hủy.");
+            if (_db.Database.IsRelational())
+            {
+                var cancelled = await _db.GiftRedemptions
+                    .Where(r => r.Id == redemptionId
+                                && (r.Status == RedemptionStatus.Pending || r.Status == RedemptionStatus.Redeemed))
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(r => r.Status, RedemptionStatus.Cancelled)
+                        .SetProperty(r => r.FulfilledAt, (DateTime?)now), ct);
+                if (cancelled == 0)
+                    throw GamErrors.Rule("BR-GAM-05", "MSG-GEN-01", "Lượt đổi quà này đã được xử lý, đã hết hạn hoặc đã bị hủy.");
 
-            await _db.Gifts
-                .Where(g => g.Id == existing.GiftId)
-                .ExecuteUpdateAsync(s => s
-                    .SetProperty(g => g.StockQuantity, g => g.StockQuantity + existing.Quantity)
-                    .SetProperty(g => g.UpdatedAt, now), ct);
+                await _db.Gifts
+                    .Where(g => g.Id == existing.GiftId)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(g => g.StockQuantity, g => g.StockQuantity + existing.Quantity)
+                        .SetProperty(g => g.UpdatedAt, now), ct);
+            }
+            else
+            {
+                var tracked = await _db.GiftRedemptions
+                    .FirstOrDefaultAsync(r => r.Id == redemptionId
+                                              && (r.Status == RedemptionStatus.Pending || r.Status == RedemptionStatus.Redeemed), ct)
+                    ?? throw GamErrors.Rule("BR-GAM-05", "MSG-GEN-01", "Lượt đổi quà này đã được xử lý, đã hết hạn hoặc đã bị hủy.");
+                tracked.Status = RedemptionStatus.Cancelled;
+                tracked.FulfilledAt = now;
+
+                var giftTracked = await _db.Gifts.FirstOrDefaultAsync(g => g.Id == existing.GiftId, ct);
+                if (giftTracked != null)
+                {
+                    giftTracked.StockQuantity += existing.Quantity;
+                    giftTracked.UpdatedAt = now;
+                }
+                await _db.SaveChangesAsync(ct);
+            }
 
             if (existing.PointsSpent > 0)
             {
@@ -340,18 +439,34 @@ public class GiftService : IGiftService
             return await LoadRedemptionAsync(redemptionId, ct);
         }
 
-        var n = await _db.GiftRedemptions
-            .Where(r => r.Id == redemptionId
-                        && (r.Status == RedemptionStatus.Pending
-                            || (r.Status == RedemptionStatus.Redeemed && (r.ExpiresAt == null || r.ExpiresAt > now))))
-            .ExecuteUpdateAsync(s => s.SetProperty(r => r.Status, RedemptionStatus.Delivered)
-                .SetProperty(r => r.FulfilledAt, (DateTime?)now), ct);
-        if (n == 0)
+        if (_db.Database.IsRelational())
         {
-            if (!await _db.GiftRedemptions.AnyAsync(r => r.Id == redemptionId, ct))
-                throw new NotFoundException("Không tìm thấy lượt đổi quà.");
+            var n = await _db.GiftRedemptions
+                .Where(r => r.Id == redemptionId
+                            && (r.Status == RedemptionStatus.Pending
+                                || (r.Status == RedemptionStatus.Redeemed && (r.ExpiresAt == null || r.ExpiresAt > now))))
+                .ExecuteUpdateAsync(s => s.SetProperty(r => r.Status, RedemptionStatus.Delivered)
+                    .SetProperty(r => r.FulfilledAt, (DateTime?)now), ct);
+            if (n == 0)
+            {
+                if (!await _db.GiftRedemptions.AnyAsync(r => r.Id == redemptionId, ct))
+                    throw new NotFoundException("Không tìm thấy lượt đổi quà.");
+                throw GamErrors.Rule("BR-GAM-05", "MSG-GEN-01", "Lượt đổi quà này đã được xử lý, đã hết hạn hoặc đã bị hủy.");
+            }
+            return await LoadRedemptionAsync(redemptionId, ct);
+        }
+
+        var trackedRedemption = await _db.GiftRedemptions.FirstOrDefaultAsync(r => r.Id == redemptionId, ct)
+                                ?? throw new NotFoundException("Không tìm thấy lượt đổi quà.");
+        if (!(trackedRedemption.Status == RedemptionStatus.Pending
+              || (trackedRedemption.Status == RedemptionStatus.Redeemed
+                  && (trackedRedemption.ExpiresAt == null || trackedRedemption.ExpiresAt > now))))
+        {
             throw GamErrors.Rule("BR-GAM-05", "MSG-GEN-01", "Lượt đổi quà này đã được xử lý, đã hết hạn hoặc đã bị hủy.");
         }
+        trackedRedemption.Status = RedemptionStatus.Delivered;
+        trackedRedemption.FulfilledAt = now;
+        await _db.SaveChangesAsync(ct);
         return await LoadRedemptionAsync(redemptionId, ct);
     }
 
@@ -359,9 +474,19 @@ public class GiftService : IGiftService
     public async Task<int> ExpireVouchersAsync(CancellationToken ct = default)
     {
         var now = DateTime.UtcNow;
-        return await _db.GiftRedemptions
+        if (_db.Database.IsRelational())
+        {
+            return await _db.GiftRedemptions
+                .Where(r => r.Status == RedemptionStatus.Redeemed && r.ExpiresAt != null && r.ExpiresAt < now)
+                .ExecuteUpdateAsync(s => s.SetProperty(r => r.Status, RedemptionStatus.Expired), ct);
+        }
+
+        var expiredRows = await _db.GiftRedemptions
             .Where(r => r.Status == RedemptionStatus.Redeemed && r.ExpiresAt != null && r.ExpiresAt < now)
-            .ExecuteUpdateAsync(s => s.SetProperty(r => r.Status, RedemptionStatus.Expired), ct);
+            .ToListAsync(ct);
+        foreach (var r in expiredRows) r.Status = RedemptionStatus.Expired;
+        await _db.SaveChangesAsync(ct);
+        return expiredRows.Count;
     }
 
     // ============================================================ Hỗ trợ

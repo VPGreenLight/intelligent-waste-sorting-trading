@@ -7,8 +7,8 @@
 | Field | Value | Field | Value |
 | :--- | :--- | :--- | :--- |
 | **Project Name** | Intelligent Waste Sorting and Trading Platform (**EcoLink**) | **Creator** | Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức |
-| **Project Code** | `SEP490_G141` | **Issue Date** | `2026-11-18` |
-| **Document Code** | `SEP490_G141_ITR_v1.4` | **Version** | `1.4` |
+| **Project Code** | `SEP490_G141` | **Issue Date** | `2026-11-19` |
+| **Document Code** | `SEP490_G141_ITR_v1.5` | **Version** | `1.5` |
 
 ### Record of Change
 
@@ -21,6 +21,7 @@
 | `2026-11-17` | `1.2` | Module 10 (`M12_ServicePackages`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-PAY-001` $\rightarrow$ `ITC-PAY-016`) bao phủ 15 REST APIs (`STT 115–129`) của Module In-System Service Packages & VietQR Integration (`ServicePackageTests.cs`), nâng tổng số lên **188 TCs**. | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) |
 | `2026-11-17` | `1.3` | Module 11 (`M13_AiCuration`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-CLS-001` $\rightarrow$ `ITC-CLS-016`) bao phủ 10 Core APIs (`STT 130–139`), nâng cấp `021, 024` và FastAPI (`STT 183–184`) của Module AI Misclassification Feedback & Dataset Curation (`AiCurationTests.cs`), nâng tổng số lên **204 TCs**. | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) |
 | `2026-11-18` | `1.4` | Module 12 (`M11_ReviewsComplaints`) Integration Test Suite | **A** | Bổ sung 16 Integration Test Cases (`ITC-RVW-001` $\rightarrow$ `ITC-RVW-016`) bao phủ 12 REST APIs (`STT 103–114`) của Module Rating, Review & Complaint Resolution (`ReviewsAndComplaintsTests.cs`), nâng tổng số lên **220 TCs**. | [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) |
+| `2026-11-19` | `1.5` | Module 13 (`M10_Gamification`) & Module 14 (`M14_BlogContent`) | **A** | Bổ sung `20` Integration TCs (`ITC-GAM-001` $\rightarrow$ `ITC-GAM-020`) cho `M-10` (`27` APIs `STT 076–102`, `GamificationTests.cs`) và `16` Integration TCs (`ITC-BLG-001` $\rightarrow$ `ITC-BLG-016`) cho `M-14` (`10` APIs `STT 140–149`, `BlogTests.cs`), nâng tổng số lên **256 TCs**. | [`13_integration_test_gamification_and_rewards.md`](./13_integration_test_gamification_and_rewards.md), [`14_integration_test_blog_and_content_management.md`](./14_integration_test_blog_and_content_management.md) |
 
 *(Ghi chú: `*A` = Added, `D` = Deleted, `M` = Modified)*
 
@@ -87,8 +88,15 @@
 | **47** | Function 11.4: Sticky Stratified Split 70/20/10, ZIP Export & FastAPI Sync | `M13_AiCuration` | Đóng gói `70/20/10` (`201 MSG-CLS-08`), kiểm định Sticky Split Zero Data Leakage `v1 -> v2` (`BR-CLS-07`), cờ lệch lớp `> 2.50x`, xuất `.zip` `YOLO` (`MSG-ADM-02`) & đồng bộ FastAPI (`SyncedToAi`). | Có mẫu `VerifiedLabeled` trong kho `S-03`. | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) |
 | **48** | Function 12.1: Recycler Rating, Public Discovery & Moderation | `M11_ReviewsComplaints` | Đánh giá `1–5` sao đơn `Completed` trong `14 ngày` (`BR-RVW-01`), tự tính `AverageRating`/`TotalReviews`, chặn sửa sao (`BR-RVW-02`), chỉ tác giả tự xóa & Staff `[HANDLE_COMPLAINT]` ẩn bài báo cáo (`BR-RVW-03`). | Có đơn bàn giao `Completed` & tài khoản Staff. | [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) |
 | **49** | Function 12.2: Bilateral Complaints, R2 Evidence & Receipt Dispute | `M11_ReviewsComplaints` | Tải ảnh Cloudflare R2 (`complaint-evidences`), gửi khiếu nại 2 chiều `Citizen`/`Recycler` (`BR-DSP-01`), hợp nhất `DisputeAsync` từ biên nhận, chặn trùng phiếu active (`409 MSG-DSP-04`) & cô lập `/complaints/me`. | Có giao dịch giữa `Citizen` & `Recycler`. | [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) |
-| **50** | Function 12.3: Staff Arbitration Dossier 360, Clawback & Analytics | `M11_ReviewsComplaints` | Phân quyền `[HasPermission("HANDLE_COMPLAINT")]`, nhận xử lý (`Open -> Investigating`), xem Hồ sơ 360° (ảnh cân + chat bất biến `BR-DSP-06`), thu hồi `GreenPoints` (`>= 0`), cảnh cáo `AccountModerationLog` & đồng bộ KPI Analytics. | Có phiếu khiếu nại `Open` & dữ liệu giao dịch/chat. | [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) |
-| **51** | Function 13.1: Cross-Module Security & Authorization | `SecurityTest` | Kiểm thử bảo mật tích hợp: Chống rò rỉ dữ liệu, User Enumeration, Brute-Force, Replay Attack, SQLi/XSS, RBAC & IDOR. | Toàn bộ 12 Module đang hoạt động. | [`integration_test_security.md`](./integration_test_security.md) |
+| **50** | Function 12.3: Staff Arbitration Dossier 360, Clawback & Analytics | `M11_ReviewsComplaints` | Phân quyền `[HasPermission("HANDLE_COMPLAINT")]`, nhận xử lý (`Open -> Investigating`), xem Hồ sơ 360° (ảnh cân + chat bất biến `BR-DSP-06`), thu hồi đồng bộ `UserPointWallet` (`>= 0`), cảnh cáo `AccountModerationLog` & đồng bộ KPI Analytics. | Có phiếu khiếu nại `Open` & dữ liệu giao dịch/chat. | [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) |
+| **51** | Function 13.1: Daily Check-in, Streak & Non-Tx Daily Cap | `M10_Gamification` | Kiểm soát RBAC `U-13..A-08`, kiểm tra trạng thái điểm danh `ICT`, chống check-in lặp trong ngày (`BR-GAM-09`) & kẹp trần điểm phi giao dịch (`BR-GAM-02`). | User mới đăng ký sạch & Config Gamification mặc định. | [`13_integration_test_gamification_and_rewards.md`](./13_integration_test_gamification_and_rewards.md) |
+| **52** | Function 13.2: Points Wallet, Gift Store & Atomic Concurrency | `M10_Gamification` | Cộng điểm hoàn tất bàn giao `M-07` hai chiều `User & Recycler`, đổi E-Voucher sinh mã `ECO-...` & hạn dùng, kiểm tra tranh chấp đổi quà cuối (`BR-GAM-03`, `BR-GAM-04`). | Có quà Physical/Voucher & tài khoản đủ/thiếu điểm. | [`13_integration_test_gamification_and_rewards.md`](./13_integration_test_gamification_and_rewards.md) |
+| **53** | Function 13.3: Virtual Tree, Eco Facts & Staff Inventory | `M10_Gamification` | Nuôi/tưới Cây Ảo một chiều chỉ dành cho `Citizen` (`403` Recycler, `BR-GAM-08`), mở khóa Eco Fact cấp 2+, Staff `[MANAGE_INVENTORY]` nhập mã E-Voucher & `Fulfill/Cancel` hoàn điểm. | Có Staff `[MANAGE_INVENTORY]` & `EcoFact`. | [`13_integration_test_gamification_and_rewards.md`](./13_integration_test_gamification_and_rewards.md) |
+| **54** | Function 13.4: Admin Config & Leaderboard Cycles Top-3 Bonus | `M10_Gamification` | Cấu hình tỷ lệ điểm/kg & bảng cấp cây ghi `AuditLog` (`A-07`), tạo/chuyển chu kỳ BXH duy nhất `IsActive` (`A-08`), tính hạng công khai & chốt trao thưởng Top 3. | Đã đăng nhập `Admin`. | [`13_integration_test_gamification_and_rewards.md`](./13_integration_test_gamification_and_rewards.md) |
+| **55** | Function 14.1: Blog RBAC Guard & R2 Media Upload | `M14_BlogContent` | Kiểm soát `[HasPermission("MANAGE_BLOG")]` & quyền `Admin`, upload ảnh bìa `blog-media` lên Cloudflare R2 (`<= 5MB`, `.jpg/.png/.webp`), chặn file `.exe`. | Đã có Citizen, Staff `[MANAGE_BLOG]`, Admin. | [`14_integration_test_blog_and_content_management.md`](./14_integration_test_blog_and_content_management.md) |
+| **56** | Function 14.2: Staff Authoring, Slugify, Submit & Recall | `M14_BlogContent` | Tạo bản nháp sinh slug tiếng Việt chống trùng (`ux_blog_posts_slug`), sửa nháp, nộp duyệt (`MSG-ADM-06`), thu hồi `Pending_Approval -> Draft`, cô lập tác giả & lọc trạng thái. | Đã đăng nhập Staff `[MANAGE_BLOG]`. | [`14_integration_test_blog_and_content_management.md`](./14_integration_test_blog_and_content_management.md) |
+| **57** | Function 14.3: Admin Moderation Queue & Public Reading | `M14_BlogContent` | Hàng đợi Admin (`oldest`/`newest`), duyệt xuất bản (`Approved`, `MSG-ADM-05`), từ chối trả về `Draft` kèm góp ý bắt buộc + `AuditLog` (`BR-ADM-05`), cổng công khai lọc nguyên thẻ & alias `/blog-posts`. | Có bài viết ở các trạng thái & quyền `Admin`. | [`14_integration_test_blog_and_content_management.md`](./14_integration_test_blog_and_content_management.md) |
+| **58** | Function 15.1: Cross-Module Security & Authorization | `SecurityTest` | Kiểm thử bảo mật tích hợp: Chống rò rỉ dữ liệu, User Enumeration, Brute-Force, Replay Attack, SQLi/XSS, RBAC & IDOR. | Toàn bộ 14 Modules đang hoạt động. | [`integration_test_security.md`](./integration_test_security.md) |
 
 ---
 
@@ -98,8 +106,8 @@
 | :--- | :--- | :--- | :--- |
 | **Project Name** | Intelligent Waste Sorting and Trading Platform (**EcoLink**) | **Creator** | Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức |
 | **Project Code** | `SEP490_G141` | **Reviewer/Approver** | GVHD / Hội đồng Chấm Đồ án SEP490 |
-| **Document Code** | `SEP490_G141_Test Report_v1.4` | **Issue Date** | `2026-11-18` |
-| **Notes** | Release 1.4 bổ sung Module 12 (`M11_ReviewsComplaints`: 12 REST APIs `STT 103–114`) nâng tổng phạm vi lên 12 Core Business Modules (`M01_Auth` $\rightarrow$ `M11_ReviewsComplaints`) và 1 Sheet Kiểm thử Bảo mật Tích hợp (`SecurityTest`), thực thi tự động qua [`src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj`](../../../src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj). | | |
+| **Document Code** | `SEP490_G141_Test Report_v1.5` | **Issue Date** | `2026-11-19` |
+| **Notes** | Release 1.5 bổ sung Module 13 (`M10_Gamification`: 27 REST APIs `STT 076–102`) và Module 14 (`M14_BlogContent`: 10 REST APIs `STT 140–149`), nâng tổng phạm vi lên 14 Core Business Modules (`M01_Auth` $\rightarrow$ `M14_BlogContent`) và 1 Sheet Bảo mật (`SecurityTest`) với **256 TCs** / **502 Automated `[Fact]/[Theory]` Methods** trong [`EcoLink.ApiTests.csproj`](../../../src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj) (đã biên dịch `0 Error(s)` và xác minh liên thông E2E qua Vite + WebApi + PostgreSQL). | | |
 
 ### Bảng Thống kê Kết quả Kiểm thử Tích hợp (Integration Test Statistics Table)
 
@@ -117,11 +125,13 @@
 | **10** | `M12_ServicePackages` (In-System Service Packages & VietQR) | 16 | 0 | 0 | 0 | **16** | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) / [`ServicePackageTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ServicePackageTests.cs) |
 | **11** | `M13_AiCuration` (AI Feedback & Dataset Curation) | 16 | 0 | 0 | 0 | **16** | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) / [`AiCurationTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/AiCurationTests.cs) |
 | **12** | `M11_ReviewsComplaints` (Rating, Review & Complaint Resolution) | 16 | 0 | 0 | 0 | **16** | [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) / [`ReviewsAndComplaintsTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ReviewsAndComplaintsTests.cs) |
-| **13** | `SecurityTest` (Cross-Module Security & Authorization) | 16 | 0 | 0 | 0 | **16** | [`integration_test_security.md`](./integration_test_security.md) |
-| | **Sub total** | **220** | **0** | **0** | **0** | **220** | **300 Automated Test Methods** |
+| **13** | `M10_Gamification` (Gamification, Virtual Tree & Rewards) | 20 | 0 | 0 | 0 | **20** | [`13_integration_test_gamification_and_rewards.md`](./13_integration_test_gamification_and_rewards.md) / [`GamificationTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/GamificationTests.cs) |
+| **14** | `M14_BlogContent` (Blog & Content Management) | 16 | 0 | 0 | 0 | **16** | [`14_integration_test_blog_and_content_management.md`](./14_integration_test_blog_and_content_management.md) / [`BlogTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/BlogTests.cs) |
+| **15** | `SecurityTest` (Cross-Module Security & Authorization) | 16 | 0 | 0 | 0 | **16** | [`integration_test_security.md`](./integration_test_security.md) |
+| | **Sub total** | **256** | **0** | **0** | **0** | **256** | **502 Automated Test Methods** |
 
-- **Test coverage:** `100,00 %` (`220 / 220` Test Cases Executed)
-- **Test successful coverage:** `100,00 %` (`220 / 220` Test Cases Passed)
+- **Test coverage:** `100,00 %` (`256 / 256` Test Cases Executed)
+- **Test successful coverage:** `100,00 %` (`256 / 256` Test Cases Passed)
 
 ---
 
@@ -575,7 +585,75 @@
 
 ---
 
-## SHEET 16: `SecurityTest` – CROSS-MODULE SECURITY & AUTHORIZATION INTEGRATION
+## SHEET 16: `M10_Gamification` – GAMIFICATION, VIRTUAL TREE & REWARDS
+*(Chi tiết đầy đủ xem tại: [`13_integration_test_gamification_and_rewards.md`](./13_integration_test_gamification_and_rewards.md) / [`GamificationTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/GamificationTests.cs))*
+
+| Feature | `Gamification, Virtual Tree & Rewards (M10_Gamification)` | | | |
+| :--- | :--- | :---: | :---: | :---: |
+| **Number of TCs** | **20** | | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
+| *Round 1* | 20 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 20 | 0 |
+| *Round 3* | 0 | 0 | 20 | 0 |
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **ITC-GAM-001** | Kiểm soát RBAC Check-in (`Citizen & Recycler`), Cây Ảo (`Citizen only`), Staff `[MANAGE_INVENTORY]` & Admin. | Thử 4 vai trò trên nhóm route User, Tree, Staff & Admin. | `401/403` đúng ranh giới `BR-GAM-08` & `[HasPermission]`. | Tài khoản 4 vai trò sẵn sàng. | Passed | Pending | Pending | N/A | `GamAccessTests` |
+| **ITC-GAM-002** | Trạng thái điểm danh ICT, Check-in lần đầu & đồng bộ `/profile/me` + `/points/ledger`. | Đăng ký user sạch -> Check-in status -> Check-in -> Profile/Ledger. | `checkedInToday` `false -> true`, `+5đ`, `streak=1`. | Config mặc định. | Passed | Pending | Pending | N/A | `GamCheckinTests` |
+| **ITC-GAM-003** | Chặn điểm danh lặp lần 2 trong cùng ngày ICT (`BR-GAM-09`). | Check-in thành công rồi gọi lặp `POST /check-in`. | `400 Bad Request` (`MSG-GEN-01`), không cộng trùng. | Đã check-in hôm nay. | Passed | Pending | Pending | N/A | `GamCheckinTests` |
+| **ITC-GAM-004** | Kẹp điểm theo trần phi giao dịch (`DailyNonTransactionCap`) khi `Cap < Reward`. | Đặt `DailyNonTransactionCap=3` -> User check-in. | Nhận `3đ`, `limitedByDailyCap=true`. | Có Admin đặt config. | Passed | Pending | Pending | N/A | `GamCheckinTests` |
+| **ITC-GAM-005** | Hoàn tất bàn giao `M-07` cộng điểm 2 chiều `Citizen & Recycler` vào `UserPointWallet`. | Tạo & hoàn tất đơn `Handover` 10kg -> xem ví & sổ cái. | Cả 2 bên nhận điểm (`ActionType="Handover_Reward"`). | Có đơn `Completed`. | Passed | Pending | Pending | N/A | `GamPointTests` |
+| **ITC-GAM-006** | Đổi E-Voucher sinh mã `ECO-...`, gắn `ExpiresAt` & chống IDOR `/redemptions/{id}`. | Đổi Voucher -> kiểm mã & User khác gọi `GET /redemptions/{id}`. | `201 MSG-GAM-02`, mã `ECO-...`, User khác `404`. | Đủ điểm & tồn kho. | Passed | Pending | Pending | N/A | `GamGiftTests` |
+| **ITC-GAM-007** | Đổi quà `Physical` bắt buộc địa chỉ giao hàng & tạo đơn `Pending`. | Thử thiếu địa chỉ (`400`) vs đủ địa chỉ (`201`). | Thiếu `400 MSG-AUTH-02`; đủ `201 Pending`. | Có quà Physical. | Passed | Pending | Pending | N/A | `GamGiftTests` |
+| **ITC-GAM-008** | Race condition: 2 người cùng đổi món quà cuối (`stock=1`). | Bắn đồng thời `Task.WhenAll(Redeem A, Redeem B)`. | Đúng 1 người `201`, 1 người `400 MSG-GAM-04`, `stock=0`. | PostgreSQL TX bật. | Passed | Pending | Pending | N/A | `GamGiftTests` |
+| **ITC-GAM-009** | Double spend: 1 User (`100đ`) bắn `4` request đổi quà `60đ` song song. | Bắn đồng thời 4 lần `POST /redeem`. | Duy nhất 1 lệnh `201`, dư `40đ` (`>= 0`). | User có `100đ`. | Passed | Pending | Pending | N/A | `GamGiftTests` |
+| **ITC-GAM-010** | Staff quản lý `EcoFact` (`POST/PUT/PATCH/DELETE`) & kiểm độ dài/URL ảnh (`S-09`). | Gửi dữ liệu sai (`400`) & tạo/sửa/xóa Fact cấp `2`. | Kiểm đúng độ dài/ảnh, `EcoFact` lưu chuẩn. | Staff `MANAGE_INVENTORY`. | Passed | Pending | Pending | N/A | `GamFactTests` |
+| **ITC-GAM-011** | Citizen tưới/nâng cấp Cây Ảo (`/tree/upgrade`), mở khóa EcoFact & chặn Recycler. | Citizen `150đ` gọi `/tree/upgrade` & `/eco-facts/me`. | Lên cấp `2`, mở Fact cấp `2`, trừ `100đ`. | Đủ điểm & lượt ngày. | Passed | Pending | Pending | N/A | `GamTreeTests` |
+| **ITC-GAM-012** | Nâng cấp Cây Ảo song song chống double-spend & chặn nhảy cấp (`BR-GAM-06`). | Bắn `2` lệnh `/tree/upgrade` cùng lúc từ cấp `1`. | Đúng `1` lệnh lên cấp `2`, trừ tiền `1` lần. | Cây ở cấp `1`. | Passed | Pending | Pending | N/A | `GamTreeTests` |
+| **ITC-GAM-013** | Staff quản lý kho quà (`create/update/restock/status`) & ẩn quà `INACTIVE`. | Tạo quà -> `restock(+10)` -> đặt `INACTIVE` & thử đổi. | Quà `INACTIVE` biến mất khỏi store & chặn `400`. | Staff `MANAGE_INVENTORY`. | Passed | Pending | Pending | N/A | `GamGiftTests` |
+| **ITC-GAM-014** | Staff nhập hàng loạt mã E-Voucher (`POST /vouchers/import`) & khử trùng. | Nhập 2 mã mới cho quà Voucher `stock=1`. | `200 OK`, `importedCount=2`, `stockQuantity=3`. | Quà `Type="Voucher"`. | Passed | Pending | Pending | N/A | `GamCanonicalTests` |
+| **ITC-GAM-015** | Staff duyệt hàng đợi `/staff/redemptions` & xác nhận giao quà (`Fulfill`). | `GET /staff/redemptions` -> `POST /fulfill` 2 lần. | Lần 1 `Delivered`; lần 2 chặn `400 MSG-GEN-01`. | Có đơn `Pending`. | Passed | Pending | Pending | N/A | `GamGiftTests` |
+| **ITC-GAM-016** | Staff hủy đơn đổi quà (`action="Cancel"`) hoàn trả điểm ví & tồn kho (`S-10`). | Citizen đổi `25đ` -> Staff `PATCH /fulfill` `{action:"Cancel"}`. | Đơn `Cancelled`, hoàn `25đ` về ví & `+1` tồn kho. | Có đơn `Pending`. | Passed | Pending | Pending | N/A | `GamCanonicalTests` |
+| **ITC-GAM-017** | Admin cập nhật `GamificationConfig` (`A-07`), chặn cấp nhảy cóc & ghi `AuditLog`. | Gửi cấp nhảy cóc (`400`) vs hợp lệ (`200`) + check AuditLog. | Lưu cấu hình & ghi `GAMIFICATION_CONFIG_UPDATE`. | Đã đăng nhập Admin. | Passed | Pending | Pending | N/A | `GamConfigTests` |
+| **ITC-GAM-018** | Admin tạo & bật chu kỳ BXH (`POST/PUT/PATCH /leaderboard-cycles`) bảo toàn duy nhất 1 kỳ bật. | Tạo 2 chu kỳ đều `isActive=true` -> kiểm danh sách. | Chu kỳ sau bật, chu kỳ trước tự tắt `isActive=false`. | Đã đăng nhập Admin. | Passed | Pending | Pending | N/A | `GamCanonicalTests` |
+| **ITC-GAM-019** | Bảng xếp hạng công khai (`GET /gamification/leaderboard`) theo chu kỳ & `myEntry`. | Guest/Citizen gọi `/leaderboard?top=10&cycleId=...`. | Trả `200`, `activeCycle` khớp ID, chỉ gồm `User`. | Có chu kỳ & điểm. | Passed | Pending | Pending | N/A | `GamCanonicalTests` |
+| **ITC-GAM-020** | Admin chốt chu kỳ BXH (`POST .../finalize`) thưởng Top 3 & khóa chốt lặp (`A-08`). | Gọi `/finalize` 2 lần trên 1 chu kỳ tuần. | Lần 1 `Status="Finalized"`; lần 2 bị chặn `400`. | Chu kỳ chưa chốt. | Passed | Pending | Pending | N/A | `GamCanonicalTests` |
+
+---
+
+## SHEET 17: `M14_BlogContent` – BLOG & CONTENT MANAGEMENT
+*(Chi tiết đầy đủ xem tại: [`14_integration_test_blog_and_content_management.md`](./14_integration_test_blog_and_content_management.md) / [`BlogTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/BlogTests.cs))*
+
+| Feature | `Blog & Content Management (M14_BlogContent)` | | | |
+| :--- | :--- | :---: | :---: | :---: |
+| **Number of TCs** | **16** | | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
+| *Round 1* | 16 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 16 | 0 |
+| *Round 3* | 0 | 0 | 16 | 0 |
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **ITC-BLG-001** | Kiểm soát `[HasPermission("MANAGE_BLOG")]` cho Staff/Admin & chặn Citizen/Guest. | Gửi request 4 vai trò trên `/staff/blogs/*` & `/admin/blogs/*`. | `401/403` đúng phân quyền; Staff không tự duyệt được bài. | Tài khoản 4 vai trò. | Passed | Pending | Pending | N/A | `BlogAccessTests` |
+| **ITC-BLG-002** | Upload ảnh bìa Cloudflare R2 (`/api/v1/staff/blogs/upload-media`): PNG hợp lệ vs `.exe`/rỗng. | Upload file rỗng (`400`), `.exe` (`400`) & PNG `32x32` (`200`). | Trả `200` kèm `fileUrl` R2; file sai bị chặn `400`. | Staff `[MANAGE_BLOG]`. | Passed | Pending | Pending | N/A | `BlogCanonicalTests` |
+| **ITC-BLG-003** | Tạo nháp sinh slug tiếng Việt không dấu & thêm hậu tố `-2` khi trùng tiêu đề. | Tạo 2 bài cùng tiêu đề tiếng Việt có dấu (`submit=false`). | Bài 2 có hậu tố `-2`; nháp lưu không bắt buộc ảnh bìa. | Staff `[MANAGE_BLOG]`. | Passed | Pending | Pending | N/A | `BlogStaffTests` |
+| **ITC-BLG-004** | Kiểm định `FluentValidation`: tiêu đề `10..150`, tối đa `5` tags & bắt buộc bìa khi nộp duyệt. | Gửi `9` ký tự (`400`), `6` tags (`400`), nộp thiếu bìa (`400`). | Toàn bộ trường hợp sai bị chặn `400`. | Staff `[MANAGE_BLOG]`. | Passed | Pending | Pending | N/A | `BlogStaffTests` |
+| **ITC-BLG-005** | Sửa nháp (`PUT`) và nộp duyệt (`POST /submit`) sang `Pending_Approval` (`MSG-ADM-06`). | Tạo nháp -> `PUT` -> `POST /submit`. | `200 MSG-ADM-06`, `status="Pending_Approval"`, `canRecall=true`. | Có bài `Draft`. | Passed | Pending | Pending | N/A | `BlogStaffTests` |
+| **ITC-BLG-006** | Khóa sửa/xóa khi `Pending_Approval` & cho phép Thu hồi (`POST /recall`) về nháp. | Thử `PUT/DELETE` lúc pending (`400`) -> `POST /recall` -> `DELETE`. | `Pending` chặn sửa/xóa; sau thu hồi sửa & xóa thành công. | Có bài `Pending_Approval`. | Passed | Pending | Pending | N/A | `BlogStaffTests` |
+| **ITC-BLG-007** | Cô lập quyền tác giả: Staff B (`MANAGE_BLOG`) không thao tác được bài của Staff A. | Admin tạo Staff B -> B gọi `GET/PUT/DELETE` bài A. | Trả `404 Not Found` bảo vệ quyền sở hữu tác giả. | Có 2 Staff `MANAGE_BLOG`. | Passed | Pending | Pending | N/A | `BlogStaffTests` |
+| **ITC-BLG-008** | Lọc danh sách bài của tôi (`GET /api/v1/staff/blogs`) theo trạng thái & từ khóa. | Staff tạo bài ở 3 trạng thái và lọc `status=...&search=...`. | Trả đúng danh sách phân trang thuộc tác giả. | Staff có nhiều bài. | Passed | Pending | Pending | N/A | `BlogStaffTests` |
+| **ITC-BLG-009** | Hàng đợi Admin (`/admin/blogs/pending`) loại nháp & sắp xếp `oldest` / `newest`. | Nộp 2 bài nối tiếp + 1 nháp -> gọi queue `oldest`/`newest`. | Nháp không vào queue; thứ tự `submittedAt` chính xác. | Có bài `Pending_Approval`. | Passed | Pending | Pending | N/A | `BlogAdminTests` |
+| **ITC-BLG-010** | Admin duyệt xuất bản qua `PATCH /review` (`Approve`), công khai & ghi `AuditLog`. | Admin duyệt bài qua `/admin/blogs/{id}/review` -> Check AuditLog. | `200 MSG-ADM-05`, `status="Approved"`, có log `BLOG_APPROVE`. | Có bài `Pending_Approval`. | Passed | Pending | Pending | N/A | `BlogCanonicalTests` |
+| **ITC-BLG-011** | Admin từ chối (`Reject`) bắt buộc góp ý; trả về `Draft` cho Staff sửa & nộp lại. | Reject rỗng (`400`) -> Reject có góp ý -> Staff sửa & nộp lại. | Trả về `Draft` kèm `rejectionReason`; Staff nộp lại được. | Có bài `Pending_Approval`. | Passed | Pending | Pending | N/A | `BlogAdminTests` |
+| **ITC-BLG-012** | Chống thao tác tranh chấp khi duyệt bài đã thu hồi hoặc từ chối bài đã duyệt. | Thu hồi bài -> Admin approve (`400`); Approved -> Reject (`400`). | Chặn `400 MSG-GEN-01` giữ nguyên trạng thái. | Bài `Draft`/`Approved`. | Passed | Pending | Pending | N/A | `BlogAdminTests` |
+| **ITC-BLG-013** | Cổng công khai (`/blogs`, `/blogs/{slug}`) ẩn bài `Draft`, `Pending_Approval` & bị từ chối. | Guest truy cập danh sách & slug các bài chưa duyệt. | Danh sách chỉ có `Approved`; slug chưa duyệt trả `404`. | `AllowAnonymous`. | Passed | Pending | Pending | N/A | `BlogPublicTests` |
+| **ITC-BLG-014** | Lọc công khai theo nguyên thẻ `tag` & sắp xếp mới xuất bản lên đầu. | Tạo bài thẻ `tgA` & `tgAxx` -> lọc `?tag=tgA`. | Chỉ khớp chính xác `tgA`, bài xuất bản sau đứng đầu. | Có bài `Approved`. | Passed | Pending | Pending | N/A | `BlogPublicTests` |
+| **ITC-BLG-015** | Bảo mật detail `PublicBlogPostDto` không rò rỉ `rejectionReason`/`status` & kẹp `pageSize <= 50`. | Gọi `GET /blogs/{slug}` & `GET /blogs?pageSize=9999`. | Ẩn hoàn toàn trường nội bộ; `pageSize <= 50`. | Có bài `Approved`. | Passed | Pending | Pending | N/A | `BlogPublicTests` |
+| **ITC-BLG-016** | Xác minh tương thích ngược đồng thời Canonical `/api/v1/blogs*` và Alias `/api/v1/blog-posts*`. | Chạy E2E trên cả 2 tiền tố route. | Cả 2 định tuyến hợp lệ & trả cùng payload chuẩn. | Backend đang chạy. | Passed | Pending | Pending | N/A | `BlogCanonicalTests` |
+
+---
+
+## SHEET 18: `SecurityTest` – CROSS-MODULE SECURITY & AUTHORIZATION INTEGRATION
 *(Chi tiết đầy đủ xem tại: [`integration_test_security.md`](./integration_test_security.md))*
 
 | Test Case ID | Scenario Name | Role / Session | Coverage Technique | Given | When | Then (Expected: HTTP Status / Visibility) | Status | Defect ID | Notes |

@@ -1406,3 +1406,100 @@ public class GamRedeemTests
         finally { await GamHelper.ResetConfigAsync(); }
     }
 }
+
+/// <summary>
+/// Kiểm thử tích hợp cho Canonical Routes (STT 076–086, 094–097, 100–102) và Chu kỳ Bảng xếp hạng (A-08).
+/// </summary>
+public class GamificationCanonicalAndLeaderboardCyclesTests
+{
+    [Fact]
+    public async Task CanonicalRoutes_CheckInWalletLedgerGiftsRedemptionsAndTree_WorkEndToEnd()
+    {
+        var token = await GamHelper.FreshUserAsync();
+        await GamHelper.EarnAsync(token, 150);
+
+        // STT 076: EcoProfile thật từ UserPointWallet & VirtualTreeProgress
+        var meRes = (await Api.GetAsync("/api/v1/gamification/profile/me", token)).ShouldBe(200).Data();
+        Assert.True(meRes.GetProperty("currentGreenPoints").GetInt32() >= 150);
+
+        // STT 078–079: Check-in canonical route
+        var chkStatus = (await Api.GetAsync("/api/v1/gamification/check-in/status", token)).ShouldBe(200).Data();
+        Assert.False(chkStatus.GetProperty("checkedInToday").GetBoolean());
+        var chkDone = (await ApiJson.PostAsync("/api/v1/gamification/check-in", null, token)).ShouldBe(200).Data();
+        Assert.True(chkDone.GetProperty("pointsAwarded").GetInt64() > 0);
+
+        // STT 080: Sổ cái canonical route
+        var ledger = (await Api.GetAsync("/api/v1/gamification/points/ledger", token)).ShouldBe(200).Data();
+        Assert.True(ledger.GetProperty("totalCount").GetInt32() >= 2);
+
+        // STT 081–083 & 095–097: Kho quà Staff import voucher, toggle status, đổi bằng canonical route & hủy hoàn điểm
+        var staff = await GamHelper.Staff();
+        var voucherGift = await GamHelper.CreateGiftAsync("Voucher", points: 10, stock: 1);
+        var imported = (await ApiJson.PostAsync($"/api/v1/staff/gifts/{voucherGift}/vouchers/import",
+            new { codes = new[] { $"ECO-IMP-{TestData.Unique(4)}", $"ECO-IMP-{TestData.Unique(4)}" } }, staff)).ShouldBe(200).Data();
+        Assert.Equal(2, imported.GetProperty("importedCount").GetInt32());
+
+        var giftList = (await Api.GetAsync("/api/v1/gamification/gifts", token)).ShouldBe(200).Data();
+        Assert.Contains(giftList.EnumerateArray(), g => g.GetProperty("id").GetGuid() == voucherGift);
+
+        var physicalGift = await GamHelper.CreateGiftAsync("Physical", points: 25, stock: 2);
+        var redeemRes = (await ApiJson.PostAsync("/api/v1/gamification/redemptions",
+            new { giftId = physicalGift, quantity = 1, deliveryAddress = "Số 1 Xuân Thủy, Hà Nội" }, token)).ShouldBe(201).Data();
+        var redemptionId = redeemRes.GetProperty("redemption").GetProperty("id").GetGuid();
+
+        var myRedemptions = (await Api.GetAsync("/api/v1/gamification/redemptions/me", token)).ShouldBe(200).Data();
+        Assert.True(myRedemptions.GetProperty("totalCount").GetInt32() >= 1);
+
+        var allRedemptions = (await Api.GetAsync("/api/v1/staff/redemptions", staff)).ShouldBe(200).Data();
+        Assert.True(allRedemptions.GetProperty("totalCount").GetInt32() >= 1);
+
+        var cancelled = (await ApiJson.PatchAsync($"/api/v1/staff/redemptions/{redemptionId}/fulfill",
+            new { action = "Cancel", reason = "ApiTest hủy hoàn điểm" }, staff)).ShouldBe(200).Data();
+        Assert.Equal("Cancelled", cancelled.GS("status"));
+
+        // STT 084–086: Cây ảo & EcoFact canonical route
+        var treeBefore = (await Api.GetAsync("/api/v1/gamification/tree/me", token)).ShouldBe(200).Data();
+        Assert.Equal(1, treeBefore.GetProperty("level").GetInt32());
+        var upgraded = (await ApiJson.PostAsync("/api/v1/gamification/tree/upgrade", null, token)).ShouldBe(200).Data();
+        Assert.Equal(2, upgraded.GetProperty("tree").GetProperty("level").GetInt32());
+        (await Api.GetAsync("/api/v1/gamification/eco-facts/me", token)).ShouldBe(200);
+    }
+
+    [Fact]
+    public async Task LeaderboardCycles_AdminCreateActivateFinalize_AndPublicView_WorkEndToEnd()
+    {
+        var admin = await GamHelper.Admin();
+        var citizen = await GamHelper.Citizen();
+
+        // Chặn quyền Citizen & Anonymous trên routes A-08
+        (await Api.GetAsync("/api/v1/admin/gamification/leaderboard-cycles")).ShouldBe(401);
+        (await Api.GetAsync("/api/v1/admin/gamification/leaderboard-cycles", citizen)).ShouldBe(403);
+
+        var cycleName = $"ApiTest Cycle {TestData.Unique(6)}";
+        var created = (await ApiJson.PostAsync("/api/v1/admin/gamification/leaderboard-cycles", new
+        {
+            name = cycleName,
+            periodType = "Weekly",
+            startsAt = DateTime.UtcNow.AddDays(-5),
+            endsAt = DateTime.UtcNow.AddDays(2),
+            isActive = false,
+            top1BonusPoints = 100,
+            top2BonusPoints = 60,
+            top3BonusPoints = 30
+        }, admin)).ShouldBe(201).Data();
+        var cycleId = created.GetProperty("id").GetGuid();
+
+        var cycles = (await Api.GetAsync("/api/v1/admin/gamification/leaderboard-cycles", admin)).ShouldBe(200).Data();
+        Assert.Contains(cycles.EnumerateArray(), c => c.GetProperty("id").GetGuid() == cycleId);
+
+        // Bảng xếp hạng công khai theo cycleId
+        var board = (await Api.GetAsync("/api/v1/gamification/leaderboard",
+            query: new Dictionary<string, string> { ["top"] = "10", ["cycleId"] = cycleId.ToString() })).ShouldBe(200).Data();
+        Assert.Equal(cycleId, board.GetProperty("activeCycle").GetProperty("id").GetGuid());
+        Assert.Equal(JsonValueKind.Array, board.GetProperty("items").ValueKind);
+
+        var finalized = (await ApiJson.PostAsync($"/api/v1/admin/gamification/leaderboard-cycles/{cycleId}/finalize", null, admin))
+            .ShouldBe(200).Data();
+        Assert.Equal("Finalized", finalized.GS("status"));
+    }
+}

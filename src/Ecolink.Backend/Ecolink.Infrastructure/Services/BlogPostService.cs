@@ -127,14 +127,26 @@ public class BlogPostService : IBlogPostService
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
         var now = DateTime.UtcNow;
-        var affected = await _db.BlogPosts
-            .Where(p => p.Id == postId && p.AuthorId == authorId && p.Status == BlogPostStatus.PendingApproval)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(p => p.Status, BlogPostStatus.Draft)
-                .SetProperty(p => p.SubmittedAt, (DateTime?)null)
-                .SetProperty(p => p.UpdatedAt, now), ct);
-        if (affected == 0)
-            throw new BusinessRuleException("BR-ADM-08", "MSG-GEN-01", "Bài viết không ở trạng thái chờ duyệt nên không thể thu hồi.");
+        if (_db.Database.IsRelational())
+        {
+            var affected = await _db.BlogPosts
+                .Where(p => p.Id == postId && p.AuthorId == authorId && p.Status == BlogPostStatus.PendingApproval)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(p => p.Status, BlogPostStatus.Draft)
+                    .SetProperty(p => p.SubmittedAt, (DateTime?)null)
+                    .SetProperty(p => p.UpdatedAt, now), ct);
+            if (affected == 0)
+                throw new BusinessRuleException("BR-ADM-08", "MSG-GEN-01", "Bài viết không ở trạng thái chờ duyệt nên không thể thu hồi.");
+        }
+        else
+        {
+            var tracked = await _db.BlogPosts
+                .FirstOrDefaultAsync(p => p.Id == postId && p.AuthorId == authorId && p.Status == BlogPostStatus.PendingApproval, ct)
+                ?? throw new BusinessRuleException("BR-ADM-08", "MSG-GEN-01", "Bài viết không ở trạng thái chờ duyệt nên không thể thu hồi.");
+            tracked.Status = BlogPostStatus.Draft;
+            tracked.SubmittedAt = null;
+            tracked.UpdatedAt = now;
+        }
 
         await NotifyAdminsAsync("Bài viết đã được thu hồi",
             $"Bài viết '{post.Title}' đã được tác giả thu hồi về bản nháp và không còn chờ duyệt.", postId, ct);
@@ -150,11 +162,21 @@ public class BlogPostService : IBlogPostService
                    ?? throw new NotFoundException("Không tìm thấy bài viết.");
         EnsureEditable(post.Status);
 
-        var affected = await _db.BlogPosts
-            .Where(p => p.Id == postId && p.AuthorId == authorId && p.Status == BlogPostStatus.Draft)
-            .ExecuteDeleteAsync(ct);
-        if (affected == 0)
-            throw new BusinessRuleException("BR-ADM-08", "MSG-GEN-01", "Chỉ có thể xóa bài viết ở trạng thái nháp.");
+        if (_db.Database.IsRelational())
+        {
+            var affected = await _db.BlogPosts
+                .Where(p => p.Id == postId && p.AuthorId == authorId && p.Status == BlogPostStatus.Draft)
+                .ExecuteDeleteAsync(ct);
+            if (affected == 0)
+                throw new BusinessRuleException("BR-ADM-08", "MSG-GEN-01", "Chỉ có thể xóa bài viết ở trạng thái nháp.");
+            return;
+        }
+
+        var tracked = await _db.BlogPosts
+            .FirstOrDefaultAsync(p => p.Id == postId && p.AuthorId == authorId && p.Status == BlogPostStatus.Draft, ct)
+            ?? throw new BusinessRuleException("BR-ADM-08", "MSG-GEN-01", "Chỉ có thể xóa bài viết ở trạng thái nháp.");
+        _db.BlogPosts.Remove(tracked);
+        await _db.SaveChangesAsync(ct);
     }
 
     public async Task<BlogPostDto> GetMineAsync(Guid authorId, Guid postId, CancellationToken ct = default)
@@ -177,8 +199,16 @@ public class BlogPostService : IBlogPostService
         var rows = Rows(query);
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var pattern = Like(search);
-            rows = rows.Where(r => EF.Functions.ILike(r.Post.Title, pattern));
+            if (_db.Database.IsRelational())
+            {
+                var pattern = Like(search);
+                rows = rows.Where(r => EF.Functions.ILike(r.Post.Title, pattern));
+            }
+            else
+            {
+                var kw = search.Trim();
+                rows = rows.Where(r => r.Post.Title.Contains(kw, StringComparison.OrdinalIgnoreCase));
+            }
         }
 
         return await PageAsync(rows.OrderByDescending(r => r.Post.UpdatedAt).ThenBy(r => r.Post.Id), page, pageSize, ToSummary, ct);
@@ -193,9 +223,18 @@ public class BlogPostService : IBlogPostService
         var rows = Rows(_db.BlogPosts.Where(p => p.Status == BlogPostStatus.PendingApproval));
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var pattern = Like(search);
-            rows = rows.Where(r => EF.Functions.ILike(r.Post.Title, pattern)
-                                   || (r.AuthorName != null && EF.Functions.ILike(r.AuthorName, pattern)));
+            if (_db.Database.IsRelational())
+            {
+                var pattern = Like(search);
+                rows = rows.Where(r => EF.Functions.ILike(r.Post.Title, pattern)
+                                       || (r.AuthorName != null && EF.Functions.ILike(r.AuthorName, pattern)));
+            }
+            else
+            {
+                var kw = search.Trim();
+                rows = rows.Where(r => r.Post.Title.Contains(kw, StringComparison.OrdinalIgnoreCase)
+                                       || (r.AuthorName != null && r.AuthorName.Contains(kw, StringComparison.OrdinalIgnoreCase)));
+            }
         }
 
         var newestFirst = string.Equals(sort, "newest", StringComparison.OrdinalIgnoreCase);
@@ -220,17 +259,32 @@ public class BlogPostService : IBlogPostService
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
         var now = DateTime.UtcNow;
-        var affected = await _db.BlogPosts
-            .Where(p => p.Id == postId && p.Status == BlogPostStatus.PendingApproval)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(p => p.Status, BlogPostStatus.Approved)
-                .SetProperty(p => p.ApprovedByAdminId, (Guid?)adminId)
-                .SetProperty(p => p.ApprovedAt, (DateTime?)now)
-                .SetProperty(p => p.PublishedAt, (DateTime?)now)
-                .SetProperty(p => p.RejectionReason, (string?)null)
-                .SetProperty(p => p.UpdatedAt, now), ct);
-        if (affected == 0)
-            throw StaleDecision();
+        if (_db.Database.IsRelational())
+        {
+            var affected = await _db.BlogPosts
+                .Where(p => p.Id == postId && p.Status == BlogPostStatus.PendingApproval)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(p => p.Status, BlogPostStatus.Approved)
+                    .SetProperty(p => p.ApprovedByAdminId, (Guid?)adminId)
+                    .SetProperty(p => p.ApprovedAt, (DateTime?)now)
+                    .SetProperty(p => p.PublishedAt, (DateTime?)now)
+                    .SetProperty(p => p.RejectionReason, (string?)null)
+                    .SetProperty(p => p.UpdatedAt, now), ct);
+            if (affected == 0)
+                throw StaleDecision();
+        }
+        else
+        {
+            var tracked = await _db.BlogPosts
+                .FirstOrDefaultAsync(p => p.Id == postId && p.Status == BlogPostStatus.PendingApproval, ct)
+                ?? throw StaleDecision();
+            tracked.Status = BlogPostStatus.Approved;
+            tracked.ApprovedByAdminId = adminId;
+            tracked.ApprovedAt = now;
+            tracked.PublishedAt = now;
+            tracked.RejectionReason = null;
+            tracked.UpdatedAt = now;
+        }
 
         _db.Notifications.Add(new Notification
         {
@@ -282,15 +336,28 @@ public class BlogPostService : IBlogPostService
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
         var now = DateTime.UtcNow;
-        var affected = await _db.BlogPosts
-            .Where(p => p.Id == postId && p.Status == BlogPostStatus.PendingApproval)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(p => p.Status, BlogPostStatus.Draft)
-                .SetProperty(p => p.RejectionReason, feedback)
-                .SetProperty(p => p.SubmittedAt, (DateTime?)null)
-                .SetProperty(p => p.UpdatedAt, now), ct);
-        if (affected == 0)
-            throw StaleDecision();
+        if (_db.Database.IsRelational())
+        {
+            var affected = await _db.BlogPosts
+                .Where(p => p.Id == postId && p.Status == BlogPostStatus.PendingApproval)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(p => p.Status, BlogPostStatus.Draft)
+                    .SetProperty(p => p.RejectionReason, feedback)
+                    .SetProperty(p => p.SubmittedAt, (DateTime?)null)
+                    .SetProperty(p => p.UpdatedAt, now), ct);
+            if (affected == 0)
+                throw StaleDecision();
+        }
+        else
+        {
+            var tracked = await _db.BlogPosts
+                .FirstOrDefaultAsync(p => p.Id == postId && p.Status == BlogPostStatus.PendingApproval, ct)
+                ?? throw StaleDecision();
+            tracked.Status = BlogPostStatus.Draft;
+            tracked.RejectionReason = feedback;
+            tracked.SubmittedAt = null;
+            tracked.UpdatedAt = now;
+        }
 
         _db.Notifications.Add(new Notification
         {
@@ -343,16 +410,33 @@ public class BlogPostService : IBlogPostService
 
         if (!string.IsNullOrWhiteSpace(search))
         {
-            var pattern = Like(search);
-            rows = rows.Where(r => EF.Functions.ILike(r.Post.Title, pattern)
-                                   || (r.Post.Summary != null && EF.Functions.ILike(r.Post.Summary, pattern)));
+            if (_db.Database.IsRelational())
+            {
+                var pattern = Like(search);
+                rows = rows.Where(r => EF.Functions.ILike(r.Post.Title, pattern)
+                                       || (r.Post.Summary != null && EF.Functions.ILike(r.Post.Summary, pattern)));
+            }
+            else
+            {
+                var kw = search.Trim();
+                rows = rows.Where(r => r.Post.Title.Contains(kw, StringComparison.OrdinalIgnoreCase)
+                                       || (r.Post.Summary != null && r.Post.Summary.Contains(kw, StringComparison.OrdinalIgnoreCase)));
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(tag))
         {
-            // Tags lưu dạng mảng JSON ["a","b"] nên khớp nguyên thẻ bằng cách bao trong dấu nháy kép
-            var tagPattern = "%\"" + EscapeLike(tag.Trim()) + "\"%";
-            rows = rows.Where(r => EF.Functions.ILike(r.Post.Tags, tagPattern));
+            if (_db.Database.IsRelational())
+            {
+                // Tags lưu dạng mảng JSON ["a","b"] nên khớp nguyên thẻ bằng cách bao trong dấu nháy kép
+                var tagPattern = "%\"" + EscapeLike(tag.Trim()) + "\"%";
+                rows = rows.Where(r => EF.Functions.ILike(r.Post.Tags, tagPattern));
+            }
+            else
+            {
+                var quotedTag = "\"" + tag.Trim() + "\"";
+                rows = rows.Where(r => r.Post.Tags.Contains(quotedTag, StringComparison.OrdinalIgnoreCase));
+            }
         }
 
         return await PageAsync(rows.OrderByDescending(r => r.Post.PublishedAt).ThenBy(r => r.Post.Id), page, pageSize, ToSummary, ct);
@@ -458,15 +542,28 @@ public class BlogPostService : IBlogPostService
 
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
         var now = DateTime.UtcNow;
-        var affected = await _db.BlogPosts
-            .Where(p => p.Id == postId && p.AuthorId == authorId && p.Status == BlogPostStatus.Draft)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(p => p.Status, BlogPostStatus.PendingApproval)
-                .SetProperty(p => p.SubmittedAt, (DateTime?)now)
-                .SetProperty(p => p.RejectionReason, (string?)null)
-                .SetProperty(p => p.UpdatedAt, now), ct);
-        if (affected == 0)
-            throw new BusinessRuleException("BR-ADM-08", "MSG-GEN-01", "Bài viết không còn ở trạng thái nháp nên không thể nộp duyệt.");
+        if (_db.Database.IsRelational())
+        {
+            var affected = await _db.BlogPosts
+                .Where(p => p.Id == postId && p.AuthorId == authorId && p.Status == BlogPostStatus.Draft)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(p => p.Status, BlogPostStatus.PendingApproval)
+                    .SetProperty(p => p.SubmittedAt, (DateTime?)now)
+                    .SetProperty(p => p.RejectionReason, (string?)null)
+                    .SetProperty(p => p.UpdatedAt, now), ct);
+            if (affected == 0)
+                throw new BusinessRuleException("BR-ADM-08", "MSG-GEN-01", "Bài viết không còn ở trạng thái nháp nên không thể nộp duyệt.");
+        }
+        else
+        {
+            var tracked = await _db.BlogPosts
+                .FirstOrDefaultAsync(p => p.Id == postId && p.AuthorId == authorId && p.Status == BlogPostStatus.Draft, ct)
+                ?? throw new BusinessRuleException("BR-ADM-08", "MSG-GEN-01", "Bài viết không còn ở trạng thái nháp nên không thể nộp duyệt.");
+            tracked.Status = BlogPostStatus.PendingApproval;
+            tracked.SubmittedAt = now;
+            tracked.RejectionReason = null;
+            tracked.UpdatedAt = now;
+        }
 
         var authorName = await _db.Users.AsNoTracking().Where(u => u.Id == authorId).Select(u => u.FullName).FirstOrDefaultAsync(ct);
         await NotifyAdminsAsync("Có bài viết chờ duyệt",

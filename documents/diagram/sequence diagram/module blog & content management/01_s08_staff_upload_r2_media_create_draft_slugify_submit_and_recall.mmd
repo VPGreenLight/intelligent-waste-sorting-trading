@@ -1,0 +1,41 @@
+sequenceDiagram
+    autonumber
+    actor Staff as Staff MANAGE_BLOG
+    participant UI as Staff Blog Editor
+    participant Ctrl as StaffBlogController
+    participant R2 as CloudflareR2StorageService
+    participant Svc as BlogPostService
+    participant DB as PostgreSQL 16
+
+    Note over Staff,DB: S-08: Tai anh len Cloudflare R2, tao nhap, sinh slug tieng Viet, nop duyet va thu hoi (BR-ADM-08)
+
+    Staff->>UI: Chon anh bia <= 5 MB (JPG/PNG/WEBP)
+    UI->>Ctrl: POST /api/v1/staff/blogs/upload-media (multipart/form-data)
+    Ctrl->>Ctrl: Kiem tra kich thuoc <= 5MB & duoi tep hop le (else MSG-NTF-03 / MSG-CLS-01)
+    Ctrl->>R2: UploadRecyclerDocumentAsync(stream, fileName, contentType, "blog-media")
+    R2-->>Ctrl: Uploaded fileUrl (CDN R2)
+    Ctrl-->>UI: 200 OK BlogMediaUploadResponseDto
+
+    Staff->>UI: Nhap tieu de (10-150 ky tu), noi dung, tags (<=5) va bam Luu nhap / Nop duyet
+    UI->>Ctrl: POST /api/v1/staff/blogs (SaveBlogPostRequest)
+    Ctrl->>Svc: CreateAsync(staffId, request)
+    Svc->>Svc: Normalize(request) + Slugify(Title) (khu dau tieng Viet, bo ky tu dac biet)
+    Svc->>DB: UniqueSlugAsync(baseSlug) -> neu trung them -2, -3... + SaveWithSlugRetryAsync
+    alt SubmitForApproval == false
+        Svc-->>Ctrl: 201 Created BlogPostDto (Status = Draft, CanEdit = true)
+    else SubmitForApproval == true
+        Svc->>Svc: EnsureSubmittable (bat buoc co CoverImageUrl + Content, else MSG-AUTH-02)
+        Svc->>DB: BeginTransaction -> UPDATE Status = PendingApproval, SubmittedAt = NOW()
+        Svc->>DB: NotifyAdminsAsync ("Co bai viet cho duyet")
+        Svc->>DB: Commit Transaction
+        Ctrl-->>UI: 201 Created MSG-ADM-06 (Status = Pending_Approval, CanRecall = true)
+    end
+
+    opt Staff thu hoi bai dang cho duyet de sua tiep
+        Staff->>UI: Nhan Thu hoi ve ban nhap
+        UI->>Ctrl: POST /api/v1/staff/blogs/{id}/recall
+        Ctrl->>Svc: RecallAsync(staffId, postId)
+        Svc->>DB: UPDATE blog_posts SET status = Draft, submitted_at = NULL WHERE status = PendingApproval
+        Svc->>DB: NotifyAdminsAsync ("Bai viet da duoc thu hoi")
+        Ctrl-->>UI: 200 OK BlogPostDto (CanEdit = true)
+    end

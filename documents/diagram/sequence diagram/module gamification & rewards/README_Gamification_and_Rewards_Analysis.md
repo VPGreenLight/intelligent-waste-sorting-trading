@@ -1,0 +1,17 @@
+# PHÂN TÍCH THIẾT KẾ CLASS & SEQUENCE DIAGRAM — MODULE `M-10` (`FE-13`: GAMIFICATION & REWARDS)
+
+## 1. Phạm vi & Bố cục Thành phần
+
+Thư mục này đặc tả đầy đủ kiến trúc Clean Architecture của **Module 13 (`M-10` / `FE-13`: Gamification & Rewards)** triển khai trên `.NET 10 + PostgreSQL 16` (`27` REST Endpoints: `STT 076` – `STT 102`, bao phủ `7` Use Cases `U-13`, `U-14`, `U-15`, `S-09`, `S-10`, `A-07`, `A-08`):
+
+* **Class Diagram:** [`module13_gamification_and_rewards_clean_architecture_class_diagram_ultra_compact.mmd`](../../../class%20diagram/module%20gamification%20%26%20rewards/module13_gamification_and_rewards_clean_architecture_class_diagram_ultra_compact.mmd)
+* **Sequence Diagram 1 (`U-13`):** [`01_u13_daily_checkin_streak_calculation_and_non_tx_daily_cap.mmd`](./01_u13_daily_checkin_streak_calculation_and_non_tx_daily_cap.mmd) — Điểm danh hằng ngày theo múi giờ `ICT (UTC+7)`, tính chuỗi liên tiếp `Streak`, kẹp trần điểm phi giao dịch (`DailyNonTransactionCap`, `BR-GAM-02`) và chống bấm đúp bằng unique index `ux_daily_checkin_user_date`.
+* **Sequence Diagram 2 (`U-14`, `S-10`):** [`02_u14_s10_gift_store_atomic_redemption_voucher_import_and_staff_fulfillment.mmd`](./02_u14_s10_gift_store_atomic_redemption_voucher_import_and_staff_fulfillment.mmd) — Đổi quà nguyên tử (trừ tồn kho + trừ ví điểm trong 1 DB transaction, `BR-GAM-03`, `BR-GAM-04`), nhập mã E-Voucher hàng loạt, xác nhận giao quà hoặc hủy hoàn điểm + tồn kho.
+* **Sequence Diagram 3 (`U-15`, `S-09`):** [`03_u15_s09_virtual_tree_watering_upgrade_and_eco_fact_unlocking.mmd`](./03_u15_s09_virtual_tree_watering_upgrade_and_eco_fact_unlocking.mmd) — Quản trị nội dung Eco Fact (`S-09`, xóa mềm `INACTIVE` nếu đã có người đạt cấp mở khóa) và nâng cấp Cây Ảo một chiều chỉ dành cho `User`/`Citizen` (`BR-GAM-06`, `BR-GAM-08`).
+* **Sequence Diagram 4 (`A-07`, `A-08`):** [`04_a07_a08_admin_gamification_config_leaderboard_cycles_and_top3_bonus_finalization.mmd`](./04_a07_a08_admin_gamification_config_leaderboard_cycles_and_top3_bonus_finalization.mmd) — Cấu hình bảng điểm/ngưỡng cây ghi `AuditLog`, điều phối chu kỳ bảng xếp hạng (duy nhất 1 chu kỳ `IsActive = true`), tính hạng không phạt tiêu điểm (`BR-GAM-07`) và chốt thưởng Top 3.
+
+## 2. Điểm nhấn Kỹ thuật Cốt lõi
+
+1. **Nguyên tử Tồn kho & Số dư Không Âm (`BR-GAM-03`, `BR-GAM-04`):** `PointsService.TryDebitAsync` dùng câu lệnh `UPDATE ... WHERE current_balance >= @cost` và `GiftService.RedeemAsync` dùng `UPDATE ... WHERE status = 'ACTIVE' AND stock_quantity >= @qty` trong cùng transaction giúp hai luồng song song tranh mua món quà cuối cùng chỉ cho phép đúng 1 giao dịch thành công. Với EF Core InMemory khi chạy Unit Test, 6 service đã hỗ trợ nhánh `!_db.Database.IsRelational()` để kiểm thử logic nghiệp vụ sát thực tế mà không phụ thuộc Relational SQL.
+2. **Idempotency Ledger (`BR-GAM-01`):** Sổ cái `point_transactions` gắn ràng buộc `ux_point_transactions_idem` cho từng nguồn phát sinh (`HANDOVER:{id}:USER`, `CHECKIN:{id}:{date}`, `TREE:{id}:L{lvl}`, `LEADERBOARD:{cycle}:RANK:{r}:{user}`, `REFUND:{id}`, `COMPLAINT_CLAWBACK:{cid}:{uid}`), bảo đảm không bao giờ cộng/trừ trùng.
+3. **Phân quyền Hạt mịn & Bảo vệ Chu kỳ Bảng xếp hạng (`BR-GAM-07`, `BR-GAM-08`, `BR-ADM-02`):** Staff thao tác kho quà và Eco Fact qua `[HasPermission("MANAGE_INVENTORY")]`; chỉ `User`/`Citizen` được chăm cây và xếp hạng leaderboard, trong khi `Recycler` vẫn dùng ví điểm, điểm danh và đổi quà. Partial unique index `uq_leaderboard_cycles_single_active` bảo đảm tại một thời điểm chỉ có tối đa 1 chu kỳ hoạt động.

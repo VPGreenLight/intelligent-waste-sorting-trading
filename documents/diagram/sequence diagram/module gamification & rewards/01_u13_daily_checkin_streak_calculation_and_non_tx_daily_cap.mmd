@@ -1,0 +1,42 @@
+sequenceDiagram
+    autonumber
+    actor Actor as Citizen / Recycler
+    participant UI as Daily Check-in Screen
+    participant Ctrl as UserGamificationController
+    participant ChkSvc as CheckinService
+    participant CfgSvc as GamificationConfigService
+    participant PtsSvc as PointsService
+    participant DB as PostgreSQL 16
+
+    Note over Actor,DB: U-13: Diem danh hang ngay ICT UTC+7, tinh chuoi Streak va tran diem phi giao dich (BR-GAM-02, BR-GAM-09)
+
+    Actor->>UI: Mo trang /check-in hoac /gamification
+    UI->>Ctrl: GET /api/v1/gamification/check-in/status
+    Ctrl->>ChkSvc: GetStatusAsync(userId)
+    ChkSvc->>CfgSvc: GetSettingsAsync()
+    CfgSvc->>DB: EnsureDefaults & Doc gamification_config (base, inc, cap)
+    ChkSvc->>DB: Query daily_checkin_logs 7 ngay gan nhat + Sum point_transactions trong ngay ICT
+    ChkSvc->>PtsSvc: GetWalletAsync(userId)
+    Ctrl-->>UI: 200 OK CheckinStatusDto (streak, todayRewardPreview, dailyCapRemaining, calendar)
+
+    Actor->>UI: Nhan nut Diem danh hom nay
+    UI->>Ctrl: POST /api/v1/gamification/check-in
+    Ctrl->>ChkSvc: CheckInAsync(userId)
+    ChkSvc->>DB: BeginTransaction & Kiem tra last.CheckinDate == today (UTC+7)
+    alt Da diem danh hom nay
+        ChkSvc-->>Ctrl: BusinessRuleException (BR-GAM-09, MSG-GEN-01)
+        Ctrl-->>UI: 400 Bad Request
+    else Chua diem danh hom nay
+        ChkSvc->>ChkSvc: Tinh streakCount = (hom qua da check-in ? streak + 1 : 1)
+        ChkSvc->>DB: CapRemainingAsync = Max(0, DailyCap - Sum(DailyCheckin hom nay))
+        alt DailyCapRemaining <= 0
+            ChkSvc-->>Ctrl: BusinessRuleException (BR-GAM-02, MSG-GAM-05)
+            Ctrl-->>UI: 400 Bad Request
+        else Con han muc tran ngay
+            ChkSvc->>DB: INSERT daily_checkin_logs (UX ux_daily_checkin_user_date chong bam dup)
+            ChkSvc->>PtsSvc: CreditAsync(award = Min(reward, remaining), DailyCheckin, CHECKIN:userId:date)
+            PtsSvc->>DB: INSERT point_transactions + UPDATE user_point_wallets
+            ChkSvc->>DB: Commit Transaction
+            Ctrl-->>UI: 200 OK MSG-GAM-08 (pointsAwarded, streakCount, limitedByDailyCap, walletBalance)
+        end
+    end

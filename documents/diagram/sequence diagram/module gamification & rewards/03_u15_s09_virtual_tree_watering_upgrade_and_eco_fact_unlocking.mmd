@@ -1,0 +1,43 @@
+sequenceDiagram
+    autonumber
+    actor Staff as Staff MANAGE_INVENTORY
+    actor Citizen as Citizen (User only)
+    participant Ctrl as UserGamificationController / StaffGamificationController
+    participant TreeSvc as VirtualTreeService
+    participant FactSvc as EcoFactService
+    participant PtsSvc as PointsService
+    participant DB as PostgreSQL 16
+
+    Note over Staff,DB: U-15 & S-09: Quan tri Eco Fact va Tuoi/Nang cap Cay ao mo khoa kien thuc (BR-GAM-06, BR-GAM-08)
+
+    Staff->>Ctrl: POST /api/v1/staff/eco-facts (title, content, unlockTreeLevel)
+    Ctrl->>FactSvc: CreateAsync(staffId, request)
+    FactSvc->>DB: Validate UnlockTreeLevel in [1..MaxLevel] & INSERT eco_facts (Status=ACTIVE)
+    Ctrl-->>Staff: 201 Created EcoFactDto
+
+    Citizen->>Ctrl: POST /api/v1/gamification/tree/upgrade
+    Ctrl->>TreeSvc: WaterAndUpgradeAsync(userId)
+    TreeSvc->>DB: EnsureTreeAsync + Check TreeLevel < MaxLevel & DailyWaterCount < DailyTreeCareLimit
+    TreeSvc->>DB: BeginTransaction: UPDATE virtual_tree_progress SET tree_level += 1 WHERE user_id = userId AND tree_level = currentLevel
+    alt Concurrent request win hoac het luot ngay
+        TreeSvc-->>Ctrl: BusinessRuleException (BR-GAM-06, MSG-GEN-01)
+    else Tang cap hop le
+        TreeSvc->>PtsSvc: TryDebitAsync(userId, next.RequiredPoints, TreeCare, TREE:userId:L_next)
+        alt Khong du diem
+            PtsSvc-->>TreeSvc: false -> Rollback cap cay
+            TreeSvc-->>Ctrl: BusinessRuleException (BR-GAM-03, MSG-GAM-03)
+        else Tru diem & Mo khoa thanh cong
+            TreeSvc->>DB: Commit Transaction & SELECT eco_facts WHERE status = 'ACTIVE' AND unlock_tree_level = newLevel
+            Ctrl-->>Citizen: 200 OK MSG-GAM-06 (WaterTreeResultDto + unlockedFacts)
+        end
+    end
+
+    Staff->>Ctrl: DELETE /api/v1/staff/eco-facts/{id}
+    Ctrl->>FactSvc: DeleteAsync(id)
+    FactSvc->>DB: Check ANY virtual_tree_progress.tree_level >= fact.UnlockTreeLevel
+    alt Da co nguoi dat cap mo khoa
+        FactSvc->>DB: UPDATE eco_facts SET status = 'INACTIVE' (Bao toan lich su BR-GAM-06)
+    else Chua co ai dat cap nay
+        FactSvc->>DB: DELETE FROM eco_facts WHERE id = id
+    end
+    Ctrl-->>Staff: 200 OK

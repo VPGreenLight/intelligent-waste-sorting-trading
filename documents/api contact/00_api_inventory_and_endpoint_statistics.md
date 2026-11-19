@@ -2,8 +2,8 @@
 ## (FULL-SCOPE API INVENTORY, FORECAST & STATISTICAL DASHBOARD)
 
 **Dự án:** EcoLink – Intelligent Waste Sorting & Trading Platform (`SEP490_G141`)  
-**Phiên bản tài liệu:** `v2.4.0` (Cập nhật tiến độ sau khi hoàn tất triển khai `FE-10` thuộc Module `M-11`: Đánh giá uy tín, Báo cáo vi phạm & Giải quyết khiếu nại 2 chiều `360°`)  
-**Thời điểm cập nhật:** 18/11/2026  
+**Phiên bản tài liệu:** `v2.5.0` (Cập nhật tiến độ sau khi hợp nhất và hoàn tất 2 Phân hệ `M-10` [`FE-13`: Gamification & Rewards] và `M-14` [`FE-16`: Blog & Content Management], đồng bộ Route chuẩn + Clawback Ví Điểm `M-11`)  
+**Thời điểm cập nhật:** 19/11/2026  
 **Công nghệ Backend:** ASP.NET Core 10 WebApi (Clean Architecture, Npgsql PostGIS, SignalR WebSocket)  
 **Công nghệ AI Service:** Python 3.11 FastAPI (YOLOv8 + MobileNetV3 + EfficientNet)  
 **Tình trạng tài liệu:** **Tài liệu quy hoạch & đối chiếu tổng thể (Master API Inventory)** – Dùng làm nguồn dữ liệu chuẩn để đồng bộ bảng tính `Report_API List_SEP490_G141` trên Google Drive (`Dashboard` & `API Inventory`).
@@ -18,27 +18,27 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
   * **173 Endpoints thuộc Core Backend (`Ecolink.WebApi` - .NET 10):** gồm **171 REST APIs** và **2 SignalR WebSocket Hubs** (`/hubs/negotiation-chat`, `/hubs/notifications`).
   * **11 REST Endpoints thuộc Dedicated AI Vision Service (`FastAPI` - Python 3.11):** phục vụ nhận diện đa mô hình, Rule Engine, đồng bộ tập dữ liệu huấn luyện và nạp nóng mô hình.
 * **Tiến độ triển khai thực tế trên nhánh hiện tại:**
-  * **Đã triển khai (`139 Endpoints` – đạt `75.5%`):** gồm `127` Core REST APIs + `1` SignalR Hub + `11` AI FastAPI APIs (`100% AIS`).
-  * **Dự kiến bổ sung (`45 Endpoints` – chiếm `24.5%`):** gồm `44` Core REST APIs + `1` SignalR Hub + `0` AI FastAPI APIs trải đều trên các phân hệ `FE-03 (Admin Rules)`, `FE-13`, `FE-16` và `SU-04`.
+  * **Đã triển khai (`174 Endpoints` – đạt `94.6%`):** gồm `162` Core REST APIs + `1` SignalR Hub + `11` AI FastAPI APIs (`100% AIS`).
+  * **Dự kiến bổ sung (`10 Endpoints` – chiếm `5.4%`):** gồm `9` Core REST APIs + `1` SignalR Hub + `0` AI FastAPI APIs chỉ còn tập trung tại `FE-03 (Admin Rules / Scan History: 6 APIs)` và `SU-04 (Notifications Hub/REST: 4 APIs)`.
 
 ```text
 +--------------------------------------------------------------------------------------------------+
 |                      TỔNG QUY MÔ API TOÀN HỆ THỐNG ECOLINK (FULL SRS SCOPE)                      |
 |                                          184 ENDPOINTS                                           |
-|                    [ Đã triển khai: 139 (75.5%)  |  Dự kiến bổ sung: 45 (24.5%) ]                |
+|                    [ Đã triển khai: 174 (94.6%)  |  Dự kiến bổ sung: 10 (5.4%) ]                 |
 +---------------------------------------------------+----------------------------------------------+
 |        Core .NET 10 WebApi: 173 Endpoints         |     Dedicated AI Service: 11 Endpoints       |
 |     (171 REST APIs + 2 SignalR WebSocket Hubs)    |            (FastAPI Python 3.11)             |
-|       [ Đã có: 128 |  Dự kiến bổ sung: 45 ]       |        [ Đã có: 11 |  Dự kiến thêm: 0 ]      |
+|       [ Đã có: 163 |  Dự kiến bổ sung: 10 ]       |        [ Đã có: 11 |  Dự kiến thêm: 0 ]      |
 +---------------------------------------------------+----------------------------------------------+
 ```
 
 ### Bảng chỉ số KPI đầu trang cho Sheet `API Inventory` & `Dashboard` (Google Drive)
 
-| Chỉ số KPI trên Google Sheet | Hiện trạng Code (`v2.4.0`) | Dự kiến mở rộng (Planned) | Tổng quy mô Toàn dự án (`v2.4.0`) |
+| Chỉ số KPI trên Google Sheet | Hiện trạng Code (`v2.5.0`) | Dự kiến mở rộng (Planned) | Tổng quy mô Toàn dự án (`v2.5.0`) |
 |:---|:---:|:---:|:---:|
-| **Tổng Endpoint** | 139 | +45 | **184** |
-| **Core .NET 10** *(REST + WS)* | 128 | +45 | **173** |
+| **Tổng Endpoint** | 174 | +10 | **184** |
+| **Core .NET 10** *(REST + WS)* | 163 | +10 | **173** |
 | **AI FastAPI** | 11 | +0 | **11** |
 | **WebSocket (SignalR Hub)** | 1 | +1 | **2** |
 
@@ -57,15 +57,15 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 | **M-07** | `FE-09` | **Handover Completion, Receipt & History** | `RecyclerReceiptController`, `HandoverReceiptController`, `TransactionControllers` | 8 | 0 | 8 | 0 | **8** | 4.3% | 100.0% |
 | **M-08** | `FE-08` | **In-App Real-Time Negotiation Chatbox** | `NegotiationChatController`, `NegotiationChatHub` | 8 | 0 | 7 | 1 | **8** | 4.3% | 100.0% |
 | **M-09** | `FE-07/09` | **Direct Trade Orders & QR Confirmation** | `TradeController` | 5 | 0 | 5 | 0 | **5** | 2.7% | 100.0% |
-| **M-10** | `FE-13` | **Gamification, Virtual Tree & Rewards** | `GamificationController`, `StaffGamificationController` *(dự kiến)*, `AdminGamificationController` *(dự kiến)* | 2 | 25 | 27 | 0 | **27** | 14.7% | 7.4% |
+| **M-10** | `FE-13` | **Gamification, Virtual Tree & Rewards** | `GamificationController`, `UserGamificationController`, `PointsAndRewardsController`, `StaffGamificationController`, `AdminGamificationController` | 27 | 0 | 27 | 0 | **27** | 14.7% | 100.0% |
 | **M-11** | `FE-10` | **Rating, Review & Complaint Resolution** | `ReviewsController`, `ComplaintsController`, `StaffComplaintsController` | 12 | 0 | 12 | 0 | **12** | 6.5% | 100.0% |
 | **M-12** | `FE-14` | **In-System Service Packages & VietQR** | `ServicePaymentController`, `ServicePackagesController`, `AdminReconciliationController` | 15 | 0 | 15 | 0 | **15** | 8.2% | 100.0% |
 | **M-13** | `FE-15` | **AI Misclassification & Dataset Curation** | `StaffAiFeedbackController`, `StaffDatasetCurationController` | 10 | 0 | 10 | 0 | **10** | 5.4% | 100.0% |
-| **M-14** | `FE-16` | **Blog & Content Management** | `BlogsController` *(dự kiến)*, `StaffBlogsController` *(dự kiến)*, `AdminBlogsController` *(dự kiến)* | 0 | 10 | 10 | 0 | **10** | 5.4% | 0.0% |
+| **M-14** | `FE-16` | **Blog & Content Management** | `PublicBlogController`, `StaffBlogController`, `AdminBlogController` | 10 | 0 | 10 | 0 | **10** | 5.4% | 100.0% |
 | **M-15** | `FE-17..18` | **Account, Staff, Governance & Analytics** | `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `StaffAttendanceController`, `NotificationsController` *(dự kiến)*, `NotificationHub` *(dự kiến)* | 19 | 4 | 22 | 1 | **23** | 12.5% | 82.6% |
 | **SYS** | `INFRA` | **System Infrastructure & Health** | Minimal API (`Program.cs`) | 1 | 0 | 1 | 0 | **1** | 0.5% | 100.0% |
 | **AIS** | `FE-03/15` | **Dedicated AI Vision Service (Python)** | FastAPI (`app.py`) | 11 | 0 | 11 | 0 | **11** | 6.0% | 100.0% |
-| **TỔNG** | **ALL SRS** | **TOÀN BỘ HỆ THỐNG ECOLINK** | **Core .NET 10 (173) + FastAPI Python (11)** | **139** | **45** | **182** | **2** | **184** | **100.0%** | **75.5%** |
+| **TỔNG** | **ALL SRS** | **TOÀN BỘ HỆ THỐNG ECOLINK** | **Core .NET 10 (173) + FastAPI Python (11)** | **174** | **10** | **182** | **2** | **184** | **100.0%** | **94.6%** |
 
 ---
 
@@ -82,13 +82,13 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 
 | Phương thức HTTP / Giao thức | Ý nghĩa sử dụng chính trong dự án | Đã triển khai | Dự kiến bổ sung | Tổng quy mô | Tỷ lệ (%) |
 |:---|:---|:---:|:---:|:---:|:---:|
-| **GET** | Truy vấn danh sách, tìm kiếm PostGIS, đọc hồ sơ/khiếu nại, KPI Dashboard, Audit Log, xuất báo cáo CSV/XLSX | 64 | 17 | **81** | 44.0% |
-| **POST** | Đăng ký/đăng nhập, quét rác AI, tạo đơn thu gom, biên nhận, điểm danh, đổi quà, khiếu nại, VietQR, đóng gói Dataset | 50 | 12 | **62** | 33.7% |
-| **PUT** | Cập nhật toàn phần hồ sơ, cấu hình bảng giá, cấu hình Gamification, gán nhãn ảnh chuẩn, phân quyền RBAC Staff | 12 | 7 | **19** | 10.3% |
-| **PATCH** | Chuyển trạng thái nghiệp vụ tức thời: duyệt khiếu nại, duyệt blog, khóa tài khoản, đối soát giao dịch, ẩn/mở danh mục | 10 | 6 | **16** | 8.7% |
-| **DELETE** | Xóa đánh giá của chính tác giả (`BR-RVW-03`), xóa thẻ Eco Fact nháp, xóa bài Blog nháp, vô hiệu hóa mềm tài khoản | 2 | 2 | **4** | 2.2% |
+| **GET** | Truy vấn danh sách, tìm kiếm PostGIS, đọc hồ sơ/khiếu nại, KPI Dashboard, Audit Log, xuất báo cáo CSV/XLSX | 79 | 2 | **81** | 44.0% |
+| **POST** | Đăng ký/đăng nhập, quét rác AI, tạo đơn thu gom, biên nhận, điểm danh, đổi quà, khiếu nại, VietQR, đóng gói Dataset | 61 | 1 | **62** | 33.7% |
+| **PUT** | Cập nhật toàn phần hồ sơ, cấu hình bảng giá, cấu hình Gamification, gán nhãn ảnh chuẩn, phân quyền RBAC Staff | 16 | 3 | **19** | 10.3% |
+| **PATCH** | Chuyển trạng thái nghiệp vụ tức thời: duyệt khiếu nại, duyệt blog, khóa tài khoản, đối soát giao dịch, ẩn/mở danh mục | 13 | 3 | **16** | 8.7% |
+| **DELETE** | Xóa đánh giá của chính tác giả (`BR-RVW-03`), xóa thẻ Eco Fact nháp, xóa bài Blog nháp, vô hiệu hóa mềm tài khoản | 4 | 0 | **4** | 2.2% |
 | **WebSocket (`WS`)** | Kết nối SignalR song công thời gian thực cho phòng Chat thương lượng giá và kênh Đẩy thông báo hệ thống | 1 | 1 | **2** | 1.1% |
-| **Tổng cộng** | | **139** | **45** | **184** | **100.0%** |
+| **Tổng cộng** | | **174** | **10** | **184** | **100.0%** |
 
 ---
 
@@ -98,12 +98,12 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 
 | Nhóm RBAC chuẩn | Đối tượng được phép truy cập | Đã triển khai | Dự kiến bổ sung | Tổng API | Tỷ lệ (%) | Ví dụ nghiệp vụ tiêu biểu |
 |:---|:---|:---:|:---:|:---:|:---:|:---|
-| **Public / Guest** | Mọi người dùng (kể cả chưa đăng nhập, Webhook Gateway & Internal AI) | 33 | 2 | **35** | 19.0% | Đăng ký/đăng nhập, quét rác AI, tìm vựa GPS, bảng xếp hạng, đọc Blog, xem Review vựa, Webhook VietQR, Internal AI Curate/Reload |
-| **Citizen (User)** | Người dân đã xác thực tài khoản (`Role = Citizen`) | 15 | 4 | **19** | 10.3% | Nộp đơn mở vựa, đặt lịch thu gom, xác nhận biên nhận, nuôi Cây Ảo, mở Eco Fact, theo dõi báo cáo AI sai, gửi/xóa đánh giá sao |
+| **Public / Guest** | Mọi người dùng (kể cả chưa đăng nhập, Webhook Gateway & Internal AI) | 35 | 0 | **35** | 19.0% | Đăng ký/đăng nhập, quét rác AI, tìm vựa GPS, bảng xếp hạng, đọc Blog, xem Review vựa, Webhook VietQR, Internal AI Curate/Reload |
+| **Citizen (User)** | Người dân đã xác thực tài khoản (`Role = Citizen`) | 18 | 1 | **19** | 10.3% | Nộp đơn mở vựa, đặt lịch thu gom, xác nhận biên nhận, nuôi Cây Ảo, mở Eco Fact, theo dõi báo cáo AI sai, gửi/xóa đánh giá sao |
 | **Recycler (Collector)** | Đối tác cơ sở thu gom đã được xác minh (`Role = Recycler`) | 19 | 0 | **19** | 10.3% | Hồ sơ vựa, cấu hình bảng giá thu mua, lịch mở cửa, nhận/từ chối đơn, phát hành biên nhận cân điện tử |
-| **Staff / Admin** | Nhân viên vận hành (`Staff`) và Quản trị viên hệ thống (`Admin`) | 42 | 29 | **71** | 38.6% | Duyệt vựa, xử lý khiếu nại, kho quà & Eco Fact, gán nhãn & đóng gói Dataset AI, biên tập/duyệt Blog, đối soát VietQR, KPI & RBAC |
-| **Authenticated (All)** | Nhiều vai trò đã đăng nhập (`Citizen / Recycler` hoặc mọi User hợp lệ) | 30 | 10 | **40** | 21.7% | Hồ sơ cá nhân, chat thương lượng, điểm danh Streak, đổi quà, gửi khiếu nại, mua gói dịch vụ VietQR, nhận thông báo |
-| **Tổng cộng** | | **139** | **45** | **184** | **100.0%** | |
+| **Staff / Admin** | Nhân viên vận hành (`Staff`) và Quản trị viên hệ thống (`Admin`) | 66 | 5 | **71** | 38.6% | Duyệt vựa, xử lý khiếu nại, kho quà & Eco Fact, gán nhãn & đóng gói Dataset AI, biên tập/duyệt Blog, đối soát VietQR, KPI & RBAC |
+| **Authenticated (All)** | Nhiều vai trò đã đăng nhập (`Citizen / Recycler` hoặc mọi User hợp lệ) | 36 | 4 | **40** | 21.7% | Hồ sơ cá nhân, chat thương lượng, điểm danh Streak, đổi quà, gửi khiếu nại, mua gói dịch vụ VietQR, nhận thông báo |
+| **Tổng cộng** | | **174** | **10** | **184** | **100.0%** | |
 
 #### B. Phân rã chi tiết nội bộ nhóm Quản trị & Vận hành (`Staff / Admin` – `71 APIs`)
 
@@ -295,39 +295,40 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 ---
 
 ### PHÂN HỆ 10 (`M-10` / `FE-13`): GAMIFICATION, CÂY ẢO & ĐỔI QUÀ THƯỞNG (GAMIFICATION & REWARDS MODULE)
+* **Tài liệu đặc tả chi tiết:** [`13_module_gamification_and_rewards_api.md`](./13_module_gamification_and_rewards_api.md)
 * **Use Cases bao phủ:** `U-13` (Daily Check-in), `U-14` (Redeem Points for Gifts), `U-15` (Upgrade Virtual Tree), `S-09` (Manage Eco Fact Content), `S-10` (Manage Gift Inventory), `A-07` (Manage Gamification Config), `A-08` (Configure Leaderboard Cycles)
-* **Controllers:** `GamificationController` (hiện có), `StaffGamificationController` *(dự kiến)*, `AdminGamificationController` *(dự kiến)*
-* **Quy mô:** `27` APIs (2 Đã triển khai, 25 Dự kiến)
+* **Controllers:** `GamificationController`, `UserGamificationController`, `PointsAndRewardsController`, `StaffGamificationController`, `AdminGamificationController`
+* **Quy mô:** `27` APIs (27 Đã triển khai, 0 Dự kiến)
 
 | STT | Mã Modul | Phương thức | Tuyến đường Endpoint (Route) | Phân quyền (RBAC) | Action / Function | Mô tả chức năng & Use Case nghiệp vụ | Nhóm RBAC | Trạng thái |
 |:---:|:---:|:---:|:---|:---|:---|:---|:---|:---:|
-| **076** | `M-10` | `GET` | `/api/v1/gamification/profile/{userId:guid}` | Authenticated | `GetProfile` | Xem hồ sơ Sống Xanh: tổng điểm Mầm Xanh tích lũy, giai đoạn Cây Ảo (`Virtual Tree`) và lượng CO2 giảm thải (`U-13`, `U-15`). | Authenticated (All) | Đã triển khai |
-| **077** | `M-10` | `GET` | `/api/v1/gamification/leaderboard` | Public (All) | `GetLeaderboard` | Xem Bảng xếp hạng đóng góp tái chế dẫn đầu theo chu kỳ Tuần/Tháng/Quý (`A-08`, `BR-GAM-07`). | Public / Guest | Đã triển khai |
-| **078** | `M-10` | `GET` | `/api/v1/gamification/check-in/status` | Citizen / Recycler | `GetDailyCheckInStatus` | Kiểm tra trạng thái điểm danh trong ngày (múi giờ `UTC+7`), số ngày chuỗi liên tiếp (`streak_days`) và mốc thưởng kế tiếp (`U-13`, `BR-GAM-02`). | Authenticated (All) | Dự kiến |
-| **079** | `M-10` | `POST` | `/api/v1/gamification/check-in` | Citizen / Recycler | `PerformDailyCheckIn` | Thực hiện điểm danh hàng ngày để duy trì chuỗi Streak và nhận điểm Mầm Xanh (kiểm tra trần điểm ngày `BR-GAM-03`) (`U-13`). | Authenticated (All) | Dự kiến |
-| **080** | `M-10` | `GET` | `/api/v1/gamification/points/ledger` | Citizen / Recycler | `GetPointLedger` | Tra cứu sổ cái lịch sử biến động điểm Mầm Xanh: cộng điểm bán rác, điểm danh, thưởng Top, trừ điểm đổi quà/nâng cấp cây (`U-13`, `U-14`, `U-15`). | Authenticated (All) | Dự kiến |
-| **081** | `M-10` | `GET` | `/api/v1/gamification/gifts` | Authenticated | `GetAvailableGifts` | Duyệt kho quà tặng đang mở đổi thưởng (E-Voucher đối tác, sản phẩm thân thiện môi trường), mức điểm yêu cầu và tồn kho (`U-14`). | Authenticated (All) | Dự kiến |
-| **082** | `M-10` | `POST` | `/api/v1/gamification/redemptions` | Citizen / Recycler | `RedeemGift` | Đổi điểm Mầm Xanh lấy E-Voucher hoặc quà hiện vật (khóa tồn kho nguyên tử chống tranh chấp `BR-GAM-06`, kiểm tra số dư `BR-GAM-05`) (`U-14`, `BR-GAM-08`). | Authenticated (All) | Dự kiến |
-| **083** | `M-10` | `GET` | `/api/v1/gamification/redemptions/me` | Citizen / Recycler | `GetMyRedemptions` | Xem lịch sử đổi quà cá nhân, tra cứu mã E-Voucher đã cấp hoặc tiến độ giao nhận quà hiện vật (`U-14`). | Authenticated (All) | Dự kiến |
-| **084** | `M-10` | `GET` | `/api/v1/gamification/tree/me` | Citizen (User) | `GetMyVirtualTree` | Xem chi tiết Cây Ảo cá nhân: cấp độ sinh trưởng hiện tại, tổng điểm đã tưới và số điểm cần để lên giai đoạn kế tiếp (`U-15`). | Citizen (User) | Dự kiến |
-| **085** | `M-10` | `POST` | `/api/v1/gamification/tree/upgrade` | Citizen (User) | `UpgradeVirtualTree` | Phân bổ điểm thưởng nuôi dưỡng Cây Ảo lên giai đoạn phát triển mới và tự động mở khóa thẻ kiến thức Eco Fact (`U-15`, `BR-GAM-04`). | Citizen (User) | Dự kiến |
-| **086** | `M-10` | `GET` | `/api/v1/gamification/eco-facts/me` | Citizen (User) | `GetUnlockedEcoFacts` | Xem bộ sưu tập các thẻ kiến thức môi trường (`Eco Facts`) đã mở khóa qua từng cột mốc trưởng thành của Cây Ảo (`U-15`). | Citizen (User) | Dự kiến |
-| **087** | `M-10` | `GET` | `/api/v1/staff/eco-facts` | Staff / Admin | `GetEcoFacts` | Nhân viên tra cứu danh sách toàn bộ thẻ kiến thức môi trường gắn với các mốc cấp độ Cây Ảo (`S-09`). | Staff / Admin | Dự kiến |
-| **088** | `M-10` | `POST` | `/api/v1/staff/eco-facts` | Staff / Admin | `CreateEcoFact` | Nhân viên biên soạn thẻ Eco Fact mới, gán mốc cấp độ Cây Ảo mở khóa và đính kèm hình minh họa (`S-09`). | Staff / Admin | Dự kiến |
-| **089** | `M-10` | `PUT` | `/api/v1/staff/eco-facts/{factId:guid}` | Staff / Admin | `UpdateEcoFact` | Nhân viên chỉnh sửa nội dung thông điệp xanh, điều chỉnh mốc cấp độ cây hoặc trạng thái hiển thị của Eco Fact (`S-09`). | Staff / Admin | Dự kiến |
-| **090** | `M-10` | `DELETE` | `/api/v1/staff/eco-facts/{factId:guid}` | Staff / Admin | `DeleteEcoFact` | Xóa thẻ Eco Fact nháp chưa phát hành hoặc chưa gắn với lịch sử mở khóa của người dùng (`S-09`). | Staff / Admin | Dự kiến |
-| **091** | `M-10` | `GET` | `/api/v1/staff/gifts` | Staff / Admin | `GetGiftInventory` | Nhân viên quản lý toàn bộ danh mục kho quà tặng, số lượng voucher khả dụng, tồn kho vật lý và hạn sử dụng (`S-10`). | Staff / Admin | Dự kiến |
-| **092** | `M-10` | `POST` | `/api/v1/staff/gifts` | Staff / Admin | `CreateGiftItem` | Nhân viên thêm mới vật phẩm đổi thưởng (E-Voucher / hiện vật xanh), cấu hình điểm quy đổi và số lượng tồn kho (`S-10`). | Staff / Admin | Dự kiến |
-| **093** | `M-10` | `PUT` | `/api/v1/staff/gifts/{giftId:guid}` | Staff / Admin | `UpdateGiftItem` | Nhân viên cập nhật thông tin mô tả quà tặng, nhập bổ sung tồn kho vật lý hoặc điều chỉnh mức điểm đổi (`S-10`). | Staff / Admin | Dự kiến |
-| **094** | `M-10` | `PATCH` | `/api/v1/staff/gifts/{giftId:guid}/status` | Staff / Admin | `ToggleGiftStatus` | Bật mở đổi thưởng hoặc tạm ẩn vật phẩm quà tặng khi hết hàng / hết hạn chương trình (`S-10`). | Staff / Admin | Dự kiến |
-| **095** | `M-10` | `POST` | `/api/v1/staff/gifts/{giftId:guid}/vouchers/import` | Staff / Admin | `ImportVoucherCodes` | Nhập hàng loạt (Batch Import CSV/JSON) danh sách mã E-Voucher độc nhất vào kho phát thưởng tự động (`S-10`). | Staff / Admin | Dự kiến |
-| **096** | `M-10` | `GET` | `/api/v1/staff/redemptions` | Staff / Admin | `GetRedemptionRequests` | Nhân viên tra cứu danh sách đơn đổi quà hiện vật của người dùng đang chờ đóng gói và bàn giao (`S-10`). | Staff / Admin | Dự kiến |
-| **097** | `M-10` | `PATCH` | `/api/v1/staff/redemptions/{redemptionId:guid}/fulfill` | Staff / Admin | `FulfillRedemption` | Nhân viên xác nhận hoàn tất giao quà hiện vật (`Fulfilled`) hoặc hủy đơn kèm hoàn trả điểm nguyên vẹn (`S-10`). | Staff / Admin | Dự kiến |
-| **098** | `M-10` | `GET` | `/api/v1/admin/gamification/config` | Admin | `GetGamificationConfig` | Quản trị viên xem cấu hình quy tắc Gamification: hệ số điểm/kg rác, trần điểm ngày, hệ số nhân Streak, ngưỡng cấp Cây Ảo (`A-07`). | Staff / Admin | Dự kiến |
-| **099** | `M-10` | `PUT` | `/api/v1/admin/gamification/config` | Admin | `UpdateGamificationConfig` | Quản trị viên cập nhật tỷ lệ quy đổi điểm, giới hạn điểm/ngày (`BR-GAM-03`) và bảng ngưỡng điểm nâng cấp Cây Ảo (`A-07`, `BR-GAM-01`). | Staff / Admin | Dự kiến |
-| **100** | `M-10` | `GET` | `/api/v1/admin/gamification/leaderboard-cycles` | Admin | `GetLeaderboardCycles` | Quản trị viên xem danh sách các chu kỳ thi đua Bảng xếp hạng (Tuần/Tháng) và cơ cấu giải thưởng điểm (`A-08`). | Staff / Admin | Dự kiến |
-| **101** | `M-10` | `POST` | `/api/v1/admin/gamification/leaderboard-cycles` | Admin | `CreateLeaderboardCycle` | Quản trị viên khởi tạo chu kỳ Bảng xếp hạng mới, định nghĩa khung thời gian và mức thưởng điểm cho Top đầu (`A-08`, `BR-GAM-07`). | Staff / Admin | Dự kiến |
-| **102** | `M-10` | `POST` | `/api/v1/admin/gamification/leaderboard-cycles/{cycleId:guid}/finalize` | Admin | `FinalizeLeaderboardCycle` | Chốt bảng tổng sắp cuối kỳ thi đua và tự động cộng điểm thưởng vinh danh cho các tài khoản đạt thứ hạng cao (`A-08`, `BR-GAM-07`). | Staff / Admin | Dự kiến |
+| **076** | `M-10` | `GET` | `/api/v1/gamification/profile/{userId:guid}` | Authenticated | `GetProfile` | Xem hồ sơ Sống Xanh từ ví điểm & cây ảo thật (`user_point_wallets`, `virtual_tree_progress`): điểm Mầm Xanh, giai đoạn Cây Ảo và CO2 giảm thải (`U-13`, `U-15`). | Authenticated (All) | Đã triển khai |
+| **077** | `M-10` | `GET` | `/api/v1/gamification/leaderboard` | Public (All) | `GetLeaderboard` | Xem Bảng xếp hạng đóng góp tái chế dẫn đầu theo chu kỳ Tuần/Tháng/Quý đang bật hoặc chỉ định (`A-08`, `BR-GAM-07`). | Public / Guest | Đã triển khai |
+| **078** | `M-10` | `GET` | `/api/v1/gamification/check-in/status` | Citizen / Recycler | `CheckinStatus` | Kiểm tra trạng thái điểm danh trong ngày (múi giờ `ICT UTC+7`), số ngày chuỗi liên tiếp và mốc thưởng kế tiếp (`U-13`, `BR-GAM-02`). | Authenticated (All) | Đã triển khai |
+| **079** | `M-10` | `POST` | `/api/v1/gamification/check-in` | Citizen / Recycler | `CheckIn` | Thực hiện điểm danh hàng ngày để duy trì chuỗi Streak và nhận điểm Mầm Xanh (kiểm tra trần điểm phi giao dịch `BR-GAM-02`) (`U-13`). | Authenticated (All) | Đã triển khai |
+| **080** | `M-10` | `GET` | `/api/v1/gamification/points/ledger` | Citizen / Recycler | `Transactions` | Tra cứu sổ cái lịch sử biến động điểm Mầm Xanh (`point_transactions`): cộng điểm bán rác, điểm danh, thưởng Top, trừ/hoàn điểm (`U-13`, `U-14`, `U-15`). | Authenticated (All) | Đã triển khai |
+| **081** | `M-10` | `GET` | `/api/v1/gamification/gifts` | Citizen / Recycler | `Gifts` | Duyệt kho quà tặng đang mở đổi thưởng (E-Voucher đối tác, sản phẩm thân thiện môi trường), mức điểm yêu cầu và tồn kho (`U-14`). | Authenticated (All) | Đã triển khai |
+| **082** | `M-10` | `POST` | `/api/v1/gamification/redemptions` | Citizen / Recycler | `RedeemFromBody` | Đổi điểm Mầm Xanh lấy E-Voucher hoặc quà hiện vật (khóa tồn kho + trừ ví nguyên tử trong `1` transaction `BR-GAM-03/04`) (`U-14`). | Authenticated (All) | Đã triển khai |
+| **083** | `M-10` | `GET` | `/api/v1/gamification/redemptions/me` | Citizen / Recycler | `MyRedemptions` | Xem lịch sử đổi quà cá nhân, tra cứu mã E-Voucher đã cấp (`ECO-...`) hoặc tiến độ giao nhận quà hiện vật (`U-14`). | Authenticated (All) | Đã triển khai |
+| **084** | `M-10` | `GET` | `/api/v1/gamification/tree/me` | Citizen (User) | `Tree` | Xem chi tiết Cây Ảo cá nhân: cấp độ sinh trưởng hiện tại, tổng điểm đã tưới và số điểm cần để lên giai đoạn kế tiếp (`U-15`). | Citizen (User) | Đã triển khai |
+| **085** | `M-10` | `POST` | `/api/v1/gamification/tree/upgrade` | Citizen (User) | `Water` | Phân bổ điểm thưởng nuôi dưỡng Cây Ảo lên giai đoạn phát triển mới và tự động mở khóa thẻ kiến thức Eco Fact (`U-15`, `BR-GAM-06`, `BR-GAM-08`). | Citizen (User) | Đã triển khai |
+| **086** | `M-10` | `GET` | `/api/v1/gamification/eco-facts/me` | Citizen (User) | `Facts` | Xem bộ sưu tập các thẻ kiến thức môi trường (`Eco Facts`) đã mở khóa qua từng cột mốc trưởng thành của Cây Ảo (`U-15`). | Citizen (User) | Đã triển khai |
+| **087** | `M-10` | `GET` | `/api/v1/staff/eco-facts` | Staff [`MANAGE_INVENTORY`] / Admin | `Facts` | Nhân viên tra cứu danh sách toàn bộ thẻ kiến thức môi trường gắn với các mốc cấp độ Cây Ảo (`S-09`). | Staff / Admin | Đã triển khai |
+| **088** | `M-10` | `POST` | `/api/v1/staff/eco-facts` | Staff [`MANAGE_INVENTORY`] / Admin | `CreateFact` | Nhân viên biên soạn thẻ Eco Fact mới, gán mốc cấp độ Cây Ảo mở khóa và đính kèm hình minh họa (`S-09`). | Staff / Admin | Đã triển khai |
+| **089** | `M-10` | `PUT` | `/api/v1/staff/eco-facts/{factId:guid}` | Staff [`MANAGE_INVENTORY`] / Admin | `UpdateFact` | Nhân viên chỉnh sửa nội dung thông điệp xanh, điều chỉnh mốc cấp độ cây hoặc nguồn trích dẫn của Eco Fact (`S-09`). | Staff / Admin | Đã triển khai |
+| **090** | `M-10` | `DELETE` | `/api/v1/staff/eco-facts/{factId:guid}` | Staff [`MANAGE_INVENTORY`] / Admin | `DeleteFact` | Xóa thẻ Eco Fact nháp hoặc tự động vô hiệu hóa mềm (`INACTIVE`) nếu đã có người dùng đạt cấp mở khóa (`S-09`, `BR-GAM-06`). | Staff / Admin | Đã triển khai |
+| **091** | `M-10` | `GET` | `/api/v1/staff/gifts` | Staff [`MANAGE_INVENTORY`] / Admin | `Gifts` | Nhân viên quản lý toàn bộ danh mục kho quà tặng, số lượng tồn kho, trạng thái mở đổi và hạn sử dụng (`S-10`). | Staff / Admin | Đã triển khai |
+| **092** | `M-10` | `POST` | `/api/v1/staff/gifts` | Staff [`MANAGE_INVENTORY`] / Admin | `CreateGift` | Nhân viên thêm mới vật phẩm đổi thưởng (E-Voucher / hiện vật xanh), cấu hình điểm quy đổi và số lượng tồn kho (`S-10`). | Staff / Admin | Đã triển khai |
+| **093** | `M-10` | `PUT` | `/api/v1/staff/gifts/{giftId:guid}` | Staff [`MANAGE_INVENTORY`] / Admin | `UpdateGift` | Nhân viên cập nhật thông tin mô tả quà tặng, ảnh minh họa hoặc điều chỉnh mức điểm quy đổi (`S-10`). | Staff / Admin | Đã triển khai |
+| **094** | `M-10` | `PATCH` | `/api/v1/staff/gifts/{giftId:guid}/status` | Staff [`MANAGE_INVENTORY`] / Admin | `GiftStatus` | Bật mở đổi thưởng (`ACTIVE`) hoặc tạm ẩn vật phẩm quà tặng (`INACTIVE`) khi hết hàng / hết hạn chương trình (`S-10`). | Staff / Admin | Đã triển khai |
+| **095** | `M-10` | `POST` | `/api/v1/staff/gifts/{giftId:guid}/vouchers/import` | Staff [`MANAGE_INVENTORY`] / Admin | `ImportVouchers` | Nhập hàng loạt (khử trùng lặp danh sách mã hoặc số lượng bổ sung) vào tồn kho E-Voucher phát thưởng tự động (`S-10`). | Staff / Admin | Đã triển khai |
+| **096** | `M-10` | `GET` | `/api/v1/staff/redemptions` | Staff [`MANAGE_INVENTORY`] / Admin | `AllRedemptions` | Nhân viên tra cứu danh sách toàn bộ đơn đổi quà của người dùng (lọc trạng thái, loại quà, mã đổi) chờ đóng gói bàn giao (`S-10`). | Staff / Admin | Đã triển khai |
+| **097** | `M-10` | `PATCH` | `/api/v1/staff/redemptions/{redemptionId:guid}/fulfill` | Staff [`MANAGE_INVENTORY`] / Admin | `Fulfill` | Nhân viên xác nhận hoàn tất giao quà (`Delivered`) hoặc hủy đơn (`Cancelled`) kèm hoàn trả điểm + tồn kho nguyên vẹn (`S-10`). | Staff / Admin | Đã triển khai |
+| **098** | `M-10` | `GET` | `/api/v1/admin/gamification/config` | Admin | `Get` | Quản trị viên xem cấu hình quy tắc Gamification: hệ số điểm/kg rác, trần điểm ngày, hệ số Streak, ngưỡng cấp Cây Ảo (`A-07`). | Staff / Admin | Đã triển khai |
+| **099** | `M-10` | `PUT` | `/api/v1/admin/gamification/config` | Admin | `Update` | Quản trị viên cập nhật tỷ lệ quy đổi điểm, giới hạn điểm/ngày và bảng ngưỡng điểm nâng cấp Cây Ảo ghi `AuditLog` (`A-07`, `BR-ADM-05`). | Staff / Admin | Đã triển khai |
+| **100** | `M-10` | `GET` | `/api/v1/admin/gamification/leaderboard-cycles` | Admin | `GetCycles` | Quản trị viên xem danh sách các chu kỳ thi đua Bảng xếp hạng (Tuần/Tháng/Quý) và cơ cấu giải thưởng Top 1/2/3 (`A-08`). | Staff / Admin | Đã triển khai |
+| **101** | `M-10` | `POST` | `/api/v1/admin/gamification/leaderboard-cycles` | Admin | `CreateCycle` | Quản trị viên khởi tạo chu kỳ Bảng xếp hạng mới, định nghĩa khung thời gian và mức thưởng điểm cho Top 3 (`A-08`, `BR-GAM-07`). | Staff / Admin | Đã triển khai |
+| **102** | `M-10` | `POST` | `/api/v1/admin/gamification/leaderboard-cycles/{cycleId:guid}/finalize` | Admin | `FinalizeCycle` | Chốt bảng tổng sắp cuối kỳ thi đua (`Finalized`) và tự động cộng điểm thưởng vinh danh cho Top 3 kèm ghi `AuditLog` (`A-08`, `BR-GAM-07`). | Staff / Admin | Đã triển khai |
 
 ---
 
@@ -402,22 +403,23 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 ---
 
 ### PHÂN HỆ 14 (`M-14` / `FE-16`): QUẢN TRỊ BÀI VIẾT BLOG & NỘI DUNG TRUYỀN THÔNG (BLOG & CONTENT MANAGEMENT)
+* **Tài liệu đặc tả chi tiết:** [`14_module_blog_and_content_management_api.md`](./14_module_blog_and_content_management_api.md)
 * **Use Cases bao phủ:** `G-01` (Browse Public Eco Blogs), `S-08` (Create Blog Post), `A-09` (Approve / Reject Blog Post)
-* **Controllers dự kiến:** `BlogsController`, `StaffBlogsController`, `AdminBlogsController`
-* **Quy mô:** `10` APIs (0 Đã triển khai, 10 Dự kiến)
+* **Controllers:** `PublicBlogController`, `StaffBlogController`, `AdminBlogController`
+* **Quy mô:** `10` APIs (10 Đã triển khai, 0 Dự kiến)
 
 | STT | Mã Modul | Phương thức | Tuyến đường Endpoint (Route) | Phân quyền (RBAC) | Action / Function | Mô tả chức năng & Use Case nghiệp vụ | Nhóm RBAC | Trạng thái |
 |:---:|:---:|:---:|:---|:---|:---|:---|:---|:---:|
-| **140** | `M-14` | `GET` | `/api/v1/blogs` | Public (All) | `GetPublishedBlogs` | Người dân và khách vãng lai xem danh sách bài viết chuyên đề kinh tế tuần hoàn & hướng dẫn phân loại rác đã xuất bản (`G-01`, `S-08`). | Public / Guest | Dự kiến |
-| **141** | `M-14` | `GET` | `/api/v1/blogs/{slug}` | Public (All) | `GetPublishedBlogBySlug` | Xem nội dung chi tiết bài viết Blog theo đường dẫn thân thiện (`slug`), danh mục bài viết liên quan và tăng lượt đọc (`G-01`, `S-08`). | Public / Guest | Dự kiến |
-| **142** | `M-14` | `POST` | `/api/v1/staff/blogs/upload-media` | Staff / Admin | `UploadBlogMedia` | Nhân viên tải ảnh bìa (`cover_image_url`) và ảnh minh họa nội dung bài viết lên Cloudflare R2 (`S-08`). | Staff / Admin | Dự kiến |
-| **143** | `M-14` | `GET` | `/api/v1/staff/blogs` | Staff / Admin | `GetStaffBlogs` | Nhân viên quản lý danh sách bài viết đã tạo theo trạng thái biên tập (`Draft`, `Pending_Approval`, `Published`, `Rejected`) (`S-08`). | Staff / Admin | Dự kiến |
-| **144** | `M-14` | `POST` | `/api/v1/staff/blogs` | Staff / Admin | `CreateBlogDraft` | Nhân viên soạn thảo bài viết mới bằng trình biên tập Rich-Text/Markdown và lưu bản nháp (`Draft`) (`S-08`, `BR-ADM-08`). | Staff / Admin | Dự kiến |
-| **145** | `M-14` | `PUT` | `/api/v1/staff/blogs/{postId:guid}` | Staff / Admin | `UpdateBlogPost` | Nhân viên chỉnh sửa nội dung, ảnh bìa hoặc từ khóa bài viết đang ở trạng thái bản nháp hoặc bị trả về sửa (`S-08`). | Staff / Admin | Dự kiến |
-| **146** | `M-14` | `DELETE` | `/api/v1/staff/blogs/{postId:guid}` | Staff / Admin | `DeleteBlogDraft` | Nhân viên xóa bài viết bản nháp chưa xuất bản khỏi hệ thống (`S-08`). | Staff / Admin | Dự kiến |
-| **147** | `M-14` | `POST` | `/api/v1/staff/blogs/{postId:guid}/submit` | Staff / Admin | `SubmitBlogForApproval` | Nhân viên gửi bài viết hoàn chỉnh lên hàng đợi biên tập chờ Quản trị viên phê duyệt (`Draft` → `Pending_Approval`) (`S-08`, `BR-ADM-08`). | Staff / Admin | Dự kiến |
-| **148** | `M-14` | `GET` | `/api/v1/admin/blogs/pending` | Admin | `GetPendingBlogs` | Quản trị viên xem hàng đợi các bài viết Blog do Nhân viên gửi lên đang chờ xét duyệt xuất bản (`A-09`). | Staff / Admin | Dự kiến |
-| **149** | `M-14` | `PATCH` | `/api/v1/admin/blogs/{postId:guid}/review` | Admin | `ReviewBlogPost` | Quản trị viên phê duyệt đăng công khai (`Published`) hoặc từ chối trả về (`Rejected`) kèm nhận xét biên tập bắt buộc (`A-09`, `BR-ADM-08`). | Staff / Admin | Dự kiến |
+| **140** | `M-14` | `GET` | `/api/v1/blogs` | Public (All) | `List` | Người dân và khách vãng lai xem danh sách bài viết chuyên đề kinh tế tuần hoàn & phân loại rác đã xuất bản, lọc theo từ khóa/tag (`G-01`). | Public / Guest | Đã triển khai |
+| **141** | `M-14` | `GET` | `/api/v1/blogs/{slug}` | Public (All) | `GetBySlug` | Xem nội dung chi tiết bài viết Blog đã xuất bản theo đường dẫn thân thiện (`slug`), ẩn thông tin kiểm duyệt nội bộ (`G-01`). | Public / Guest | Đã triển khai |
+| **142** | `M-14` | `POST` | `/api/v1/staff/blogs/upload-media` | Staff [`MANAGE_BLOG`] / Admin | `UploadMedia` | Nhân viên tải ảnh bìa (`cover_image_url`) và ảnh minh họa nội dung bài viết (`<= 5MB`, `.jpg/.png/.webp`) lên Cloudflare R2 (`S-08`). | Staff / Admin | Đã triển khai |
+| **143** | `M-14` | `GET` | `/api/v1/staff/blogs` | Staff [`MANAGE_BLOG`] / Admin | `List` | Nhân viên quản lý danh sách bài viết của chính mình theo trạng thái biên tập (`Draft`, `Pending_Approval`, `Approved`/`Published`) (`S-08`). | Staff / Admin | Đã triển khai |
+| **144** | `M-14` | `POST` | `/api/v1/staff/blogs` | Staff [`MANAGE_BLOG`] / Admin | `Create` | Nhân viên soạn thảo bài viết mới bằng trình biên tập Rich-Text/Markdown, lưu nháp (`Draft`) hoặc nộp duyệt ngay (`Pending_Approval`) (`S-08`). | Staff / Admin | Đã triển khai |
+| **145** | `M-14` | `PUT` | `/api/v1/staff/blogs/{id:guid}` | Staff [`MANAGE_BLOG`] / Admin | `Update` | Nhân viên chỉnh sửa nội dung, ảnh bìa hoặc thẻ tag bài viết đang ở trạng thái bản nháp (`Draft` / bài bị trả về) (`S-08`). | Staff / Admin | Đã triển khai |
+| **146** | `M-14` | `DELETE` | `/api/v1/staff/blogs/{id:guid}` | Staff [`MANAGE_BLOG`] / Admin | `Delete` | Nhân viên xóa bài viết bản nháp (`Draft`) chưa gửi duyệt hoặc chưa xuất bản khỏi hệ thống (`S-08`). | Staff / Admin | Đã triển khai |
+| **147** | `M-14` | `POST` | `/api/v1/staff/blogs/{id:guid}/submit` | Staff [`MANAGE_BLOG`] / Admin | `Submit` | Nhân viên gửi bài viết hoàn chỉnh lên hàng đợi biên tập (`Draft -> Pending_Approval`, `MSG-ADM-06`) kèm thông báo `Admin` (`S-08`, `BR-ADM-08`). | Staff / Admin | Đã triển khai |
+| **148** | `M-14` | `GET` | `/api/v1/admin/blogs/pending` | Admin | `Queue` | Quản trị viên xem hàng đợi các bài viết Blog do Nhân viên gửi lên đang chờ xét duyệt xuất bản (`A-09`). | Staff / Admin | Đã triển khai |
+| **149** | `M-14` | `PATCH` | `/api/v1/admin/blogs/{id:guid}/review` | Admin | `Review` | Quản trị viên phê duyệt đăng công khai (`Approved`, `MSG-ADM-05`) hoặc từ chối trả về `Draft` kèm nhận xét bắt buộc & ghi `AuditLog` (`A-09`). | Staff / Admin | Đã triển khai |
 
 ---
 
@@ -505,4 +507,4 @@ Khi cập nhật tệp **`Report_API List_SEP490_G141`** gồm 2 sheet `Dashboar
    powershell -ExecutionPolicy Bypass -File scripts/scan_api_inventory.ps1
    ```
 3. **Bước 3 – Chuyển trạng thái Endpoint:** Đổi cột `Trạng thái` của các dòng tương ứng từ `Dự kiến` sang `Đã triển khai`, đồng thời cập nhật lại số liệu cột `Đã code` / `Dự kiến` / `Tiến độ` tại **Mục 1.1**, **1.2**, **1.3**.
-4. **Bước 4 – Bổ sung đặc tả Payload chi tiết:** Tạo tệp đặc tả JSON Request/Response tương ứng trong thư mục `documents/api contact/` (hiện đã hoàn thiện đến [`10_module_in_system_service_packages_vietqr_api.md`](./10_module_in_system_service_packages_vietqr_api.md) cho `M-12` và [`11_module_ai_misclassification_feedback_dataset_curation_api.md`](./11_module_ai_misclassification_feedback_dataset_curation_api.md) cho `M-13`; các phân hệ tiếp theo sẽ đánh số từ `12_` trở đi).
+4. **Bước 4 – Bổ sung đặc tả Payload chi tiết:** Tạo tệp đặc tả JSON Request/Response tương ứng trong thư mục `documents/api contact/` (đã hoàn thiện đến [`12_module_rating_review_complaint_resolution_api.md`](./12_module_rating_review_complaint_resolution_api.md) cho `M-11`, [`13_module_gamification_and_rewards_api.md`](./13_module_gamification_and_rewards_api.md) cho `M-10` và [`14_module_blog_and_content_management_api.md`](./14_module_blog_and_content_management_api.md) cho `M-14`).
