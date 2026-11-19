@@ -23,7 +23,7 @@ public class HandoverRequestService : IHandoverRequestService
     public const int MaxActiveRequestsPerUser = 3;
     public const int LateCancelWindowHours = 4;      // BR-HND-06 / MSG-HND-06 (phải lớn hơn MinLeadHours để hủy muộn xảy ra được)
     private const int MinLeadHours = 2;              // SCR-USR-06: tối thiểu 2 giờ
-    private const int MaxAheadDays = 7;               // SCR-USR-06: tối đa 7 ngày
+    private const int MaxAheadDays = 30;             // Cho phép hẹn từ hôm nay đến +30 ngày tới
     private static readonly TimeSpan LocalOffset = TimeSpan.FromHours(7); // ICT (GMT+7)
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -372,10 +372,12 @@ public class HandoverRequestService : IHandoverRequestService
     {
         var utc = proposed.UtcDateTime;
         var now = DateTime.UtcNow;
+        if (utc <= now)
+            throw new BusinessRuleException("BR-NEG-04", "MSG-GEN-01", "Không thể đặt lịch hẹn trong quá khứ.");
         if (utc < now.AddHours(MinLeadHours))
             throw new BusinessRuleException("BR-NEG-04", "MSG-GEN-01", $"Khung giờ thu gom phải cách hiện tại tối thiểu {MinLeadHours} giờ.");
         if (utc > now.AddDays(MaxAheadDays))
-            throw new BusinessRuleException("BR-NEG-04", "MSG-GEN-01", $"Chỉ được hẹn trong vòng {MaxAheadDays} ngày tới.");
+            throw new BusinessRuleException("BR-NEG-04", "MSG-GEN-01", $"Chỉ được chọn ngày hẹn từ hôm nay đến tối đa {MaxAheadDays} ngày tới.");
 
         // Nếu cơ sở đã khai báo lịch tuần, khung giờ phải nằm trong giờ mở cửa (ICT)
         if (!string.IsNullOrWhiteSpace(recycler.WeeklyScheduleJson))

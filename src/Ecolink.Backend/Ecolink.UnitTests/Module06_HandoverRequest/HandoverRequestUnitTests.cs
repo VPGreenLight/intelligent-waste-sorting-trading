@@ -206,17 +206,27 @@ public class HandoverRequestUnitTests
     }
 
     [Fact]
-    public async Task UTC007_CreateAsync_ProposedTimeSlotLessThan2HoursOrMoreThan7DaysAhead_ThrowsBrNeg04()
+    public async Task UTC007_CreateAsync_ProposedTimeSlotLessThan2HoursOrInPastOrMoreThan30DaysAhead_ThrowsBrNeg04()
     {
         var (sut, _, citizen, recyclerUser, _, plastic, _) = await CreateSeededSutAsync();
+
+        var pastReq = ValidCreateRequest(recyclerUser.Id, plastic.Id);
+        pastReq.ProposedTimeSlot = DateTimeOffset.UtcNow.AddHours(-2);
+        (await ((Func<Task>)(() => sut.CreateAsync(citizen.Id, pastReq))).Should().ThrowAsync<BusinessRuleException>())
+            .Which.RuleCode.Should().Be("BR-NEG-04");
 
         var tooSoonReq = ValidCreateRequest(recyclerUser.Id, plastic.Id);
         tooSoonReq.ProposedTimeSlot = DateTimeOffset.UtcNow.AddMinutes(45);
         (await ((Func<Task>)(() => sut.CreateAsync(citizen.Id, tooSoonReq))).Should().ThrowAsync<BusinessRuleException>())
             .Which.RuleCode.Should().Be("BR-NEG-04");
 
+        var validWithin30DaysReq = ValidCreateRequest(recyclerUser.Id, plastic.Id);
+        validWithin30DaysReq.ProposedTimeSlot = DateTimeOffset.UtcNow.AddDays(29);
+        var validDto = await sut.CreateAsync(citizen.Id, validWithin30DaysReq);
+        validDto.Id.Should().NotBeEmpty();
+
         var tooFarReq = ValidCreateRequest(recyclerUser.Id, plastic.Id);
-        tooFarReq.ProposedTimeSlot = DateTimeOffset.UtcNow.AddDays(8);
+        tooFarReq.ProposedTimeSlot = DateTimeOffset.UtcNow.AddDays(31);
         (await ((Func<Task>)(() => sut.CreateAsync(citizen.Id, tooFarReq))).Should().ThrowAsync<BusinessRuleException>())
             .Which.RuleCode.Should().Be("BR-NEG-04");
     }

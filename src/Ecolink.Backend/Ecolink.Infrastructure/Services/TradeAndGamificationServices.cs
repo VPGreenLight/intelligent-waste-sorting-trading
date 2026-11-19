@@ -252,6 +252,24 @@ public class TradeTransactionService : ITradeTransactionService
         var scheduledUtc = NormalizeUtc(
             request.ScheduledAt == default ? DateTime.UtcNow.AddHours(2) : request.ScheduledAt);
 
+        if (!isInquiryOnly)
+        {
+            if (HandoverTradeSyncHelper.TryParseAppointmentSlotUtc(
+                proposedSlot,
+                scheduledUtc,
+                out var parsedSlotUtc,
+                out var hasExplicitDate,
+                out var hasTime) && hasExplicitDate)
+            {
+                HandoverTradeSyncHelper.ValidateAppointmentWindowUtc(parsedSlotUtc, hasTime);
+                scheduledUtc = parsedSlotUtc;
+            }
+            else if (request.ScheduledAt != default)
+            {
+                HandoverTradeSyncHelper.ValidateAppointmentWindowUtc(scheduledUtc, checkTimeToo: true);
+            }
+        }
+
         var orderDto = new TradeOrderDto
         {
             Id = orderId,
@@ -730,6 +748,18 @@ public class TradeTransactionService : ITradeTransactionService
         }
 
         var slot = proposedTimeSlot.Trim();
+        var now = DateTime.UtcNow;
+        DateTime? parsedExplicitUtc = null;
+        if (HandoverTradeSyncHelper.TryParseAppointmentSlotUtc(
+            slot,
+            now,
+            out var parsedSlotUtc,
+            out var hasExplicitDate,
+            out var hasTime) && hasExplicitDate)
+        {
+            HandoverTradeSyncHelper.ValidateAppointmentWindowUtc(parsedSlotUtc, hasTime);
+            parsedExplicitUtc = parsedSlotUtc;
+        }
 
         if (_dbContext != null)
         {
@@ -741,8 +771,11 @@ public class TradeTransactionService : ITradeTransactionService
 
             if (dbOrder != null)
             {
-                var now = DateTime.UtcNow;
                 dbOrder.ProposedTimeSlot = slot;
+                if (parsedExplicitUtc.HasValue)
+                {
+                    dbOrder.ScheduledAt = parsedExplicitUtc.Value;
+                }
                 dbOrder.UpdatedAt = now;
 
                 var effectiveActorId = callerUserId != Guid.Empty ? callerUserId : dbOrder.UserId;
@@ -771,6 +804,10 @@ public class TradeTransactionService : ITradeTransactionService
         if (_orders.TryGetValue(orderId, out var cached))
         {
             cached.ProposedTimeSlot = slot;
+            if (parsedExplicitUtc.HasValue)
+            {
+                cached.ScheduledAt = parsedExplicitUtc.Value;
+            }
             return cached;
         }
 

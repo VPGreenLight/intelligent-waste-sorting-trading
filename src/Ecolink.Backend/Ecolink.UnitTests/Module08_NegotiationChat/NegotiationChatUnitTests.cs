@@ -1,3 +1,4 @@
+using System.Globalization;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Validators;
 using Ecolink.Domain.Entities;
@@ -16,6 +17,9 @@ namespace Ecolink.UnitTests.Module08_NegotiationChat;
 [Trait("Module", "Module08_NegotiationChat")]
 public class NegotiationChatUnitTests
 {
+    private static string FutureSlotDate =>
+        (DateTime.UtcNow + TimeSpan.FromHours(7)).Date.AddDays(1).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
     private readonly SendChatMessageRequestValidator _msgValidator = new();
     private readonly SendProposalRequestValidator _proposalValidator = new();
     private readonly RespondProposalRequestValidator _respondValidator = new();
@@ -98,7 +102,7 @@ public class NegotiationChatUnitTests
             CategoryCode = "plastic",
             EstimatedWeightKg = 5.0m,
             InitialPricePerKg = 7000m,
-            ProposedTimeSlot = "2026-11-12 (09:00 - 11:00)",
+            ProposedTimeSlot = $"{FutureSlotDate} (09:00 - 11:00)",
             PickupAddress = "KTX Khu B, ĐH FPT Hòa Lạc",
             ScheduledAt = DateTime.UtcNow.AddDays(1)
         };
@@ -154,7 +158,7 @@ public class NegotiationChatUnitTests
         {
             ProposedPricePerKg = 7500m,
             ProposedWeightKg = 6.0m,
-            ProposedTimeSlot = "2026-11-12 (14:00 - 16:00)",
+            ProposedTimeSlot = $"{FutureSlotDate} (14:00 - 16:00)",
             Note = "Tăng thêm 1kg"
         });
         validProposal.IsValid.Should().BeTrue();
@@ -263,7 +267,7 @@ public class NegotiationChatUnitTests
             {
                 ProposedPricePerKg = 7500m,
                 ProposedWeightKg = 8.0m,
-                ProposedTimeSlot = "2026-11-12 (15:00 - 17:00)",
+                ProposedTimeSlot = $"{FutureSlotDate} (15:00 - 17:00)",
                 Note = "Em có tới 8kg chai sạch"
             });
 
@@ -276,7 +280,7 @@ public class NegotiationChatUnitTests
 
         var updatedOrder = await db.TradeOrders.FirstAsync(o => o.Id == order.Id);
         updatedOrder.Status.Should().Be(OrderStatus.Negotiating);
-        updatedOrder.ProposedTimeSlot.Should().Be("2026-11-12 (15:00 - 17:00)");
+        updatedOrder.ProposedTimeSlot.Should().Be($"{FutureSlotDate} (15:00 - 17:00)");
     }
 
     [Fact]
@@ -288,14 +292,14 @@ public class NegotiationChatUnitTests
         {
             ProposedPricePerKg = 8000m,
             ProposedWeightKg = 8.0m,
-            ProposedTimeSlot = "2026-11-12 (15:00 - 17:00)"
+            ProposedTimeSlot = $"{FutureSlotDate} (15:00 - 17:00)"
         });
 
         var (counterProposal, supersededIds, _, _) = await sut.SendProposalAsync(order.Id, recyclerUser.Id, "Recycler", new SendProposalRequest
         {
             ProposedPricePerKg = 7400m,
             ProposedWeightKg = 8.0m,
-            ProposedTimeSlot = "2026-11-12 (16:00 - 18:00)",
+            ProposedTimeSlot = $"{FutureSlotDate} (16:00 - 18:00)",
             Note = "Cơ sở hỗ trợ giá 7.400đ/kg"
         });
 
@@ -315,7 +319,7 @@ public class NegotiationChatUnitTests
         {
             ProposedPricePerKg = 8000m,
             ProposedWeightKg = 5.0m,
-            ProposedTimeSlot = "2026-11-12 (15:00 - 17:00)"
+            ProposedTimeSlot = $"{FutureSlotDate} (15:00 - 17:00)"
         });
 
         var ex = await act.Should().ThrowAsync<BusinessRuleException>();
@@ -331,7 +335,7 @@ public class NegotiationChatUnitTests
         {
             ProposedPricePerKg = 7300m,
             ProposedWeightKg = 6.5m,
-            ProposedTimeSlot = "2026-11-12 (14:00 - 16:00)"
+            ProposedTimeSlot = $"{FutureSlotDate} (14:00 - 16:00)"
         });
 
         var (res, toast) = await sut.RespondToProposalAsync(
@@ -345,7 +349,7 @@ public class NegotiationChatUnitTests
         res.OrderStatus.Should().Be(OrderStatus.Accepted.ToString());
         res.AgreedPricePerKg.Should().Be(7300m);
         res.ConfirmedWeightKg.Should().Be(6.5m);
-        res.ConfirmedTimeSlot.Should().Be("2026-11-12 (14:00 - 16:00)");
+        res.ConfirmedTimeSlot.Should().Be($"{FutureSlotDate} (14:00 - 16:00)");
         res.IsProposalLocked.Should().BeTrue();
         res.SystemMessage.MessageType.Should().Be(ChatMessageType.System.ToString());
         toast.Should().Be("Nguyễn Văn Dân đã chấp nhận đề nghị của bạn."); // MSG-NEG-03
@@ -363,7 +367,7 @@ public class NegotiationChatUnitTests
         {
             ProposedPricePerKg = 9000m,
             ProposedWeightKg = 5.0m,
-            ProposedTimeSlot = "2026-11-12 (14:00 - 16:00)"
+            ProposedTimeSlot = $"{FutureSlotDate} (14:00 - 16:00)"
         });
 
         var (res, _) = await sut.RespondToProposalAsync(
@@ -394,7 +398,7 @@ public class NegotiationChatUnitTests
         {
             ProposedPricePerKg = 7500m,
             ProposedWeightKg = 5.0m,
-            ProposedTimeSlot = "2026-11-12 (14:00 - 16:00)"
+            ProposedTimeSlot = $"{FutureSlotDate} (14:00 - 16:00)"
         });
 
         var act = () => sut.RespondToProposalAsync(
@@ -417,13 +421,13 @@ public class NegotiationChatUnitTests
         {
             ProposedPricePerKg = 7500m,
             ProposedWeightKg = 5.0m,
-            ProposedTimeSlot = "2026-11-12 (14:00 - 16:00)"
+            ProposedTimeSlot = $"{FutureSlotDate} (14:00 - 16:00)"
         });
         await sut.SendProposalAsync(order.Id, recyclerUser.Id, "Recycler", new SendProposalRequest
         {
             ProposedPricePerKg = 7200m,
             ProposedWeightKg = 5.0m,
-            ProposedTimeSlot = "2026-11-12 (15:00 - 17:00)"
+            ProposedTimeSlot = $"{FutureSlotDate} (15:00 - 17:00)"
         });
 
         var act = () => sut.RespondToProposalAsync(
@@ -446,7 +450,7 @@ public class NegotiationChatUnitTests
         {
             ProposedPricePerKg = 8000m,
             ProposedWeightKg = 5.0m,
-            ProposedTimeSlot = "2026-11-12 (14:00 - 16:00)"
+            ProposedTimeSlot = $"{FutureSlotDate} (14:00 - 16:00)"
         });
         await sut.RespondToProposalAsync(order.Id, proposalMsg.Id, recyclerUser.Id, "Recycler", new RespondProposalRequest { IsAccepted = false });
 
@@ -471,7 +475,7 @@ public class NegotiationChatUnitTests
 
         res.OrderStatus.Should().Be(OrderStatus.Accepted.ToString());
         res.AgreedPricePerKg.Should().Be(7000m);
-        res.ConfirmedTimeSlot.Should().Be("2026-11-12 (09:00 - 11:00)");
+        res.ConfirmedTimeSlot.Should().Be($"{FutureSlotDate} (09:00 - 11:00)");
         res.IsProposalLocked.Should().BeTrue();
         toast.Should().Be("Trạm Tái Chế Hòa Lạc đã chấp nhận đề nghị của bạn."); // MSG-NEG-03
     }
@@ -496,7 +500,7 @@ public class NegotiationChatUnitTests
         {
             ProposedPricePerKg = 7400m,
             ProposedWeightKg = 6.0m,
-            ProposedTimeSlot = "2026-11-12 (16:00 - 18:00)"
+            ProposedTimeSlot = $"{FutureSlotDate} (16:00 - 18:00)"
         });
 
         var (res, _) = await sut.AcceptOrderInitialTermsAsync(order.Id, recyclerUser.Id, "Recycler");
@@ -505,7 +509,7 @@ public class NegotiationChatUnitTests
         res.OrderStatus.Should().Be(OrderStatus.Accepted.ToString());
         res.AgreedPricePerKg.Should().Be(7400m);
         res.ConfirmedWeightKg.Should().Be(6.0m);
-        res.ConfirmedTimeSlot.Should().Be("2026-11-12 (16:00 - 18:00)");
+        res.ConfirmedTimeSlot.Should().Be($"{FutureSlotDate} (16:00 - 18:00)");
     }
 
     [Fact]
@@ -819,6 +823,134 @@ public class NegotiationChatUnitTests
         threadAfter.IsInquiryOnly.Should().BeFalse();
         threadAfter.AgreedPricePerKg.Should().BeNull();
         threadAfter.IsProposalLocked.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task UTC025_CreateTradeOrderAndUpdateTimeSlot_ValidatesTodayTo30DaysAndRejectsPastOrOver30Days()
+    {
+        var db = TestDbContextFactory.Create();
+        var citizen = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "citizen_slot_check",
+            Email = "citizen_slot@ecolink.vn",
+            FullName = "Nguyễn Văn Tùng",
+            Role = UserRole.Citizen,
+            Status = UserStatus.Active
+        };
+        var recyclerUser = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "collector_slot_check",
+            Email = "collector_slot@ecolink.vn",
+            FullName = "Vựa Thanh Xuân",
+            Role = UserRole.Recycler,
+            Status = UserStatus.Active
+        };
+        db.Users.AddRange(citizen, recyclerUser);
+        db.CollectionPartners.Add(new CollectionPartner
+        {
+            Id = recyclerUser.Id,
+            UserId = recyclerUser.Id,
+            FacilityName = "Vựa Thanh Xuân",
+            Address = "Thanh Xuân, Hà Nội",
+            Latitude = 21.0,
+            Longitude = 105.8,
+            OperatingHours = "08:00 - 19:00",
+            ContactPhone = "0988000111",
+            IsVerified = true
+        });
+        await db.SaveChangesAsync();
+
+        var tradeService = new TradeTransactionService(
+            NullLogger<TradeTransactionService>.Instance,
+            new GamificationService(NullLogger<GamificationService>.Instance),
+            db);
+
+        var todayLocal = (DateTime.UtcNow + TimeSpan.FromHours(7)).Date;
+        var yesterdayStr = todayLocal.AddDays(-1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+        var tooFarStr = todayLocal.AddDays(31).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+        var validDay30Str = todayLocal.AddDays(30).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+        var validDay15Str = todayLocal.AddDays(15).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+        // 1. Chặn tạo đơn với ngày hẹn trong quá khứ
+        var pastAct = () => tradeService.CreateTradeOrderAsync(new CreateTradeOrderRequest
+        {
+            UserId = citizen.Id,
+            PartnerId = recyclerUser.Id,
+            EstimatedWeightKg = 5m,
+            CategoryCode = "plastic",
+            ProposedTimeSlot = $"{yesterdayStr} (10:00 - 12:00)",
+            PickupAddress = "Cổng phụ Hòa Lạc"
+        });
+        (await pastAct.Should().ThrowAsync<BusinessRuleException>()).Which.RuleCode.Should().Be("BR-NEG-04");
+
+        // 2. Chặn tạo đơn vượt quá +30 ngày
+        var overAct = () => tradeService.CreateTradeOrderAsync(new CreateTradeOrderRequest
+        {
+            UserId = citizen.Id,
+            PartnerId = recyclerUser.Id,
+            EstimatedWeightKg = 5m,
+            CategoryCode = "plastic",
+            ProposedTimeSlot = $"{tooFarStr} (10:00 - 12:00)",
+            PickupAddress = "Cổng phụ Hòa Lạc"
+        });
+        (await overAct.Should().ThrowAsync<BusinessRuleException>()).Which.RuleCode.Should().Be("BR-NEG-04");
+
+        // 3. Chấp nhận ngày +30 và đồng bộ ScheduledAt
+        var created = await tradeService.CreateTradeOrderAsync(new CreateTradeOrderRequest
+        {
+            UserId = citizen.Id,
+            PartnerId = recyclerUser.Id,
+            EstimatedWeightKg = 5m,
+            CategoryCode = "plastic",
+            ProposedTimeSlot = $"{validDay30Str} (13:30 - 15:30)",
+            PickupAddress = "Cổng phụ Hòa Lạc"
+        });
+        (created.ScheduledAt + TimeSpan.FromHours(7)).Date.Should().Be(todayLocal.AddDays(30));
+
+        // 4. UpdateOrderTimeSlotAsync chặn quá khứ và đồng bộ ScheduledAt khi đổi sang ngày +15
+        var pastUpdateAct = () => tradeService.UpdateOrderTimeSlotAsync(created.Id, citizen.Id, $"{yesterdayStr} (10:00 - 12:00)");
+        (await pastUpdateAct.Should().ThrowAsync<BusinessRuleException>()).Which.RuleCode.Should().Be("BR-NEG-04");
+
+        var updated = await tradeService.UpdateOrderTimeSlotAsync(created.Id, citizen.Id, $"{validDay15Str} (15:30 - 17:30)");
+        (updated.ScheduledAt + TimeSpan.FromHours(7)).Date.Should().Be(todayLocal.AddDays(15));
+    }
+
+    [Fact]
+    public async Task UTC026_SendProposalAsync_RejectsPastOrOver30Days_AndAllowsDay30()
+    {
+        var (sut, db, citizen, _, _, order) = await CreateSeededChatSutAsync(OrderStatus.Negotiating);
+        var todayLocal = (DateTime.UtcNow + TimeSpan.FromHours(7)).Date;
+        var yesterdayStr = todayLocal.AddDays(-1).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+        var day31Str = todayLocal.AddDays(31).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+        var day30Str = todayLocal.AddDays(30).ToString("dd/MM/yyyy", CultureInfo.InvariantCulture);
+
+        var pastAct = () => sut.SendProposalAsync(order.Id, citizen.Id, "Citizen", new SendProposalRequest
+        {
+            ProposedPricePerKg = 7500m,
+            ProposedWeightKg = 5m,
+            ProposedTimeSlot = $"{yesterdayStr} (10:00 - 12:00)"
+        });
+        (await pastAct.Should().ThrowAsync<BusinessRuleException>()).Which.RuleCode.Should().Be("BR-NEG-04");
+
+        var tooFarAct = () => sut.SendProposalAsync(order.Id, citizen.Id, "Citizen", new SendProposalRequest
+        {
+            ProposedPricePerKg = 7500m,
+            ProposedWeightKg = 5m,
+            ProposedTimeSlot = $"{day31Str} (10:00 - 12:00)"
+        });
+        (await tooFarAct.Should().ThrowAsync<BusinessRuleException>()).Which.RuleCode.Should().Be("BR-NEG-04");
+
+        var (okMsg, _, _, _) = await sut.SendProposalAsync(order.Id, citizen.Id, "Citizen", new SendProposalRequest
+        {
+            ProposedPricePerKg = 7500m,
+            ProposedWeightKg = 5m,
+            ProposedTimeSlot = $"{day30Str} (13:30 - 15:30)"
+        });
+        okMsg.Proposal!.ProposedTimeSlot.Should().Be($"{day30Str} (13:30 - 15:30)");
+        var refreshedOrder = await db.TradeOrders.FirstAsync(o => o.Id == order.Id);
+        (refreshedOrder.ScheduledAt + TimeSpan.FromHours(7)).Date.Should().Be(todayLocal.AddDays(30));
     }
 }
 

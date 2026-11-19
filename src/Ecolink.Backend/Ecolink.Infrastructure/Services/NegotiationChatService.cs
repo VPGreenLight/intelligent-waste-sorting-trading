@@ -232,6 +232,18 @@ public class NegotiationChatService : INegotiationChatService
         }
 
         var normalizedTimeSlot = request.ProposedTimeSlot.Trim();
+        DateTime? parsedProposalScheduledUtc = null;
+        if (HandoverTradeSyncHelper.TryParseAppointmentSlotUtc(
+            normalizedTimeSlot,
+            context.Order.ScheduledAt,
+            out var parsedSlotUtc,
+            out var hasExplicitDate,
+            out var hasTime) && hasExplicitDate)
+        {
+            HandoverTradeSyncHelper.ValidateAppointmentWindowUtc(parsedSlotUtc, hasTime);
+            parsedProposalScheduledUtc = parsedSlotUtc;
+        }
+
         var normalizedCategoryCode = !string.IsNullOrWhiteSpace(request.CategoryCode)
             ? request.CategoryCode.Trim().ToLowerInvariant()
             : context.Order.CategoryCode;
@@ -247,6 +259,10 @@ public class NegotiationChatService : INegotiationChatService
         }
 
         context.Order.ProposedTimeSlot = normalizedTimeSlot;
+        if (parsedProposalScheduledUtc.HasValue)
+        {
+            context.Order.ScheduledAt = parsedProposalScheduledUtc.Value;
+        }
         context.Order.EstimatedWeightKg = request.ProposedWeightKg;
         if (!context.Order.InitialPricePerKg.HasValue || context.Order.InitialPricePerKg.Value <= 0m)
         {
@@ -391,6 +407,15 @@ public class NegotiationChatService : INegotiationChatService
             context.Order.ConfirmedTimeSlot = !string.IsNullOrWhiteSpace(proposalMessage.ProposedTimeSlot)
                 ? proposalMessage.ProposedTimeSlot
                 : context.Order.ProposedTimeSlot ?? context.Order.ScheduledAt.ToString("yyyy-MM-dd HH:mm");
+            if (HandoverTradeSyncHelper.TryParseAppointmentSlotUtc(
+                context.Order.ConfirmedTimeSlot,
+                context.Order.ScheduledAt,
+                out var confirmedUtc,
+                out var hasConfirmedDate,
+                out _) && hasConfirmedDate)
+            {
+                context.Order.ScheduledAt = confirmedUtc;
+            }
             context.Order.Status = OrderStatus.Accepted;
             context.Order.AcceptedAt = now;
             context.Order.UpdatedAt = now;

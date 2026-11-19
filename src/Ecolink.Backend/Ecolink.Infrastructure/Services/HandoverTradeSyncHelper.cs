@@ -16,6 +16,7 @@ namespace Ecolink.Infrastructure.Services;
 /// </summary>
 internal static class HandoverTradeSyncHelper
 {
+    public const int MaxAppointmentAheadDays = 30;
     private static readonly TimeSpan LocalOffset = TimeSpan.FromHours(7); // ICT (GMT+7)
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -74,15 +75,36 @@ internal static class HandoverTradeSyncHelper
 
     public static DateTime ParseSlotToUtc(string? slotText, DateTime fallbackUtc)
     {
+        TryParseAppointmentSlotUtc(slotText, fallbackUtc, out var utcResult, out _, out _);
+        return utcResult;
+    }
+
+    public static bool TryParseAppointmentSlotUtc(
+        string? slotText,
+        DateTime fallbackUtc,
+        out DateTime utcResult,
+        out bool hasExplicitDate,
+        out bool hasTime)
+    {
+        utcResult = DateTime.SpecifyKind(fallbackUtc, DateTimeKind.Utc);
+        hasExplicitDate = false;
+        hasTime = false;
+
         if (string.IsNullOrWhiteSpace(slotText))
-            return DateTime.SpecifyKind(fallbackUtc, DateTimeKind.Utc);
+            return false;
 
         var trimmed = slotText.Trim();
         if (DateTimeOffset.TryParse(trimmed, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dto))
-            return dto.UtcDateTime;
+        {
+            utcResult = dto.UtcDateTime;
+            hasExplicitDate = true;
+            hasTime = true;
+            return true;
+        }
 
         var fallbackLocal = DateTime.SpecifyKind(fallbackUtc, DateTimeKind.Utc) + LocalOffset;
         var datePart = fallbackLocal.Date;
+        var timeSearchStart = 0;
 
         // Kiểm tra xem chuỗi có chứa yyyy-MM-dd hoặc dd/MM/yyyy không
         var dateMatch = Regex.Match(trimmed, @"(?<y>\d{4})-(?<m>\d{2})-(?<d>\d{2})");
@@ -91,22 +113,36 @@ internal static class HandoverTradeSyncHelper
             int.TryParse(dateMatch.Groups["m"].Value, out var m) &&
             int.TryParse(dateMatch.Groups["d"].Value, out var d))
         {
-            try { datePart = new DateTime(y, m, d); } catch { /* ignore */ }
+            try
+            {
+                datePart = new DateTime(y, m, d);
+                hasExplicitDate = true;
+                timeSearchStart = dateMatch.Index + dateMatch.Length;
+            }
+            catch { /* ignore */ }
         }
         else
         {
-            var vnDateMatch = Regex.Match(trimmed, @"(?<d>\d{2})/(?<m>\d{2})/(?<y>\d{4})");
+            var vnDateMatch = Regex.Match(trimmed, @"(?<d>\d{1,2})/(?<m>\d{1,2})/(?<y>\d{4})");
             if (vnDateMatch.Success &&
                 int.TryParse(vnDateMatch.Groups["y"].Value, out var vy) &&
                 int.TryParse(vnDateMatch.Groups["m"].Value, out var vm) &&
                 int.TryParse(vnDateMatch.Groups["d"].Value, out var vd))
             {
-                try { datePart = new DateTime(vy, vm, vd); } catch { /* ignore */ }
+                try
+                {
+                    datePart = new DateTime(vy, vm, vd);
+                    hasExplicitDate = true;
+                    timeSearchStart = vnDateMatch.Index + vnDateMatch.Length;
+                }
+                catch { /* ignore */ }
             }
         }
 
         // Tìm giờ bắt đầu HH:mm (sau phần ngày nếu có)
-        var timeSearchText = dateMatch.Success ? trimmed[(dateMatch.Index + dateMatch.Length)..] : trimmed;
+        var timeSearchText = timeSearchStart > 0 && timeSearchStart < trimmed.Length
+            ? trimmed[timeSearchStart..]
+            : trimmed;
         var timeMatch = TimeRangeStartRegex.Match(timeSearchText);
         if (timeMatch.Success &&
             int.TryParse(timeMatch.Groups["hour"].Value, out var hour) &&
@@ -114,10 +150,45 @@ internal static class HandoverTradeSyncHelper
             hour is >= 0 and <= 23 && min is >= 0 and <= 59)
         {
             var localDt = new DateTime(datePart.Year, datePart.Month, datePart.Day, hour, min, 0, DateTimeKind.Unspecified);
-            return DateTime.SpecifyKind(localDt - LocalOffset, DateTimeKind.Utc);
+            utcResult = DateTime.SpecifyKind(localDt - LocalOffset, DateTimeKind.Utc);
+            hasTime = true;
+            return true;
         }
 
-        return DateTime.SpecifyKind(fallbackUtc, DateTimeKind.Utc);
+        if (hasExplicitDate)
+        {
+            var localDt = new DateTime(datePart.Year, datePart.Month, datePart.Day, 10, 0, 0, DateTimeKind.Unspecified);
+            utcResult = DateTime.SpecifyKind(localDt - LocalOffset, DateTimeKind.Utc);
+            return true;
+        }
+
+        return false;
+    }
+
+    public static void ValidateAppointmentWindowUtc(DateTime utcTime, bool checkTimeToo = true)
+    {
+        var nowUtc = DateTime.UtcNow;
+        var todayLocalDate = (nowUtc + LocalOffset).Date;
+        var targetUtc = utcTime.Kind == DateTimeKind.Utc
+            ? utcTime
+            : DateTime.SpecifyKind(utcTime, DateTimeKind.Utc);
+        var targetLocal = targetUtc + LocalOffset;
+
+        if (targetLocal.Date < todayLocalDate || (checkTimeToo && targetUtc < nowUtc.AddMinutes(-1)))
+        {
+            throw new Domain.Exceptions.BusinessRuleException(
+                "BR-NEG-04",
+                "MSG-GEN-01",
+                "Không thể chọn ngày hoặc khung giờ hẹn trong quá khứ.");
+        }
+
+        if (targetLocal.Date > todayLocalDate.AddDays(MaxAppointmentAheadDays))
+        {
+            throw new Domain.Exceptions.BusinessRuleException(
+                "BR-NEG-04",
+                "MSG-GEN-01",
+                $"Chỉ được chọn ngày hẹn từ hôm nay đến tối đa {MaxAppointmentAheadDays} ngày tới.");
+        }
     }
 
     /// <summary>

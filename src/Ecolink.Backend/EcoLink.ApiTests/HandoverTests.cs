@@ -291,11 +291,11 @@ public class HandoverTests
     }
 
     [Fact]
-    public async Task Create_SlotMoreThan7DaysAhead_Returns400()
+    public async Task Create_SlotMoreThan30DaysAhead_Returns400()
     {
         await Prepare();
         (await ApiJson.PostAsync(HandoverRoutes.Base,
-            await HandoverHelper.PayloadAsync(slot: DateTimeOffset.UtcNow.AddDays(9)), await Citizen())).ShouldFailWith(400);
+            await HandoverHelper.PayloadAsync(slot: DateTimeOffset.UtcNow.AddDays(31)), await Citizen())).ShouldFailWith(400);
     }
 
     [Fact]

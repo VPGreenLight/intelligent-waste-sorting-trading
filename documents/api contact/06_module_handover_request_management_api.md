@@ -44,7 +44,7 @@
    * Toàn bộ các loại phế liệu trong `items` phải không trùng lặp, nằm trong bảng giá đang hoạt động (`PriceStatus.Active`) của cơ sở thu gom đó, và có khối lượng ước tính `estimatedWeightKg >= minQuantityKg` (lớn hơn `0`, tối đa `2` chữ số thập phân).
    * Bắt buộc đính kèm từ **`1` đến `5` URL ảnh chụp phế liệu thực tế** (`photoUrls` hợp lệ chuẩn `http/https`).
 2. **Kiểm tra khung giờ hẹn thu gom & Lịch làm việc (`BR-NEG-04`):**
-   * Khung giờ đề xuất (`proposedTimeSlot`) phải cách thời điểm hiện tại tối thiểu **`2 giờ`** (`MinLeadHours = 2`) và không vượt quá **`7 ngày`** (`MaxAheadDays = 7`).
+   * Khung giờ đề xuất (`proposedTimeSlot`) phải cách thời điểm hiện tại tối thiểu **`2 giờ`** (`MinLeadHours = 2`, không nằm trong quá khứ) và không vượt quá **`30 ngày`** (`MaxAheadDays = 30`).
    * Nếu cơ sở thu gom đã thiết lập lịch hoạt động tuần (`WeeklyScheduleJson` tại Module 5 `R-02`), hệ thống tự động quy đổi `proposedTimeSlot` sang múi giờ Việt Nam (`ICT / GMT+7`) để kiểm tra: chặn đặt lịch vào ngày cơ sở nghỉ (`isClosed == true`) hoặc nằm ngoài khung giờ mở cửa (`openTime .. closeTime`).
 3. **Vòng đời trạng thái một chiều (`BR-HND-02`):**
    * Luồng trạng thái tiến triển một chiều: `Pending` $\rightarrow$ (`Negotiating`) $\rightarrow$ `Accepted` $\rightarrow$ `Scheduled` $\rightarrow$ `AwaitingConfirmation` $\rightarrow$ `Completed`.
@@ -84,7 +84,7 @@
 | `items[].estimatedWeightKg` | Body | `decimal` | **Có** | `> 0`, tối đa `2` số lẻ, `>= minQuantityKg` của cơ sở | Khối lượng ước tính (`kg`) của loại phế liệu đó. |
 | `items[].itemNote` | Body | `string?` | Không | Tối đa `200` ký tự | Ghi chú riêng cho dòng phế liệu (VD: `"Đã tháo nắp và ép dẹp"`). |
 | `photoUrls` | Body | `string[]` | **Có** | Từ `1` đến `5` URL (`http/https`, `<= 1000` ký tự/URL) | Danh sách URL ảnh chụp phế liệu thực tế đã tải lên Cloudflare R2. |
-| `proposedTimeSlot` | Body | `DateTimeOffset` | **Có** | `[UtcNow + 2h, UtcNow + 7d]`, trong giờ mở cửa của cơ sở | Thời điểm / khung giờ mong muốn cơ sở đến thu gom. |
+| `proposedTimeSlot` | Body | `DateTimeOffset` | **Có** | `[UtcNow + 2h, UtcNow + 30d]`, trong giờ mở cửa của cơ sở | Thời điểm / khung giờ mong muốn cơ sở đến thu gom. |
 | `pickupAddress` | Body | `string` | **Có** | Không rỗng, tối đa `500` ký tự | Địa chỉ thu gom thực tế của người dân. |
 | `latitude` | Body | `decimal?` | Không | `[-90, 90]` | Vĩ độ điểm thu gom (chỉ lưu nội bộ, không trả cho `Recycler`). |
 | `longitude` | Body | `decimal?` | Không | `[-180, 180]` | Kinh độ điểm thu gom (chỉ lưu nội bộ, không trả cho `Recycler`). |
