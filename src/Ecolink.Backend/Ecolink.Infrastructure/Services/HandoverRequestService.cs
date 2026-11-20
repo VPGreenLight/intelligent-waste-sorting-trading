@@ -141,12 +141,16 @@ public class HandoverRequestService : IHandoverRequestService
         return await ToDtoAsync(entity.Id, false, ct);
     }
 
+    public Task<HandoverPagedResult<HandoverRequestDto>> GetUserRequestsAsync(
+        Guid userId, string? status, int page, int pageSize, CancellationToken ct = default) =>
+        GetUserRequestsAsync(userId, status, page, pageSize, null, ct);
+
     public async Task<HandoverPagedResult<HandoverRequestDto>> GetUserRequestsAsync(
-        Guid userId, string? status, int page, int pageSize, CancellationToken ct = default)
+        Guid userId, string? status, int page, int pageSize, string? search, CancellationToken ct = default)
     {
         await SyncUnsyncedTradeOrdersForUserAsync(userId, isRecycler: false, ct);
         var query = _db.HandoverRequests.AsNoTracking().Where(h => h.UserId == userId);
-        return await PageAsync(query, status, page, pageSize, viewerIsRecycler: false, ct);
+        return await PageAsync(query, status, page, pageSize, viewerIsRecycler: false, search, ct);
     }
 
     public async Task<HandoverRequestDto> GetUserRequestAsync(Guid userId, Guid requestId, CancellationToken ct = default)
@@ -158,12 +162,16 @@ public class HandoverRequestService : IHandoverRequestService
     // ============================================================
     // Recycler
     // ============================================================
+    public Task<HandoverPagedResult<HandoverRequestDto>> GetRecyclerRequestsAsync(
+        Guid recyclerId, string? status, int page, int pageSize, CancellationToken ct = default) =>
+        GetRecyclerRequestsAsync(recyclerId, status, page, pageSize, null, ct);
+
     public async Task<HandoverPagedResult<HandoverRequestDto>> GetRecyclerRequestsAsync(
-        Guid recyclerId, string? status, int page, int pageSize, CancellationToken ct = default)
+        Guid recyclerId, string? status, int page, int pageSize, string? search, CancellationToken ct = default)
     {
         await SyncUnsyncedTradeOrdersForUserAsync(recyclerId, isRecycler: true, ct);
         var query = _db.HandoverRequests.AsNoTracking().Where(h => h.RecyclerId == recyclerId); // BR-HND-03
-        return await PageAsync(query, status, page, pageSize, viewerIsRecycler: true, ct);
+        return await PageAsync(query, status, page, pageSize, viewerIsRecycler: true, search, ct);
     }
 
     private static bool ShouldSyncTradeOrderIntoHandover(HandoverStatus? currentStatus, TradeOrder order)
@@ -516,13 +524,38 @@ public class HandoverRequestService : IHandoverRequestService
     private static bool Contains(HandoverStatus[] arr, HandoverStatus s) => arr.Contains(s);
 
     private async Task<HandoverPagedResult<HandoverRequestDto>> PageAsync(
-        IQueryable<HandoverRequest> query, string? status, int page, int pageSize, bool viewerIsRecycler, CancellationToken ct)
+        IQueryable<HandoverRequest> query, string? status, int page, int pageSize, bool viewerIsRecycler, string? search, CancellationToken ct)
     {
         if (!string.IsNullOrWhiteSpace(status))
         {
             if (!Enum.TryParse<HandoverStatus>(status, true, out var parsed) || !Enum.IsDefined(parsed))
                 throw new BusinessRuleException("BR-HND-02", "MSG-GEN-01", "Trạng thái lọc không hợp lệ.");
             query = query.Where(h => h.Status == parsed);
+        }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var kw = search.Trim();
+            if (_db.Database.IsRelational())
+            {
+                var p = GamErrors.Like(kw);
+                var matchedRecyclers = _db.RecyclerProfiles.Where(r => EF.Functions.ILike(r.FacilityName, p)).Select(r => r.UserId);
+                var matchedUsers = _db.Users.Where(u => EF.Functions.ILike(u.FullName, p)).Select(u => u.Id);
+                query = query.Where(h =>
+                    EF.Functions.ILike(h.RequestCode, p) ||
+                    EF.Functions.ILike(h.PickupAddress, p) ||
+                    matchedRecyclers.Contains(h.RecyclerId) ||
+                    matchedUsers.Contains(h.UserId));
+            }
+            else
+            {
+                var matchedRecyclers = _db.RecyclerProfiles.Where(r => r.FacilityName.Contains(kw, StringComparison.OrdinalIgnoreCase)).Select(r => r.UserId);
+                var matchedUsers = _db.Users.Where(u => u.FullName.Contains(kw, StringComparison.OrdinalIgnoreCase)).Select(u => u.Id);
+                query = query.Where(h =>
+                    h.RequestCode.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                    h.PickupAddress.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                    matchedRecyclers.Contains(h.RecyclerId) ||
+                    matchedUsers.Contains(h.UserId));
+            }
         }
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);

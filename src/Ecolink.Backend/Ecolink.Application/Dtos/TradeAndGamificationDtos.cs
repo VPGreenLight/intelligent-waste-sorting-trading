@@ -168,6 +168,7 @@ public class LeaderboardEntryDto
     public int Rank { get; set; }
     public Guid UserId { get; set; }
     public string FullName { get; set; } = string.Empty;
+    public string Role { get; set; } = "User";
     public string Area { get; set; } = string.Empty;
     public int TotalPoints { get; set; }
     public long PeriodPoints { get; set; }

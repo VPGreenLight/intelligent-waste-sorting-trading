@@ -4,7 +4,7 @@ namespace EcoLink.ApiTests;
 
 /// <summary>
 /// Test cho module Recycler Profile, Pricing &amp; Availability (UC R-01, R-02).
-/// Dùng tài khoản demo "collector" (đã Verified, đang Online) cho các luồng thành công và
+/// Dùng tài khoản demo "recycler" (đã Verified, đang Online) cho các luồng thành công và
 /// một Recycler mới đăng ký (Pending) cho các luồng bị chặn theo BR-MTH-01.
 /// Các test thay đổi dữ liệu của collector đều tự khôi phục về trạng thái nền trong khối finally.
 /// </summary>
@@ -81,7 +81,7 @@ public class RecyclerTests
 
     [Theory]
     [InlineData("citizen")]
-    [InlineData("collector")]
+    [InlineData("recycler")]
     [InlineData("admin")]
     public async Task Categories_WithAnyAuthenticatedRole_Returns200(string role)
     {

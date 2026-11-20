@@ -18,6 +18,8 @@ public class GiftService : IGiftService
 {
     private const string Rule = "BR-GAM-04";
     private const string CodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // bỏ ký tự dễ nhầm: 0 O 1 I
+    private static readonly SemaphoreSlim SeedImageLock = new(1, 1);
+    private static volatile bool _seededImagesChecked;
 
     private readonly ApplicationDbContext _db;
     private readonly IPointsService _points;
@@ -33,6 +35,7 @@ public class GiftService : IGiftService
     // ============================================================ Cửa hàng
     public async Task<List<GiftDto>> ListStoreAsync(string? type, string? sort, string? search, CancellationToken ct = default)
     {
+        await EnsureSeededGiftImagesAsync(ct);
         var q = _db.Gifts.AsNoTracking().Where(g => g.Status == "ACTIVE");
         if (!string.IsNullOrWhiteSpace(type)) { var t = ParseType(type); q = q.Where(g => g.Type == t); }
         if (!string.IsNullOrWhiteSpace(search))
@@ -170,6 +173,7 @@ public class GiftService : IGiftService
     // ============================================================ Staff (S-10)
     public async Task<GamPagedResult<GiftDto>> ListInventoryAsync(string? type, string? status, string? search, int page, int pageSize, CancellationToken ct = default)
     {
+        await EnsureSeededGiftImagesAsync(ct);
         var q = _db.Gifts.AsNoTracking().AsQueryable();
         if (!string.IsNullOrWhiteSpace(type)) { var t = ParseType(type); q = q.Where(g => g.Type == t); }
         if (!string.IsNullOrWhiteSpace(status)) { var st = ParseGiftStatus(status); q = q.Where(g => g.Status == st); }
@@ -557,6 +561,82 @@ public class GiftService : IGiftService
         var chars = new char[length];
         for (var i = 0; i < length; i++) chars[i] = CodeAlphabet[RandomNumberGenerator.GetInt32(CodeAlphabet.Length)];
         return new string(chars);
+    }
+
+    private async Task EnsureSeededGiftImagesAsync(CancellationToken ct)
+    {
+        if (_seededImagesChecked || !_db.Database.IsRelational()) return;
+
+        await SeedImageLock.WaitAsync(ct);
+        try
+        {
+            if (_seededImagesChecked) return;
+
+            var cutoff = DateTime.UtcNow.AddMinutes(-1);
+            var missing = await _db.Gifts
+                .Where(g => g.ImageUrl == null && g.CreatedAt < cutoff)
+                .OrderBy(g => g.CreatedAt)
+                .ThenBy(g => g.Id)
+                .ToListAsync(ct);
+
+            if (missing.Count > 0)
+            {
+                var physicalFallbacks = new[]
+                {
+                    "/assets/rewards/kit.jpg",
+                    "/assets/rewards/bag.jpg",
+                    "/assets/rewards/glasses.jpg",
+                    "/assets/rewards/compactor.jpg",
+                    "/assets/rewards/seedling.jpg",
+                    "/assets/rewards/grand-cookware.jpg"
+                };
+                var idx = 0;
+
+                foreach (var g in missing)
+                {
+                    g.ImageUrl = ResolveDefaultAssetUrl(g.Name, g.Type, physicalFallbacks, ref idx);
+                    g.UpdatedAt = DateTime.UtcNow;
+                }
+                await _db.SaveChangesAsync(ct);
+            }
+
+            _seededImagesChecked = true;
+        }
+        catch
+        {
+            // Bỏ qua nếu bảng chưa sẵn sàng để không chặn thao tác đọc danh sách
+        }
+        finally
+        {
+            SeedImageLock.Release();
+        }
+    }
+
+    private static string ResolveDefaultAssetUrl(string name, GiftType type, string[] physicalFallbacks, ref int idx)
+    {
+        var lower = (name ?? string.Empty).Trim().ToLowerInvariant();
+        if (lower.Contains("voucher") || lower.Contains("10%") || lower.Contains("giảm") || type == GiftType.Voucher)
+            return "/assets/rewards/coupon10.jpg";
+        if (lower.Contains("kit") || lower.Contains("ươm"))
+            return "/assets/rewards/kit.jpg";
+        if (lower.Contains("túi") || lower.Contains("canvas"))
+            return "/assets/rewards/bag.jpg";
+        if (lower.Contains("hạt") || lower.Contains("cây"))
+            return "/assets/rewards/seedling.jpg";
+        if (lower.Contains("ly") || lower.Contains("bình") || lower.Contains("cốc") || lower.Contains("thuỷ") || lower.Contains("thủy"))
+            return "/assets/rewards/glasses.jpg";
+        if (lower.Contains("nén") || lower.Contains("ép") || lower.Contains("thùng"))
+            return "/assets/rewards/compactor.jpg";
+        if (lower.Contains("nồi") || lower.Contains("bếp"))
+            return "/assets/rewards/grand-cookware.jpg";
+        if (lower.Contains("xe"))
+            return "/assets/rewards/grand-scooter.jpg";
+        if (lower.Contains("du lịch") || lower.Contains("chuyến"))
+            return "/assets/rewards/grand-trip.jpg";
+
+        var url = physicalFallbacks[idx % physicalFallbacks.Length];
+        idx++;
+        return url;
     }
 
     private static GiftDto ToDto(Gift g) => new()

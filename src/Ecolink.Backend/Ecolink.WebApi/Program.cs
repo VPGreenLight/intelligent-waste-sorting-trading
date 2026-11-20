@@ -121,7 +121,7 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Hệ thống Phân loại rác thông minh kết hợp Giao dịch thu gom & Đổi thưởng phế liệu EcoLink.\n\n" +
                       "- **Tài khoản Demo có sẵn:**\n" +
                       "  - Người dân: `citizen` / `citizen123`\n" +
-                      "  - Cơ sở thu gom: `collector` / `collector123`\n" +
+                      "  - Cơ sở thu gom (Recycler): `recycler` / `recycler123`\n" +
                       "  - Nhân viên vận hành: `staff` / `staff123`\n" +
                       "  - Quản trị viên: `admin` / `admin123`\n" +
                       "- **Hướng dẫn xác thực:** Đăng nhập tại `POST /api/v1/auth/login`, copy trường `token`, bấm nút **Authorize** ở góc trên bên phải, nhập `Bearer <token>` rồi bấm Authorize."

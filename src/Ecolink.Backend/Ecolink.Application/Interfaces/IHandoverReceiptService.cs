@@ -9,13 +9,17 @@ public interface IHandoverReceiptService
     Task<ReceiptDto> PreviewAsync(Guid recyclerId, Guid requestId, CreateReceiptRequest request, CancellationToken ct = default);
     Task<ReceiptDto> CreateAsync(Guid recyclerId, Guid requestId, CreateReceiptRequest request, CancellationToken ct = default);
     Task<ReceiptDto> GetForRecyclerAsync(Guid recyclerId, Guid requestId, CancellationToken ct = default);
-    Task<TransactionHistoryDto> GetRecyclerHistoryAsync(Guid recyclerId, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default);
+    Task<TransactionHistoryDto> GetRecyclerHistoryAsync(Guid recyclerId, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default) =>
+        GetRecyclerHistoryAsync(recyclerId, from, to, page, pageSize, null, ct);
+    Task<TransactionHistoryDto> GetRecyclerHistoryAsync(Guid recyclerId, DateTime? from, DateTime? to, int page, int pageSize, string? search, CancellationToken ct = default);
 
     // Người dân
     Task<ReceiptDto> GetForUserAsync(Guid userId, Guid requestId, CancellationToken ct = default);
     Task<ReceiptDto> ConfirmAsync(Guid userId, Guid requestId, CancellationToken ct = default);
     Task<ReceiptDto> DisputeAsync(Guid userId, Guid requestId, DisputeReceiptRequest request, CancellationToken ct = default);
-    Task<TransactionHistoryDto> GetUserHistoryAsync(Guid userId, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default);
+    Task<TransactionHistoryDto> GetUserHistoryAsync(Guid userId, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default) =>
+        GetUserHistoryAsync(userId, from, to, page, pageSize, null, ct);
+    Task<TransactionHistoryDto> GetUserHistoryAsync(Guid userId, DateTime? from, DateTime? to, int page, int pageSize, string? search, CancellationToken ct = default);
 
     // JOB-01
     Task<int> AutoCompleteExpiredAsync(TimeSpan timeout, CancellationToken ct = default);

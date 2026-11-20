@@ -14,21 +14,59 @@ namespace Ecolink.WebApi.Controllers;
 [Produces("application/json")]
 public class StaffGamificationController : ControllerBase
 {
+    private const long MaxGiftImageBytes = 5 * 1024 * 1024;
+    private static readonly string[] AllowedGiftImageExtensions = { ".jpg", ".jpeg", ".png", ".webp" };
+
     private readonly IGiftService _gifts;
     private readonly IEcoFactService _facts;
     private readonly ICurrentUserService _currentUser;
+    private readonly IFileStorageService? _fileStorage;
 
-    public StaffGamificationController(IGiftService gifts, IEcoFactService facts, ICurrentUserService currentUser)
+    public StaffGamificationController(
+        IGiftService gifts,
+        IEcoFactService facts,
+        ICurrentUserService currentUser,
+        IFileStorageService? fileStorage = null)
     {
         _gifts = gifts;
         _facts = facts;
         _currentUser = currentUser;
+        _fileStorage = fileStorage;
     }
 
     private Guid StaffId =>
         _currentUser.UserId ?? throw new UnauthorizedAccessException("Phiên đăng nhập không hợp lệ hoặc đã hết hạn.");
 
     // ---------------- Kho quà (S-10)
+    [HttpPost("api/v1/staff/gifts/upload-image")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(ApiResponse<RecyclerDocumentUploadResponseDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UploadGiftImage(IFormFile? file, CancellationToken ct = default)
+    {
+        if (file == null || file.Length == 0)
+            return BadRequest(ApiResponse<object>.Fail("Vui lòng chọn tệp ảnh quà tặng để tải lên.", "MSG-AUTH-02"));
+
+        if (file.Length > MaxGiftImageBytes)
+            return BadRequest(ApiResponse<object>.Fail("Dung lượng ảnh quà tặng tối đa 5 MB.", "MSG-CLS-02"));
+
+        var ext = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+        if (string.IsNullOrEmpty(ext) || !AllowedGiftImageExtensions.Contains(ext))
+            return BadRequest(ApiResponse<object>.Fail("Định dạng ảnh không được hỗ trợ (chỉ JPG, PNG, WEBP).", "MSG-CLS-01"));
+
+        if (_fileStorage == null)
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, ApiResponse<object>.Fail("Dịch vụ lưu trữ ảnh chưa được cấu hình."));
+
+        await using var stream = file.OpenReadStream();
+        var uploaded = await _fileStorage.UploadRecyclerDocumentAsync(
+            stream,
+            file.FileName,
+            file.ContentType,
+            "gamification-gifts",
+            ct);
+
+        return Ok(ApiResponse<RecyclerDocumentUploadResponseDto>.Ok(uploaded, "Đã tải ảnh quà tặng thành công."));
+    }
     [HttpGet("api/v1/staff/gifts")]
     [ProducesResponseType(typeof(ApiResponse<GamPagedResult<GiftDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Gifts([FromQuery] string? type, [FromQuery] string? status, [FromQuery] string? search,

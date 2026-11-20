@@ -124,8 +124,8 @@ public class OnboardingTests
         // 1. Không có JWT token -> 401 Unauthorized
         (await ApiJson.PostAsync(OnboardingRoutes.Base, payload)).ShouldBe(401);
 
-        // 2. Tài khoản Collector đã là Recycler được duyệt -> bị chặn bởi BR-MTH-01 (400 Bad Request, MSG-MTH-04)
-        var collectorToken = await Tokens.GetAsync("collector");
+        // 2. Tài khoản Recycler đã được duyệt -> bị chặn bởi BR-MTH-01 (400 Bad Request, MSG-MTH-04)
+        var collectorToken = await Tokens.GetAsync("recycler");
         (await ApiJson.PostAsync(OnboardingRoutes.Base, payload, collectorToken))
             .ShouldFailWith(400, "MSG-MTH-04");
     }

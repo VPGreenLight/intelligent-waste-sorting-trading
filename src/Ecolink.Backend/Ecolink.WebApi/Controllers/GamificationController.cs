@@ -56,9 +56,10 @@ public class GamificationController : ControllerBase
         [FromQuery] int top = 10,
         [FromQuery] string? period = null,
         [FromQuery] Guid? cycleId = null,
+        [FromQuery] string? role = null,
         CancellationToken ct = default)
     {
-        var board = await _leaderboardService.GetLeaderboardViewAsync(top, period, cycleId, _currentUser.UserId, ct);
+        var board = await _leaderboardService.GetLeaderboardViewAsync(top, period, cycleId, _currentUser.UserId, role, ct);
         return Ok(ApiResponse<LeaderboardViewDto>.Ok(board));
     }
 }

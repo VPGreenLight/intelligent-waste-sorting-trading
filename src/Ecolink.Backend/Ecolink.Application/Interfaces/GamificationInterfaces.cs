@@ -73,8 +73,11 @@ public interface IGiftService
 public interface IVirtualTreeService
 {
     Task<VirtualTreeDto> GetAsync(Guid userId, CancellationToken ct = default);
+    Task<VirtualTreeDto> CareAsync(Guid userId, string? actionType, CancellationToken ct = default);
     Task<WaterTreeResultDto> WaterAndUpgradeAsync(Guid userId, CancellationToken ct = default);
     Task<List<EcoFactDto>> ListUnlockedFactsAsync(Guid userId, CancellationToken ct = default);
+    Task<List<EcoFactDto>> ListUnlockedFactsAsync(Guid userId, bool includeLocked, CancellationToken ct = default) =>
+        ListUnlockedFactsAsync(userId, ct);
     Task<EcoFactDto> GetUnlockedFactAsync(Guid userId, Guid factId, CancellationToken ct = default);
 }
 
@@ -95,5 +98,7 @@ public interface ILeaderboardService
     Task<LeaderboardCycleDto> UpdateCycleAsync(Guid adminId, Guid cycleId, SaveLeaderboardCycleRequest request, CancellationToken ct = default);
     Task<LeaderboardCycleDto> ActivateCycleAsync(Guid adminId, Guid cycleId, CancellationToken ct = default);
     Task<LeaderboardCycleDto> FinalizeCycleAsync(Guid adminId, Guid cycleId, CancellationToken ct = default);
-    Task<LeaderboardViewDto> GetLeaderboardViewAsync(int top = 10, string? periodType = null, Guid? cycleId = null, Guid? viewerUserId = null, CancellationToken ct = default);
+    Task<LeaderboardViewDto> GetLeaderboardViewAsync(int top = 10, string? periodType = null, Guid? cycleId = null, Guid? viewerUserId = null, CancellationToken ct = default) =>
+        GetLeaderboardViewAsync(top, periodType, cycleId, viewerUserId, null, ct);
+    Task<LeaderboardViewDto> GetLeaderboardViewAsync(int top, string? periodType, Guid? cycleId, Guid? viewerUserId, string? role, CancellationToken ct = default);
 }

@@ -236,6 +236,7 @@ public class LeaderboardService : ILeaderboardService
                 Rank = entry.Rank,
                 UserId = entry.UserId,
                 FullName = entry.FullName,
+                Role = entry.Role,
                 Area = entry.Area,
                 Points = entry.TotalPoints,
                 BonusPointsAwarded = bonus
@@ -268,14 +269,32 @@ public class LeaderboardService : ILeaderboardService
         return ToCycleDto(cycle);
     }
 
-    public async Task<LeaderboardViewDto> GetLeaderboardViewAsync(
+    public Task<LeaderboardViewDto> GetLeaderboardViewAsync(
         int top = 10,
         string? periodType = null,
         Guid? cycleId = null,
         Guid? viewerUserId = null,
+        CancellationToken ct = default) =>
+        GetLeaderboardViewAsync(top, periodType, cycleId, viewerUserId, null, ct);
+
+    public async Task<LeaderboardViewDto> GetLeaderboardViewAsync(
+        int top,
+        string? periodType,
+        Guid? cycleId,
+        Guid? viewerUserId,
+        string? role,
         CancellationToken ct = default)
     {
         var cycle = await ResolveReferenceCycleAsync(periodType, cycleId, ct);
+        var recentFinalized = (await _db.LeaderboardCycles
+                .AsNoTracking()
+                .Where(c => c.Status == LeaderboardCycleStatus.Finalized)
+                .OrderByDescending(c => c.FinalizedAt ?? c.EndsAt)
+                .Take(3)
+                .ToListAsync(ct))
+            .Select(ToCycleDto)
+            .ToList();
+
         if (cycle != null && cycle.Status == LeaderboardCycleStatus.Finalized && !string.IsNullOrWhiteSpace(cycle.WinnersSnapshotJson))
         {
             var winners = ParseWinners(cycle.WinnersSnapshotJson);
@@ -286,6 +305,7 @@ public class LeaderboardService : ILeaderboardService
                     Rank = w.Rank > 0 ? w.Rank : idx + 1,
                     UserId = w.UserId,
                     FullName = w.FullName,
+                    Role = string.IsNullOrWhiteSpace(w.Role) ? "User" : w.Role,
                     Area = w.Area,
                     TotalPoints = (int)Math.Min(int.MaxValue, w.Points),
                     PeriodPoints = w.Points,
@@ -296,19 +316,21 @@ public class LeaderboardService : ILeaderboardService
                 {
                     ActiveCycle = ToCycleDto(cycle),
                     Items = snapshotItems,
-                    MyEntry = viewerUserId.HasValue ? snapshotItems.FirstOrDefault(x => x.UserId == viewerUserId.Value) : null
+                    MyEntry = viewerUserId.HasValue ? snapshotItems.FirstOrDefault(x => x.UserId == viewerUserId.Value) : null,
+                    RecentFinalizedCycles = recentFinalized
                 };
             }
         }
 
-        var allRanked = await ComputeRankedEntriesAsync(cycle, viewerUserId, ct);
+        var allRanked = await ComputeRankedEntriesAsync(cycle, viewerUserId, role, ct);
         var limit = Math.Clamp(top, 1, 100);
 
         return new LeaderboardViewDto
         {
             ActiveCycle = cycle != null ? ToCycleDto(cycle) : null,
             Items = allRanked.Take(limit).ToList(),
-            MyEntry = viewerUserId.HasValue ? allRanked.FirstOrDefault(x => x.UserId == viewerUserId.Value) : null
+            MyEntry = viewerUserId.HasValue ? allRanked.FirstOrDefault(x => x.UserId == viewerUserId.Value) : null,
+            RecentFinalizedCycles = recentFinalized
         };
     }
 
@@ -341,17 +363,46 @@ public class LeaderboardService : ILeaderboardService
     private async Task<List<LeaderboardEntryDto>> ComputeRankedEntriesAsync(
         LeaderboardCycle? cycle,
         Guid? viewerUserId,
+        CancellationToken ct,
+        string? roleFilter = null) =>
+        await ComputeRankedEntriesCoreAsync(cycle, viewerUserId, roleFilter, ct);
+
+    private async Task<List<LeaderboardEntryDto>> ComputeRankedEntriesAsync(
+        LeaderboardCycle? cycle,
+        Guid? viewerUserId,
+        string? roleFilter,
+        CancellationToken ct) =>
+        await ComputeRankedEntriesCoreAsync(cycle, viewerUserId, roleFilter, ct);
+
+    private async Task<List<LeaderboardEntryDto>> ComputeRankedEntriesCoreAsync(
+        LeaderboardCycle? cycle,
+        Guid? viewerUserId,
+        string? roleFilter,
         CancellationToken ct)
     {
-        var citizens = await _db.Users
+        var normalizedRole = (roleFilter ?? string.Empty).Trim().ToLowerInvariant();
+        var usersQuery = _db.Users
             .AsNoTracking()
-            .Where(u => u.Role == UserRole.User && u.Status == UserStatus.Active)
-            .Select(u => new { u.Id, u.FullName })
+            .Where(u => u.Status == UserStatus.Active && (u.Role == UserRole.User || u.Role == UserRole.Recycler));
+
+        if (normalizedRole is "user" or "citizen")
+            usersQuery = usersQuery.Where(u => u.Role == UserRole.User);
+        else if (normalizedRole is "recycler" or "collector")
+            usersQuery = usersQuery.Where(u => u.Role == UserRole.Recycler);
+
+        var participants = await usersQuery
+            .Select(u => new { u.Id, u.FullName, u.Role })
             .ToListAsync(ct);
 
-        if (citizens.Count == 0) return new List<LeaderboardEntryDto>();
+        if (participants.Count == 0) return new List<LeaderboardEntryDto>();
 
-        var userIds = citizens.Select(c => c.Id).ToList();
+        var userIds = participants.Select(c => c.Id).ToList();
+        var participantSet = userIds.ToHashSet();
+
+        var recyclerProfiles = await _db.RecyclerProfiles
+            .AsNoTracking()
+            .Where(p => userIds.Contains(p.UserId))
+            .ToDictionaryAsync(p => p.UserId, ct);
 
         var wallets = await _db.UserPointWallets
             .AsNoTracking()
@@ -370,8 +421,9 @@ public class LeaderboardService : ILeaderboardService
 
         var completedHandovers = await _db.HandoverRequests
             .AsNoTracking()
-            .Where(h => h.Status == HandoverStatus.Completed && userIds.Contains(h.UserId))
-            .Select(h => new { h.Id, h.UserId, h.PickupAddress, h.UpdatedAt })
+            .Where(h => h.Status == HandoverStatus.Completed &&
+                        (userIds.Contains(h.UserId) || (h.RecyclerId != Guid.Empty && userIds.Contains(h.RecyclerId))))
+            .Select(h => new { h.Id, h.UserId, h.RecyclerId, h.PickupAddress, h.UpdatedAt })
             .ToListAsync(ct);
 
         var handoverIds = completedHandovers.Select(h => h.Id).ToList();
@@ -387,15 +439,39 @@ public class LeaderboardService : ILeaderboardService
 
         var recycledByUser = new Dictionary<Guid, decimal>();
         var areaByUser = new Dictionary<Guid, string>();
-        foreach (var grp in completedHandovers.GroupBy(h => h.UserId))
+        var latestCitizenDate = new Dictionary<Guid, DateTime>();
+
+        foreach (var h in completedHandovers)
         {
-            recycledByUser[grp.Key] = grp.Sum(h => receiptsByRequest.GetValueOrDefault(h.Id, 0m));
-            var latestAddress = grp.OrderByDescending(h => h.UpdatedAt).Select(h => h.PickupAddress).FirstOrDefault();
-            var formatted = FormatArea(latestAddress);
-            if (!string.IsNullOrEmpty(formatted)) areaByUser[grp.Key] = formatted;
+            var kg = receiptsByRequest.GetValueOrDefault(h.Id, 0m);
+            if (participantSet.Contains(h.UserId))
+            {
+                recycledByUser[h.UserId] = recycledByUser.GetValueOrDefault(h.UserId, 0m) + kg;
+                if (!latestCitizenDate.TryGetValue(h.UserId, out var prevDate) || h.UpdatedAt > prevDate)
+                {
+                    var formatted = FormatArea(h.PickupAddress);
+                    if (!string.IsNullOrEmpty(formatted))
+                    {
+                        areaByUser[h.UserId] = formatted;
+                        latestCitizenDate[h.UserId] = h.UpdatedAt;
+                    }
+                }
+            }
+
+            if (participantSet.Contains(h.RecyclerId) && h.RecyclerId != h.UserId)
+            {
+                recycledByUser[h.RecyclerId] = recycledByUser.GetValueOrDefault(h.RecyclerId, 0m) + kg;
+            }
         }
 
-        // Fall back to any HandoverRequest address if user has no Completed order yet
+        foreach (var rp in recyclerProfiles.Values)
+        {
+            var formatted = FormatArea(rp.BusinessAddress);
+            if (!string.IsNullOrEmpty(formatted))
+                areaByUser[rp.UserId] = formatted;
+        }
+
+        // Fall back to any HandoverRequest address if Citizen has no Completed order yet
         var usersWithoutArea = userIds.Where(id => !areaByUser.ContainsKey(id)).ToList();
         if (usersWithoutArea.Count > 0)
         {
@@ -437,6 +513,7 @@ public class LeaderboardService : ILeaderboardService
         var candidates = new List<(
             Guid UserId,
             string FullName,
+            string Role,
             string Area,
             long Score,
             long LifetimeEarned,
@@ -445,11 +522,12 @@ public class LeaderboardService : ILeaderboardService
             int TreeLevel,
             decimal RecycledKg)>();
 
-        foreach (var c in citizens)
+        foreach (var c in participants)
         {
             wallets.TryGetValue(c.Id, out var wallet);
             trees.TryGetValue(c.Id, out var tree);
             ecoProfiles.TryGetValue(c.Id, out var eco);
+            recyclerProfiles.TryGetValue(c.Id, out var rp);
 
             var lifetimeEarned = Math.Max(wallet?.TotalEarned ?? 0L, (long)(eco?.TotalLifetimePoints ?? 0));
             var periodEarned = periodEarnedByUser.GetValueOrDefault(c.Id, 0L);
@@ -462,8 +540,22 @@ public class LeaderboardService : ILeaderboardService
             var level = Math.Max(tree?.TreeLevel ?? 1, eco?.TreeLevel ?? 1);
             var recycledKg = Math.Max(recycledByUser.GetValueOrDefault(c.Id, 0m), eco?.TotalRecycledKg ?? 0m);
             var area = areaByUser.GetValueOrDefault(c.Id, "Cộng đồng Xanh EcoLink");
+            var isRecycler = c.Role == UserRole.Recycler;
+            var displayName = isRecycler && rp != null && !string.IsNullOrWhiteSpace(rp.FacilityName)
+                ? rp.FacilityName
+                : c.FullName;
 
-            candidates.Add((c.Id, c.FullName, area, score, lifetimeEarned, hasPeriodActivity ? periodEarned : lifetimeEarned, spendable, level, recycledKg));
+            candidates.Add((
+                c.Id,
+                displayName,
+                isRecycler ? "Recycler" : "User",
+                area,
+                score,
+                lifetimeEarned,
+                hasPeriodActivity ? periodEarned : lifetimeEarned,
+                spendable,
+                level,
+                recycledKg));
         }
 
         var sorted = candidates
@@ -484,6 +576,7 @@ public class LeaderboardService : ILeaderboardService
                 Rank = i + 1,
                 UserId = cur.UserId,
                 FullName = cur.FullName,
+                Role = cur.Role,
                 Area = cur.Area,
                 TotalPoints = (int)Math.Min(int.MaxValue, cur.Score),
                 PeriodPoints = cur.PeriodEarned,

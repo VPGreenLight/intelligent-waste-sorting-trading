@@ -315,7 +315,7 @@ public class AuthController : ControllerBase
         var users = await _authService.GetAllDemoUsersAsync(ct);
         return Ok(new
         {
-            message = "Tài khoản mẫu để test nhanh: citizen / citizen123 | collector / collector123 | staff / staff123 | admin / admin123",
+            message = "Tài khoản mẫu để test nhanh: citizen / citizen123 | recycler / recycler123 | staff / staff123 | admin / admin123",
             accounts = users
         });
     }

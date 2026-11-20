@@ -183,6 +183,7 @@ public class EcoFactDto
     public string? SourceUrl { get; set; }
     public string? ImageUrl { get; set; }
     public int UnlockTreeLevel { get; set; }
+    public bool IsUnlocked { get; set; } = true;
     public string Status { get; set; } = string.Empty;
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
@@ -226,6 +227,11 @@ public class VirtualTreeDto
     public List<TreeLevelInfoDto> Levels { get; set; } = new();
     public int UnlockedFactCount { get; set; }
     public int TotalFactCount { get; set; }
+}
+
+public class CareTreeRequest
+{
+    public string? ActionType { get; set; }
 }
 
 public class WaterTreeResultDto
@@ -298,6 +304,7 @@ public class LeaderboardWinnerDto
     public int Rank { get; set; }
     public Guid UserId { get; set; }
     public string FullName { get; set; } = string.Empty;
+    public string Role { get; set; } = "User";
     public string Area { get; set; } = string.Empty;
     public long Points { get; set; }
     public long BonusPointsAwarded { get; set; }
@@ -338,4 +345,5 @@ public class LeaderboardViewDto
     public LeaderboardCycleDto? ActiveCycle { get; set; }
     public List<LeaderboardEntryDto> Items { get; set; } = new();
     public LeaderboardEntryDto? MyEntry { get; set; }
+    public List<LeaderboardCycleDto> RecentFinalizedCycles { get; set; } = new();
 }

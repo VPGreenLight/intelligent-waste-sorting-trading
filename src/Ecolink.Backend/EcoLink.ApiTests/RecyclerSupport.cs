@@ -59,7 +59,7 @@ public static class RecyclerHelper
         ["metal"] = (15000m, 1m, null),
     };
 
-    public static Task<string> CollectorToken() => Tokens.GetAsync("collector");
+    public static Task<string> CollectorToken() => Tokens.GetAsync("recycler");
 
     // ---------- Đọc response ----------
     public static JsonElement Data(this ApiResult r) => r.Body.GetProperty("data");

@@ -29,8 +29,8 @@
 3. **Đổi quà Nguyên tử (`BR-GAM-04`, `BR-GAM-05`):**
    * `GiftService.RedeemAsync` gộp trừ tồn kho có điều kiện (`status == 'ACTIVE' AND stock_quantity >= qty`), tạo `GiftRedemption`, và trừ ví điểm `TryDebitAsync` trong cùng `1` DB Transaction. Thất bại ở bước nào sẽ rollback toàn bộ bước còn lại.
 4. **Phân quyền Hạt mịn & Tách biệt Vai trò (`BR-GAM-07`, `BR-GAM-08`, `BR-ADM-02`):**
-   * **Cả `Citizen` (`User`) và `Recycler` (`Collector`):** được dùng ví điểm, đổi quà (`U-14`), điểm danh hằng ngày (`U-13`).
-   * **Chỉ `Citizen` (`User`):** được nuôi Cây Ảo (`U-15`), mở khóa Eco Fact và xếp hạng trên Bảng xếp hạng (`BR-GAM-07`, `BR-GAM-08`).
+   * **Cả `Citizen` (`User`) và `Recycler` (`Collector`):** được dùng ví điểm, đổi quà (`U-14`), điểm danh hằng ngày (`U-13`) và xếp hạng trên Bảng xếp hạng (`STT 077`, `BR-GAM-08`).
+   * **Chỉ `Citizen` (`User`):** được nuôi Cây Ảo (`U-15`) và mở khóa Eco Fact (`BR-GAM-08`).
    * **Staff quản trị kho quà & Eco Fact (`S-09`, `S-10`):** bắt buộc qua `[HasPermission(StaffPermissions.ManageInventory)]` (hoặc `Admin`).
 
 ### 1.2. Bảng Quy chiếu Nhanh `27` Endpoints (`STT 076` – `STT 102`) & Alias Route Tương thích
@@ -76,8 +76,8 @@
 * **Response `200 OK` (`EcoProfileDto`):** `userId`, `currentGreenPoints`, `totalLifetimePoints`, `treeLevel`, `treeStageTitle`, `treeExperience`, `experienceToNextLevel`, `totalWasteScanned`, `totalRecycledKg`, `currentStreak`, `co2SavedKg`.
 
 #### `[STT 077]` `GET /api/v1/gamification/leaderboard`
-* **Query Parameters:** `top` (`1..100`, mặc định `10`), `period` (`Weekly|Monthly|Quarterly`), `cycleId` (`Guid?`).
-* **Response `200 OK` (`LeaderboardViewDto`):** Gồm `activeCycle: LeaderboardCycleDto?`, `items: LeaderboardEntryDto[]` (chỉ xếp hạng tài khoản `Role = User`, điểm tính theo `TotalEarned` / điểm kiếm được trong chu kỳ, đổi quà không làm tụt hạng `BR-GAM-07`), và `myEntry: LeaderboardEntryDto?` nếu người dùng đã đăng nhập.
+* **Query Parameters:** `top` (`1..100`, mặc định `10`), `period` (`Weekly|Monthly|Quarterly`), `cycleId` (`Guid?`), `role` (`all|user|recycler`).
+* **Response `200 OK` (`LeaderboardViewDto`):** Gồm `activeCycle: LeaderboardCycleDto?`, `items: LeaderboardEntryDto[]` (xếp hạng cả `User` và `Recycler` đang `Active`, điểm tính theo `TotalEarned` / điểm kiếm được trong chu kỳ, đổi quà không làm tụt hạng `BR-GAM-07`), `myEntry: LeaderboardEntryDto?`, và `recentFinalizedCycles: LeaderboardCycleDto[]`.
 
 #### `[STT 078]` & `[STT 079]` `GET /api/v1/gamification/check-in/status` & `POST /api/v1/gamification/check-in`
 * **Logic Check-in:** Cộng `checkinBasePoints + min((streak - 1) * streakBonusIncrement, streakBonusCap)`, kẹp theo phần còn lại của `dailyNonTransactionCap` hôm nay ICT.

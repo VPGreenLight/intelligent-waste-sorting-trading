@@ -839,26 +839,42 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Đảm bảo luôn có các tài khoản Demo cho cả 4 vai trò (citizen, collector, staff, admin),
+    /// Đảm bảo luôn có các tài khoản Demo cho cả 4 vai trò (citizen, recycler, staff, admin),
     /// Danh mục phế liệu chuẩn và Bảng giá mẫu (BR-MTH-03) sẵn sàng trong PostgreSQL.
     /// </summary>
     private async Task EnsureDemoUsersAsync(CancellationToken ct)
     {
         var demoCitizenId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        var demoCollectorId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        var demoRecyclerId = Guid.Parse("22222222-2222-2222-2222-222222222222");
         var demoAdminId = Guid.Parse("33333333-3333-3333-3333-333333333333");
         var demoStaffId = Guid.Parse("88888888-8888-8888-8888-888888888888");
 
         var hasCitizen = await _dbContext.Users.IgnoreQueryFilters()
             .AnyAsync(u => u.Id == demoCitizenId || u.Username == "citizen", ct);
-        var hasCollector = await _dbContext.Users.IgnoreQueryFilters()
-            .AnyAsync(u => u.Id == demoCollectorId || u.Username == "collector", ct);
+        var existingDemoRecycler = await _dbContext.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == demoRecyclerId || u.Username == "recycler" || u.Username == "collector", ct);
+        var hasRecycler = existingDemoRecycler != null;
         var hasAdmin = await _dbContext.Users.IgnoreQueryFilters()
             .AnyAsync(u => u.Id == demoAdminId || u.Username == "admin", ct);
         var hasStaff = await _dbContext.Users.IgnoreQueryFilters()
             .AnyAsync(u => u.Id == demoStaffId || u.Username == "staff", ct);
 
-        if (!hasCitizen || !hasCollector || !hasAdmin || !hasStaff)
+        if (existingDemoRecycler != null &&
+            existingDemoRecycler.Id == demoRecyclerId &&
+            !string.Equals(existingDemoRecycler.Username, "recycler", StringComparison.OrdinalIgnoreCase))
+        {
+            var conflict = await _dbContext.Users.IgnoreQueryFilters()
+                .AnyAsync(u => u.Id != existingDemoRecycler.Id && (u.Username == "recycler" || u.Email == "recycler@ecolink.vn"), ct);
+            if (!conflict)
+            {
+                existingDemoRecycler.Username = "recycler";
+                existingDemoRecycler.Email = "recycler@ecolink.vn";
+                existingDemoRecycler.PasswordHash = BCrypt.Net.BCrypt.HashPassword("recycler123");
+                await _dbContext.SaveChangesAsync(ct);
+            }
+        }
+
+        if (!hasCitizen || !hasRecycler || !hasAdmin || !hasStaff)
         {
             if (!hasCitizen)
             {
@@ -884,21 +900,21 @@ public class AuthService : IAuthService
                 });
             }
 
-            if (!hasCollector)
+            if (!hasRecycler)
             {
                 _dbContext.Users.Add(new User
                 {
-                    Id = demoCollectorId,
-                    Username = "collector",
-                    Email = "collector@ecolink.vn",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("collector123"),
+                    Id = demoRecyclerId,
+                    Username = "recycler",
+                    Email = "recycler@ecolink.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("recycler123"),
                     FullName = "Trần Thu Gom (Vựa phế liệu EcoGreen)",
                     PhoneNumber = "0988776655",
                     Role = UserRole.Recycler,
                     Status = UserStatus.Active,
                     RecyclerProfile = new RecyclerProfile
                     {
-                        UserId = demoCollectorId,
+                        UserId = demoRecyclerId,
                         FacilityName = "Vựa phế liệu EcoGreen",
                         RepresentativeName = "Trần Thu Gom",
                         BusinessAddress = "123 Đường Nguyễn Hữu Cảnh, P. 22, Bình Thạnh, TP.HCM",
@@ -944,7 +960,7 @@ public class AuthService : IAuthService
             }
 
             await _dbContext.SaveChangesAsync(ct);
-            _logger.LogInformation("Đảm bảo đầy đủ tài khoản Demo (citizen, collector, staff, admin) trong PostgreSQL");
+            _logger.LogInformation("Đảm bảo đầy đủ tài khoản Demo (citizen, recycler, staff, admin) trong hệ thống.");
         }
 
         // Đảm bảo tài khoản demoStaff luôn có StaffProfile (NV-001) và bộ quyền chuẩn phục vụ vận hành (A-03, A-04)
@@ -1000,9 +1016,9 @@ public class AuthService : IAuthService
             await _dbContext.SaveChangesAsync(ct);
         }
 
-        // Đảm bảo tài khoản demoCollector (đang Online) luôn có bảng giá niêm yết hợp lệ theo BR-MTH-03
-        var hasCollectorPrices = await _dbContext.RecyclerPrices.AnyAsync(p => p.RecyclerId == demoCollectorId, ct);
-        if (!hasCollectorPrices && await _dbContext.RecyclerProfiles.AnyAsync(r => r.UserId == demoCollectorId, ct))
+        // Đảm bảo tài khoản demoRecycler (đang Online) luôn có bảng giá niêm yết hợp lệ theo BR-MTH-03
+        var hasRecyclerPrices = await _dbContext.RecyclerPrices.AnyAsync(p => p.RecyclerId == demoRecyclerId, ct);
+        if (!hasRecyclerPrices && await _dbContext.RecyclerProfiles.AnyAsync(r => r.UserId == demoRecyclerId, ct))
         {
             var categoriesByCode = await _dbContext.WasteCategories
                 .Where(c => c.IsRecyclable)
@@ -1022,7 +1038,7 @@ public class AuthService : IAuthService
                 {
                     _dbContext.RecyclerPrices.Add(new RecyclerPrice
                     {
-                        RecyclerId = demoCollectorId,
+                        RecyclerId = demoRecyclerId,
                         WasteCategoryId = cat.Id,
                         PricePerKg = price,
                         MinQuantityKg = minKg,

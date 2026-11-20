@@ -184,7 +184,7 @@ public class AuthServiceUnitTests
         var req = new RegisterRecyclerRequestDto
         {
             Username = "recycler_dup_06",
-            Email = "collector@ecolink.vn", // trùng email demo collector
+            Email = "recycler@ecolink.vn", // trùng email demo recycler
             Password = "Password@123",
             FullName = "Cơ Sở Trùng",
             FacilityName = "Cơ Sở Trùng",

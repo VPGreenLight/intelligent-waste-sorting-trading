@@ -30,7 +30,7 @@ public static class HandoverHelper
     public static Guid? RecyclerIdCache;
 
     public static Task<string> Citizen() => Tokens.GetAsync("citizen");
-    public static Task<string> Collector() => Tokens.GetAsync("collector");
+    public static Task<string> Collector() => Tokens.GetAsync("recycler");
 
     /// <summary>Id của Recycler demo = userId trong claim JWT (lấy từ /auth/me hoặc hồ sơ).</summary>
     public static async Task<Guid> RecyclerIdAsync()

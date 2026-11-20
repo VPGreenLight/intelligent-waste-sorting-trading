@@ -166,10 +166,17 @@ public class EcoFactService : IEcoFactService
         return v is "ACTIVE" or "INACTIVE" ? v : throw GamErrors.Rule(Rule, "MSG-AUTH-02", "Trạng thái phải là ACTIVE hoặc INACTIVE.");
     }
 
+    internal static string FormatCode(Guid id)
+    {
+        var hex = id.ToString("N").ToUpperInvariant();
+        var shortHex = hex.StartsWith("100000", StringComparison.Ordinal) ? hex[..2] + hex[^4..] : hex[..6];
+        return "EF-" + shortHex;
+    }
+
     internal static EcoFactDto ToDto(EcoFact f) => new()
     {
-        Id = f.Id, Code = "EF-" + f.Id.ToString("N")[..6].ToUpperInvariant(), Title = f.Title, Content = f.Content,
-        SourceUrl = f.SourceUrl, ImageUrl = f.ImageUrl, UnlockTreeLevel = f.UnlockTreeLevel, Status = f.Status,
-        CreatedAt = f.CreatedAt, UpdatedAt = f.UpdatedAt
+        Id = f.Id, Code = FormatCode(f.Id), Title = f.Title, Content = f.Content,
+        SourceUrl = f.SourceUrl, ImageUrl = f.ImageUrl, UnlockTreeLevel = f.UnlockTreeLevel,
+        IsUnlocked = true, Status = f.Status, CreatedAt = f.CreatedAt, UpdatedAt = f.UpdatedAt
     };
 }

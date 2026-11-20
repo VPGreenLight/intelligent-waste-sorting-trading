@@ -134,9 +134,9 @@ public class RecyclerTransactionController : ControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<TransactionHistoryDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetHistory([FromQuery] DateTime? from, [FromQuery] DateTime? to,
-        [FromQuery] int page = 1, [FromQuery] int pageSize = 20, CancellationToken ct = default)
+        [FromQuery] int page = 1, [FromQuery] int pageSize = 20, [FromQuery] string? search = null, CancellationToken ct = default)
     {
-        var data = await _service.GetRecyclerHistoryAsync(RecyclerId, from, to, page, pageSize, ct);
+        var data = await _service.GetRecyclerHistoryAsync(RecyclerId, from, to, page, pageSize, search, ct);
         return Ok(ApiResponse<TransactionHistoryDto>.Ok(data));
     }
 }

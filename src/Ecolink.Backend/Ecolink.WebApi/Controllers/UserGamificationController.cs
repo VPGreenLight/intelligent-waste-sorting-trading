@@ -3,6 +3,7 @@ using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Ecolink.WebApi.Controllers;
 
@@ -52,6 +53,19 @@ public class UserGamificationController : ControllerBase
     public async Task<IActionResult> Tree(CancellationToken ct) =>
         Ok(ApiResponse<VirtualTreeDto>.Ok(await _tree.GetAsync(UserId, ct)));
 
+    /// <summary>[STT 085b] Chăm sóc cây hàng ngày (Tưới nước / Bón phân) có lưu tiến trình và áp dụng giới hạn lượt/ngày.</summary>
+    [HttpPost("api/v1/gamification/tree/care")]
+    [HttpPost("api/v1/virtual-tree/care")]
+    [Authorize(Roles = "User,Citizen")]
+    [ProducesResponseType(typeof(ApiResponse<VirtualTreeDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Care(
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] CareTreeRequest? request = null,
+        CancellationToken ct = default)
+    {
+        var data = await _tree.CareAsync(UserId, request?.ActionType, ct);
+        return Ok(ApiResponse<VirtualTreeDto>.Ok(data, "Đã chăm sóc cây ảo thành công!", "MSG-GAM-06"));
+    }
+
     /// <summary>[STT 085] Tưới &amp; nâng cấp cây: trả điểm theo ngưỡng cấp kế tiếp, lên một cấp, trả về Eco Fact vừa mở khóa (MSG-GAM-06 / MSG-GAM-07).</summary>
     [HttpPost("api/v1/gamification/tree/upgrade")]
     [HttpPost("api/v1/virtual-tree/water")]
@@ -63,13 +77,13 @@ public class UserGamificationController : ControllerBase
         return Ok(ApiResponse<WaterTreeResultDto>.Ok(data, "Cây của bạn đã lên cấp mới!", "MSG-GAM-06"));
     }
 
-    /// <summary>[STT 086] Thư viện kiến thức: các Eco Fact đã mở khóa theo cấp cây hiện tại.</summary>
+    /// <summary>[STT 086] Thư viện kiến thức: các Eco Fact theo cấp cây hiện tại (tùy chọn includeLocked để xem lộ trình 6 cấp).</summary>
     [HttpGet("api/v1/gamification/eco-facts/me")]
     [HttpGet("api/v1/eco-facts")]
     [Authorize(Roles = "User,Citizen")]
     [ProducesResponseType(typeof(ApiResponse<List<EcoFactDto>>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> Facts(CancellationToken ct) =>
-        Ok(ApiResponse<List<EcoFactDto>>.Ok(await _tree.ListUnlockedFactsAsync(UserId, ct)));
+    public async Task<IActionResult> Facts([FromQuery] bool includeLocked = false, CancellationToken ct = default) =>
+        Ok(ApiResponse<List<EcoFactDto>>.Ok(await _tree.ListUnlockedFactsAsync(UserId, includeLocked, ct)));
 
     [HttpGet("api/v1/gamification/eco-facts/{id:guid}")]
     [HttpGet("api/v1/eco-facts/{id:guid}")]

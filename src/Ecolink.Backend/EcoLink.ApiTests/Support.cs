@@ -174,12 +174,13 @@ public static class Tokens
     public static readonly Dictionary<string, (string User, string Password)> Accounts = new()
     {
         ["citizen"] = ("citizen", "citizen123"),
-        ["collector"] = ("collector", "collector123"),
+        ["recycler"] = ("recycler", "recycler123"),
+        ["collector"] = ("recycler", "recycler123"),
         ["staff"] = ("staff", "staff123"),
         ["admin"] = ("admin", "admin123"),
     };
 
-    public static TheoryData<string> Roles => new() { "citizen", "collector", "admin" };
+    public static TheoryData<string> Roles => new() { "citizen", "recycler", "admin" };
 
     private static readonly ConcurrentDictionary<string, Lazy<Task<string>>> Cache = new();
 

@@ -201,7 +201,8 @@ public class GamificationAndBlogUnitTests
             new PointTransaction { WalletId = w1.Id, UserId = topInPeriod.Id, Points = 200, ActionType = PointActionType.HandoverReward, CreatedAt = DateTime.UtcNow.AddDays(-1) },
             new PointTransaction { WalletId = w1.Id, UserId = topInPeriod.Id, Points = -180, ActionType = PointActionType.RedeemGift, CreatedAt = DateTime.UtcNow.AddHours(-5) },
             new PointTransaction { WalletId = w2.Id, UserId = secondInPeriod.Id, Points = 80, ActionType = PointActionType.DailyCheckin, CreatedAt = DateTime.UtcNow.AddDays(-1) },
-            new PointTransaction { WalletId = w2.Id, UserId = secondInPeriod.Id, Points = 500, ActionType = PointActionType.LeaderboardBonus, CreatedAt = DateTime.UtcNow.AddDays(-1) }
+            new PointTransaction { WalletId = w2.Id, UserId = secondInPeriod.Id, Points = 500, ActionType = PointActionType.LeaderboardBonus, CreatedAt = DateTime.UtcNow.AddDays(-1) },
+            new PointTransaction { WalletId = wRec.Id, UserId = recycler.Id, Points = 150, ActionType = PointActionType.HandoverReward, CreatedAt = DateTime.UtcNow.AddDays(-1) }
         );
         db.HandoverRequests.Add(new HandoverRequest
         {
@@ -226,15 +227,23 @@ public class GamificationAndBlogUnitTests
         var suite = CreateSuite(db, Guid.NewGuid());
         var view = await suite.Leaderboard.GetLeaderboardViewAsync(10, "Weekly", null, secondInPeriod.Id);
 
-        view.Items.Should().HaveCount(2); // BR-GAM-07: Chỉ xếp hạng User (Citizen), không đưa Recycler vào bảng
+        view.Items.Should().HaveCount(3); // Bảng xếp hạng áp dụng cho cả Người dân (User) và Người thu gom (Recycler)
         view.Items[0].UserId.Should().Be(topInPeriod.Id);
+        view.Items[0].Role.Should().Be("User");
         view.Items[0].PeriodPoints.Should().Be(200);
         view.Items[0].SpendablePoints.Should().Be(20);
         view.Items[0].Area.Should().Be("Thạch Thất, Hà Nội");
-        view.Items[1].UserId.Should().Be(secondInPeriod.Id);
-        view.Items[1].PeriodPoints.Should().Be(80); // Không cộng dồn LeaderboardBonus kỳ trước vào điểm thi đua kỳ mới
-        view.Items[1].PointsNeededForNextRank.Should().Be(120);
-        view.MyEntry!.Rank.Should().Be(2);
+        view.Items[1].UserId.Should().Be(recycler.Id);
+        view.Items[1].Role.Should().Be("Recycler");
+        view.Items[1].PeriodPoints.Should().Be(150);
+        view.Items[2].UserId.Should().Be(secondInPeriod.Id);
+        view.Items[2].PeriodPoints.Should().Be(80); // Không cộng dồn LeaderboardBonus kỳ trước vào điểm thi đua kỳ mới
+        view.Items[2].PointsNeededForNextRank.Should().Be(70);
+        view.MyEntry!.Rank.Should().Be(3);
+
+        var citizensOnly = await suite.Leaderboard.GetLeaderboardViewAsync(10, "Weekly", null, secondInPeriod.Id, "user");
+        citizensOnly.Items.Should().HaveCount(2);
+        citizensOnly.Items.Should().OnlyContain(x => x.Role == "User");
     }
 
     [Fact]

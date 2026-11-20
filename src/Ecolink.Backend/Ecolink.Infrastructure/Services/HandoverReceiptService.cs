@@ -143,7 +143,10 @@ public class HandoverReceiptService : IHandoverReceiptService
     }
 
     public Task<TransactionHistoryDto> GetRecyclerHistoryAsync(Guid recyclerId, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default) =>
-        HistoryAsync(recyclerId, Viewer.Recycler, from, to, page, pageSize, ct);
+        GetRecyclerHistoryAsync(recyclerId, from, to, page, pageSize, null, ct);
+
+    public Task<TransactionHistoryDto> GetRecyclerHistoryAsync(Guid recyclerId, DateTime? from, DateTime? to, int page, int pageSize, string? search, CancellationToken ct = default) =>
+        HistoryAsync(recyclerId, Viewer.Recycler, from, to, page, pageSize, search, ct);
 
     // ============================================================
     // Người dân: U-09, U-12
@@ -270,7 +273,10 @@ public class HandoverReceiptService : IHandoverReceiptService
     }
 
     public Task<TransactionHistoryDto> GetUserHistoryAsync(Guid userId, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default) =>
-        HistoryAsync(userId, Viewer.User, from, to, page, pageSize, ct);
+        GetUserHistoryAsync(userId, from, to, page, pageSize, null, ct);
+
+    public Task<TransactionHistoryDto> GetUserHistoryAsync(Guid userId, DateTime? from, DateTime? to, int page, int pageSize, string? search, CancellationToken ct = default) =>
+        HistoryAsync(userId, Viewer.User, from, to, page, pageSize, search, ct);
 
     // ============================================================
     // JOB-01
@@ -612,7 +618,7 @@ public class HandoverReceiptService : IHandoverReceiptService
     // Lịch sử giao dịch (U-12)
     // ============================================================
     private async Task<TransactionHistoryDto> HistoryAsync(
-        Guid ownerId, Viewer viewer, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct)
+        Guid ownerId, Viewer viewer, DateTime? from, DateTime? to, int page, int pageSize, string? search, CancellationToken ct)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
@@ -632,6 +638,33 @@ public class HandoverReceiptService : IHandoverReceiptService
             // "to" chỉ có ngày (00:00) -> gồm cả ngày đó
             var t = ToUtc(to.Value.TimeOfDay == TimeSpan.Zero ? to.Value.AddDays(1) : to.Value);
             query = query.Where(r => r.ConfirmedByUserAt < t);
+        }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var kw = search.Trim();
+            if (_db.Database.IsRelational())
+            {
+                var p = GamErrors.Like(kw);
+                var matchedRequests = _db.HandoverRequests.Where(h => EF.Functions.ILike(h.RequestCode, p)).Select(h => h.Id);
+                var matchedRecyclers = _db.RecyclerProfiles.Where(rp => EF.Functions.ILike(rp.FacilityName, p)).Select(rp => rp.UserId);
+                var matchedUsers = _db.Users.Where(u => EF.Functions.ILike(u.FullName, p)).Select(u => u.Id);
+                query = query.Where(r =>
+                    EF.Functions.ILike(r.ReceiptCode, p) ||
+                    matchedRequests.Contains(r.RequestId) ||
+                    matchedRecyclers.Contains(r.RecyclerId) ||
+                    matchedUsers.Contains(r.UserId));
+            }
+            else
+            {
+                var matchedRequests = _db.HandoverRequests.Where(h => h.RequestCode.Contains(kw, StringComparison.OrdinalIgnoreCase)).Select(h => h.Id);
+                var matchedRecyclers = _db.RecyclerProfiles.Where(rp => rp.FacilityName.Contains(kw, StringComparison.OrdinalIgnoreCase)).Select(rp => rp.UserId);
+                var matchedUsers = _db.Users.Where(u => u.FullName.Contains(kw, StringComparison.OrdinalIgnoreCase)).Select(u => u.Id);
+                query = query.Where(r =>
+                    r.ReceiptCode.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                    matchedRequests.Contains(r.RequestId) ||
+                    matchedRecyclers.Contains(r.RecyclerId) ||
+                    matchedUsers.Contains(r.UserId));
+            }
         }
 
         var total = await query.CountAsync(ct);

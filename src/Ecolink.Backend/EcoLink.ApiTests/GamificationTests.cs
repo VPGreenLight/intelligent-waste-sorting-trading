@@ -51,7 +51,7 @@ public static class GamHelper
     public static Task<string> Staff() => StaffTokenLazy.Value;
     public static Task<string> Admin() => Tokens.GetAsync("admin");
     public static Task<string> Citizen() => Tokens.GetAsync("citizen");
-    public static Task<string> Collector() => Tokens.GetAsync("collector");
+    public static Task<string> Collector() => Tokens.GetAsync("recycler");
 
     /// <summary>Đăng ký một người dùng mới và đăng nhập: ví điểm / cây / điểm danh đều bắt đầu từ trạng thái sạch.</summary>
     public static async Task<string> FreshUserAsync()

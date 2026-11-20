@@ -33,6 +33,46 @@ public class VirtualTreeService : IVirtualTreeService
         return await BuildAsync(userId, settings, ct);
     }
 
+    public async Task<VirtualTreeDto> CareAsync(Guid userId, string? actionType, CancellationToken ct = default)
+    {
+        var settings = await _config.GetSettingsAsync(ct);
+        var today = GamTime.Today();
+        await EnsureTreeAsync(userId, ct);
+        var tree = await _db.VirtualTreeProgresses.AsNoTracking().FirstAsync(t => t.UserId == userId, ct);
+
+        var dailyCount = tree.LastWaterDate == today ? tree.DailyWaterCount : 0;
+        if (dailyCount >= settings.TreeLimit)
+            throw GamErrors.Rule(Rule, "MSG-GEN-01", $"Bạn đã chăm cây tối đa {settings.TreeLimit} lần trong ngày hôm nay.");
+
+        var now = DateTime.UtcNow;
+        if (_db.Database.IsRelational())
+        {
+            var changed = await _db.VirtualTreeProgresses
+                .Where(t => t.UserId == userId &&
+                            ((t.LastWaterDate == today && t.DailyWaterCount == dailyCount) || t.LastWaterDate != today))
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(t => t.TotalWatered, t => t.TotalWatered + 1)
+                    .SetProperty(t => t.DailyWaterCount, dailyCount + 1)
+                    .SetProperty(t => t.LastWaterDate, (DateOnly?)today)
+                    .SetProperty(t => t.LastWateredAt, (DateTime?)now)
+                    .SetProperty(t => t.UpdatedAt, now), ct);
+            if (changed == 0)
+                throw GamErrors.Rule(Rule, "MSG-GEN-01", "Cây vừa được cập nhật. Vui lòng thử lại.");
+        }
+        else
+        {
+            var tracked = await _db.VirtualTreeProgresses.FirstAsync(t => t.UserId == userId, ct);
+            tracked.TotalWatered += 1;
+            tracked.DailyWaterCount = dailyCount + 1;
+            tracked.LastWaterDate = today;
+            tracked.LastWateredAt = now;
+            tracked.UpdatedAt = now;
+            await _db.SaveChangesAsync(ct);
+        }
+
+        return await BuildAsync(userId, settings, ct);
+    }
+
     public async Task<WaterTreeResultDto> WaterAndUpgradeAsync(Guid userId, CancellationToken ct = default)
     {
         var settings = await _config.GetSettingsAsync(ct);
@@ -109,14 +149,29 @@ public class VirtualTreeService : IVirtualTreeService
         };
     }
 
-    public async Task<List<EcoFactDto>> ListUnlockedFactsAsync(Guid userId, CancellationToken ct = default)
+    public Task<List<EcoFactDto>> ListUnlockedFactsAsync(Guid userId, CancellationToken ct = default) =>
+        ListUnlockedFactsAsync(userId, includeLocked: false, ct);
+
+    public async Task<List<EcoFactDto>> ListUnlockedFactsAsync(Guid userId, bool includeLocked, CancellationToken ct = default)
     {
         await EnsureTreeAsync(userId, ct);
         var level = await _db.VirtualTreeProgresses.AsNoTracking().Where(t => t.UserId == userId).Select(t => t.TreeLevel).FirstAsync(ct);
-        var facts = await _db.EcoFacts.AsNoTracking()
-            .Where(f => f.Status == "ACTIVE" && f.UnlockTreeLevel <= level)
-            .OrderBy(f => f.UnlockTreeLevel).ThenBy(f => f.CreatedAt).ToListAsync(ct);
-        return facts.Select(EcoFactService.ToDto).ToList();
+        var q = _db.EcoFacts.AsNoTracking().Where(f => f.Status == "ACTIVE");
+        if (!includeLocked)
+            q = q.Where(f => f.UnlockTreeLevel <= level);
+
+        var facts = await q.OrderBy(f => f.UnlockTreeLevel).ThenBy(f => f.CreatedAt).ToListAsync(ct);
+        return facts.Select(f =>
+        {
+            var dto = EcoFactService.ToDto(f);
+            dto.IsUnlocked = f.UnlockTreeLevel <= level;
+            if (!dto.IsUnlocked)
+            {
+                dto.Content = $"Chăm sóc và nâng cấp Cây Ảo lên Cấp {f.UnlockTreeLevel} để mở khóa kiến thức này.";
+                dto.SourceUrl = null;
+            }
+            return dto;
+        }).ToList();
     }
 
     public async Task<EcoFactDto> GetUnlockedFactAsync(Guid userId, Guid factId, CancellationToken ct = default)

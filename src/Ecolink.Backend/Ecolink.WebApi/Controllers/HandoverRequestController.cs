@@ -39,9 +39,9 @@ public class HandoverRequestController : ControllerBase
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<HandoverPagedResult<HandoverRequestDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetMine([FromQuery] string? status, [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20, CancellationToken ct = default)
+        [FromQuery] int pageSize = 20, [FromQuery] string? search = null, CancellationToken ct = default)
     {
-        var data = await _service.GetUserRequestsAsync(UserId, status, page, pageSize, ct);
+        var data = await _service.GetUserRequestsAsync(UserId, status, page, pageSize, search, ct);
         return Ok(ApiResponse<HandoverPagedResult<HandoverRequestDto>>.Ok(data));
     }
 
