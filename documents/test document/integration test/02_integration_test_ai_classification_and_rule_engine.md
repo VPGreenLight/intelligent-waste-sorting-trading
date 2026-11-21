@@ -4,16 +4,16 @@
 
 | Feature | `AI Waste Classification & Rule Engine (M-02)` | | | |
 | :--- | :--- | :---: | :---: | :---: |
-| **Test requirement** | Kiểm thử tích hợp luồng Nhận diện & Phân loại rác thông minh bằng AI (`U-04`), kiểm tra danh sách mô hình AI khả dụng (`GET /models`), tra cứu tập luật phân loại rác của Rule Engine (`GET /rules`, `GET /waste-categories`), kiểm tra ngưỡng độ tự tin OOD (`BR-AI-02`), xử lý ảnh lỗi/sai định dạng (`BR-AI-01`) và gửi phản hồi hiệu chỉnh (`POST /feedback`) tích hợp giữa `WasteScanController` $\leftrightarrow$ `AiVisionHttpClient` $\leftrightarrow$ `FastAPI AI Service` $\leftrightarrow$ `WasteRuleEngineService` (`EcoLink.ApiTests/WasteScanTests.cs`). | | | |
-| **Number of TCs** | **15** | | | |
+| **Test requirement** | Kiểm thử tích hợp luồng Nhận diện & Phân loại rác thông minh bằng AI (`U-04`), kiểm tra danh sách mô hình AI khả dụng (`GET /models`), tra cứu tập luật phân loại rác của Rule Engine (`GET /rules`, `GET /waste-categories`), lịch sử quét cá nhân (`GET /history`), quản trị danh mục rác (`POST/PUT/PATCH /waste-categories`), xuất bản luật (`PUT/PATCH /rules`) đồng bộ AI Service và gửi phản hồi hiệu chỉnh (`POST /feedback`) (`EcoLink.ApiTests/WasteScanTests.cs`). | | | |
+| **Number of TCs** | **20** | | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
-| *Round 1* | 15 | 0 | 0 | 0 |
-| *Round 2* | 0 | 0 | 15 | 0 |
-| *Round 3* | 0 | 0 | 15 | 0 |
+| *Round 1* | 20 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 20 | 0 |
+| *Round 3* | 0 | 0 | 20 | 0 |
 
 ---
 
-## 2. Integration Test Case Specification (`ITC-AI-001` $\rightarrow$ `ITC-AI-015`)
+## 2. Integration Test Case Specification (`ITC-AI-001` $\rightarrow$ `ITC-AI-020`)
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
 | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
@@ -35,4 +35,10 @@
 | **ITC-AI-013** | Kiểm tra chặn phản hồi khi truyền sai kiểu dữ liệu `confidence`, JSON sai cú pháp hoặc thiếu body. | 1. Gửi `POST /api/v1/waste-scan/feedback` với `{"confidence":"not-a-number"}`.<br>2. Gửi tiếp với chuỗi JSON hỏng `"{not valid json"` hoặc body rỗng. | - Tất cả các trường hợp trả về HTTP Status `400 Bad Request` (hoặc `415`). | Hệ thống hoạt động bình thường. | Passed | Pending | Pending | N/A | `WasteScanTests.Feedback_WithWrongTypeForConfidence_Returns400` & `Feedback_WithMalformedJson_Returns400` |
 | **ITC-AI-014** | Kiểm tra luồng tích hợp End-to-End: Chụp ảnh quét rác (`POST /classify`) $\rightarrow$ Lấy nhãn dự đoán $\rightarrow$ Gửi phản hồi hiệu chỉnh (`POST /feedback`). | 1. Gửi ảnh PNG qua `POST /api/v1/waste-scan/classify` và trích xuất `predictedClass`, `confidence`.<br>2. Dùng chính kết quả đó gửi `POST /api/v1/waste-scan/feedback` với `actualClass="paper"`. | - Bước 1 trả về `200 OK` kèm nhãn dự đoán.<br>- Bước 2 trả về `200 OK`, hoàn tất chu trình khép kín Quét AI $\rightarrow$ Đóng góp dữ liệu. | `Ecolink.WebApi` và `FastAPI AI Service` đang hoạt động. | Passed | Pending | Pending | N/A | `WasteScanTests.ClassifyThenFeedback_EndToEndFlow` |
 | **ITC-AI-015** | Kiểm tra quyền truy cập Public (Guest) và khả năng chịu lỗi khi đính kèm JWT không hợp lệ trên cả 4 endpoints của Module 2. | 1. Lần lượt gọi `models`, `rules`, `classify`, `feedback` không đính kèm token.<br>2. Lần lượt gọi lại 4 endpoints với header `Authorization: Bearer invalid.token.here`. | - Không có token: truy cập thành công (`200 OK`).<br>- Token không hợp lệ: hệ thống xử lý an toàn, tuyệt đối không gây lỗi `500`. | Hệ thống hoạt động bình thường. | Passed | Pending | Pending | N/A | `WasteScanTests.Endpoint_WithoutToken_IsAccessible` |
+| **Function 2.4: Personal Scan History, Master Categories & Rule Engine Publish (`STT 025–031`)** | | | | | | | | | |
+| **ITC-AI-016** | Chặn truy cập ẩn danh khi xem lịch sử quét ảnh AI cá nhân (`GET /api/v1/waste-scan/history`). | 1. Gửi `GET /api/v1/waste-scan/history` không đính kèm JWT token. | HTTP `401 Unauthorized`. | Hệ thống đang chạy. | Passed | Pending | Pending | N/A | `WasteScanTests.History_Unauthenticated_Returns401` |
+| **ITC-AI-017** | Người dân đã đăng nhập xem lịch sử quét AI cá nhân kèm phân trang chuẩn (`BR-CLS-08`). | 1. Đăng nhập tài khoản `Citizen`.<br>2. Gửi `GET /api/v1/waste-scan/history`. | HTTP `200 OK`, `success = true`, `data.items` là mảng JSON. | Tài khoản `Citizen` hợp lệ. | Passed | Pending | Pending | N/A | `WasteScanTests.History_Citizen_ReturnsPagedEnvelope` |
+| **ITC-AI-018** | Người dùng ẩn danh tra cứu danh mục phế liệu chuẩn đang hoạt động (`GET /api/v1/waste-categories`). | 1. Gửi `GET /api/v1/waste-categories` không cần token. | HTTP `200 OK`, `data` chứa danh mục phế liệu đang `Active`. | Đã seed danh mục mặc định. | Passed | Pending | Pending | N/A | `WasteScanTests.Categories_Anonymous_ReturnsActiveRecyclables` |
+| **ITC-AI-019** | Ngăn người dùng không phải `Admin` tạo mới danh mục phế liệu (`POST /api/v1/waste-categories`). | 1. Gửi `POST /api/v1/waste-categories` bằng token `Citizen`. | HTTP `403 Forbidden`. | Tài khoản `Citizen` hợp lệ. | Passed | Pending | Pending | N/A | `WasteScanTests.Categories_CitizenCreate_Returns403` |
+| **ITC-AI-020** | Luồng quản trị khép kín `Admin`: Tạo danh mục (`201`) -> Sửa danh mục (`200`) -> Cấu hình Rule nháp (`PUT`) -> Phát hành Rule (`PATCH /publish`) -> Xóa mềm `Inactive` (`PATCH /status`). | 1. `Admin` gọi lần lượt `POST/PUT /waste-categories`, `PUT /waste-scan/rules/{catId}`, `PATCH /publish`, `PATCH /status`. | Toàn bộ bước trả `201`/`200`; Rule chuyển `DRAFT -> ACTIVE`; danh mục chuyển `Inactive` mà không xóa cứng (`BR-SRT-01..04`). | Đã đăng nhập tài khoản `Admin`. | Passed | Pending | Pending | N/A | `WasteScanTests.Admin_CategoryAndRuleEngineLifecycle_WorksEndToEnd` |
 

@@ -1,13 +1,16 @@
 using System.IO.Compression;
 using System.Net;
 using System.Text;
+using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
+using Ecolink.Application.Events;
 using Ecolink.Application.Interfaces;
 using Ecolink.Application.Validators;
 using Ecolink.Domain.Constants;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
 using Ecolink.Domain.Exceptions;
+using Ecolink.Infrastructure.Messaging;
 using Ecolink.Infrastructure.Services;
 using Ecolink.UnitTests.Common;
 using FluentAssertions;
@@ -15,6 +18,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 using Xunit;
 
 namespace Ecolink.UnitTests.Module15_Governance;
@@ -1009,5 +1013,198 @@ public class GovernanceModuleTests
         var checkOutValidator = new StaffCheckOutValidator();
         (await checkOutValidator.ValidateAsync(new StaffCheckOutRequest { ShiftNote = new string('e', 500) })).IsValid.Should().BeTrue();
         (await checkOutValidator.ValidateAsync(new StaffCheckOutRequest { ShiftNote = new string('e', 501) })).IsValid.Should().BeFalse();
+    }
+
+    // =========================================================================
+    // UTC023 [Normal] [SU-04]: Lấy danh sách thông báo cô lập UserId, đếm Unread & lọc IsRead/Type
+    // =========================================================================
+    [Fact]
+    public async Task UTC023_GetMyNotificationsAsync_FiltersByOwnerReadStatusAndType()
+    {
+        using var db = TestDbContextFactory.Create();
+        var userA = Guid.NewGuid();
+        var userB = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+
+        db.Notifications.AddRange(
+            new Notification { Id = Guid.NewGuid(), UserId = userA, Title = "N1", Message = "M1", NotificationType = "HANDOVER_ACCEPTED", IsRead = false, CreatedAt = now.AddMinutes(-5) },
+            new Notification { Id = Guid.NewGuid(), UserId = userA, Title = "N2", Message = "M2", NotificationType = "PAYMENT_SUCCESS", IsRead = false, CreatedAt = now.AddMinutes(-1) },
+            new Notification { Id = Guid.NewGuid(), UserId = userA, Title = "N3", Message = "M3", NotificationType = "PAYMENT_SUCCESS", IsRead = true, ReadAt = now, CreatedAt = now.AddMinutes(-10) },
+            new Notification { Id = Guid.NewGuid(), UserId = userB, Title = "Other", Message = "M4", NotificationType = "SYSTEM", IsRead = false, CreatedAt = now });
+        await db.SaveChangesAsync();
+
+        var svc = new NotificationService(db, NullLogger<NotificationService>.Instance);
+
+        var unreadPayments = await svc.GetMyNotificationsAsync(userA, new NotificationFilterRequest
+        {
+            IsRead = false,
+            NotificationType = "payment_success"
+        });
+
+        unreadPayments.UnreadCount.Should().Be(2); // tổng chưa đọc của userA là 2 (N1 + N2)
+        unreadPayments.TotalRecords.Should().Be(1); // lọc PAYMENT_SUCCESS & IsRead=false chỉ còn N2
+        unreadPayments.Items.Should().ContainSingle(i => i.Title == "N2");
+    }
+
+    // =========================================================================
+    // UTC024 [Normal] [SU-04]: Đánh dấu 1 thông báo đã đọc và đồng bộ UnreadCountUpdated qua SignalR Notifier
+    // =========================================================================
+    [Fact]
+    public async Task UTC024_MarkAsReadAsync_MarksNotificationReadAndPushesUpdatedUnreadCount()
+    {
+        using var db = TestDbContextFactory.Create();
+        var userId = Guid.NewGuid();
+        var n1 = new Notification { Id = Guid.NewGuid(), UserId = userId, Title = "T1", Message = "M1", IsRead = false };
+        var n2 = new Notification { Id = Guid.NewGuid(), UserId = userId, Title = "T2", Message = "M2", IsRead = false };
+        db.Notifications.AddRange(n1, n2);
+        await db.SaveChangesAsync();
+
+        var notifier = Substitute.For<INotificationRealtimeNotifier>();
+        var svc = new NotificationService(db, NullLogger<NotificationService>.Instance, notifier);
+
+        var res = await svc.MarkAsReadAsync(userId, n1.Id);
+
+        res.NotificationId.Should().Be(n1.Id);
+        res.IsRead.Should().BeTrue();
+        res.ReadAt.Should().NotBeNull();
+        res.UnreadCount.Should().Be(1);
+        await notifier.Received(1).PushUnreadCountAsync(userId, 1, Arg.Any<CancellationToken>());
+    }
+
+    // =========================================================================
+    // UTC025 [Abnormal] [SU-04]: Chống IDOR khi đọc thông báo người khác & trả 404 khi không tồn tại
+    // =========================================================================
+    [Fact]
+    public async Task UTC025_MarkAsReadAsync_OtherUserOrMissingId_ThrowsForbiddenOrNotFound()
+    {
+        using var db = TestDbContextFactory.Create();
+        var ownerId = Guid.NewGuid();
+        var intruderId = Guid.NewGuid();
+        var notif = new Notification { Id = Guid.NewGuid(), UserId = ownerId, Title = "Private", Message = "Secret", IsRead = false };
+        db.Notifications.Add(notif);
+        await db.SaveChangesAsync();
+
+        var svc = new NotificationService(db, NullLogger<NotificationService>.Instance);
+
+        var forbiddenEx = await FluentActions.Invoking(() => svc.MarkAsReadAsync(intruderId, notif.Id))
+            .Should().ThrowAsync<ForbiddenAccessException>();
+        forbiddenEx.Which.MessageCode.Should().Be("MSG-NTF-02");
+
+        await FluentActions.Invoking(() => svc.MarkAsReadAsync(ownerId, Guid.NewGuid()))
+            .Should().ThrowAsync<NotFoundException>();
+    }
+
+    // =========================================================================
+    // UTC026 [Normal] [SU-04]: Đánh dấu toàn bộ thông báo của tài khoản là đã xem
+    // =========================================================================
+    [Fact]
+    public async Task UTC026_MarkAllAsReadAsync_MarksOnlyCallerNotificationsAndResetsUnreadToZero()
+    {
+        using var db = TestDbContextFactory.Create();
+        var userA = Guid.NewGuid();
+        var userB = Guid.NewGuid();
+        db.Notifications.AddRange(
+            new Notification { Id = Guid.NewGuid(), UserId = userA, Title = "A1", Message = "M1", IsRead = false },
+            new Notification { Id = Guid.NewGuid(), UserId = userA, Title = "A2", Message = "M2", IsRead = false },
+            new Notification { Id = Guid.NewGuid(), UserId = userB, Title = "B1", Message = "M3", IsRead = false });
+        await db.SaveChangesAsync();
+
+        var notifier = Substitute.For<INotificationRealtimeNotifier>();
+        var svc = new NotificationService(db, NullLogger<NotificationService>.Instance, notifier);
+
+        var res = await svc.MarkAllAsReadAsync(userA);
+
+        res.MarkedCount.Should().Be(2);
+        res.UnreadCount.Should().Be(0);
+        (await db.Notifications.CountAsync(n => n.UserId == userA && !n.IsRead)).Should().Be(0);
+        (await db.Notifications.CountAsync(n => n.UserId == userB && !n.IsRead)).Should().Be(1);
+        await notifier.Received(1).PushUnreadCountAsync(userA, 0, Arg.Any<CancellationToken>());
+    }
+
+    // =========================================================================
+    // UTC027 [Normal] [SU-04, EI-07]: CreateAndPushAsync lưu DB bền vững & phát sự kiện ReceiveNotification
+    // =========================================================================
+    [Fact]
+    public async Task UTC027_CreateAndPushAsync_PersistsNotificationAndPushesViaSignalR()
+    {
+        using var db = TestDbContextFactory.Create();
+        var userId = Guid.NewGuid();
+        var notifier = Substitute.For<INotificationRealtimeNotifier>();
+        var svc = new NotificationService(db, NullLogger<NotificationService>.Instance, notifier);
+
+        var created = await svc.CreateAndPushAsync(
+            userId,
+            "Thanh toán thành công",
+            "Đơn hàng ECO20261120 (150,000 VNĐ) đã được kích hoạt.",
+            "payment_success",
+            "ServiceOrder",
+            Guid.NewGuid());
+
+        created.NotificationType.Should().Be("PAYMENT_SUCCESS");
+        created.IsRead.Should().BeFalse();
+        (await db.Notifications.CountAsync(n => n.UserId == userId)).Should().Be(1);
+        await notifier.Received(1).PushNotificationAsync(
+            userId,
+            Arg.Is<NotificationDto>(d => d.Id == created.Id),
+            1,
+            Arg.Any<CancellationToken>());
+    }
+
+    // =========================================================================
+    // UTC028 [Boundary] [BR-NTF-05]: Tự động che SĐT và Email trong thông báo nhưng giữ nguyên mã đơn/số tiền
+    // =========================================================================
+    [Fact]
+    public void UTC028_MaskSensitivePii_RedactsPhoneAndEmailWhilePreservingOrderCode()
+    {
+        const string raw = "Đơn ECO20261120 (150,000 VNĐ) của khách 0912345678 / citizen.user@ecolink.vn đã hoàn tất.";
+        var masked = NotificationService.MaskSensitivePii(raw);
+
+        masked.Should().NotContain("0912345678");
+        masked.Should().NotContain("citizen.user@ecolink.vn");
+        masked.Should().Contain("091***78");
+        masked.Should().Contain("c***@ecolink.vn");
+        masked.Should().Contain("ECO20261120");
+        masked.Should().Contain("150,000 VNĐ");
+    }
+
+    // =========================================================================
+    // UTC029 [Normal] [EI-07]: Channel EventBus đẩy sự kiện bất đồng bộ và khử trùng lặp EventId (Idempotency)
+    // =========================================================================
+    [Fact]
+    public async Task UTC029_InMemoryChannelEventBus_PublishesEventAndDeduplicatesRepeatedEventId()
+    {
+        var bus = new InMemoryChannelEventBus(NullLogger<InMemoryChannelEventBus>.Instance);
+        var evt = new SystemNotificationDispatchedEvent(
+            Guid.NewGuid(),
+            "Hồ sơ KYB đã duyệt",
+            "Chúc mừng cơ sở được kích hoạt.",
+            "KYB_VERIFICATION");
+
+        await bus.PublishAsync(evt);
+        bus.Reader.TryRead(out var consumed).Should().BeTrue();
+        consumed.Should().BeOfType<SystemNotificationDispatchedEvent>();
+
+        bus.TryMarkProcessed(evt.EventId).Should().BeTrue();
+        bus.TryMarkProcessed(evt.EventId).Should().BeFalse();
+    }
+
+    // =========================================================================
+    // UTC030 [Abnormal] [SU-04]: Cô lập lỗi SignalR Push để vẫn bảo toàn thông báo đã lưu DB
+    // =========================================================================
+    [Fact]
+    public async Task UTC030_CreateAndPushAsync_NotifierThrowsException_IsolatesFailureAndKeepsDbNotification()
+    {
+        using var db = TestDbContextFactory.Create();
+        var userId = Guid.NewGuid();
+        var notifier = Substitute.For<INotificationRealtimeNotifier>();
+        notifier.PushNotificationAsync(Arg.Any<Guid>(), Arg.Any<NotificationDto>(), Arg.Any<int>(), Arg.Any<CancellationToken>())
+            .Throws(new InvalidOperationException("SignalR transport disconnected"));
+
+        var svc = new NotificationService(db, NullLogger<NotificationService>.Instance, notifier);
+
+        var created = await svc.CreateAndPushAsync(userId, "Thông báo", "Nội dung an toàn", "SYSTEM");
+
+        created.Id.Should().NotBeEmpty();
+        (await db.Notifications.CountAsync(n => n.Id == created.Id)).Should().Be(1);
     }
 }

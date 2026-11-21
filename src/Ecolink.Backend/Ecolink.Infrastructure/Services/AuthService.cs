@@ -668,6 +668,16 @@ public class AuthService : IAuthService
         try
         {
             var principal = _tokenService.GetPrincipalFromExpiredToken(cleanToken);
+            var expClaim = principal?.FindFirst("exp")?.Value;
+            if (long.TryParse(expClaim, out var expUnix))
+            {
+                var expiresAtUtc = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
+                if (expiresAtUtc <= DateTime.UtcNow)
+                {
+                    return null;
+                }
+            }
+
             var userIdStr = principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value
                             ?? principal?.FindFirst("sub")?.Value;
 

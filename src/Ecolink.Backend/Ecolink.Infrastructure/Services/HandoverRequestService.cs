@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
+using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
+using Ecolink.Application.Events;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
@@ -41,11 +43,16 @@ public class HandoverRequestService : IHandoverRequestService
 
     private readonly ApplicationDbContext _db;
     private readonly ILogger<HandoverRequestService> _logger;
+    private readonly IEventBus? _eventBus;
 
-    public HandoverRequestService(ApplicationDbContext db, ILogger<HandoverRequestService> logger)
+    public HandoverRequestService(
+        ApplicationDbContext db,
+        ILogger<HandoverRequestService> logger,
+        IEventBus? eventBus = null)
     {
         _db = db;
         _logger = logger;
+        _eventBus = eventBus;
     }
 
     // ============================================================
@@ -91,6 +98,13 @@ public class HandoverRequestService : IHandoverRequestService
         await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(_db, entity.Id, userId, null, ct);
 
         _logger.LogInformation("Người dùng {UserId} tạo yêu cầu bàn giao {Code} tới {RecyclerId}.", userId, entity.RequestCode, recyclerId);
+        await PublishNotificationSafeAsync(
+            recyclerId,
+            "Yêu cầu thu gom mới",
+            $"Bạn nhận được yêu cầu bàn giao #{entity.RequestCode}. Vui lòng kiểm tra và phản hồi.",
+            "HANDOVER_REQUESTED",
+            entity.Id,
+            ct);
         return await ToDtoAsync(entity.Id, viewerIsRecycler: false, ct);
     }
 
@@ -137,6 +151,14 @@ public class HandoverRequestService : IHandoverRequestService
 
         await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(
             _db, entity.Id, userId, $"Người dân đã hủy yêu cầu bàn giao. Lý do: {entity.CancelReason}", ct);
+
+        await PublishNotificationSafeAsync(
+            entity.RecyclerId,
+            "Người dân đã hủy yêu cầu thu gom",
+            $"Yêu cầu bàn giao #{entity.RequestCode} đã bị người dân hủy.",
+            "HANDOVER_CANCELLED",
+            entity.Id,
+            ct);
 
         return await ToDtoAsync(entity.Id, false, ct);
     }
@@ -283,6 +305,14 @@ public class HandoverRequestService : IHandoverRequestService
             $"Cơ sở thu gom đã chấp nhận yêu cầu bàn giao. Khung giờ chốt: {HandoverTradeSyncHelper.FormatSlotText(entity.ConfirmedTimeSlot.Value)}.",
             ct);
 
+        await PublishNotificationSafeAsync(
+            entity.UserId,
+            "Yêu cầu thu gom đã được chấp nhận",
+            $"Cơ sở thu gom đã chấp nhận yêu cầu #{entity.RequestCode}.",
+            "HANDOVER_ACCEPTED",
+            entity.Id,
+            ct);
+
         return await ToDtoAsync(entity.Id, true, ct);
     }
 
@@ -302,6 +332,14 @@ public class HandoverRequestService : IHandoverRequestService
         await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(
             _db, entity.Id, recyclerId, $"Cơ sở thu gom đã từ chối yêu cầu bàn giao. Lý do: {entity.CancelReason}", ct);
 
+        await PublishNotificationSafeAsync(
+            entity.UserId,
+            "Yêu cầu thu gom bị từ chối",
+            $"Cơ sở thu gom đã từ chối yêu cầu #{entity.RequestCode}. Lý do: {entity.CancelReason}",
+            "HANDOVER_REJECTED",
+            entity.Id,
+            ct);
+
         return await ToDtoAsync(entity.Id, true, ct);
     }
 
@@ -314,7 +352,36 @@ public class HandoverRequestService : IHandoverRequestService
         await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(
             _db, entity.Id, recyclerId, $"Cơ sở thu gom đã hủy lịch hẹn. Lý do: {entity.CancelReason}", ct);
 
+        await PublishNotificationSafeAsync(
+            entity.UserId,
+            "Cơ sở thu gom đã hủy lịch hẹn",
+            $"Lịch hẹn cho yêu cầu #{entity.RequestCode} đã bị cơ sở thu gom hủy.",
+            "HANDOVER_CANCELLED",
+            entity.Id,
+            ct);
+
         return await ToDtoAsync(entity.Id, true, ct);
+    }
+
+    private ValueTask PublishNotificationSafeAsync(
+        Guid recipientUserId,
+        string title,
+        string message,
+        string notificationType,
+        Guid referenceId,
+        CancellationToken ct)
+    {
+        if (_eventBus == null || recipientUserId == Guid.Empty) return ValueTask.CompletedTask;
+
+        return _eventBus.PublishAsync(
+            new SystemNotificationDispatchedEvent(
+                recipientUserId,
+                title,
+                message,
+                notificationType,
+                "HandoverRequest",
+                referenceId),
+            ct);
     }
 
     // ============================================================

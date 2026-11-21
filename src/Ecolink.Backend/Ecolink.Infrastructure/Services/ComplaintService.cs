@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
+using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
+using Ecolink.Application.Events;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
@@ -27,6 +29,7 @@ public class ComplaintService : IComplaintService
     private readonly IReviewService _reviewService;
     private readonly ILogger<ComplaintService> _logger;
     private readonly IPointsService? _pointsService;
+    private readonly IEventBus? _eventBus;
 
     public ComplaintService(
         ApplicationDbContext db,
@@ -34,7 +37,8 @@ public class ComplaintService : IComplaintService
         IAuditLogService auditLogService,
         IReviewService reviewService,
         ILogger<ComplaintService> logger,
-        IPointsService? pointsService = null)
+        IPointsService? pointsService = null,
+        IEventBus? eventBus = null)
     {
         _db = db;
         _fileStorage = fileStorage;
@@ -42,6 +46,7 @@ public class ComplaintService : IComplaintService
         _reviewService = reviewService;
         _logger = logger;
         _pointsService = pointsService;
+        _eventBus = eventBus;
     }
 
     public Task<RecyclerDocumentUploadResponseDto> UploadEvidenceAsync(
@@ -609,6 +614,24 @@ public class ComplaintService : IComplaintService
         _logger.LogInformation(
             "Staff {StaffId} đã giải quyết khiếu nại {Code} với phán quyết {Outcome} (PointsRevoked={Revoked}, Warning={Warn}).",
             staffUserId, complaint.ComplaintCode, outcome, pointsRevoked, warningLogged);
+
+        if (_eventBus != null)
+        {
+            var title = "Đã có phán quyết khiếu nại giao dịch";
+            var msg = $"Khiếu nại #{complaint.ComplaintCode} đã được giải quyết với kết quả: {outcome}.";
+            if (complaint.ComplainantId != Guid.Empty)
+            {
+                await _eventBus.PublishAsync(
+                    new SystemNotificationDispatchedEvent(complaint.ComplainantId, title, msg, "COMPLAINT_RESOLVED", "TransactionComplaint", complaint.Id),
+                    ct);
+            }
+            if (complaint.RespondentId != Guid.Empty && complaint.RespondentId != complaint.ComplainantId)
+            {
+                await _eventBus.PublishAsync(
+                    new SystemNotificationDispatchedEvent(complaint.RespondentId, title, msg, "COMPLAINT_RESOLVED", "TransactionComplaint", complaint.Id),
+                    ct);
+            }
+        }
 
         return await LoadComplaintDetailAsync(complaint.Id, ct);
     }

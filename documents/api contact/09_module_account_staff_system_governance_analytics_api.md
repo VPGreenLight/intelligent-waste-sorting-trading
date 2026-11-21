@@ -193,16 +193,40 @@
 
 ---
 
+### Nhóm 5: Thông báo Hệ thống & Kênh Realtime SignalR (`NotificationsController` & `NotificationHub` – `SU-04`, `EI-07`, `STT 169–172`)
+
+#### 2.14. Danh sách Thông báo Hệ thống (`GET /api/v1/notifications` – `STT 169`)
+* **Phân quyền:** `[Authorize]` (mọi tài khoản đã đăng nhập; cô lập dữ liệu theo `UserId`).
+* **Query Parameters (`NotificationFilterRequest`):** `isRead?` (`true`/`false`), `notificationType?` (VD: `KYB_VERIFICATION`, `HANDOVER_ACCEPTED`, `RECEIPT_ISSUED`, `COMPLAINT_RESOLVED`, `PAYMENT_SUCCESS`, `AI_FEEDBACK_REVIEWED`), `pageNumber` (mặc định `1`), `pageSize` (mặc định `20`, tối đa `50`).
+* **Response (`200 OK` – `MSG-NTF-LIST-OK`):** Trả về `NotificationListResponseDto` kế thừa `PagedResult<NotificationDto>` kèm trường `unreadCount` toàn cục của người dùng hiện tại.
+
+#### 2.15. Đánh dấu Đã đọc (`PATCH /api/v1/notifications/{notificationId:guid}/read` & `PUT /api/v1/notifications/read-all` – `STT 170, 171`)
+* **`PATCH /api/v1/notifications/{notificationId:guid}/read`:** Kiểm tra quyền sở hữu (`403 Forbidden` – `MSG-NTF-02` nếu không phải chủ thông báo; `404 Not Found` nếu không tồn tại), cập nhật `isRead = true`, `readAt = UtcNow`, và phát sự kiện SignalR `UnreadCountUpdated`. Trả về `MarkNotificationReadResultDto` (`MSG-NTF-READ-OK`).
+* **`PUT /api/v1/notifications/read-all`:** Đánh dấu toàn bộ thông báo chưa đọc của tài khoản hiện tại là đã xem (`unreadCount = 0`), phát `UnreadCountUpdated` và trả về `MarkAllNotificationsReadResultDto` (`MSG-NTF-READ-ALL-OK`).
+
+#### 2.16. Kênh WebSocket SignalR (`/hubs/notifications` – `STT 172`) & Event Bus Nội bộ
+* **Kiến trúc Event-Driven (`System.Threading.Channels`):** Các luồng nghiệp vụ chính (Duyệt KYB, Đơn bàn giao, Biên nhận cân đo, Giải quyết Khiếu nại, Thanh toán VietQR, Đối soát tài chính, Thẩm định AI Feedback) phát `SystemNotificationDispatchedEvent` qua `IEventBus` (`< 1ms` non-blocking). `EventBackgroundWorker` tiêu thụ bất đồng bộ, khử trùng lặp theo `EventId` (`Idempotency`), che PII nhạy cảm (`BR-NTF-05`), lưu bảng `notifications` và đẩy realtime qua `SignalRNotificationNotifier`.
+* **Sự kiện SignalR Server → Client:**
+  * `ReceiveNotification`: payload `NotificationDto` đẩy tới group `user:{userId}` ngay khi phát sinh thông báo mới.
+  * `UnreadCountUpdated`: payload `{ unreadCount: number }` đồng bộ bộ đếm badge trên header/trang thông báo.
+* **Bảo mật Kết nối:** Hub gắn `[Authorize]`, hỗ trợ truyền JWT Bearer qua query string `?access_token=<jwt>` hoặc Header.
+
+---
+
 ## 3. BẢNG MÃ LỖI & MÃ THÔNG BÁO CHUẨN TRONG MODULE 9
 
 | HTTP Status | `messageCode` | Quy tắc | Trường hợp xảy ra |
 |:---:|:---|:---:|:---|
 | `200` / `201` | `MSG-GEN-01` | — | Tải KPI, charts, danh sách, khởi tạo Staff, chấm công ca trực thành công. |
+| `200` | `MSG-NTF-LIST-OK` | `SU-04` | Lấy danh sách thông báo hệ thống & tổng số chưa đọc thành công. |
+| `200` | `MSG-NTF-READ-OK` | `SU-04` | Đánh dấu một thông báo cụ thể là đã đọc thành công. |
+| `200` | `MSG-NTF-READ-ALL-OK` | `SU-04` | Đánh dấu toàn bộ thông báo chưa đọc của tài khoản là đã đọc thành công. |
 | `200` | `MSG-ADM-01` | `BR-ADM-02` | Admin cập nhật ma trận quyền RBAC cho Staff thành công (*"Cập nhật quyền nhân viên thành công."*). |
 | `200` | `MSG-ADM-02` | `BR-ADM-05`, `BR-ADM-06` | Header `X-EcoLink-Message-Code` xác nhận trích xuất báo cáo hệ thống che PII thành công. |
 | `200` | `MSG-ADM-03` | `BR-ADM-03`, `BR-ADM-04` | Khóa, mở khóa, vô hiệu hóa tài khoản hoặc đổi trạng thái Staff thành công. |
 | `400` | `MSG-GEN-01` | `BR-ADM-03`, `BR-ADM-06`, `BR-GAM-09` | Thiếu/ngắn lý do (`< 10` ký tự), sai mã quyền RBAC, sai định dạng export, hoặc điểm danh trùng trong ngày. |
 | `401` | `MSG-AUTH-03` | — | Chưa đăng nhập hoặc JWT Bearer token không hợp lệ. |
+| `403` | `MSG-NTF-02` | `BR-NTF-01` | Thao tác đánh dấu đã đọc thông báo thuộc quyền sở hữu của người dùng khác. |
 | `403` | `MSG-ADM-04` | `BR-ADM-02`, `BR-ADM-03` | `Staff` thiếu quyền tương ứng trong `staff_permission_assignments`, tự khóa mình, hoặc tác động tài khoản `Staff`/`Admin` qua endpoint kiểm duyệt bên ngoài. |
 | `403` | `MSG-AUTH-04` | `BR-AUTH-05`, `BR-ADM-03` | JWT còn hạn nhưng tài khoản vừa bị chuyển sang `Suspended`/`Deactivated` và bị `AccountStatusGuardMiddleware` chặn tức thời. |
-| `404` | `MSG-GEN-01` | — | Không tìm thấy tài khoản `User` hoặc `StaffProfile` mục tiêu. |
+| `404` | `MSG-GEN-01` | — | Không tìm thấy tài khoản `User`, `StaffProfile` hoặc bản ghi `Notification` mục tiêu. |

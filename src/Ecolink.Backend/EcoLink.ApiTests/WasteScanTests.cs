@@ -55,7 +55,9 @@ public class WasteScanTests
     {
         var token = await CitizenToken();
         var result = (await Api.GetAsync(Routes.ScanRules, token)).ShouldBe(200);
-        Assert.True(TestData.IsNonEmpty(result.Body), "Sorting rules list is empty");
+        AssertEnvelope(result.Body);
+        Assert.True(result.Body.GetProperty("success").GetBoolean());
+        Assert.True(TestData.IsNonEmpty(result.Body.GetProperty("data")), "Sorting rules list is empty");
     }
 
     // ======================= classify =======================
@@ -220,4 +222,91 @@ public class WasteScanTests
     [InlineData("feedback")]
     public async Task Endpoint_WithInvalidToken_DoesNotCauseServerError(string endpoint) =>
         (await Call(endpoint, "invalid.fake.token")).ShouldNotBeServerError();
+
+    // ======================= M-03 Lịch sử quét, Danh mục & Rule Engine (STT 025-031) =======================
+
+    [Fact]
+    public async Task History_Unauthenticated_Returns401()
+    {
+        var result = await Api.GetAsync(Routes.ScanHistory);
+        result.ShouldBe(401);
+    }
+
+    [Fact]
+    public async Task History_Citizen_ReturnsPagedEnvelope()
+    {
+        var token = await CitizenToken();
+        var result = (await Api.GetAsync(Routes.ScanHistory, token)).ShouldBe(200);
+        AssertEnvelope(result.Body);
+        Assert.True(result.Body.GetProperty("success").GetBoolean());
+        Assert.Equal(JsonValueKind.Array, result.Body.GetProperty("data").GetProperty("items").ValueKind);
+    }
+
+    [Fact]
+    public async Task Categories_Anonymous_ReturnsActiveRecyclables()
+    {
+        var result = (await Api.GetAsync(Routes.WasteCategories)).ShouldBe(200);
+        AssertEnvelope(result.Body);
+        Assert.True(TestData.IsNonEmpty(result.Body.GetProperty("data")), "Category list is empty");
+    }
+
+    [Fact]
+    public async Task Categories_CitizenCreate_Returns403()
+    {
+        var token = await CitizenToken();
+        var result = await Api.PostJsonAsync(Routes.WasteCategories, new
+        {
+            code = $"forbidden_{TestData.Unique(6)}",
+            name = "Test",
+            standardBinColor = "Cam",
+            isRecyclable = true
+        }, token);
+        result.ShouldBe(403);
+    }
+
+    [Fact]
+    public async Task Admin_CategoryAndRuleEngineLifecycle_WorksEndToEnd()
+    {
+        var adminToken = await Tokens.GetAsync("admin");
+        var code = $"qa_cat_{TestData.Unique(6)}";
+
+        var created = (await Api.PostJsonAsync(Routes.WasteCategories, new
+        {
+            code,
+            name = "Vật liệu QA thử nghiệm",
+            description = "Mô tả thử nghiệm",
+            standardBinColor = "Xanh Ngọc",
+            isRecyclable = true
+        }, adminToken)).ShouldBe(201);
+
+        var categoryId = created.Body.GetProperty("data").GetProperty("id").GetGuid();
+
+        (await Api.PutJsonAsync($"{Routes.WasteCategories}/{categoryId}", new
+        {
+            name = "Vật liệu QA cập nhật",
+            description = "Cập nhật mô tả",
+            standardBinColor = "Xanh Lam",
+            isRecyclable = true
+        }, adminToken)).ShouldBe(200);
+
+        var ruleDraft = (await Api.PutJsonAsync($"{Routes.ScanRules}/{categoryId}", new
+        {
+            title = "Quy tắc QA",
+            preparationSteps = "1. Làm sạch.",
+            sortingInstruction = "Phân tách riêng.",
+            handlingAction = "Đưa về trạm thu gom.",
+            applicableRegion = "VN_NATIONAL"
+        }, adminToken)).ShouldBe(200);
+
+        var ruleId = ruleDraft.Body.GetProperty("data").GetProperty("ruleId").GetGuid();
+
+        var published = (await Api.PatchJsonAsync($"{Routes.ScanRules}/{ruleId}/publish", null, adminToken)).ShouldBe(200);
+        Assert.Equal("ACTIVE", published.Body.GetProperty("data").GetProperty("rule").GetProperty("status").GetString());
+
+        var deactivated = (await Api.PatchJsonAsync($"{Routes.WasteCategories}/{categoryId}/status", new
+        {
+            status = "Inactive"
+        }, adminToken)).ShouldBe(200);
+        Assert.Equal("Inactive", deactivated.Body.GetProperty("data").GetProperty("status").GetString());
+    }
 }

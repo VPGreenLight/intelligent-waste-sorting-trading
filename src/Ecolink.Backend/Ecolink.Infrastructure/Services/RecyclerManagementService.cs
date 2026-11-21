@@ -38,11 +38,19 @@ public class RecyclerManagementService : IRecyclerManagementService
 
     private readonly ApplicationDbContext _db;
     private readonly ILogger<RecyclerManagementService> _logger;
+    private readonly IAuditLogService? _auditLogService;
+    private readonly IWasteRuleEngineService? _ruleEngine;
 
-    public RecyclerManagementService(ApplicationDbContext db, ILogger<RecyclerManagementService> logger)
+    public RecyclerManagementService(
+        ApplicationDbContext db,
+        ILogger<RecyclerManagementService> logger,
+        IAuditLogService? auditLogService = null,
+        IWasteRuleEngineService? ruleEngine = null)
     {
         _db = db;
         _logger = logger;
+        _auditLogService = auditLogService;
+        _ruleEngine = ruleEngine;
     }
 
     // ============================================================
@@ -50,22 +58,11 @@ public class RecyclerManagementService : IRecyclerManagementService
     // ============================================================
     public async Task<IReadOnlyList<WasteCategoryDto>> GetWasteCategoriesAsync(CancellationToken ct = default)
     {
-        // Tự khởi tạo danh mục chuẩn nếu bảng còn trống (cùng cách làm với tài khoản demo của AuthService)
-        var existingCodes = await _db.WasteCategories.AsNoTracking().Select(c => c.Code).ToListAsync(ct);
-        var missing = DefaultCategories.Where(d => !existingCodes.Contains(d.Code)).ToList();
-        if (missing.Count > 0)
-        {
-            foreach (var (code, name, bin) in missing)
-            {
-                _db.WasteCategories.Add(new WasteCategory { Code = code, Name = name, StandardBinColor = bin });
-            }
-            await _db.SaveChangesAsync(ct);
-            _logger.LogInformation("Đã khởi tạo {Count} danh mục phế liệu chuẩn.", missing.Count);
-        }
+        await EnsureDefaultCategoriesSeededAsync(ct);
 
         return await _db.WasteCategories
             .AsNoTracking()
-            .Where(c => c.Code != NonRecyclableCode)
+            .Where(c => c.Code != NonRecyclableCode && c.Status == "Active")
             .OrderBy(c => c.Name)
             .Select(c => new WasteCategoryDto
             {
@@ -74,10 +71,273 @@ public class RecyclerManagementService : IRecyclerManagementService
                 Name = c.Name,
                 Description = c.Description,
                 StandardBinColor = c.StandardBinColor,
-                IconUrl = c.IconUrl
+                IconUrl = c.IconUrl,
+                IsRecyclable = c.IsRecyclable,
+                Status = c.Status,
+                HasSortingRule = c.SortingRule != null,
+                RuleStatus = c.SortingRule != null ? c.SortingRule.Status : null,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt
             })
             .ToListAsync(ct);
     }
+
+    public async Task<IReadOnlyList<WasteCategoryDto>> GetAllWasteCategoriesAsync(
+        bool includeInactive,
+        bool includeNonRecyclable,
+        CancellationToken ct = default)
+    {
+        await EnsureDefaultCategoriesSeededAsync(ct);
+
+        var query = _db.WasteCategories
+            .AsNoTracking()
+            .Include(c => c.SortingRule)
+            .AsQueryable();
+
+        if (!includeInactive)
+        {
+            query = query.Where(c => c.Status == "Active");
+        }
+
+        if (!includeNonRecyclable)
+        {
+            query = query.Where(c => c.Code != NonRecyclableCode);
+        }
+
+        return await query
+            .OrderBy(c => c.Name)
+            .Select(c => new WasteCategoryDto
+            {
+                Id = c.Id,
+                Code = c.Code,
+                Name = c.Name,
+                Description = c.Description,
+                StandardBinColor = c.StandardBinColor,
+                IconUrl = c.IconUrl,
+                IsRecyclable = c.IsRecyclable,
+                Status = c.Status,
+                HasSortingRule = c.SortingRule != null,
+                RuleStatus = c.SortingRule != null ? c.SortingRule.Status : null,
+                CreatedAt = c.CreatedAt,
+                UpdatedAt = c.UpdatedAt
+            })
+            .ToListAsync(ct);
+    }
+
+    public async Task<WasteCategoryDto> CreateWasteCategoryAsync(
+        Guid adminUserId,
+        CreateWasteCategoryRequest request,
+        CancellationToken ct = default)
+    {
+        var code = request.Code.Trim().ToLowerInvariant();
+        if (await _db.WasteCategories.AsNoTracking().AnyAsync(c => c.Code == code, ct))
+        {
+            throw new ConflictException(
+                "BR-SRT-02",
+                "MSG-SRT-02",
+                $"Mã danh mục rác '{code}' đã tồn tại trong hệ thống.");
+        }
+
+        var now = DateTime.UtcNow;
+        var entity = new WasteCategory
+        {
+            Code = code,
+            Name = request.Name.Trim(),
+            Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim(),
+            StandardBinColor = request.StandardBinColor.Trim(),
+            IconUrl = string.IsNullOrWhiteSpace(request.IconUrl) ? null : request.IconUrl.Trim(),
+            IsRecyclable = request.IsRecyclable,
+            Status = "Active",
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        var defaultRule = new SortingRule
+        {
+            WasteCategoryId = entity.Id,
+            WasteCategory = entity,
+            Title = $"Hướng dẫn phân loại {entity.Name}",
+            SortingInstruction = !string.IsNullOrWhiteSpace(entity.Description)
+                ? entity.Description
+                : $"Tách riêng {entity.Name} khỏi các nhóm rác khác để tránh lẫn tạp chất.",
+            PreparationSteps = entity.IsRecyclable
+                ? "1. Làm sạch sơ bộ và để khô ráo trước khi phân loại.\n2. Xếp gọn để tối ưu thể tích lưu trữ."
+                : "1. Buộc kín miệng túi rác.\n2. Không trộn lẫn vào nhóm phế liệu tái chế.",
+            HandlingAction = entity.IsRecyclable
+                ? $"Bỏ vào thùng rác màu {entity.StandardBinColor} hoặc đặt lịch thu gom trên EcoLink."
+                : $"Bỏ vào thùng rác màu {entity.StandardBinColor} theo quy định thu gom rác sinh hoạt.",
+            HazardWarning = null,
+            ApplicableRegion = "VN_NATIONAL",
+            Status = "DRAFT",
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        entity.SortingRule = defaultRule;
+        _db.WasteCategories.Add(entity);
+        _db.SortingRules.Add(defaultRule);
+        await _db.SaveChangesAsync(ct);
+
+        if (_auditLogService != null)
+        {
+            await _auditLogService.LogAsync(
+                action: "CREATE_WASTE_CATEGORY",
+                entityType: nameof(WasteCategory),
+                entityId: entity.Id.ToString(),
+                oldValues: null,
+                newValues: new { entity.Code, entity.Name, entity.StandardBinColor, entity.IsRecyclable, entity.Status },
+                reason: $"Tạo mới danh mục rác '{entity.Code}' ({entity.Name}).",
+                explicitActorId: adminUserId,
+                ct: ct);
+        }
+
+        return MapCategory(entity);
+    }
+
+    public async Task<WasteCategoryDto> UpdateWasteCategoryAsync(
+        Guid adminUserId,
+        Guid categoryId,
+        UpdateWasteCategoryRequest request,
+        CancellationToken ct = default)
+    {
+        var entity = await _db.WasteCategories
+            .Include(c => c.SortingRule)
+            .FirstOrDefaultAsync(c => c.Id == categoryId, ct)
+            ?? throw new NotFoundException($"Không tìm thấy danh mục rác với ID '{categoryId}'.");
+
+        var oldSnapshot = new
+        {
+            entity.Name,
+            entity.Description,
+            entity.StandardBinColor,
+            entity.IconUrl,
+            entity.IsRecyclable
+        };
+
+        entity.Name = request.Name.Trim();
+        entity.Description = string.IsNullOrWhiteSpace(request.Description) ? null : request.Description.Trim();
+        entity.StandardBinColor = request.StandardBinColor.Trim();
+        entity.IconUrl = string.IsNullOrWhiteSpace(request.IconUrl) ? null : request.IconUrl.Trim();
+        entity.IsRecyclable = request.IsRecyclable;
+        entity.UpdatedAt = DateTime.UtcNow;
+
+        await _db.SaveChangesAsync(ct);
+
+        if (_ruleEngine != null)
+        {
+            await _ruleEngine.InvalidateRuleCacheAsync(entity.Code, ct);
+        }
+
+        if (_auditLogService != null)
+        {
+            await _auditLogService.LogAsync(
+                action: "UPDATE_WASTE_CATEGORY",
+                entityType: nameof(WasteCategory),
+                entityId: entity.Id.ToString(),
+                oldValues: oldSnapshot,
+                newValues: new
+                {
+                    entity.Name,
+                    entity.Description,
+                    entity.StandardBinColor,
+                    entity.IconUrl,
+                    entity.IsRecyclable
+                },
+                reason: $"Cập nhật danh mục rác '{entity.Code}'.",
+                explicitActorId: adminUserId,
+                ct: ct);
+        }
+
+        return MapCategory(entity);
+    }
+
+    public async Task<WasteCategoryDto> ToggleWasteCategoryStatusAsync(
+        Guid adminUserId,
+        Guid categoryId,
+        ToggleWasteCategoryStatusRequest request,
+        CancellationToken ct = default)
+    {
+        var entity = await _db.WasteCategories
+            .Include(c => c.SortingRule)
+            .FirstOrDefaultAsync(c => c.Id == categoryId, ct)
+            ?? throw new NotFoundException($"Không tìm thấy danh mục rác với ID '{categoryId}'.");
+
+        var normalizedStatus = request.Status.Trim().ToLowerInvariant() switch
+        {
+            "active" => "Active",
+            "inactive" => "Inactive",
+            _ => throw new BusinessRuleException(
+                "BR-SRT-04",
+                "MSG-SRT-04",
+                "Trạng thái danh mục chỉ chấp nhận 'Active' hoặc 'Inactive'.")
+        };
+
+        var oldStatus = entity.Status;
+        if (!string.Equals(oldStatus, normalizedStatus, StringComparison.Ordinal))
+        {
+            entity.Status = normalizedStatus;
+            entity.UpdatedAt = DateTime.UtcNow;
+            await _db.SaveChangesAsync(ct);
+
+            if (_ruleEngine != null)
+            {
+                await _ruleEngine.InvalidateRuleCacheAsync(entity.Code, ct);
+            }
+
+            if (_auditLogService != null)
+            {
+                await _auditLogService.LogAsync(
+                    action: "TOGGLE_WASTE_CATEGORY_STATUS",
+                    entityType: nameof(WasteCategory),
+                    entityId: entity.Id.ToString(),
+                    oldValues: new { Status = oldStatus },
+                    newValues: new { Status = entity.Status },
+                    reason: $"Chuyển trạng thái danh mục '{entity.Code}' từ {oldStatus} sang {entity.Status} (xóa mềm theo BR-SRT-04).",
+                    explicitActorId: adminUserId,
+                    ct: ct);
+            }
+        }
+
+        return MapCategory(entity);
+    }
+
+    private async Task EnsureDefaultCategoriesSeededAsync(CancellationToken ct)
+    {
+        var existingCodes = await _db.WasteCategories.AsNoTracking().Select(c => c.Code).ToListAsync(ct);
+        var missing = DefaultCategories.Where(d => !existingCodes.Contains(d.Code)).ToList();
+        if (missing.Count > 0)
+        {
+            foreach (var (code, name, bin) in missing)
+            {
+                _db.WasteCategories.Add(new WasteCategory
+                {
+                    Code = code,
+                    Name = name,
+                    StandardBinColor = bin,
+                    IsRecyclable = true,
+                    Status = "Active"
+                });
+            }
+            await _db.SaveChangesAsync(ct);
+            _logger.LogInformation("Đã khởi tạo {Count} danh mục phế liệu chuẩn.", missing.Count);
+        }
+    }
+
+    private static WasteCategoryDto MapCategory(WasteCategory c) => new()
+    {
+        Id = c.Id,
+        Code = c.Code,
+        Name = c.Name,
+        Description = c.Description,
+        StandardBinColor = c.StandardBinColor,
+        IconUrl = c.IconUrl,
+        IsRecyclable = c.IsRecyclable,
+        Status = c.Status,
+        HasSortingRule = c.SortingRule != null,
+        RuleStatus = c.SortingRule?.Status,
+        CreatedAt = c.CreatedAt,
+        UpdatedAt = c.UpdatedAt
+    };
 
     // ============================================================
     // Recycler Profile

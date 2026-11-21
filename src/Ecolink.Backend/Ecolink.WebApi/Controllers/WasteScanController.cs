@@ -18,6 +18,7 @@ public class WasteScanController : ControllerBase
     private readonly IAiFeedbackService? _feedbackService;
     private readonly ICurrentUserService? _currentUserService;
     private readonly IValidator<SubmitFeedbackDto>? _feedbackValidator;
+    private readonly IValidator<UpsertSortingRuleRequest>? _upsertRuleValidator;
 
     public WasteScanController(
         IAiVisionClient aiClient,
@@ -25,7 +26,8 @@ public class WasteScanController : ControllerBase
         ILogger<WasteScanController> logger,
         IAiFeedbackService? feedbackService = null,
         ICurrentUserService? currentUserService = null,
-        IValidator<SubmitFeedbackDto>? feedbackValidator = null)
+        IValidator<SubmitFeedbackDto>? feedbackValidator = null,
+        IValidator<UpsertSortingRuleRequest>? upsertRuleValidator = null)
     {
         _aiClient = aiClient;
         _ruleEngine = ruleEngine;
@@ -33,12 +35,14 @@ public class WasteScanController : ControllerBase
         _feedbackService = feedbackService;
         _currentUserService = currentUserService;
         _feedbackValidator = feedbackValidator;
+        _upsertRuleValidator = upsertRuleValidator;
     }
 
     /// <summary>
     /// [STT 021] Nhận diện rác thải qua ảnh, lưu vết lịch sử quét SHA-256 và ánh xạ quy tắc xử lý (U-01, U-04).
     /// </summary>
     [HttpPost("classify")]
+    [Authorize]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ApiResponse<WasteScanResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
@@ -151,6 +155,7 @@ public class WasteScanController : ControllerBase
     /// [STT 022] Lấy danh sách các mô hình AI có sẵn để phân loại rác (yolov8_detect, mobilenet_v3, efficientnet_b0, yolov8n).
     /// </summary>
     [HttpGet("models")]
+    [AllowAnonymous]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAvailableModels(CancellationToken ct)
     {
@@ -169,20 +174,118 @@ public class WasteScanController : ControllerBase
     }
 
     /// <summary>
-    /// [STT 023] Tra cứu toàn bộ danh mục quy tắc phân loại rác tĩnh (UC3, UC14).
+    /// [STT 023] Tra cứu toàn bộ danh mục quy tắc phân loại rác (Admin có thể truyền detailed=true để lấy kèm ruleId &amp; bản DRAFT).
     /// </summary>
     [HttpGet("rules")]
-    public async Task<IActionResult> GetAllRules(CancellationToken ct)
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<WasteSortingGuideDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAllRules(
+        [FromQuery] bool detailed = false,
+        [FromQuery] bool includeDraft = false,
+        CancellationToken ct = default)
     {
+        if (detailed && (User.IsInRole("Admin") || User.IsInRole("Staff")))
+        {
+            var details = await _ruleEngine.GetAllRuleDetailsAsync(includeDraft, ct);
+            return Ok(ApiResponse<IReadOnlyList<SortingRuleDetailDto>>.Ok(
+                details,
+                message: "Tải danh sách cấu hình quy tắc phân loại thành công.",
+                messageCode: "MSG-SRT-RULE-LIST-OK"));
+        }
+
         var rules = await _ruleEngine.GetAllRulesAsync(ct);
-        return Ok(rules);
+        return Ok(ApiResponse<IEnumerable<WasteSortingGuideDto>>.Ok(
+            rules,
+            message: "Tải quy tắc phân loại rác thành công.",
+            messageCode: "MSG-SRT-RULE-LIST-OK"));
+    }
+
+    /// <summary>
+    /// [STT 026] Người dân xem lại lịch sử các lần chụp/quét ảnh rác AI của cá nhân kèm hướng dẫn đã nhận (U-01, U-03, BR-CLS-08).
+    /// </summary>
+    [HttpGet("history")]
+    [Authorize]
+    [ProducesResponseType(typeof(ApiResponse<PagedResult<MyWasteScanHistoryItemDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMyScanHistory(
+        [FromQuery] WasteScanHistoryFilterRequest filter,
+        CancellationToken ct = default)
+    {
+        if (_feedbackService == null)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                ApiResponse<object>.Fail("Dịch vụ lưu trữ lịch sử quét AI chưa sẵn sàng.", "MSG-SYS-503"));
+        }
+
+        var userId = TryResolveCurrentUserId()
+            ?? throw new UnauthorizedAccessException("Không xác định được danh tính người dùng từ phiên đăng nhập.");
+
+        var data = await _feedbackService.GetMyScanHistoryAsync(userId, filter, ct);
+        return Ok(ApiResponse<PagedResult<MyWasteScanHistoryItemDto>>.Ok(
+            data,
+            message: "Tải lịch sử quét ảnh AI cá nhân thành công.",
+            messageCode: "MSG-CLS-HISTORY-OK"));
+    }
+
+    /// <summary>
+    /// [STT 030] Admin tạo hoặc cập nhật chính sách hướng dẫn phân loại, sơ chế sạch &amp; cảnh báo an toàn theo danh mục (A-06, BR-SRT-01).
+    /// </summary>
+    [HttpPut("rules/{categoryId:guid}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(ApiResponse<SortingRuleDetailDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpsertSortingRule(
+        Guid categoryId,
+        [FromBody] UpsertSortingRuleRequest request,
+        CancellationToken ct = default)
+    {
+        if (_upsertRuleValidator != null)
+        {
+            var validation = await _upsertRuleValidator.ValidateAsync(request, ct);
+            if (!validation.IsValid)
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    "Nội dung quy tắc phân loại chưa hợp lệ.",
+                    "MSG-GEN-01",
+                    validation.Errors.Select(e => e.ErrorMessage).ToList()));
+            }
+        }
+
+        var adminId = TryResolveCurrentUserId()
+            ?? throw new UnauthorizedAccessException("Không xác định được danh tính quản trị viên.");
+
+        var dto = await _ruleEngine.UpsertSortingRuleAsync(adminId, categoryId, request, ct);
+        return Ok(ApiResponse<SortingRuleDetailDto>.Ok(
+            dto,
+            message: $"Đã lưu quy tắc phân loại cho danh mục '{dto.CategoryCode}' ở trạng thái DRAFT.",
+            messageCode: "MSG-SRT-RULE-SAVED"));
+    }
+
+    /// <summary>
+    /// [STT 031] Phát hành phiên bản luật phân loại mới (ACTIVE), làm mới cache Rule Engine &amp; đồng bộ sang AI Service (A-06, BR-SRT-03).
+    /// </summary>
+    [HttpPatch("rules/{ruleId:guid}/publish")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(ApiResponse<PublishSortingRuleResultDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> PublishSortingRule(Guid ruleId, CancellationToken ct = default)
+    {
+        var adminId = TryResolveCurrentUserId()
+            ?? throw new UnauthorizedAccessException("Không xác định được danh tính quản trị viên.");
+
+        var result = await _ruleEngine.PublishSortingRuleAsync(adminId, ruleId, ct);
+        return Ok(ApiResponse<PublishSortingRuleResultDto>.Ok(
+            result,
+            message: $"Đã phát hành chính thức quy tắc phân loại '{result.Rule.CategoryCode}'.",
+            messageCode: "MSG-SRT-RULE-PUBLISHED"));
     }
 
     /// <summary>
     /// [STT 024] [U-04] Báo cáo AI nhận diện sai, lưu bền vững PostgreSQL kèm ScanId &amp; đồng bộ vòng lặp retrain (BR-CLS-02, BR-CLS-05).
     /// </summary>
     [HttpPost("feedback")]
-    [AllowAnonymous]
+    [Authorize]
     [ProducesResponseType(typeof(ApiResponse<SubmitAiFeedbackResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status409Conflict)]

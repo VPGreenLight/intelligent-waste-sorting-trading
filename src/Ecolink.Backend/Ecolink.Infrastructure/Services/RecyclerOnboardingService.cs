@@ -1,4 +1,6 @@
+using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
+using Ecolink.Application.Events;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
@@ -31,15 +33,18 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
     private readonly ApplicationDbContext _dbContext;
     private readonly IEmailService _emailService;
     private readonly ILogger<RecyclerOnboardingService> _logger;
+    private readonly IEventBus? _eventBus;
 
     public RecyclerOnboardingService(
         ApplicationDbContext dbContext,
         IEmailService emailService,
-        ILogger<RecyclerOnboardingService> logger)
+        ILogger<RecyclerOnboardingService> logger,
+        IEventBus? eventBus = null)
     {
         _dbContext = dbContext;
         _emailService = emailService;
         _logger = logger;
+        _eventBus = eventBus;
     }
 
     public async Task<RecyclerApplicationDetailDto> SubmitUpgradeApplicationAsync(
@@ -283,6 +288,21 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
 
         // Gửi email thông báo kết quả (BR-NTF-02, BR-NTF-06)
         await SendVerificationNotificationEmailAsync(profile.User, profile, request.IsApproved, ct);
+
+        if (_eventBus != null)
+        {
+            await _eventBus.PublishAsync(
+                new SystemNotificationDispatchedEvent(
+                    targetUserId,
+                    request.IsApproved ? "Hồ sơ cơ sở thu gom đã được duyệt" : "Hồ sơ cơ sở thu gom cần bổ sung",
+                    request.IsApproved
+                        ? $"Chúc mừng! Cơ sở '{profile.FacilityName}' đã được phê duyệt và kích hoạt sẵn sàng thu gom trên EcoLink."
+                        : $"Hồ sơ cơ sở '{profile.FacilityName}' chưa được phê duyệt. Lý do: {profile.RejectionReason}",
+                    "KYB_VERIFICATION",
+                    "RecyclerProfile",
+                    profile.Id),
+                ct);
+        }
 
         return MapToDetailDto(profile.User, profile);
     }

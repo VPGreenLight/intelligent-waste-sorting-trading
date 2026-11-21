@@ -356,3 +356,48 @@ public class AdminStaffAttendanceItemDto
     public int TasksCompletedSnapshot { get; set; }
     public string? ShiftNote { get; set; }
 }
+
+// ---------------------------------------------------------------------------
+// Module M-15 (SU-04, EI-07): System Notifications & SignalR Hub (STT 169-172)
+// ---------------------------------------------------------------------------
+
+public class NotificationFilterRequest
+{
+    public bool? IsRead { get; set; }
+    public string? NotificationType { get; set; }
+    public int PageNumber { get; set; } = 1;
+    public int PageSize { get; set; } = 20;
+}
+
+public class NotificationDto
+{
+    public Guid Id { get; set; }
+    public string Title { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    public string NotificationType { get; set; } = "SYSTEM";
+    public string? ReferenceType { get; set; }
+    public Guid? ReferenceId { get; set; }
+    public bool IsRead { get; set; }
+    public DateTime? ReadAt { get; set; }
+    public DateTime CreatedAt { get; set; }
+}
+
+public class NotificationListResponseDto : PagedResult<NotificationDto>
+{
+    public int UnreadCount { get; set; }
+}
+
+public class MarkNotificationReadResultDto
+{
+    public Guid NotificationId { get; set; }
+    public bool IsRead { get; set; }
+    public DateTime? ReadAt { get; set; }
+    public int UnreadCount { get; set; }
+}
+
+public class MarkAllNotificationsReadResultDto
+{
+    public int MarkedCount { get; set; }
+    public int UnreadCount { get; set; }
+    public DateTime ReadAt { get; set; }
+}

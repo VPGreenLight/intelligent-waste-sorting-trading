@@ -240,28 +240,34 @@ Không có tham số đầu vào.
 * **Mô tả:** Trả về danh sách toàn bộ 6 nhóm danh mục rác trong Rule Engine (`plastic`, `paper`, `cardboard`, `metal`, `glass`, `trash`) kèm màu thùng rác, các bước sơ chế, hành động gợi ý và cảnh báo an toàn (`BR-SRT-01`).
 
 #### a. Request Parameters
-Không có tham số đầu vào.
+* `[FromQuery] bool detailed = false` *(Admin/Staff có thể đặt `true` để nhận `SortingRuleDetailDto[]` gồm `ruleId`, `wasteCategoryId`, `status`)*
+* `[FromQuery] bool includeDraft = false` *(Khi `detailed=true`, lấy cả quy tắc đang ở trạng thái `DRAFT`)*
 
-#### b. Ví dụ Response Thành công (`200 OK` – `IEnumerable<WasteSortingGuideDto>`):
+#### b. Ví dụ Response Thành công (`200 OK` – bọc chuẩn `ApiResponse<T>`):
 ```json
-[
-  {
-    "categoryCode": "plastic",
-    "categoryName": "Nhựa tái chế (Plastic)",
-    "standardBinColor": "Thùng màu Vàng hoặc Trắng (Rác tái chế)",
-    "preparationSteps": "1. Đổ hết chất lỏng còn thừa. 2. Tráng sơ qua bằng nước sạch. 3. Tháo rời nhãn mác (nếu có) và bóp dẹp chai nhựa để tiết kiệm diện tích.",
-    "handlingAction": "Có thể gom lại để bán hoặc đổi Điểm Xanh tại các Điểm thu mua phế liệu trên bản đồ EcoLink.",
-    "hazardWarning": "Không đốt nhựa tại nhà vì sinh ra khí Dioxin cực độc. Tránh tái sử dụng chai nhựa PET (số 1) nhiều lần để đựng nước nóng."
-  },
-  {
-    "categoryCode": "metal",
-    "categoryName": "Kim loại / Vỏ lon (Metal)",
-    "standardBinColor": "Thùng màu Vàng hoặc Trắng (Rác tái chế)",
-    "preparationSteps": "1. Đổ hết nước ngọt/bia thừa trong lon. 2. Tráng sạch để tránh thu hút côn trùng. 3. Có thể đạp dẹp vỏ lon nhôm.",
-    "handlingAction": "Nhôm và kim loại có giá trị thu mua rất cao! Hãy tích trữ và đặt lịch thu gom trên EcoLink để nhận tiền mặt và Điểm Xanh.",
-    "hazardWarning": "Cẩn thận với nắp hộp thiếc hoặc cạnh vỏ lon bị cắt sắc nhọn gây đứt tay."
-  }
-]
+{
+  "success": true,
+  "messageCode": "MSG-SRT-RULE-LIST-OK",
+  "message": "Tải quy tắc phân loại rác thành công.",
+  "data": [
+    {
+      "categoryCode": "plastic",
+      "categoryName": "Nhựa tái chế (Plastic)",
+      "standardBinColor": "Cam",
+      "preparationSteps": "1. Tráng sạch cặn nước ngọt, dầu mỡ.\n2. Tháo nắp chai và gỡ màng co ni-lông.\n3. Bẹp chai để tiết kiệm thể tích lưu trữ.",
+      "handlingAction": "Bỏ vào thùng rác màu Cam hoặc mang đến các điểm đối tác thu mua phế liệu.",
+      "hazardWarning": "Không trộn lẫn các loại chai nhựa chứa hóa chất độc hại, thuốc trừ sâu."
+    },
+    {
+      "categoryCode": "metal",
+      "categoryName": "Kim loại & Vỏ lon (Metal)",
+      "standardBinColor": "Xám Kim Loại",
+      "preparationSteps": "1. Dốc sạch chất lỏng bên trong vỏ lon.\n2. Có thể giẫm bẹp vỏ lon bia/nước ngọt.\n3. Để riêng đồ nhôm, sắt thép vụn.",
+      "handlingAction": "Mang đến cơ sở thu mua phế liệu có giá thu mua cao nhất trên EcoLink.",
+      "hazardWarning": "Cẩn thận mép lon sắc nhọn có thể cứa đứt tay."
+    }
+  ]
+}
 ```
 
 ---
@@ -429,4 +435,25 @@ Không có tham số đầu vào.
   "confidence_threshold": 0.65
 }
 ```
+*(Ghi chú: Từ phiên bản `v2.6.0`, endpoint `PUT /api/v1/rules` hỗ trợ tự động thêm mới (Upsert) khóa danh mục nếu mã danh mục mới được phát hành từ Core Backend `PATCH /api/v1/waste-scan/rules/{ruleId}/publish`).*
+
+---
+
+## 4. LỊCH SỬ QUÉT AI CÁ NHÂN, QUẢN TRỊ DANH MỤC & RULE ENGINE (CORE BACKEND – `STT 025–031`)
+
+### 4.1. Lịch sử Quét AI Cá nhân (`GET /api/v1/waste-scan/history` – `STT 026`, `U-01`, `U-03`, `BR-CLS-08`)
+* **Phân quyền:** `[Authorize]` (mọi tài khoản đã đăng nhập; cô lập dữ liệu nghiêm ngặt theo `UserId` từ JWT).
+* **Query Parameters:** `categoryCode?`, `fromDate?`, `toDate?`, `pageNumber` (mặc định `1`), `pageSize` (mặc định `20`, tối đa `50`).
+* **Response (`200 OK`):** `ApiResponse<PagedResult<MyWasteScanHistoryItemDto>>` gồm `scanId`, `imageUrl`, `predictedLabel`, `confidenceScore`, `pipelineUsed`, `sortingGuide` (được hydrate từ `IWasteRuleEngineService`), `scannedAt`.
+
+### 4.2. Quản trị Danh mục Phế liệu Chuẩn (`WasteCategoryController` – `STT 025, 027–029`, `A-05`)
+* **`GET /api/v1/waste-categories` (`[AllowAnonymous]` – `STT 025`):** Công khai danh mục đang `Active` & có thể tái chế; `Admin`/`Staff` có thể truyền `?includeInactive=true&includeNonRecyclable=true`.
+* **`POST /api/v1/waste-categories` (`[Authorize(Roles = "Admin")]` – `STT 027`):** Thêm mới `MasterWasteCategory` (`code` theo regex `^[a-z0-9_]+$`, kiểm tra duy nhất trả `409 Conflict` / `MSG-SRT-02` nếu trùng, ghi `AuditLog`). Trả về `201 Created`.
+* **`PUT /api/v1/waste-categories/{categoryId:guid}` (`[Authorize(Roles = "Admin")]` – `STT 028`):** Cập nhật `name`, `description`, `standardBinColor`, `iconUrl`, `isRecyclable` (`code` bất biến theo `BR-SRT-02`), tự động xóa cache Rule Engine & ghi `AuditLog`.
+* **`PATCH /api/v1/waste-categories/{categoryId:guid}/status` (`[Authorize(Roles = "Admin")]` – `STT 029`):** Chuyển đổi trạng thái `Active` ↔ `Inactive` (xóa mềm theo `BR-SRT-04`, bảo toàn lịch sử giao dịch/biên nhận cũ, đồng bộ xóa cache Rule Engine).
+
+### 4.3. Cấu hình & Phát hành Rule Engine (`WasteScanController` – `STT 030–031`, `A-06`)
+* **`PUT /api/v1/waste-scan/rules/{categoryId:guid}` (`[Authorize(Roles = "Admin")]` – `STT 030`):** Tạo mới hoặc cập nhật quy tắc phân loại `1-1` gắn với `categoryId` (`BR-SRT-01`) gồm `title`, `preparationSteps`, `sortingInstruction`, `handlingAction`, `hazardWarning`, `applicableRegion`. Phiên bản mới chỉnh sửa mang trạng thái `DRAFT` cho tới khi được phát hành.
+* **`PATCH /api/v1/waste-scan/rules/{ruleId:guid}/publish` (`[Authorize(Roles = "Admin")]` – `STT 031`):** Phát hành chính thức quy tắc `DRAFT -> ACTIVE` (`BR-SRT-03`), cập nhật ngay bộ nhớ đệm `IWasteRuleEngineService`, ghi `AuditLog`, và gọi đồng bộ `PUT /api/v1/rules` sang Python AI Service (cô lập lỗi nếu AI Service đang offline).
+
 

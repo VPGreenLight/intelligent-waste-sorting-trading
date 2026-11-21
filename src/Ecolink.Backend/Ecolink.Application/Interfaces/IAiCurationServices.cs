@@ -27,6 +27,11 @@ public interface IAiFeedbackService
         int pageSize = 20,
         CancellationToken ct = default);
 
+    Task<PagedResult<MyWasteScanHistoryItemDto>> GetMyScanHistoryAsync(
+        Guid userId,
+        WasteScanHistoryFilterRequest filter,
+        CancellationToken ct = default);
+
     Task<StaffAiFeedbackQueueDto> GetStaffFeedbackQueueAsync(
         StaffAiFeedbackFilterRequest filter,
         CancellationToken ct = default);

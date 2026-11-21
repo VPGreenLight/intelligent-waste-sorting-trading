@@ -22,12 +22,26 @@ public interface IAiVisionClient
             Success = false,
             ErrorMessage = "ReloadModelsAsync chưa được triển khai trên client này."
         });
+
+    Task<AiRuleSyncResponseDto> SyncSortingRuleAsync(
+        string categoryCode,
+        string binColorName,
+        string instructions,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(new AiRuleSyncResponseDto
+        {
+            Success = false,
+            Message = "SyncSortingRuleAsync chưa được triển khai trên client này."
+        });
 }
 
 public interface IWasteRuleEngineService
 {
     Task<WasteSortingGuideDto?> GetSortingGuideAsync(string categoryCode, CancellationToken cancellationToken = default);
     Task<IEnumerable<WasteSortingGuideDto>> GetAllRulesAsync(CancellationToken cancellationToken = default);
+    Task<IReadOnlyList<SortingRuleDetailDto>> GetAllRuleDetailsAsync(bool includeDraft = true, CancellationToken cancellationToken = default);
+    Task<SortingRuleDetailDto> UpsertSortingRuleAsync(Guid adminUserId, Guid categoryId, UpsertSortingRuleRequest request, CancellationToken cancellationToken = default);
+    Task<PublishSortingRuleResultDto> PublishSortingRuleAsync(Guid adminUserId, Guid ruleId, CancellationToken cancellationToken = default);
     Task InvalidateRuleCacheAsync(string? categoryCode = null, CancellationToken cancellationToken = default);
 }
 

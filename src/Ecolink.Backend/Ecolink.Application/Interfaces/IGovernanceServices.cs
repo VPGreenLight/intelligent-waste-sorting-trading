@@ -139,3 +139,49 @@ public interface IAdminAnalyticsService
         ReportExportQueryRequest query,
         CancellationToken ct = default);
 }
+
+/// <summary>
+/// Dịch vụ quản lý thông báo hệ thống bền vững trong DB &amp; đẩy realtime qua SignalR (STT 169-172, SU-04).
+/// </summary>
+public interface INotificationService
+{
+    Task<NotificationListResponseDto> GetMyNotificationsAsync(
+        Guid userId,
+        NotificationFilterRequest filter,
+        CancellationToken ct = default);
+
+    Task<MarkNotificationReadResultDto> MarkAsReadAsync(
+        Guid userId,
+        Guid notificationId,
+        CancellationToken ct = default);
+
+    Task<MarkAllNotificationsReadResultDto> MarkAllAsReadAsync(
+        Guid userId,
+        CancellationToken ct = default);
+
+    Task<NotificationDto> CreateAndPushAsync(
+        Guid recipientUserId,
+        string title,
+        string message,
+        string notificationType,
+        string? referenceType = null,
+        Guid? referenceId = null,
+        CancellationToken ct = default);
+}
+
+/// <summary>
+/// Adapter trừu tượng ở Application để đẩy sự kiện thông báo tới SignalR Hub (/hubs/notifications).
+/// </summary>
+public interface INotificationRealtimeNotifier
+{
+    Task PushNotificationAsync(
+        Guid userId,
+        NotificationDto notification,
+        int unreadCount,
+        CancellationToken ct = default);
+
+    Task PushUnreadCountAsync(
+        Guid userId,
+        int unreadCount,
+        CancellationToken ct = default);
+}

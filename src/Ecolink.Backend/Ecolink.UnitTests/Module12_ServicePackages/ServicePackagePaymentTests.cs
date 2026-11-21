@@ -992,4 +992,181 @@ public class ServicePackagePaymentTests
             ResolutionBankRef = null
         }).IsValid.Should().BeFalse();
     }
+
+    // UTC023 [Abnormal/Business] [R-07]: Đang dùng PRO -> Ẩn/Chặn mua gói thấp hơn (PREMIUM) & Chặn gia hạn cộng dồn PRO
+    [Fact]
+    public async Task UTC023_ActivePro_MarksLowerPackagesIncluded_DisablesRenewal_AndBlocksPremiumOrProRepurchase()
+    {
+        using var db = TestDbContextFactory.Create();
+        var recId = Guid.NewGuid();
+        db.Users.Add(new User { Id = recId, Username = "rec_pro_active", Email = "recpro@thugom.vn", FullName = "Vựa Pro Active", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active });
+        db.RecyclerProfiles.Add(new RecyclerProfile
+        {
+            UserId = recId,
+            FacilityName = "Vựa Pro Active",
+            RepresentativeName = "K",
+            BusinessAddress = "HCM",
+            VerificationStatus = VerificationStatus.Verified,
+            ActiveStatus = RecyclerActiveStatus.Online
+        });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, packageSvc, _, _) = CreateServices(db, recId, "Recycler");
+        var proOrder = await paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+        await paymentSvc.SimulateTransferAsync(proOrder.OrderCode);
+
+        var catalog = await packageSvc.GetAvailablePackagesAsync(recId, UserRole.Recycler);
+        var basicPkg = catalog.First(p => p.PackageCode == "BASIC");
+        var premPkg = catalog.First(p => p.PackageCode == "PREMIUM");
+        var proPkg = catalog.First(p => p.PackageCode == "PRO");
+
+        basicPkg.IsIncludedInHigherPlan.Should().BeTrue();
+        basicPkg.CanRenew.Should().BeFalse();
+        premPkg.IsIncludedInHigherPlan.Should().BeTrue();
+        premPkg.CanRenew.Should().BeFalse();
+        proPkg.IsCurrentPlan.Should().BeTrue();
+        proPkg.CanRenew.Should().BeFalse();
+        proPkg.IsEligible.Should().BeFalse();
+        proPkg.ProEligibility.Should().NotBeNull();
+        proPkg.ProEligibility!.IsNotCurrentlyActivePro.Should().BeFalse();
+
+        // Chặn mua gói thấp hơn (PREMIUM)
+        var buyPremAct = () => paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PREMIUM" });
+        await buyPremAct.Should().ThrowAsync<BusinessRuleException>()
+            .Where(ex => ex.RuleCode == "BR-PAY-04");
+
+        // Chặn gia hạn cộng dồn gói PRO khi đang hiệu lực
+        var buyProAgainAct = () => paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+        await buyProAgainAct.Should().ThrowAsync<BusinessRuleException>()
+            .Where(ex => ex.MessageCode == "MSG-PAY-06");
+    }
+
+    // UTC024 [Boundary] [R-07]: Cho phép đăng ký PRO khi WarningCount <= 5 (bỏ qua khiếu nại) & Chặn khi WarningCount > 5
+    [Fact]
+    public async Task UTC024_ProEligibility_AllowsUpTo5WarningsAndIgnoresComplaints_BlocksAt6Warnings()
+    {
+        using var db = TestDbContextFactory.Create();
+        var recOkId = Guid.NewGuid();
+        var recTooManyId = Guid.NewGuid();
+        db.Users.AddRange(
+            new User { Id = recOkId, Username = "rec_w5", Email = "w5@rec.vn", FullName = "Vựa 5 Cảnh Cáo", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active, WarningCount = 5 },
+            new User { Id = recTooManyId, Username = "rec_w6", Email = "w6@rec.vn", FullName = "Vựa 6 Cảnh Cáo", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active, WarningCount = 6 });
+        db.RecyclerProfiles.AddRange(
+            new RecyclerProfile { UserId = recOkId, FacilityName = "Vựa 5 CC", BusinessAddress = "HN", VerificationStatus = VerificationStatus.Verified, ActiveStatus = RecyclerActiveStatus.Online },
+            new RecyclerProfile { UserId = recTooManyId, FacilityName = "Vựa 6 CC", BusinessAddress = "HN", VerificationStatus = VerificationStatus.Verified, ActiveStatus = RecyclerActiveStatus.Online });
+        await db.SaveChangesAsync();
+
+        var (payOk, _, _, _) = CreateServices(db, recOkId, "Recycler");
+        var okOrder = await payOk.CreatePayInOrderAsync(recOkId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+        okOrder.PackageCode.Should().Be("PRO");
+
+        var (payBlocked, pkgBlocked, _, _) = CreateServices(db, recTooManyId, "Recycler");
+        var blockedCatalog = await pkgBlocked.GetAvailablePackagesAsync(recTooManyId, UserRole.Recycler);
+        var proDto = blockedCatalog.First(c => c.PackageCode == "PRO");
+        proDto.IsEligible.Should().BeFalse();
+        proDto.ProEligibility!.IsWarningLimitOk.Should().BeFalse();
+        proDto.ProEligibility.CurrentWarningCount.Should().Be(6);
+
+        var blockedAct = () => payBlocked.CreatePayInOrderAsync(recTooManyId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+        await blockedAct.Should().ThrowAsync<BusinessRuleException>()
+            .Where(ex => ex.MessageCode == "MSG-PAY-06");
+    }
+
+    // UTC025 [Abnormal] [R-07]: Yêu cầu phản hồi >= 4.0 sao & Bắt buộc có ít nhất 1 đánh giá khi đăng ký lại PRO
+    [Fact]
+    public async Task UTC025_ProEligibility_BlocksLowRating_AndRequiresPositiveReviewOnReRegistration()
+    {
+        using var db = TestDbContextFactory.Create();
+        var recId = Guid.NewGuid();
+        db.Users.Add(new User { Id = recId, Username = "rec_rate", Email = "rate@rec.vn", FullName = "Vựa Rating", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active });
+        var profile = new RecyclerProfile
+        {
+            UserId = recId,
+            FacilityName = "Vựa Rating",
+            BusinessAddress = "Đà Nẵng",
+            VerificationStatus = VerificationStatus.Verified,
+            ActiveStatus = RecyclerActiveStatus.Online,
+            AverageRating = 3.5m,
+            TotalReviews = 3
+        };
+        db.RecyclerProfiles.Add(profile);
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, packageSvc, _, _) = CreateServices(db, recId, "Recycler");
+
+        // 1. Chặn nếu có đánh giá nhưng < 4.0 sao
+        var lowRatingAct = () => paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+        await lowRatingAct.Should().ThrowAsync<BusinessRuleException>()
+            .Where(ex => ex.MessageCode == "MSG-PAY-06");
+
+        // 2. Trường hợp tái đăng ký PRO sau khi kỳ cũ hết hạn nhưng chưa có review (TotalReviews = 0) -> chặn
+        profile.AverageRating = 0m;
+        profile.TotalReviews = 0;
+        var pastOrder = new ServiceOrder
+        {
+            Id = Guid.NewGuid(),
+            OrderCode = "ECOOLDPRO01",
+            UserId = recId,
+            PackageId = CanonicalServicePackages.ProId,
+            PackageCodeSnapshot = CanonicalServicePackages.ProCode,
+            PackageNameSnapshot = "Pro",
+            DurationDaysSnapshot = 365,
+            FeaturesSnapshot = CanonicalServicePackages.ProFeaturesJson,
+            ExpectedAmountVnd = 1_000_000m,
+            PaidAmountVnd = 1_000_000m,
+            QrCodeUrl = "https://qr.test/oldpro",
+            TransferContent = "ECOOLDPRO01",
+            BankCode = "TPB",
+            BankName = "TPBank",
+            AccountNo = "05773216801",
+            AccountName = "ECOLINK",
+            OrderStatus = ServiceOrderStatus.Paid,
+            PaymentStatus = ServicePaymentStatus.Success,
+            ReconciliationStatus = ReconciliationStatus.Matched,
+            QrExpiresAt = DateTime.UtcNow.AddDays(-400),
+            PaidAt = DateTime.UtcNow.AddDays(-400)
+        };
+        db.ServiceOrders.Add(pastOrder);
+        db.UserSubscriptions.Add(new UserSubscription
+        {
+            Id = Guid.NewGuid(),
+            UserId = recId,
+            PackageId = CanonicalServicePackages.ProId,
+            SourceOrderId = pastOrder.Id,
+            PackageCode = CanonicalServicePackages.ProCode,
+            FeaturesSnapshot = CanonicalServicePackages.ProFeaturesJson,
+            StartsAt = DateTime.UtcNow.AddDays(-400),
+            ExpiresAt = DateTime.UtcNow.AddDays(-35),
+            Status = SubscriptionStatus.Expired
+        });
+        await db.SaveChangesAsync();
+
+        var renewNoReviewCatalog = await packageSvc.GetAvailablePackagesAsync(recId, UserRole.Recycler);
+        renewNoReviewCatalog.First(c => c.PackageCode == "PRO").ProEligibility!.IsReRegistration.Should().BeTrue();
+        renewNoReviewCatalog.First(c => c.PackageCode == "PRO").ProEligibility!.IsPositiveFeedbackMet.Should().BeFalse();
+
+        // 3. Đạt >= 1 đánh giá >= 4.0 sao -> đủ điều kiện tái đăng ký PRO
+        profile.TotalReviews = 2;
+        profile.AverageRating = 4.6m;
+        await db.SaveChangesAsync();
+
+        var eligibleOrder = await paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+        eligibleOrder.PackageCode.Should().Be("PRO");
+    }
+
+    // UTC026 [Normal] [U-16]: Tài khoản Citizen (User) chỉ nhìn thấy BASIC & PREMIUM, ẩn hoàn toàn gói PRO của Recycler
+    [Fact]
+    public async Task UTC026_GetAvailablePackages_WhenCitizenUser_FiltersOutRecyclerProPackage()
+    {
+        using var db = TestDbContextFactory.Create();
+        var citizenId = Guid.NewGuid();
+        db.Users.Add(new User { Id = citizenId, Username = "cit_view", Email = "citv@email.vn", FullName = "Citizen View", PasswordHash = "h", Role = UserRole.User, Status = UserStatus.Active });
+        await db.SaveChangesAsync();
+
+        var (_, packageSvc, _, _) = CreateServices(db, citizenId, "User");
+        var catalog = await packageSvc.GetAvailablePackagesAsync(citizenId, UserRole.User);
+
+        catalog.Select(p => p.PackageCode).Should().BeEquivalentTo(new[] { "BASIC", "PREMIUM" });
+        catalog.Should().NotContain(p => p.PackageCode == "PRO");
+    }
 }

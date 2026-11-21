@@ -4,16 +4,16 @@
 
 | Feature | `Account, Staff & System Governance / Analytics (M15_Governance)` | | | |
 | :--- | :--- | :---: | :---: | :---: |
-| **Test requirement** | Kiểm thử tích hợp HTTP End-to-End cho 19 REST APIs (`STT 150–168`) thuộc Module `M-15`: Kiểm soát vai trò `Admin` & phân quyền hạt mịn `[HasPermission("MANAGE_ACCOUNTS")]` (`BR-ADM-02`), Tổng hợp KPI điều hành & biểu đồ từ giao dịch `Completed` (`BR-ADM-07`), Xuất báo cáo CSV/XLSX ẩn danh hóa PII (`BR-ADM-06`) kèm tự động ghi `audit_logs` bất biến (`BR-ADM-05`), Tra cứu/Khóa/Mở khóa & Vô hiệu hóa mềm tài khoản bảo toàn biên nhận (`BR-ADM-03`, `BR-ADM-04`), Khởi tạo Staff `0` quyền mặc định (`BR-ADM-01`), Chống tự khóa mình, Cập nhật ma trận RBAC xóa `IMemoryCache` tức thời và Điểm danh ca trực UTC+7 tách biệt ví công dân (`BR-GAM-08`, `BR-GAM-09`) (`EcoLink.ApiTests/GovernanceTests.cs`). | | | |
-| **Number of TCs** | **16** | | | |
+| **Test requirement** | Kiểm thử tích hợp HTTP End-to-End cho 22 REST APIs (`STT 150–171`) & SignalR Hub `/hubs/notifications` (`STT 172`) thuộc Module `M-15`: Kiểm soát vai trò `Admin` & phân quyền hạt mịn `[HasPermission("MANAGE_ACCOUNTS")]` (`BR-ADM-02`), Tổng hợp KPI điều hành & biểu đồ từ giao dịch `Completed` (`BR-ADM-07`), Xuất báo cáo CSV/XLSX ẩn danh hóa PII (`BR-ADM-06`), Nhật ký `audit_logs` bất biến (`BR-ADM-05`), Khóa/Vô hiệu hóa mềm tài khoản (`BR-ADM-03`, `BR-ADM-04`), Staff `0` quyền (`BR-ADM-01`), Điểm danh ca trực UTC+7 (`BR-GAM-08`, `BR-GAM-09`) và Hộp thư Thông báo Hệ thống (`SU-04`) (`EcoLink.ApiTests/GovernanceTests.cs` & `NotificationTests.cs`). | | | |
+| **Number of TCs** | **20** | | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
-| *Round 1* | 16 | 0 | 0 | 0 |
-| *Round 2* | 0 | 0 | 16 | 0 |
-| *Round 3* | 0 | 0 | 16 | 0 |
+| *Round 1* | 20 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 20 | 0 |
+| *Round 3* | 0 | 0 | 20 | 0 |
 
 ---
 
-## 2. Integration Test Case Specification (`ITC-GOV-001` $\rightarrow$ `ITC-GOV-016`)
+## 2. Integration Test Case Specification (`ITC-GOV-001` $\rightarrow$ `ITC-GOV-020`)
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
 | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
@@ -37,3 +37,8 @@
 | **Function 9.4: Staff Daily Shift Check-in, Check-out & Attendance Oversight (`S-11` – `STT 165–168`)** | | | | | | | | | |
 | **ITC-GOV-015** | Kiểm tra điểm danh đầu ca (`POST /check-in`), tách biệt hoàn toàn với ví `CurrentGreenPoints` (`BR-GAM-08`) và chặn điểm danh trùng ngày (`BR-GAM-09`). | 1. Dùng `staffToken` mới tạo gọi `POST /api/v1/staff/attendance/check-in`.<br>2. Kiểm tra `GET /api/v1/auth/me` và `GET /api/v1/staff/attendance/me`.<br>3. Gọi `POST /check-in` lần 2 trong cùng ngày. | - Bước 1: `201 Created`, `checkedInToday = true`, `pointsEarnedToday = 10`, `currentStreakDay = 1`.<br>- Bước 2: `currentGreenPoints = 0`, `checkedInToday = true`.<br>- Bước 3: `400 Bad Request`. | Staff mới tạo chưa điểm danh hôm nay. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV15` |
 | **ITC-GOV-016** | Kiểm tra kết thúc ca trực (`POST /check-out`) và đối soát báo cáo chuyên cần toàn đội ngũ (`GET /admin/staff/attendance`). | 1. Staff mới tạo gọi `POST /check-in` (`201`).<br>2. Gọi `POST /api/v1/staff/attendance/check-out` kèm `shiftNote`.<br>3. `Admin` gọi `GET /api/v1/admin/staff/attendance?staffId={staffId}`. | - Bước 2: `200 OK`, `checkedOutToday = true`, lưu `todayShiftNote`.<br>- Bước 3: `200 OK`, trả về đúng bản ghi ca trực với `staffCode` và `shiftNote`. | Staff mới đã hoàn tất Check-in trong ngày. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV16` |
+| **Function 9.5: System Notifications REST APIs (`STT 169–171`, `SU-04`)** | | | | | | | | | |
+| **ITC-GOV-017** | Chặn truy cập ẩn danh tới hộp thư thông báo hệ thống (`GET /api/v1/notifications`). | 1. Gửi `GET /api/v1/notifications` không kèm JWT token. | HTTP `401 Unauthorized`. | Hệ thống đang chạy. | Passed | Pending | Pending | N/A | `NotificationTests.NTF01_GetNotifications_Unauthenticated_Returns401` |
+| **ITC-GOV-018** | Người dùng đã đăng nhập lấy danh sách thông báo kèm bộ đếm chưa đọc (`unreadCount`). | 1. Đăng nhập tài khoản `Citizen`.<br>2. Gửi `GET /api/v1/notifications`. | HTTP `200 OK`, `messageCode = "MSG-NTF-LIST-OK"`, `data.items` là mảng, `data.unreadCount >= 0`. | Tài khoản `Citizen` hợp lệ. | Passed | Pending | Pending | N/A | `NotificationTests.NTF02_GetNotifications_CitizenToken_ReturnsPagedEnvelopeWithUnreadCount` |
+| **ITC-GOV-019** | Đánh dấu đã đọc một `notificationId` không tồn tại trả về `404 Not Found`. | 1. Gửi `PATCH /api/v1/notifications/{randomGuid}/read` bằng token `Citizen`. | HTTP `404 Not Found`. | Tài khoản `Citizen` hợp lệ. | Passed | Pending | Pending | N/A | `NotificationTests.NTF03_MarkNotificationRead_NonExistentId_Returns404` |
+| **ITC-GOV-020** | Đánh dấu toàn bộ thông báo của tài khoản là đã xem (`PUT /api/v1/notifications/read-all`). | 1. Gửi `PUT /api/v1/notifications/read-all` bằng token `Admin`. | HTTP `200 OK`, `messageCode = "MSG-NTF-READ-ALL-OK"`, `data.unreadCount == 0`. | Tài khoản `Admin` hợp lệ. | Passed | Pending | Pending | N/A | `NotificationTests.NTF04_MarkAllNotificationsRead_Authenticated_Returns200AndZeroUnread` |

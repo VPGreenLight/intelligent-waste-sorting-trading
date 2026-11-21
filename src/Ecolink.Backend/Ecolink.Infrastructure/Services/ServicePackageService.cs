@@ -39,7 +39,11 @@ public class ServicePackageService : IServicePackageService
             .AsNoTracking()
             .Where(p => p.IsActive);
 
-        if (!string.IsNullOrWhiteSpace(targetRoleFilter)
+        if (currentRole == UserRole.User)
+        {
+            query = query.Where(p => p.TargetRole == ServiceTargetRole.All || p.TargetRole == ServiceTargetRole.User);
+        }
+        else if (!string.IsNullOrWhiteSpace(targetRoleFilter)
             && Enum.TryParse<ServiceTargetRole>(targetRoleFilter, true, out var parsedFilter)
             && parsedFilter != ServiceTargetRole.All)
         {
@@ -61,9 +65,21 @@ public class ServicePackageService : IServicePackageService
 
         var currentEffectiveSubs = validSubs.Where(s => s.StartsAt <= utcNow).ToList();
         var entitlements = ServicePackageHelpers.AggregateEntitlements(currentEffectiveSubs);
+        var currentTierRank = ServicePackageHelpers.GetTierRank(entitlements.CurrentTier);
         var recyclerProfile = currentRole == UserRole.Recycler
             ? await _dbContext.RecyclerProfiles.AsNoTracking().FirstOrDefaultAsync(r => r.UserId == currentUserId, ct)
             : null;
+
+        ProEligibilityReportDto? proEligibility = null;
+        if (packages.Any(p => ServicePackageHelpers.IsProPackage(p.PackageCode, p.RequiresVerifiedKyb)))
+        {
+            proEligibility = await ServicePackageHelpers.EvaluateProEligibilityAsync(
+                _dbContext,
+                currentUserId,
+                currentRole,
+                utcNow,
+                ct);
+        }
 
         return packages.Select(pkg =>
         {
@@ -72,13 +88,18 @@ public class ServicePackageService : IServicePackageService
                 .Select(s => (DateTime?)s.ExpiresAt)
                 .Max();
 
-            var (eligible, reason) = EvaluateEligibility(pkg, currentRole, recyclerProfile);
+            var pkgRank = ServicePackageHelpers.GetTierRank(pkg.PackageCode, pkg.IsDefaultFree, pkg.RequiresVerifiedKyb);
+            var isPro = ServicePackageHelpers.IsProPackage(pkg.PackageCode, pkg.RequiresVerifiedKyb);
+            var isIncludedInHigherPlan = currentTierRank > pkgRank;
+            var (eligible, reason) = isPro && proEligibility != null
+                ? (proEligibility.IsEligible, proEligibility.BlockingReasons.FirstOrDefault())
+                : EvaluateEligibility(pkg, currentRole, recyclerProfile);
+
             var isCurrentPlan = pkg.IsDefaultFree
-                ? entitlements.CurrentTier.Equals("Basic", StringComparison.OrdinalIgnoreCase)
-                : maxExpiry.HasValue && string.Equals(
-                    entitlements.CurrentTier,
-                    pkg.PackageCode.Equals(CanonicalServicePackages.ProCode, StringComparison.OrdinalIgnoreCase) ? "Pro" : "Premium",
-                    StringComparison.OrdinalIgnoreCase);
+                ? currentTierRank == 0
+                : !isIncludedInHigherPlan && currentTierRank == pkgRank && maxExpiry.HasValue;
+
+            var canRenew = !pkg.IsDefaultFree && !isIncludedInHigherPlan && !isPro && isCurrentPlan;
 
             return new ServicePackageCatalogDto
             {
@@ -97,7 +118,10 @@ public class ServicePackageService : IServicePackageService
                 IsEligible = eligible,
                 IneligibleReason = reason,
                 IsCurrentPlan = isCurrentPlan,
-                CurrentActiveExpiresAt = maxExpiry
+                IsIncludedInHigherPlan = isIncludedInHigherPlan,
+                CanRenew = canRenew,
+                CurrentActiveExpiresAt = maxExpiry,
+                ProEligibility = isPro ? proEligibility : null
             };
         }).ToList();
     }

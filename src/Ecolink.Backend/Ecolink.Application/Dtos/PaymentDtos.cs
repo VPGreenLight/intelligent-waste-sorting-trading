@@ -24,6 +24,29 @@ public class ServicePackageFeaturesDto
 }
 
 /// <summary>
+/// Báo cáo thẩm định 4 tiêu chí đăng ký / đăng ký lại gói Tích xanh PRO cho Cơ sở thu mua (R-07).
+/// </summary>
+public class ProEligibilityReportDto
+{
+    public bool IsEligible { get; set; }
+    public bool IsReRegistration { get; set; }
+    public bool IsKybAndProfileValid { get; set; }
+    public string VerificationStatus { get; set; } = string.Empty;
+    public bool RequiresProfileReverification { get; set; }
+    public bool IsWarningLimitOk { get; set; }
+    public int CurrentWarningCount { get; set; }
+    public int MaxAllowedWarnings { get; set; } = 5;
+    public bool IsPositiveFeedbackMet { get; set; }
+    public decimal AverageRating { get; set; }
+    public int TotalReviews { get; set; }
+    public decimal MinRequiredRating { get; set; } = 4.0m;
+    public int MinRequiredReviewsForRenewal { get; set; } = 1;
+    public bool IsNotCurrentlyActivePro { get; set; }
+    public DateTime? ActiveProExpiresAt { get; set; }
+    public List<string> BlockingReasons { get; set; } = new();
+}
+
+/// <summary>
 /// Thông tin một gói dịch vụ hiển thị trên cửa hàng Citizen / Recycler (STT 120).
 /// </summary>
 public class ServicePackageCatalogDto
@@ -43,7 +66,10 @@ public class ServicePackageCatalogDto
     public bool IsEligible { get; set; } = true;
     public string? IneligibleReason { get; set; }
     public bool IsCurrentPlan { get; set; }
+    public bool IsIncludedInHigherPlan { get; set; }
+    public bool CanRenew { get; set; }
     public DateTime? CurrentActiveExpiresAt { get; set; }
+    public ProEligibilityReportDto? ProEligibility { get; set; }
 }
 
 /// <summary>

@@ -1,5 +1,7 @@
 using System.Text.Json;
+using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
+using Ecolink.Application.Events;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
@@ -23,19 +25,25 @@ public class AiFeedbackService : IAiFeedbackService
     private readonly IFileStorageService _fileStorageService;
     private readonly IAuditLogService _auditLogService;
     private readonly ILogger<AiFeedbackService> _logger;
+    private readonly IWasteRuleEngineService? _ruleEngine;
+    private readonly IEventBus? _eventBus;
 
     public AiFeedbackService(
         ApplicationDbContext db,
         IAiVisionClient aiVisionClient,
         IFileStorageService fileStorageService,
         IAuditLogService auditLogService,
-        ILogger<AiFeedbackService> logger)
+        ILogger<AiFeedbackService> logger,
+        IWasteRuleEngineService? ruleEngine = null,
+        IEventBus? eventBus = null)
     {
         _db = db;
         _aiVisionClient = aiVisionClient;
         _fileStorageService = fileStorageService;
         _auditLogService = auditLogService;
         _logger = logger;
+        _ruleEngine = ruleEngine;
+        _eventBus = eventBus;
     }
 
     public async Task<(Guid ScanId, string ImageUrl)> RecordScanHistoryAsync(
@@ -267,6 +275,85 @@ public class AiFeedbackService : IAiFeedbackService
                 CreatedAt = f.CreatedAt,
                 ReviewedAt = f.ReviewedAt
             }).ToList(),
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            TotalRecords = total
+        };
+    }
+
+    public async Task<PagedResult<MyWasteScanHistoryItemDto>> GetMyScanHistoryAsync(
+        Guid userId,
+        WasteScanHistoryFilterRequest filter,
+        CancellationToken ct = default)
+    {
+        var pageNumber = Math.Max(1, filter.PageNumber);
+        var pageSize = Math.Clamp(filter.PageSize, 1, 50);
+
+        // BR-CLS-08: Cô lập dữ liệu lịch sử quét AI theo UserId đang đăng nhập
+        var query = _db.AiScanHistories
+            .AsNoTracking()
+            .Where(s => s.UserId == userId);
+
+        if (!string.IsNullOrWhiteSpace(filter.CategoryCode))
+        {
+            var normalizedCat = AiCategoryNormalizer.NormalizeCode(filter.CategoryCode);
+            query = query.Where(s => s.PredictedLabel == normalizedCat);
+        }
+
+        if (filter.FromDate.HasValue)
+        {
+            var fromUtc = filter.FromDate.Value.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(filter.FromDate.Value, DateTimeKind.Utc)
+                : filter.FromDate.Value.ToUniversalTime();
+            query = query.Where(s => s.CreatedAt >= fromUtc);
+        }
+
+        if (filter.ToDate.HasValue)
+        {
+            var toUtc = filter.ToDate.Value.Kind == DateTimeKind.Unspecified
+                ? DateTime.SpecifyKind(filter.ToDate.Value, DateTimeKind.Utc)
+                : filter.ToDate.Value.ToUniversalTime();
+            query = query.Where(s => s.CreatedAt <= toUtc);
+        }
+
+        var total = await query.CountAsync(ct);
+        var rows = await query
+            .OrderByDescending(s => s.CreatedAt)
+            .ThenByDescending(s => s.Id)
+            .Skip((pageNumber - 1) * pageSize)
+            .Take(pageSize)
+            .ToListAsync(ct);
+
+        var guideCache = new Dictionary<string, WasteSortingGuideDto?>(StringComparer.OrdinalIgnoreCase);
+        var items = new List<MyWasteScanHistoryItemDto>(rows.Count);
+
+        foreach (var s in rows)
+        {
+            WasteSortingGuideDto? guide = null;
+            if (_ruleEngine != null && !string.IsNullOrWhiteSpace(s.PredictedLabel))
+            {
+                if (!guideCache.TryGetValue(s.PredictedLabel, out guide))
+                {
+                    guide = await _ruleEngine.GetSortingGuideAsync(s.PredictedLabel, ct);
+                    guideCache[s.PredictedLabel] = guide;
+                }
+            }
+
+            items.Add(new MyWasteScanHistoryItemDto
+            {
+                ScanId = s.Id,
+                ImageUrl = s.ImageUrl,
+                PredictedLabel = s.PredictedLabel,
+                ConfidenceScore = s.ConfidenceScore,
+                PipelineUsed = s.ModelUsed,
+                SortingGuide = guide,
+                ScannedAt = s.CreatedAt
+            });
+        }
+
+        return new PagedResult<MyWasteScanHistoryItemDto>
+        {
+            Items = items,
             PageNumber = pageNumber,
             PageSize = pageSize,
             TotalRecords = total
@@ -558,6 +645,22 @@ public class AiFeedbackService : IAiFeedbackService
             reason: cleanNote,
             explicitActorId: staffId,
             ct: ct);
+
+        if (_eventBus != null && log.UserId.HasValue && log.UserId.Value != Guid.Empty)
+        {
+            var isVerified = log.Status == FeedbackStatus.Verified;
+            await _eventBus.PublishAsync(
+                new SystemNotificationDispatchedEvent(
+                    log.UserId.Value,
+                    isVerified ? "Báo cáo nhận diện AI đã được xác nhận" : "Báo cáo nhận diện AI đã được thẩm định",
+                    isVerified
+                        ? $"Cảm ơn đóng góp của bạn! Nhãn đúng '{log.AdminVerifiedLabel ?? log.UserReportedLabel}' đã được ghi nhận vào bộ dữ liệu huấn luyện EcoLink."
+                        : $"Báo cáo phân loại sai của bạn đã được nhân viên kiểm tra ({log.ReviewNote ?? "giữ nguyên kết quả gốc"}).",
+                    "AI_FEEDBACK_REVIEWED",
+                    "AIFeedbackLog",
+                    log.Id),
+                ct);
+        }
 
         return await GetStaffFeedbackDetailAsync(log.Id, ct);
     }

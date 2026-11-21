@@ -13,6 +13,12 @@ public class WasteCategoryDto
     public string? Description { get; set; }
     public string StandardBinColor { get; set; } = string.Empty;
     public string? IconUrl { get; set; }
+    public bool IsRecyclable { get; set; } = true;
+    public string Status { get; set; } = "Active";
+    public bool HasSortingRule { get; set; }
+    public string? RuleStatus { get; set; }
+    public DateTime CreatedAt { get; set; }
+    public DateTime? UpdatedAt { get; set; }
 }
 
 // ============================================================

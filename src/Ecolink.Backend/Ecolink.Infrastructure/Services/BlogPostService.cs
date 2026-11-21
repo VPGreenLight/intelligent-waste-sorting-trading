@@ -30,12 +30,18 @@ public class BlogPostService : IBlogPostService
     private readonly ApplicationDbContext _db;
     private readonly ILogger<BlogPostService> _logger;
     private readonly IAuditLogService? _auditLog;
+    private readonly INotificationRealtimeNotifier? _realtimeNotifier;
 
-    public BlogPostService(ApplicationDbContext db, ILogger<BlogPostService> logger, IAuditLogService? auditLog = null)
+    public BlogPostService(
+        ApplicationDbContext db,
+        ILogger<BlogPostService> logger,
+        IAuditLogService? auditLog = null,
+        INotificationRealtimeNotifier? realtimeNotifier = null)
     {
         _db = db;
         _logger = logger;
         _auditLog = auditLog;
+        _realtimeNotifier = realtimeNotifier;
     }
 
     private sealed class PostRow
@@ -286,7 +292,7 @@ public class BlogPostService : IBlogPostService
             tracked.UpdatedAt = now;
         }
 
-        _db.Notifications.Add(new Notification
+        var notif = new Notification
         {
             UserId = post.AuthorId,
             Title = "Bài viết đã được duyệt",
@@ -294,7 +300,8 @@ public class BlogPostService : IBlogPostService
             NotificationType = "SYSTEM",
             ReferenceType = "BlogPost",
             ReferenceId = postId
-        });
+        };
+        _db.Notifications.Add(notif);
         if (_auditLog != null)
         {
             await _auditLog.LogAsync(
@@ -320,6 +327,8 @@ public class BlogPostService : IBlogPostService
             await _db.SaveChangesAsync(ct);
         }
         await tx.CommitAsync(ct);
+
+        await TryPushRealtimeNotificationAsync(notif, ct);
 
         _logger.LogInformation("Admin {AdminId} đã duyệt bài viết {PostId}", adminId, postId);
         return await LoadDetailAsync(postId, ct);
@@ -359,7 +368,7 @@ public class BlogPostService : IBlogPostService
             tracked.UpdatedAt = now;
         }
 
-        _db.Notifications.Add(new Notification
+        var rejectNotif = new Notification
         {
             UserId = post.AuthorId,
             Title = "Bài viết cần chỉnh sửa",
@@ -367,7 +376,8 @@ public class BlogPostService : IBlogPostService
             NotificationType = "SYSTEM",
             ReferenceType = "BlogPost",
             ReferenceId = postId
-        });
+        };
+        _db.Notifications.Add(rejectNotif);
         if (_auditLog != null)
         {
             await _auditLog.LogAsync(
@@ -394,6 +404,8 @@ public class BlogPostService : IBlogPostService
             await _db.SaveChangesAsync(ct);
         }
         await tx.CommitAsync(ct);
+
+        await TryPushRealtimeNotificationAsync(rejectNotif, ct);
 
         _logger.LogInformation("Admin {AdminId} đã từ chối bài viết {PostId}", adminId, postId);
         return await LoadDetailAsync(postId, ct);
@@ -579,7 +591,7 @@ public class BlogPostService : IBlogPostService
             .Select(u => u.Id).ToListAsync(ct);
         foreach (var id in adminIds)
         {
-            _db.Notifications.Add(new Notification
+            var n = new Notification
             {
                 UserId = id,
                 Title = title,
@@ -587,7 +599,39 @@ public class BlogPostService : IBlogPostService
                 NotificationType = "SYSTEM",
                 ReferenceType = "BlogPost",
                 ReferenceId = postId
-            });
+            };
+            _db.Notifications.Add(n);
+            await TryPushRealtimeNotificationAsync(n, ct);
+        }
+    }
+
+    private async Task TryPushRealtimeNotificationAsync(Notification n, CancellationToken ct)
+    {
+        if (_realtimeNotifier == null) return;
+        try
+        {
+            var unreadCount = await _db.Notifications.AsNoTracking()
+                .CountAsync(x => x.UserId == n.UserId && !x.IsRead, ct);
+            await _realtimeNotifier.PushNotificationAsync(
+                n.UserId,
+                new NotificationDto
+                {
+                    Id = n.Id,
+                    Title = n.Title,
+                    Message = n.Message,
+                    NotificationType = n.NotificationType,
+                    ReferenceType = n.ReferenceType,
+                    ReferenceId = n.ReferenceId,
+                    IsRead = n.IsRead,
+                    ReadAt = n.ReadAt,
+                    CreatedAt = n.CreatedAt
+                },
+                unreadCount,
+                ct);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Không thể đẩy SignalR notification cho bài viết {PostId}.", n.ReferenceId);
         }
     }
 

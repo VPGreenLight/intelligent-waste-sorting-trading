@@ -4,6 +4,7 @@ using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 
 namespace Ecolink.WebApi.Controllers;
 
@@ -41,10 +42,7 @@ public class AuthController : ControllerBase
         [FromBody] RegisterUserRequestDto request, CancellationToken ct)
     {
         var result = await _authService.RegisterUserAsync(request, ct);
-        if (!string.IsNullOrEmpty(result.RefreshToken))
-        {
-            SetRefreshTokenCookie(result.RefreshToken);
-        }
+        SetAuthCookies(result);
 
         return StatusCode(StatusCodes.Status201Created, ApiResponse<AuthResponseDto>.Ok(
             result,
@@ -62,10 +60,7 @@ public class AuthController : ControllerBase
         [FromBody] RegisterRecyclerRequestDto request, CancellationToken ct)
     {
         var result = await _authService.RegisterRecyclerAsync(request, ct);
-        if (!string.IsNullOrEmpty(result.RefreshToken))
-        {
-            SetRefreshTokenCookie(result.RefreshToken);
-        }
+        SetAuthCookies(result);
 
         return StatusCode(StatusCodes.Status201Created, ApiResponse<AuthResponseDto>.Ok(
             result,
@@ -83,11 +78,7 @@ public class AuthController : ControllerBase
         [FromBody] LoginRequestDto request, CancellationToken ct)
     {
         var result = await _authService.LoginAsync(request, GetClientIp(), ct);
-
-        if (!string.IsNullOrEmpty(result.RefreshToken))
-        {
-            SetRefreshTokenCookie(result.RefreshToken);
-        }
+        SetAuthCookies(result);
 
         return Ok(ApiResponse<AuthResponseDto>.Ok(
             result,
@@ -122,11 +113,7 @@ public class AuthController : ControllerBase
         [FromBody] GoogleAuthRequestDto request, CancellationToken ct)
     {
         var result = await _authService.AuthenticateGoogleAsync(request.IdToken, ct);
-
-        if (!string.IsNullOrEmpty(result.RefreshToken))
-        {
-            SetRefreshTokenCookie(result.RefreshToken);
-        }
+        SetAuthCookies(result);
 
         return Ok(ApiResponse<AuthResponseDto>.Ok(
             result,
@@ -141,9 +128,12 @@ public class AuthController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<ApiResponse<AuthResponseDto>>> RefreshToken(
-        [FromBody] RefreshTokenRequestDto? request, CancellationToken ct)
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RefreshTokenRequestDto? request = null,
+        CancellationToken ct = default)
     {
-        var token = request?.RefreshToken ?? Request.Cookies["refreshToken"];
+        var token = !string.IsNullOrWhiteSpace(request?.RefreshToken)
+            ? request!.RefreshToken
+            : Request.Cookies["refreshToken"];
         if (string.IsNullOrWhiteSpace(token))
         {
             return Unauthorized(ApiResponse<AuthResponseDto>.Fail(
@@ -152,11 +142,7 @@ public class AuthController : ControllerBase
         }
 
         var result = await _authService.RefreshTokenAsync(token, GetClientIp(), ct);
-
-        if (!string.IsNullOrEmpty(result.RefreshToken))
-        {
-            SetRefreshTokenCookie(result.RefreshToken);
-        }
+        SetAuthCookies(result);
 
         return Ok(ApiResponse<AuthResponseDto>.Ok(
             result,
@@ -251,18 +237,21 @@ public class AuthController : ControllerBase
     }
 
     /// <summary>
-    /// 10. Đăng xuất khỏi phiên làm việc hiện tại và xóa HttpOnly Refresh Token Cookie
+    /// 10. Đăng xuất khỏi phiên làm việc hiện tại và xóa HttpOnly Cookies (accessToken + refreshToken)
     /// </summary>
     [HttpPost("logout")]
     [ProducesResponseType(typeof(ApiResponse<object?>), StatusCodes.Status200OK)]
     public async Task<ActionResult<ApiResponse<object?>>> Logout(
-        [FromBody] LogoutRequestDto? request, CancellationToken ct)
+        [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] LogoutRequestDto? request = null,
+        CancellationToken ct = default)
     {
-        var refreshToken = request?.RefreshToken ?? Request.Cookies["refreshToken"];
+        var refreshToken = !string.IsNullOrWhiteSpace(request?.RefreshToken)
+            ? request!.RefreshToken
+            : Request.Cookies["refreshToken"];
         var userId = GetCurrentUserId();
         await _authService.LogoutAsync(refreshToken, userId, ct);
 
-        Response.Cookies.Delete("refreshToken");
+        ClearAuthCookies();
         return Ok(ApiResponse<object?>.Ok(
             null,
             message: "Đã đăng xuất thành công.",
@@ -272,7 +261,7 @@ public class AuthController : ControllerBase
     // ================= TIỆN ÍCH DÀNH CHO PHÁT TRIỂN & TEST =================
 
     /// <summary>
-    /// Lấy thông tin người dùng hiện tại qua Bearer token (Hỗ trợ qua Header hoặc Query Param)
+    /// Lấy thông tin người dùng hiện tại qua Bearer token hoặc HttpOnly Cookie
     /// </summary>
     [HttpGet("me")]
     [ProducesResponseType(typeof(UserInfoDto), StatusCodes.Status200OK)]
@@ -291,10 +280,16 @@ public class AuthController : ControllerBase
         {
             rawToken = token;
         }
+        if (string.IsNullOrWhiteSpace(rawToken) &&
+            Request.Cookies.TryGetValue("accessToken", out var cookieAccessToken) &&
+            !string.IsNullOrWhiteSpace(cookieAccessToken))
+        {
+            rawToken = cookieAccessToken;
+        }
 
         if (string.IsNullOrWhiteSpace(rawToken))
         {
-            return Unauthorized(new { message = "Thiếu Authorization Header hoặc query param 'token'. Vui lòng đính kèm Bearer token." });
+            return Unauthorized(new { message = "Thiếu Authorization Header, HttpOnly Cookie hoặc query param 'token'." });
         }
 
         var user = await _authService.GetUserByTokenAsync(rawToken, ct);
@@ -353,16 +348,63 @@ public class AuthController : ControllerBase
         return Guid.TryParse(rawId, out var id) ? id : null;
     }
 
-    private void SetRefreshTokenCookie(string refreshToken)
+    private bool IsHttpsRequest =>
+        Request.IsHttps || string.Equals(Request.Headers["X-Forwarded-Proto"], "https", StringComparison.OrdinalIgnoreCase);
+
+    private CookieOptions CreateCookieOptions(bool httpOnly, DateTimeOffset? expires = null) => new()
     {
-        var cookieOptions = new CookieOptions
+        HttpOnly = httpOnly,
+        Secure = IsHttpsRequest,
+        SameSite = SameSiteMode.Lax,
+        Path = "/",
+        Expires = expires
+    };
+
+    private void SetAuthCookies(AuthResponseDto result)
+    {
+        var noCookieHeader = Request.Headers["X-EcoLink-No-Cookie"].ToString();
+        if (noCookieHeader is "1" or "true")
         {
-            HttpOnly = true,
-            Secure = Request.IsHttps,
-            SameSite = SameSiteMode.Lax,
-            Expires = DateTime.UtcNow.AddDays(7)
-        };
-        Response.Cookies.Append("refreshToken", refreshToken, cookieOptions);
+            return;
+        }
+
+        if (!string.IsNullOrEmpty(result.RefreshToken))
+        {
+            Response.Cookies.Append(
+                "refreshToken",
+                result.RefreshToken,
+                CreateCookieOptions(httpOnly: true, expires: DateTimeOffset.UtcNow.AddDays(7)));
+        }
+
+        var shouldAttachAccessCookie =
+            Request.Headers.ContainsKey("X-EcoLink-Auth-Mode") ||
+            Request.Headers.ContainsKey("Origin") ||
+            Request.Cookies.ContainsKey("accessToken") ||
+            Request.Cookies.ContainsKey("ecolink_session_active");
+
+        if (shouldAttachAccessCookie && !string.IsNullOrEmpty(result.AccessToken))
+        {
+            var accessExpires = result.ExpiresAt is DateTime expiresAt && expiresAt != default
+                ? new DateTimeOffset(DateTime.SpecifyKind(expiresAt, DateTimeKind.Utc))
+                : DateTimeOffset.UtcNow.AddMinutes(30);
+
+            Response.Cookies.Append(
+                "accessToken",
+                result.AccessToken,
+                CreateCookieOptions(httpOnly: true, expires: accessExpires));
+
+            Response.Cookies.Append(
+                "ecolink_session_active",
+                "1",
+                CreateCookieOptions(httpOnly: false, expires: DateTimeOffset.UtcNow.AddDays(7)));
+        }
+    }
+
+    private void ClearAuthCookies()
+    {
+        Response.Cookies.Delete("accessToken", CreateCookieOptions(httpOnly: true));
+        Response.Cookies.Delete("refreshToken", CreateCookieOptions(httpOnly: true));
+        Response.Cookies.Delete("ecolink_session_active", CreateCookieOptions(httpOnly: false));
     }
 
     private string GetClientIp() =>

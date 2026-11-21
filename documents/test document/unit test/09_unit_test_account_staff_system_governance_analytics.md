@@ -4,13 +4,13 @@
 
 | Code Module | `AdminAnalyticsService, AccountGovernanceService, StaffManagementService, StaffAttendanceService, AuditLogService & GovernanceValidators` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **22** | | |
+| **Number of TCs** | **30** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 22 | 0 | 0 |
-| *Round 2* | 0 | 0 | 22 |
-| *Round 3* | 0 | 0 | 22 |
+| *Round 1* | 30 | 0 | 0 |
+| *Round 2* | 0 | 0 | 30 |
+| *Round 3* | 0 | 0 | 30 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **10** | **8** | **4** |
+| **Count** | **15** | **10** | **5** |
 
 ---
 
@@ -44,3 +44,12 @@
 | **UTC020** | Staff thử `CheckOutAsync` khi chưa `CheckIn`; thử `CheckIn` lần 2 cùng ngày; thử `CheckOut` lần 2 | Gọi lặp `CheckInAsync` & `CheckOutAsync` sai thứ tự | Cả 3 tình huống đều ném `BusinessRuleException ("BR-GAM-09")` | Abnormal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Cưỡng chế 1 lượt Check-in / Check-out mỗi ngày theo múi giờ UTC+7 (`BR-GAM-09`) |
 | **UTC021** | 3 nhân viên với lịch sử trước đó: (A) hôm qua `StreakDay = 6`, (B) hôm qua `StreakDay = 7`, (C) cách 2 ngày `StreakDay = 5` | Gọi `CheckInAsync` trong ngày hôm nay (UTC+7) cho cả 3 nhân viên | `(A) -> StreakDay = 7, PointsEarned = 15; (B) -> quay vòng StreakDay = 1, PointsEarned = 10; (C) -> đứt chuỗi reset StreakDay = 1` | Boundary | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kiểm thử chính xác 3 biên chuỗi chuyên cần 7 ngày (`BR-GAM-09`) |
 | **UTC022** | Khởi tạo cả 8 FluentValidators trong `GovernanceValidators.cs` | Test độ dài biên: `Reason` (`9`/`10`/`501`), `FullName` (`2`/`3`), `Password` (`7`/`8`), `ShiftNote` (`500`/`501`), `Permissions` | Đạt chuẩn biên: từ chối `< 10` ký tự lý do, `< 3` tên, `< 8` mật khẩu, `> 500` ghi chú ca trực và sai mã trạng thái/quyền | Boundary | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Xác minh toàn diện các ngưỡng Validation trước tầng Service |
+| **`NotificationService` & `InMemoryChannelEventBus` (`SU-04`, `EI-07`, `v2.6.0`)** | | | | | | | | | | | |
+| **UTC023** | Trong DB có 3 thông báo của `userA` (2 chưa đọc) và 1 của `userB` | `GetMyNotificationsAsync(userA, IsRead=false, NotificationType="payment_success")` | Return: `UnreadCount = 2`, `TotalRecords = 1`, chỉ trả về thông báo khớp loại của `userA` | Normal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Cô lập & lọc hộp thư thông báo |
+| **UTC024** | `userId` có 2 thông báo chưa đọc (`n1`, `n2`) | `MarkAsReadAsync(userId, n1.Id)` | `n1.IsRead = true`, `ReadAt != null`, `UnreadCount = 1`, gọi `PushUnreadCountAsync(userId, 1)` | Normal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Đánh dấu đã đọc & đồng bộ SignalR |
+| **UTC025** | Thông báo thuộc quyền sở hữu của `ownerId` | `MarkAsReadAsync(intruderId, notif.Id)` và ID không tồn tại | Throw `ForbiddenAccessException("BR-NTF-01", "MSG-NTF-02")` và `NotFoundException` | Abnormal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chống IDOR trên thông báo |
+| **UTC026** | `userA` có 2 thông báo chưa đọc, `userB` có 1 chưa đọc | `MarkAllAsReadAsync(userA)` | `MarkedCount = 2`, `UnreadCount = 0`; thông báo của `userB` giữ nguyên chưa đọc | Normal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Đánh dấu đã đọc tất cả an toàn |
+| **UTC027** | Mock `INotificationRealtimeNotifier` sẵn sàng | `CreateAndPushAsync(userId, "Thanh toán thành công", ..., "payment_success", ...)` | Lưu DB (`NotificationType = "PAYMENT_SUCCESS"`), gọi `PushNotificationAsync` kèm `unreadCount = 1` | Normal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Phát thông báo bền vững + realtime |
+| **UTC028** | Chuỗi chứa SĐT VN `0912345678`, email `citizen.user@ecolink.vn`, mã đơn `ECO20261120` | `NotificationService.MaskSensitivePii(raw)` | Che SĐT -> `091***78`, Email -> `c***@ecolink.vn`, giữ nguyên `ECO20261120` và `150,000 VNĐ` (`BR-NTF-05`) | Boundary | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Bảo mật che PII trong thông báo |
+| **UTC029** | Khởi tạo `InMemoryChannelEventBus` | `PublishAsync(evt)` + gọi `TryMarkProcessed(evt.EventId)` 2 lần | Reader đọc được `SystemNotificationDispatchedEvent`; lần 1 trả `true`, lần 2 trả `false` (Idempotency) | Normal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | EventBus Channel & khử lặp EventId |
+| **UTC030** | `PushNotificationAsync` ném `InvalidOperationException` | `CreateAndPushAsync(...)` | Không ném ngoại lệ ra luồng gọi; bản ghi `Notification` vẫn tồn tại trong DB | Abnormal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Cô lập lỗi SignalR Transport |

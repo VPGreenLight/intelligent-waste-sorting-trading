@@ -40,6 +40,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<TransactionReceipt> TransactionReceipts => Set<TransactionReceipt>();
     public DbSet<WasteCategory> WasteCategories => Set<WasteCategory>();
+    public DbSet<SortingRule> SortingRules => Set<SortingRule>();
+    public DbSet<PlatformPolicySection> PlatformPolicySections => Set<PlatformPolicySection>();
     public DbSet<AIFeedbackLog> AIFeedbackLogs => Set<AIFeedbackLog>();
     public DbSet<UserPointWallet> UserPointWallets => Set<UserPointWallet>();
     public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();

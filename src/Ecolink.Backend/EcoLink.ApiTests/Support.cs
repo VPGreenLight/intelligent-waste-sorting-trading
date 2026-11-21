@@ -20,7 +20,11 @@ public static class Routes
     public const string ScanClassify = "/api/v1/waste-scan/classify";
     public const string ScanModels = "/api/v1/waste-scan/models";
     public const string ScanRules = "/api/v1/waste-scan/rules";
+    public const string ScanHistory = "/api/v1/waste-scan/history";
     public const string ScanFeedback = "/api/v1/waste-scan/feedback";
+    public const string WasteCategories = "/api/v1/waste-categories";
+    public const string Notifications = "/api/v1/notifications";
+    public const string NotificationsReadAll = "/api/v1/notifications/read-all";
 }
 
 /// <summary>Kết quả một lần gọi API.</summary>
@@ -139,6 +143,15 @@ public static class Api
 
     public static Task<ApiResult> PostEmptyAsync(string path, string? token = null) =>
         SendAsync(HttpMethod.Post, path, null, token);
+
+    public static Task<ApiResult> PutJsonAsync(string path, object body, string? token = null) =>
+        SendAsync(HttpMethod.Put, path,
+            new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"), token);
+
+    public static Task<ApiResult> PatchJsonAsync(string path, object? body = null, string? token = null) =>
+        SendAsync(HttpMethod.Patch, path,
+            body == null ? null : new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/json"),
+            token);
 
     /// <summary>
     /// Response hiện tại bọc trong envelope { success, messageCode, message, data: {...} }.

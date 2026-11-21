@@ -4,6 +4,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
+using Ecolink.Application.Events;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
@@ -28,6 +29,7 @@ public partial class PaymentService : IPaymentService
     private readonly IConfiguration _config;
     private readonly ILogger<PaymentService> _logger;
     private readonly IPayOsService? _payOsService;
+    private readonly IEventBus? _eventBus;
 
     [GeneratedRegex(@"\b(ECO[A-Z0-9]{6,32})\b", RegexOptions.IgnoreCase | RegexOptions.Compiled)]
     private static partial Regex OrderCodePattern();
@@ -37,13 +39,15 @@ public partial class PaymentService : IPaymentService
         ISubscriptionEntitlementService entitlementService,
         IConfiguration config,
         ILogger<PaymentService> logger,
-        IPayOsService? payOsService = null)
+        IPayOsService? payOsService = null,
+        IEventBus? eventBus = null)
     {
         _dbContext = dbContext;
         _entitlementService = entitlementService;
         _config = config;
         _logger = logger;
         _payOsService = payOsService;
+        _eventBus = eventBus;
     }
 
     public async Task<PayInOrderDto> CreatePayInOrderAsync(CreatePayInRequest request, CancellationToken cancellationToken = default)
@@ -143,23 +147,47 @@ public partial class PaymentService : IPaymentService
                 $"Số tiền yêu cầu ({request.Amount.Value:N0} VNĐ) không khớp với giá niêm yết của gói ({package.PriceVnd:N0} VNĐ).");
         }
 
-        // Kiểm tra điều kiện thẩm định KYB cho gói thương mại PRO (BR-PAY-03, BR-MTH-01, MSG-PAY-06)
-        if (package.RequiresVerifiedKyb)
-        {
-            var recyclerProfile = await _dbContext.RecyclerProfiles
-                .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.UserId == currentUserId, cancellationToken);
+        var utcNow = DateTime.UtcNow;
 
-            if (recyclerProfile == null || recyclerProfile.VerificationStatus != VerificationStatus.Verified)
+        // Kiểm tra cấp bậc gói đang hiệu lực: chặn mua gói thấp hơn khi đang có gói cao hơn (VD đang có PRO thì chặn PREMIUM)
+        var activeSubs = await _dbContext.UserSubscriptions
+            .AsNoTracking()
+            .Where(s => s.UserId == currentUserId
+                        && s.Status == SubscriptionStatus.Active
+                        && s.ExpiresAt > utcNow)
+            .ToListAsync(cancellationToken);
+
+        var currentEntitlements = ServicePackageHelpers.AggregateEntitlements(activeSubs);
+        var currentTierRank = ServicePackageHelpers.GetTierRank(currentEntitlements.CurrentTier);
+        var targetTierRank = ServicePackageHelpers.GetTierRank(package.PackageCode, package.IsDefaultFree, package.RequiresVerifiedKyb);
+
+        if (currentTierRank > targetTierRank)
+        {
+            throw new BusinessRuleException(
+                "BR-PAY-04",
+                "MSG-PAY-03",
+                $"Tài khoản của bạn đang sử dụng gói {currentEntitlements.CurrentTier} cao hơn (đã bao gồm toàn bộ đặc quyền gói này), không cần đăng ký gói thấp hơn.");
+        }
+
+        // Kiểm tra 4 tiêu chí thẩm định nghiêm ngặt cho gói Tích xanh PRO (KYB, WarningCount <= 5, Đánh giá >= 4.0, Không cộng dồn)
+        if (ServicePackageHelpers.IsProPackage(package.PackageCode, package.RequiresVerifiedKyb))
+        {
+            var proEligibility = await ServicePackageHelpers.EvaluateProEligibilityAsync(
+                _dbContext,
+                currentUserId,
+                currentRole,
+                utcNow,
+                cancellationToken);
+
+            if (!proEligibility.IsEligible)
             {
                 throw new BusinessRuleException(
                     "BR-PAY-03",
                     "MSG-PAY-06",
-                    "Cơ sở thu mua cần hoàn tất xác minh hồ sơ KYB trước khi đăng ký gói Pro Tích xanh.");
+                    proEligibility.BlockingReasons.FirstOrDefault()
+                        ?? "Cơ sở thu mua chưa đáp ứng đủ điều kiện đăng ký gói Pro Tích xanh.");
             }
         }
-
-        var utcNow = DateTime.UtcNow;
 
         // Tự động hủy đơn Pending cũ cùng người dùng & cùng gói để tránh quét nhầm QR cũ
         var stalePendingOrders = await _dbContext.ServiceOrders
@@ -723,6 +751,19 @@ public partial class PaymentService : IPaymentService
         _logger.LogInformation(
             "Xác nhận thanh toán VietQR {OrderCode}: Amount={Amount:N0}, Reconciliation={Rec}",
             matchedOrder.OrderCode, receivedAmount, reconciliationStatus);
+
+        if (_eventBus != null && matchedOrder.UserId != Guid.Empty)
+        {
+            await _eventBus.PublishAsync(
+                new SystemNotificationDispatchedEvent(
+                    matchedOrder.UserId,
+                    "Thanh toán gói dịch vụ thành công",
+                    $"Đơn hàng {matchedOrder.OrderCode} ({receivedAmount:N0} VNĐ) đã được xác nhận và kích hoạt gói dịch vụ.",
+                    "PAYMENT_SUCCESS",
+                    "ServiceOrder",
+                    matchedOrder.Id),
+                ct);
+        }
 
         return new WebhookResponseDto
         {

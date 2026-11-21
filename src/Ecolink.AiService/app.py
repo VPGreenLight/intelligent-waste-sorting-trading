@@ -243,6 +243,9 @@ class RuleUpdateRequest(BaseModel):
     bin_color_name: Optional[str] = Field(None, example="Thùng Màu Vàng")
     instructions: Optional[List[str]] = Field(None, example=["Tráng sạch", "Bóp dẹp chai"])
     confidence_threshold: Optional[float] = Field(None, description="Ngưỡng tin cậy OOD", example=0.65)
+    title: Optional[str] = Field(None, example="Quy tắc phân loại Nhựa tái chế")
+    handling_action: Optional[str] = Field(None, example="Bỏ vào thùng chuyên biệt")
+    hazard_warning: Optional[str] = Field(None, example="")
 
 
 # --- API Routes ---
@@ -534,11 +537,30 @@ def update_rules(req: RuleUpdateRequest):
     if req.confidence_threshold is not None:
         data["confidence_threshold"] = req.confidence_threshold
 
-    if req.category and req.category in data.get("rules", {}):
-        if req.bin_color_name:
-            data["rules"][req.category]["bin_color_name"] = req.bin_color_name
-        if req.instructions:
-            data["rules"][req.category]["instructions"] = req.instructions
+    if req.category:
+        rules_map = data.setdefault("rules", {})
+        cat_key = req.category.strip().lower()
+        target_rule = rules_map.get(cat_key)
+        if target_rule is None:
+            target_rule = {
+                "display_name": req.title or cat_key,
+                "bin_color_name": req.bin_color_name or "Cam",
+                "instructions": req.instructions or ["Phân loại đúng quy chuẩn EcoLink."],
+                "handling_action": req.handling_action or "Bàn giao cho đối tác thu mua EcoLink.",
+                "hazard_warning": req.hazard_warning or ""
+            }
+            rules_map[cat_key] = target_rule
+        else:
+            if req.bin_color_name:
+                target_rule["bin_color_name"] = req.bin_color_name
+            if req.instructions:
+                target_rule["instructions"] = req.instructions
+            if req.title:
+                target_rule["display_name"] = req.title
+            if req.handling_action:
+                target_rule["handling_action"] = req.handling_action
+            if req.hazard_warning is not None:
+                target_rule["hazard_warning"] = req.hazard_warning
 
     save_rules_data(data)
     return {

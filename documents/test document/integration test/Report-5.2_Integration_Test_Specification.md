@@ -106,32 +106,32 @@
 | :--- | :--- | :--- | :--- |
 | **Project Name** | Intelligent Waste Sorting and Trading Platform (**EcoLink**) | **Creator** | Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức |
 | **Project Code** | `SEP490_G141` | **Reviewer/Approver** | GVHD / Hội đồng Chấm Đồ án SEP490 |
-| **Document Code** | `SEP490_G141_Test Report_v1.5` | **Issue Date** | `2026-11-19` |
-| **Notes** | Release 1.5 bổ sung Module 13 (`M10_Gamification`: 27 REST APIs `STT 076–102`) và Module 14 (`M14_BlogContent`: 10 REST APIs `STT 140–149`), nâng tổng phạm vi lên 14 Core Business Modules (`M01_Auth` $\rightarrow$ `M14_BlogContent`) và 1 Sheet Bảo mật (`SecurityTest`) với **256 TCs** / **502 Automated `[Fact]/[Theory]` Methods** trong [`EcoLink.ApiTests.csproj`](../../../src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj) (đã biên dịch `0 Error(s)` và xác minh liên thông E2E qua Vite + WebApi + PostgreSQL). | | |
+| **Document Code** | `SEP490_G141_Test Report_v1.6` | **Issue Date** | `2026-11-20` |
+| **Notes** | Release 1.6 hoàn tất 100% độ phủ API (184/184) khi bổ sung `M-03` (`STT 026–031`: Lịch sử quét AI, Danh mục chuẩn & Rule Engine Publish) và `M-15` (`STT 169–172`: System Notifications + SignalR `/hubs/notifications`), nâng tổng phạm vi lên **265 TCs** / **511 Automated `[Fact]/[Theory]` Methods** trong [`EcoLink.ApiTests.csproj`](../../../src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj). | | |
 
 ### Bảng Thống kê Kết quả Kiểm thử Tích hợp (Integration Test Statistics Table)
 
 | No | Module code | Passed | Failed | Pending | N/A | Number of test cases | File Đặc tả Chi tiết & File Code Test |
 | :---: | :--- | :---: | :---: | :---: | :---: | :---: | :--- |
 | **1** | `M01_Auth` (Authentication & Account Management) | 20 | 0 | 0 | 0 | **20** | [`01_integration_test_authentication.md`](./01_integration_test_authentication.md) / [`AuthTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/AuthTests.cs) |
-| **2** | `M02_WasteScan` (AI Waste Classification & Rule Engine) | 15 | 0 | 0 | 0 | **15** | [`02_integration_test_ai_classification_and_rule_engine.md`](./02_integration_test_ai_classification_and_rule_engine.md) / [`WasteScanTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/WasteScanTests.cs) |
+| **2** | `M02_WasteScan` (AI Waste Classification & Rule Engine) | 20 | 0 | 0 | 0 | **20** | [`02_integration_test_ai_classification_and_rule_engine.md`](./02_integration_test_ai_classification_and_rule_engine.md) / [`WasteScanTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/WasteScanTests.cs) |
 | **3** | `M03_Onboarding` (Recycler Onboarding & Verification) | 12 | 0 | 0 | 0 | **12** | [`03_integration_test_recycler_onboarding_and_verification.md`](./03_integration_test_recycler_onboarding_and_verification.md) / [`OnboardingTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/OnboardingTests.cs) |
 | **4** | `M04_Recycler` (Recycler Profile, Pricing & Availability) | 24 | 0 | 0 | 0 | **24** | [`04_integration_test_recycler_profile_pricing_and_availability.md`](./04_integration_test_recycler_profile_pricing_and_availability.md) / [`RecyclerTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/RecyclerTests.cs) |
 | **5** | `M05_Discovery` (Location-Based Recycler Discovery) | 12 | 0 | 0 | 0 | **12** | [`05_integration_test_location_based_recycler_discovery.md`](./05_integration_test_location_based_recycler_discovery.md) / [`DiscoveryTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/DiscoveryTests.cs) |
 | **6** | `M06_Handover` (Handover Request Management) | 22 | 0 | 0 | 0 | **22** | [`06_integration_test_handover_request_management.md`](./06_integration_test_handover_request_management.md) / [`HandoverTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/HandoverTests.cs) |
 | **7** | `M07_Receipt` (Handover Completion & Transaction Receipt) | 20 | 0 | 0 | 0 | **20** | [`07_integration_test_handover_completion_and_transaction_receipt.md`](./07_integration_test_handover_completion_and_transaction_receipt.md) / [`ReceiptTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ReceiptTests.cs) |
 | **8** | `M08_Negotiation` (In-App Real-Time Negotiation Chatbox) | 15 | 0 | 0 | 0 | **15** | [`08_integration_test_in_app_realtime_negotiation_chatbox.md`](./08_integration_test_in_app_realtime_negotiation_chatbox.md) / [`NegotiationChatTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/NegotiationChatTests.cs) |
-| **9** | `M15_Governance` (Account, Staff & System Governance) | 16 | 0 | 0 | 0 | **16** | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) / [`GovernanceTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/GovernanceTests.cs) |
+| **9** | `M15_Governance` (Account, Staff, Notifications & Governance) | 20 | 0 | 0 | 0 | **20** | [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md) / [`GovernanceTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/GovernanceTests.cs) & [`NotificationTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/NotificationTests.cs) |
 | **10** | `M12_ServicePackages` (In-System Service Packages & VietQR) | 16 | 0 | 0 | 0 | **16** | [`10_integration_test_in_system_service_packages_vietqr.md`](./10_integration_test_in_system_service_packages_vietqr.md) / [`ServicePackageTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ServicePackageTests.cs) |
 | **11** | `M13_AiCuration` (AI Feedback & Dataset Curation) | 16 | 0 | 0 | 0 | **16** | [`11_integration_test_ai_misclassification_feedback_dataset_curation.md`](./11_integration_test_ai_misclassification_feedback_dataset_curation.md) / [`AiCurationTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/AiCurationTests.cs) |
 | **12** | `M11_ReviewsComplaints` (Rating, Review & Complaint Resolution) | 16 | 0 | 0 | 0 | **16** | [`12_integration_test_rating_review_complaint_resolution.md`](./12_integration_test_rating_review_complaint_resolution.md) / [`ReviewsAndComplaintsTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ReviewsAndComplaintsTests.cs) |
 | **13** | `M10_Gamification` (Gamification, Virtual Tree & Rewards) | 20 | 0 | 0 | 0 | **20** | [`13_integration_test_gamification_and_rewards.md`](./13_integration_test_gamification_and_rewards.md) / [`GamificationTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/GamificationTests.cs) |
 | **14** | `M14_BlogContent` (Blog & Content Management) | 16 | 0 | 0 | 0 | **16** | [`14_integration_test_blog_and_content_management.md`](./14_integration_test_blog_and_content_management.md) / [`BlogTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/BlogTests.cs) |
 | **15** | `SecurityTest` (Cross-Module Security & Authorization) | 16 | 0 | 0 | 0 | **16** | [`integration_test_security.md`](./integration_test_security.md) |
-| | **Sub total** | **256** | **0** | **0** | **0** | **256** | **502 Automated Test Methods** |
+| | **Sub total** | **265** | **0** | **0** | **0** | **265** | **511 Automated Test Methods** |
 
-- **Test coverage:** `100,00 %` (`256 / 256` Test Cases Executed)
-- **Test successful coverage:** `100,00 %` (`256 / 256` Test Cases Passed)
+- **Test coverage:** `100,00 %` (`265 / 265` Test Cases Executed)
+- **Test successful coverage:** `100,00 %` (`265 / 265` Test Cases Passed)
 
 ---
 
@@ -183,12 +183,12 @@
 
 | Feature | `AI Waste Classification & Rule Engine (M02_WasteScan)` | | | |
 | :--- | :--- | :---: | :---: | :---: |
-| **Test requirement** | Kiểm thử tích hợp Nhận diện ảnh rác bằng AI (`U-04`), danh sách mô hình (`GET /models`), tập luật phân loại (`GET /rules`, `GET /waste-categories`), kiểm tra ngưỡng độ tự tin OOD (`BR-AI-02`), xử lý ảnh lỗi (`BR-AI-01`) và gửi phản hồi (`POST /feedback`). | | | |
-| **Number of TCs** | **15** | | | |
+| **Test requirement** | Kiểm thử tích hợp Nhận diện ảnh rác bằng AI (`U-04`), danh sách mô hình (`GET /models`), tập luật phân loại (`GET /rules` `ApiResponse<T>`, `GET /waste-categories`), lịch sử quét (`GET /history`), quản trị danh mục/Rule Engine (`STT 025–031`) và gửi phản hồi (`POST /feedback`). | | | |
+| **Number of TCs** | **20** | | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
-| *Round 1* | 15 | 0 | 0 | 0 |
-| *Round 2* | 0 | 0 | 15 | 0 |
-| *Round 3* | 0 | 0 | 15 | 0 |
+| *Round 1* | 20 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 20 | 0 |
+| *Round 3* | 0 | 0 | 20 | 0 |
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
 | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
@@ -210,6 +210,7 @@
 | **ITC-AI-013** | Chặn phản hồi khi sai kiểu dữ liệu `confidence` hoặc JSON sai cú pháp. | 1. Gửi `POST /feedback` với `confidence="abc"` hoặc JSON hỏng. | HTTP `400 Bad Request`. | Hệ thống hoạt động bình thường. | Passed | Pending | Pending | N/A | `WasteScanTests.Feedback_WithWrongTypeForConfidence_Returns400` |
 | **ITC-AI-014** | Luồng tích hợp End-to-End: Quét ảnh rác (`POST /classify`) $\rightarrow$ Gửi phản hồi (`POST /feedback`). | 1. Gọi `POST /classify` lấy kết quả dự đoán.<br>2. Dùng kết quả đó gửi `POST /feedback`. | Cả 2 bước đều trả về HTTP `200 OK`. | `Ecolink.WebApi` & `FastAPI` đang chạy. | Passed | Pending | Pending | N/A | `WasteScanTests.ClassifyThenFeedback_EndToEndFlow` |
 | **ITC-AI-015** | Kiểm tra quyền truy cập Public (Guest) trên cả 4 endpoints của Module 2. | 1. Gọi `models`, `rules`, `classify`, `feedback` không cần token. | HTTP `200 OK` trên cả 4 endpoints. | Hệ thống hoạt động bình thường. | Passed | Pending | Pending | N/A | `WasteScanTests.Endpoint_WithoutToken_IsAccessible` |
+| **ITC-AI-016–020** | *(Chi tiết xem tại [`02_integration_test_ai_classification_and_rule_engine.md`](./02_integration_test_ai_classification_and_rule_engine.md))* | `GET /history` (`401`/`200`), `GET/POST/PUT/PATCH /waste-categories`, `PUT/PATCH /waste-scan/rules` | Tuân thủ đầy đủ RBAC (`AllowAnonymous`, `Citizen`, `Admin`), soft-status `BR-SRT-04`, publish `BR-SRT-03` | Đã deploy Core & AI | Passed | Pending | Pending | N/A | `WasteScanTests.History_*`, `Categories_*`, `Admin_*` |
 
 ---
 
@@ -451,12 +452,12 @@
 
 | Feature | `Account, Staff & System Governance / Analytics (M15_Governance)` | | | |
 | :--- | :--- | :---: | :---: | :---: |
-| **Test requirement** | Kiểm thử tích hợp 19 REST APIs (`STT 150–168`): Phân quyền `Admin` & `HasPermission` (`BR-ADM-02`), KPI & biểu đồ từ đơn `Completed` (`BR-ADM-07`), Export CSV/XLSX che PII (`BR-ADM-06`), `AuditLogs` bất biến (`BR-ADM-05`), Khóa chặn JWT tức thời & Vô hiệu hóa mềm (`BR-ADM-03`, `BR-ADM-04`), Tạo Staff `0` quyền (`BR-ADM-01`) & Điểm danh ca trực UTC+7 tách biệt ví công dân (`BR-GAM-08`, `BR-GAM-09`). | | | |
-| **Number of TCs** | **16** | | | |
+| **Test requirement** | Kiểm thử tích hợp 22 REST APIs (`STT 150–171`) & SignalR Hub `/hubs/notifications` (`STT 172`) thuộc Module `M-15`: Phân quyền `Admin` & `HasPermission` (`BR-ADM-02`), KPI & biểu đồ (`BR-ADM-07`), Export CSV/XLSX che PII (`BR-ADM-06`), `AuditLogs` bất biến (`BR-ADM-05`), Khóa & Vô hiệu hóa mềm (`BR-ADM-03`, `BR-ADM-04`), Staff `0` quyền (`BR-ADM-01`), Điểm danh UTC+7 (`BR-GAM-08`, `BR-GAM-09`) & Notifications (`SU-04`). | | | |
+| **Number of TCs** | **20** | | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
-| *Round 1* | 16 | 0 | 0 | 0 |
-| *Round 2* | 0 | 0 | 16 | 0 |
-| *Round 3* | 0 | 0 | 16 | 0 |
+| *Round 1* | 20 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 20 | 0 |
+| *Round 3* | 0 | 0 | 20 | 0 |
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
 | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
@@ -480,6 +481,7 @@
 | **Function 9.4: Staff Daily Shift Attendance (`STT 165–168`)** | | | | | | | | | |
 | **ITC-GOV-015** | Điểm danh đầu ca (`POST /check-in`), tách biệt ví `GreenPoints` (`BR-GAM-08`) và chặn điểm danh lần 2 (`BR-GAM-09`). | 1. Staff mới gọi `POST /check-in`.<br>2. Kiểm tra `/auth/me` & `/attendance/me`.<br>3. Gọi `POST /check-in` lần 2. | `201 Created` (`+10đ`), `currentGreenPoints = 0`, lần 2 trả `400 Bad Request`. | Staff mới chưa check-in. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV15` |
 | **ITC-GOV-016** | Kết thúc ca trực (`POST /check-out`) & Admin tra cứu chuyên cần (`GET /admin/staff/attendance`). | 1. `Check-in` $\rightarrow$ `Check-out`.<br>2. Admin gọi `/admin/staff/attendance?staffId={id}`. | `200 OK`, ghi nhận `checkedOutToday = true` và `shiftNote` trên báo cáo Admin. | Staff đã check-in hôm nay. | Passed | Pending | Pending | N/A | `GovernanceTests.GOV16` |
+| **ITC-GOV-017–020** | *(Chi tiết xem tại [`09_integration_test_account_staff_system_governance_analytics.md`](./09_integration_test_account_staff_system_governance_analytics.md))* | `GET /notifications` (`401`/`200`), `PATCH .../read` (`404`), `PUT .../read-all` (`200`) | Kiểm soát xác thực, đếm `unreadCount`, khép kín `mark-all` đưa `unreadCount = 0` (`SU-04`) | Đã đăng nhập `Citizen`/`Admin` | Passed | Pending | Pending | N/A | `NotificationTests.NTF01..NTF04` |
 
 ---
 

@@ -1,5 +1,7 @@
 using System.Globalization;
+using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
+using Ecolink.Application.Events;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
@@ -17,15 +19,18 @@ public class AdminReconciliationService : IAdminReconciliationService
     private readonly ApplicationDbContext _dbContext;
     private readonly ISubscriptionEntitlementService _entitlementService;
     private readonly IAuditLogService _auditLogService;
+    private readonly IEventBus? _eventBus;
 
     public AdminReconciliationService(
         ApplicationDbContext dbContext,
         ISubscriptionEntitlementService entitlementService,
-        IAuditLogService auditLogService)
+        IAuditLogService auditLogService,
+        IEventBus? eventBus = null)
     {
         _dbContext = dbContext;
         _entitlementService = entitlementService;
         _auditLogService = auditLogService;
+        _eventBus = eventBus;
     }
 
     public async Task<ReconciliationLedgerResponseDto> GetPaymentLedgerAsync(
@@ -217,6 +222,19 @@ public class AdminReconciliationService : IAdminReconciliationService
             reason: order.ResolutionNote,
             explicitActorId: adminUserId,
             ct: ct);
+
+        if (_eventBus != null && order.UserId != Guid.Empty)
+        {
+            await _eventBus.PublishAsync(
+                new SystemNotificationDispatchedEvent(
+                    order.UserId,
+                    "Cập nhật đối soát thanh toán VietQR",
+                    $"Đơn hàng {order.OrderCode} đã được xử lý đối soát ({action}): trạng thái {order.OrderStatus}.",
+                    "PAYMENT_RECONCILIATION",
+                    "ServiceOrder",
+                    order.Id),
+                ct);
+        }
 
         return MapOrderToLedgerItem(order);
     }

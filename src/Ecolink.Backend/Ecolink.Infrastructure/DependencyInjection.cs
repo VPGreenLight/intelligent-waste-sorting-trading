@@ -46,8 +46,15 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(8);
         });
 
-        // Đăng ký Rule Engine
-        services.AddSingleton<IWasteRuleEngineService, WasteRuleEngineService>();
+        // Đăng ký Rule Engine (Scoped để đọc/cập nhật DB WasteCategory & SortingRule kèm cache)
+        services.AddScoped<IWasteRuleEngineService, WasteRuleEngineService>();
+        services.AddScoped<IPlatformPolicyService, PlatformPolicyService>();
+
+        // Đăng ký EventBus nội bộ bất đồng bộ & Dịch vụ Thông báo (SU-04, EI-07)
+        services.AddSingleton<Messaging.InMemoryChannelEventBus>();
+        services.AddSingleton<Application.Common.IEventBus>(sp =>
+            sp.GetRequiredService<Messaging.InMemoryChannelEventBus>());
+        services.AddScoped<INotificationService, NotificationService>();
 
         // Đăng ký Geo Matching
         services.AddScoped<IGeoMatchingService, GeoMatchingService>();

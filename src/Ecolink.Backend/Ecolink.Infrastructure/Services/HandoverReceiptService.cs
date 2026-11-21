@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
+using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
+using Ecolink.Application.Events;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
@@ -44,17 +46,20 @@ public class HandoverReceiptService : IHandoverReceiptService
     private readonly IGamificationService _gamification;
     private readonly IPointsService? _points;
     private readonly ILogger<HandoverReceiptService> _logger;
+    private readonly IEventBus? _eventBus;
 
     public HandoverReceiptService(
         ApplicationDbContext db,
         IGamificationService gamification,
         ILogger<HandoverReceiptService> logger,
-        IPointsService? points = null)
+        IPointsService? points = null,
+        IEventBus? eventBus = null)
     {
         _db = db;
         _gamification = gamification;
         _logger = logger;
         _points = points;
+        _eventBus = eventBus;
     }
 
     // ============================================================
@@ -129,6 +134,14 @@ public class HandoverReceiptService : IHandoverReceiptService
             entity.Id,
             recyclerId,
             $"Cơ sở thu gom đã phát hành biên nhận #{receipt.ReceiptCode}: Tổng khối lượng cân thực tế {receipt.TotalWeightKg:0.##} kg • Tổng thành tiền {receipt.TotalAmountCash:N0} VNĐ. Đang chờ người dân xác nhận.",
+            ct);
+
+        await PublishNotificationSafeAsync(
+            entity.UserId,
+            "Đã có biên nhận thu gom",
+            $"Biên nhận #{receipt.ReceiptCode} ({receipt.TotalWeightKg:0.##} kg • {receipt.TotalAmountCash:N0} VNĐ) đã được lập, vui lòng kiểm tra và xác nhận.",
+            "RECEIPT_ISSUED",
+            receipt.Id,
             ct);
 
         return await LoadDtoAsync(requestId, Viewer.Recycler, ct);
@@ -268,6 +281,14 @@ public class HandoverReceiptService : IHandoverReceiptService
             $"Người dân đã gửi khiếu nại biên nhận #{receipt.ReceiptCode}. Lý do: {reason}{evidenceNote}. Đơn chuyển sang trạng thái Disputed chờ Staff phân xử (BR-DSP-06).",
             ct);
 
+        await PublishNotificationSafeAsync(
+            entity.RecyclerId,
+            "Biên nhận thu gom đang bị khiếu nại",
+            $"Người dân đã gửi khiếu nại cho biên nhận #{receipt.ReceiptCode}. Lý do: {reason}",
+            "RECEIPT_DISPUTED",
+            receipt.Id,
+            ct);
+
         _logger.LogInformation("Người dùng {UserId} khiếu nại biên nhận {Code} của yêu cầu {RequestId}.", userId, receipt.ReceiptCode, requestId);
         return await LoadDtoAsync(requestId, Viewer.User, ct);
     }
@@ -367,7 +388,44 @@ public class HandoverReceiptService : IHandoverReceiptService
 
         await HandoverTradeSyncHelper.SyncReceiptCompletionAsync(_db, receipt, ct);
 
+        await PublishNotificationSafeAsync(
+            receipt.UserId,
+            "Giao dịch thu gom hoàn tất",
+            $"Giao dịch #{receipt.ReceiptCode} ({receipt.TotalWeightKg:0.##} kg) đã hoàn tất và cộng {receipt.PointsAwarded} điểm xanh.",
+            "RECEIPT_COMPLETED",
+            receipt.Id,
+            ct);
+
+        await PublishNotificationSafeAsync(
+            receipt.RecyclerId,
+            "Giao dịch thu gom đã được xác nhận",
+            $"Biên nhận #{receipt.ReceiptCode} ({receipt.TotalWeightKg:0.##} kg) đã hoàn tất.",
+            "RECEIPT_COMPLETED",
+            receipt.Id,
+            ct);
+
         return receipt;
+    }
+
+    private ValueTask PublishNotificationSafeAsync(
+        Guid recipientUserId,
+        string title,
+        string message,
+        string notificationType,
+        Guid referenceId,
+        CancellationToken ct)
+    {
+        if (_eventBus == null || recipientUserId == Guid.Empty) return ValueTask.CompletedTask;
+
+        return _eventBus.PublishAsync(
+            new SystemNotificationDispatchedEvent(
+                recipientUserId,
+                title,
+                message,
+                notificationType,
+                "HandoverReceipt",
+                referenceId),
+            ct);
     }
 
     private static long CalculatePoints(decimal weightKg) =>

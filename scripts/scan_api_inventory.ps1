@@ -109,16 +109,26 @@ foreach ($file in $controllers) {
     }
 }
 
+$programFile = Join-Path $backendRoot "Program.cs"
+$hubMatches = if (Test-Path $programFile) {
+    (Select-String -Path $programFile -Pattern 'app\.MapHub<[^>]+>\("([^"]+)"\)' -AllMatches).Matches |
+        ForEach-Object { $_.Groups[1].Value }
+} else {
+    @("/hubs/negotiation-chat")
+}
+$hubCount = [Math]::Max(1, @($hubMatches).Count)
+$hubSummary = ($hubMatches -join ", ")
+
 Write-Host "=================================================================" -ForegroundColor Green
 Write-Host "         ECOLINK API SCANNER & INVENTORY VERIFICATION           " -ForegroundColor Yellow
 Write-Host "=================================================================" -ForegroundColor Green
 Write-Host "Tong so Controller da quet: $($controllers.Count)" -ForegroundColor Cyan
 Write-Host "Tong so REST Action endpoints trong WebApi: $($endpoints.Count)" -ForegroundColor Cyan
 Write-Host "Minimal API: 1 (/health)" -ForegroundColor Cyan
-Write-Host "SignalR Hub: 1 (/hubs/negotiation-chat)" -ForegroundColor Cyan
+Write-Host "SignalR Hub: $hubCount ($hubSummary)" -ForegroundColor Cyan
 Write-Host "Python FastAPI AI Service: 9 endpoints" -ForegroundColor Cyan
 Write-Host "-----------------------------------------------------------------"
-Write-Host ">>> TONG CONG HE THONG: $($endpoints.Count + 1 + 1 + 9) ENDPOINTS <<<" -ForegroundColor Green
+Write-Host ">>> TONG CONG HE THONG: $($endpoints.Count + 1 + $hubCount + 9) ENDPOINTS <<<" -ForegroundColor Green
 Write-Host "================================================================="
 
 $endpoints | Format-Table -AutoSize STT, Method, Route, Roles, Controller

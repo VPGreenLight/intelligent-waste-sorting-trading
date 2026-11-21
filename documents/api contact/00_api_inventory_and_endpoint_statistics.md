@@ -2,8 +2,8 @@
 ## (FULL-SCOPE API INVENTORY, FORECAST & STATISTICAL DASHBOARD)
 
 **Dự án:** EcoLink – Intelligent Waste Sorting & Trading Platform (`SEP490_G141`)  
-**Phiên bản tài liệu:** `v2.5.0` (Cập nhật tiến độ sau khi hợp nhất và hoàn tất 2 Phân hệ `M-10` [`FE-13`: Gamification & Rewards] và `M-14` [`FE-16`: Blog & Content Management], đồng bộ Route chuẩn + Clawback Ví Điểm `M-11`)  
-**Thời điểm cập nhật:** 19/11/2026  
+**Phiên bản tài liệu:** `v2.6.0` (Hoàn tất **100%** phạm vi toàn dự án: triển khai đầy đủ 10 APIs còn lại gồm **M-03** [`STT 026–031`: Lịch sử quét AI cá nhân, Quản trị Danh mục phế liệu & Rule Engine 2 pha Draft/Publish đồng bộ AI Service] và **M-15** [`STT 169–172`: System Notifications REST APIs + EventBus Channel Worker + SignalR Hub `/hubs/notifications`])  
+**Thời điểm cập nhật:** 20/11/2026  
 **Công nghệ Backend:** ASP.NET Core 10 WebApi (Clean Architecture, Npgsql PostGIS, SignalR WebSocket)  
 **Công nghệ AI Service:** Python 3.11 FastAPI (YOLOv8 + MobileNetV3 + EfficientNet)  
 **Tình trạng tài liệu:** **Tài liệu quy hoạch & đối chiếu tổng thể (Master API Inventory)** – Dùng làm nguồn dữ liệu chuẩn để đồng bộ bảng tính `Report_API List_SEP490_G141` trên Google Drive (`Dashboard` & `API Inventory`).
@@ -12,45 +12,45 @@
 
 ## 1. BẢNG TỔNG HỢP SỐ LƯỢNG API TOÀN DỰ ÁN (EXECUTIVE SUMMARY DASHBOARD)
 
-Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Requirement Specification_SEP490_G141`)**, hệ sinh thái **EcoLink** có tổng quy mô **`184 Endpoint`**, được chia thành **2 nhóm trạng thái thực thi** rõ ràng:
+Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Requirement Specification_SEP490_G141`)**, hệ sinh thái **EcoLink** có tổng quy mô **`184 Endpoint`**, đạt độ phủ triển khai **`100.0%`**:
 
 * **Tổng quy mô toàn hệ thống (Full Project Scope – `184 Endpoints`):**
   * **173 Endpoints thuộc Core Backend (`Ecolink.WebApi` - .NET 10):** gồm **171 REST APIs** và **2 SignalR WebSocket Hubs** (`/hubs/negotiation-chat`, `/hubs/notifications`).
   * **11 REST Endpoints thuộc Dedicated AI Vision Service (`FastAPI` - Python 3.11):** phục vụ nhận diện đa mô hình, Rule Engine, đồng bộ tập dữ liệu huấn luyện và nạp nóng mô hình.
 * **Tiến độ triển khai thực tế trên nhánh hiện tại:**
-  * **Đã triển khai (`174 Endpoints` – đạt `94.6%`):** gồm `162` Core REST APIs + `1` SignalR Hub + `11` AI FastAPI APIs (`100% AIS`).
-  * **Dự kiến bổ sung (`10 Endpoints` – chiếm `5.4%`):** gồm `9` Core REST APIs + `1` SignalR Hub + `0` AI FastAPI APIs chỉ còn tập trung tại `FE-03 (Admin Rules / Scan History: 6 APIs)` và `SU-04 (Notifications Hub/REST: 4 APIs)`.
+  * **Đã triển khai (`184 Endpoints` – đạt `100.0%`):** gồm `171` Core REST APIs + `2` SignalR WebSocket Hubs + `11` AI FastAPI APIs (`100% AIS`).
+  * **Dự kiến bổ sung (`0 Endpoints` – `0.0%`):** toàn bộ 15 phân hệ nghiệp vụ từ `M-01` đến `M-15`, `SYS` và `AIS` đã hoàn tất 100%.
 
 ```text
 +--------------------------------------------------------------------------------------------------+
 |                      TỔNG QUY MÔ API TOÀN HỆ THỐNG ECOLINK (FULL SRS SCOPE)                      |
 |                                          184 ENDPOINTS                                           |
-|                    [ Đã triển khai: 174 (94.6%)  |  Dự kiến bổ sung: 10 (5.4%) ]                 |
+|                    [ Đã triển khai: 184 (100.0%)  |  Dự kiến bổ sung: 0 (0.0%) ]                 |
 +---------------------------------------------------+----------------------------------------------+
 |        Core .NET 10 WebApi: 173 Endpoints         |     Dedicated AI Service: 11 Endpoints       |
 |     (171 REST APIs + 2 SignalR WebSocket Hubs)    |            (FastAPI Python 3.11)             |
-|       [ Đã có: 163 |  Dự kiến bổ sung: 10 ]       |        [ Đã có: 11 |  Dự kiến thêm: 0 ]      |
+|       [ Đã có: 173 |  Dự kiến bổ sung: 0 ]        |        [ Đã có: 11 |  Dự kiến thêm: 0 ]      |
 +---------------------------------------------------+----------------------------------------------+
 ```
 
 ### Bảng chỉ số KPI đầu trang cho Sheet `API Inventory` & `Dashboard` (Google Drive)
 
-| Chỉ số KPI trên Google Sheet | Hiện trạng Code (`v2.5.0`) | Dự kiến mở rộng (Planned) | Tổng quy mô Toàn dự án (`v2.5.0`) |
+| Chỉ số KPI trên Google Sheet | Hiện trạng Code (`v2.6.0`) | Dự kiến mở rộng (Planned) | Tổng quy mô Toàn dự án (`v2.6.0`) |
 |:---|:---:|:---:|:---:|
-| **Tổng Endpoint** | 174 | +10 | **184** |
-| **Core .NET 10** *(REST + WS)* | 163 | +10 | **173** |
-| **AI FastAPI** | 11 | +0 | **11** |
-| **WebSocket (SignalR Hub)** | 1 | +1 | **2** |
+| **Tổng Endpoint** | 184 | 0 | **184** |
+| **Core .NET 10** *(REST + WS)* | 173 | 0 | **173** |
+| **AI FastAPI** | 11 | 0 | **11** |
+| **WebSocket (SignalR Hub)** | 2 | 0 | **2** |
 
 ---
 
 ### 1.1. Thống kê số lượng API theo Module nghiệp vụ (Đã triển khai vs. Dự kiến)
 
-| Mã Modul | Mã SRS | Tên Module / Phân hệ nghiệp vụ | Controller / Service phụ trách (Hiện tại & Dự kiến) | Đã code | Dự kiến | REST | WS | Tổng API | Tỷ trọng | Tiến độ |
+| Mã Modul | Mã SRS | Tên Module / Phân hệ nghiệp vụ | Controller / Service phụ trách | Đã code | Dự kiến | REST | WS | Tổng API | Tỷ trọng | Tiến độ |
 |:---:|:---:|:---|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
 | **M-01** | `FE-01..02` | **Authentication & Account** | `AuthController` | 14 | 0 | 14 | 0 | **14** | 7.6% | 100.0% |
 | **M-02** | `FE-04` | **Recycler Onboarding & Verification** | `RecyclerApplicationsController` | 6 | 0 | 6 | 0 | **6** | 3.3% | 100.0% |
-| **M-03** | `FE-03` | **AI Waste Classification & Rule Engine** | `WasteScanController`, `WasteCategoryController` | 5 | 6 | 11 | 0 | **11** | 6.0% | 45.5% |
+| **M-03** | `FE-03` | **AI Waste Classification & Rule Engine** | `WasteScanController`, `WasteCategoryController` | 11 | 0 | 11 | 0 | **11** | 6.0% | 100.0% |
 | **M-04** | `FE-05` | **Recycler Profile, Pricing & Availability** | `RecyclerController` | 9 | 0 | 9 | 0 | **9** | 4.9% | 100.0% |
 | **M-05** | `FE-06` | **Location-Based Recycler Discovery** | `RecyclersDiscoveryController`, `GeocodingController`, `TradeController` | 4 | 0 | 4 | 0 | **4** | 2.2% | 100.0% |
 | **M-06** | `FE-07` | **Handover Request Management** | `HandoverRequestController`, `RecyclerHandoverController` | 10 | 0 | 10 | 0 | **10** | 5.4% | 100.0% |
@@ -62,10 +62,10 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 | **M-12** | `FE-14` | **In-System Service Packages & VietQR** | `ServicePaymentController`, `ServicePackagesController`, `AdminReconciliationController` | 15 | 0 | 15 | 0 | **15** | 8.2% | 100.0% |
 | **M-13** | `FE-15` | **AI Misclassification & Dataset Curation** | `StaffAiFeedbackController`, `StaffDatasetCurationController` | 10 | 0 | 10 | 0 | **10** | 5.4% | 100.0% |
 | **M-14** | `FE-16` | **Blog & Content Management** | `PublicBlogController`, `StaffBlogController`, `AdminBlogController` | 10 | 0 | 10 | 0 | **10** | 5.4% | 100.0% |
-| **M-15** | `FE-17..18` | **Account, Staff, Governance & Analytics** | `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `StaffAttendanceController`, `NotificationsController` *(dự kiến)*, `NotificationHub` *(dự kiến)* | 19 | 4 | 22 | 1 | **23** | 12.5% | 82.6% |
+| **M-15** | `FE-17..18` | **Account, Staff, Governance & Analytics** | `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `StaffAttendanceController`, `NotificationsController`, `NotificationHub` | 23 | 0 | 22 | 1 | **23** | 12.5% | 100.0% |
 | **SYS** | `INFRA` | **System Infrastructure & Health** | Minimal API (`Program.cs`) | 1 | 0 | 1 | 0 | **1** | 0.5% | 100.0% |
 | **AIS** | `FE-03/15` | **Dedicated AI Vision Service (Python)** | FastAPI (`app.py`) | 11 | 0 | 11 | 0 | **11** | 6.0% | 100.0% |
-| **TỔNG** | **ALL SRS** | **TOÀN BỘ HỆ THỐNG ECOLINK** | **Core .NET 10 (173) + FastAPI Python (11)** | **174** | **10** | **182** | **2** | **184** | **100.0%** | **94.6%** |
+| **TỔNG** | **ALL SRS** | **TOÀN BỘ HỆ THỐNG ECOLINK** | **Core .NET 10 (173) + FastAPI Python (11)** | **184** | **0** | **182** | **2** | **184** | **100.0%** | **100.0%** |
 
 ---
 
@@ -82,12 +82,12 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 
 | Phương thức HTTP / Giao thức | Ý nghĩa sử dụng chính trong dự án | Đã triển khai | Dự kiến bổ sung | Tổng quy mô | Tỷ lệ (%) |
 |:---|:---|:---:|:---:|:---:|:---:|
-| **GET** | Truy vấn danh sách, tìm kiếm PostGIS, đọc hồ sơ/khiếu nại, KPI Dashboard, Audit Log, xuất báo cáo CSV/XLSX | 79 | 2 | **81** | 44.0% |
-| **POST** | Đăng ký/đăng nhập, quét rác AI, tạo đơn thu gom, biên nhận, điểm danh, đổi quà, khiếu nại, VietQR, đóng gói Dataset | 61 | 1 | **62** | 33.7% |
-| **PUT** | Cập nhật toàn phần hồ sơ, cấu hình bảng giá, cấu hình Gamification, gán nhãn ảnh chuẩn, phân quyền RBAC Staff | 16 | 3 | **19** | 10.3% |
-| **PATCH** | Chuyển trạng thái nghiệp vụ tức thời: duyệt khiếu nại, duyệt blog, khóa tài khoản, đối soát giao dịch, ẩn/mở danh mục | 13 | 3 | **16** | 8.7% |
+| **GET** | Truy vấn danh sách, tìm kiếm PostGIS, đọc hồ sơ/khiếu nại, KPI Dashboard, Audit Log, xuất báo cáo CSV/XLSX | 81 | 0 | **81** | 44.0% |
+| **POST** | Đăng ký/đăng nhập, quét rác AI, tạo đơn thu gom, biên nhận, điểm danh, đổi quà, khiếu nại, VietQR, đóng gói Dataset | 62 | 0 | **62** | 33.7% |
+| **PUT** | Cập nhật toàn phần hồ sơ, cấu hình bảng giá, cấu hình Gamification, gán nhãn ảnh chuẩn, phân quyền RBAC Staff | 19 | 0 | **19** | 10.3% |
+| **PATCH** | Chuyển trạng thái nghiệp vụ tức thời: duyệt khiếu nại, duyệt blog, khóa tài khoản, đối soát giao dịch, ẩn/mở danh mục | 16 | 0 | **16** | 8.7% |
 | **DELETE** | Xóa đánh giá của chính tác giả (`BR-RVW-03`), xóa thẻ Eco Fact nháp, xóa bài Blog nháp, vô hiệu hóa mềm tài khoản | 4 | 0 | **4** | 2.2% |
-| **WebSocket (`WS`)** | Kết nối SignalR song công thời gian thực cho phòng Chat thương lượng giá và kênh Đẩy thông báo hệ thống | 1 | 1 | **2** | 1.1% |
+| **WebSocket (`WS`)** | Kết nối SignalR song công thời gian thực cho phòng Chat thương lượng giá và kênh Đẩy thông báo hệ thống | 2 | 0 | **2** | 1.1% |
 | **Tổng cộng** | | **174** | **10** | **184** | **100.0%** |
 
 ---
@@ -179,21 +179,21 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 
 ### PHÂN HỆ 03 (`M-03`): PHÂN LOẠI RÁC AI, DANH MỤC CHUẨN & LUẬT HƯỚNG DẪN (AI WASTE CLASSIFICATION & RULE ENGINE)
 * **Tài liệu đặc tả chi tiết:** [`03_module_ai_waste_classification_api.md`](./03_module_ai_waste_classification_api.md)
-* **Controllers:** `WasteScanController`, `WasteCategoryController` | **Quy mô:** `11` APIs (5 Đã triển khai, 6 Dự kiến cho `U-01 History`, `A-05`, `A-06`)
+* **Controllers:** `WasteScanController`, `WasteCategoryController` | **Quy mô:** `11` APIs (11 Đã triển khai, 0 Dự kiến)
 
 | STT | Mã Modul | Phương thức | Tuyến đường Endpoint (Route) | Phân quyền (RBAC) | Action / Function | Mô tả chức năng & Use Case nghiệp vụ | Nhóm RBAC | Trạng thái |
 |:---:|:---:|:---:|:---|:---|:---|:---|:---|:---:|
 | **021** | `M-03` | `POST` | `/api/v1/waste-scan/classify` | Public / Citizen | `ClassifyImage` | Gửi ảnh rác lên Backend để gọi AI nhận diện, kiểm tra ngưỡng OOD, trả về nhãn rác và hướng dẫn xử lý (`U-01`, `U-02`, `U-03`). | Public / Guest | Đã triển khai |
 | **022** | `M-03` | `GET` | `/api/v1/waste-scan/models` | Public (All) | `GetAvailableModels` | Lấy danh sách các mô hình thị giác máy tính đang sẵn sàng (`yolov8`, `mobilenet_v3`, `efficientnet`) (`U-01`). | Public / Guest | Đã triển khai |
-| **023** | `M-03` | `GET` | `/api/v1/waste-scan/rules` | Public (All) | `GetAllRules` | Tra cứu toàn bộ tập luật phân loại rác của Rule Engine: màu thùng chuẩn, yêu cầu làm sạch, mẹo tái chế (`U-03`). | Public / Guest | Đã triển khai |
+| **023** | `M-03` | `GET` | `/api/v1/waste-scan/rules` | Public (All) | `GetAllRules` | Tra cứu toàn bộ tập luật phân loại rác của Rule Engine (`ApiResponse<T>`; Admin có thể truyền `detailed=true&includeDraft=true`) (`U-03`, `A-06`). | Public / Guest | Đã triển khai |
 | **024** | `M-03` | `POST` | `/api/v1/waste-scan/feedback` | Authenticated | `SubmitFeedback` | Người dùng gửi báo cáo phản hồi và gợi ý nhãn đúng khi AI nhận diện sai ảnh rác (`U-04`, `BR-CLS-05`). | Authenticated (All) | Đã triển khai |
-| **025** | `M-03` | `GET` | `/api/v1/waste-categories` | Public (All) | `GetAll` | Lấy danh mục loại phế liệu chuẩn hệ thống: mã danh mục, tên hiển thị, màu thùng, icon, cờ tái chế (`U-03`, `A-05`). | Public / Guest | Đã triển khai |
-| **026** | `M-03` | `GET` | `/api/v1/waste-scan/history` | Citizen (User) | `GetMyScanHistory` | Người dân xem lại lịch sử các lần chụp/quét ảnh rác AI của cá nhân kèm hướng dẫn đã nhận (`U-01`, `U-03`). | Citizen (User) | Dự kiến |
-| **027** | `M-03` | `POST` | `/api/v1/waste-categories` | Admin | `CreateCategory` | Quản trị viên thêm mới loại phế liệu chuẩn vào danh mục gốc hệ thống (`MasterWasteCategory`) (`A-05`, `BR-SRT-02`). | Staff / Admin | Dự kiến |
-| **028** | `M-03` | `PUT` | `/api/v1/waste-categories/{categoryId:guid}` | Admin | `UpdateCategory` | Quản trị viên cập nhật tên, mô tả, biểu tượng, đơn vị tính hoặc màu thùng chuẩn của loại phế liệu (`A-05`, `BR-SRT-02`). | Staff / Admin | Dự kiến |
-| **029** | `M-03` | `PATCH` | `/api/v1/waste-categories/{categoryId:guid}/status` | Admin | `ToggleCategoryStatus` | Vô hiệu hóa mềm (`Deactivate`) hoặc mở lại danh mục phế liệu mà vẫn bảo toàn biên nhận lịch sử (`A-05`, `BR-SRT-04`). | Staff / Admin | Dự kiến |
-| **030** | `M-03` | `PUT` | `/api/v1/waste-scan/rules/{categoryId:guid}` | Admin | `UpsertSortingRule` | Cấu hình nội dung chính sách hướng dẫn phân loại, sơ chế sạch và cảnh báo an toàn theo từng loại rác (`A-06`, `BR-SRT-01`). | Staff / Admin | Dự kiến |
-| **031** | `M-03` | `PATCH` | `/api/v1/waste-scan/rules/{ruleId:guid}/publish` | Admin | `PublishSortingRule` | Phát hành phiên bản luật phân loại mới và tự động đồng bộ bộ nhớ đệm Rule Engine sang AI Service (`A-06`, `BR-SRT-03`). | Staff / Admin | Dự kiến |
+| **025** | `M-03` | `GET` | `/api/v1/waste-categories` | Public (All) | `GetAll` | Lấy danh mục loại phế liệu chuẩn hệ thống (`AllowAnonymous` danh mục `Active`; Admin có thể xem `includeInactive`) (`U-03`, `A-05`). | Public / Guest | Đã triển khai |
+| **026** | `M-03` | `GET` | `/api/v1/waste-scan/history` | Authenticated | `GetMyScanHistory` | Người dân xem lại lịch sử các lần chụp/quét ảnh rác AI của cá nhân kèm hướng dẫn đã nhận (`U-01`, `U-03`, `BR-CLS-08`). | Citizen (User) | Đã triển khai |
+| **027** | `M-03` | `POST` | `/api/v1/waste-categories` | Admin | `CreateCategory` | Quản trị viên thêm mới loại phế liệu chuẩn vào danh mục gốc hệ thống (`MasterWasteCategory`) (`A-05`, `BR-SRT-02`). | Staff / Admin | Đã triển khai |
+| **028** | `M-03` | `PUT` | `/api/v1/waste-categories/{categoryId:guid}` | Admin | `UpdateCategory` | Quản trị viên cập nhật tên, mô tả, biểu tượng, cờ tái chế hoặc màu thùng chuẩn của loại phế liệu (`A-05`, `BR-SRT-02`). | Staff / Admin | Đã triển khai |
+| **029** | `M-03` | `PATCH` | `/api/v1/waste-categories/{categoryId:guid}/status` | Admin | `ToggleCategoryStatus` | Vô hiệu hóa mềm (`Inactive`) hoặc mở lại (`Active`) danh mục phế liệu mà vẫn bảo toàn biên nhận lịch sử (`A-05`, `BR-SRT-04`). | Staff / Admin | Đã triển khai |
+| **030** | `M-03` | `PUT` | `/api/v1/waste-scan/rules/{categoryId:guid}` | Admin | `UpsertSortingRule` | Cấu hình nội dung chính sách hướng dẫn phân loại, sơ chế sạch và cảnh báo an toàn theo từng loại rác (`A-06`, `BR-SRT-01`). | Staff / Admin | Đã triển khai |
+| **031** | `M-03` | `PATCH` | `/api/v1/waste-scan/rules/{ruleId:guid}/publish` | Admin | `PublishSortingRule` | Phát hành phiên bản luật phân loại mới (`ACTIVE`), làm mới bộ nhớ đệm Rule Engine & đồng bộ sang AI Service (`A-06`, `BR-SRT-03`). | Staff / Admin | Đã triển khai |
 
 ---
 
@@ -426,8 +426,8 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 ### PHÂN HỆ 15 (`M-15` / `FE-17`, `FE-18`): QUẢN TRỊ TÀI KHOẢN, NHÂN SỰ, THÔNG BÁO & PHÂN TÍCH HỆ THỐNG (GOVERNANCE, STAFF, NOTIFICATIONS & ANALYTICS)
 * **Tài liệu đặc tả chi tiết:** [`09_module_account_staff_system_governance_analytics_api.md`](./09_module_account_staff_system_governance_analytics_api.md)
 * **Use Cases bao phủ:** `A-01` (View Dashboard & Analytics), `A-02` (Export Data Reports & Audit Log), `S-06` (View User & Recycler Accounts), `S-07` (Lock / Delete Accounts), `A-03` (Manage Staff Accounts), `A-04` (Manage Staff Permissions), `S-11` (Staff Daily Check-in), `SU-04` (System In-App Notifications)
-* **Controllers & Hubs:** `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `StaffAttendanceController` *(đã triển khai)*; `NotificationsController`, `NotificationHub` (`/hubs/notifications`) *(dự kiến)*
-* **Quy mô:** `23` APIs = `22` REST + `1` WS Hub (19 Đã triển khai, 4 Dự kiến)
+* **Controllers & Hubs:** `AdminAnalyticsController`, `StaffAccountsController`, `AdminStaffController`, `StaffAttendanceController`, `NotificationsController`, `NotificationHub` (`/hubs/notifications`)
+* **Quy mô:** `23` APIs = `22` REST + `1` WS Hub (23 Đã triển khai, 0 Dự kiến)
 
 | STT | Mã Modul | Phương thức | Tuyến đường Endpoint (Route) | Phân quyền (RBAC) | Action / Function | Mô tả chức năng & Use Case nghiệp vụ | Nhóm RBAC | Trạng thái |
 |:---:|:---:|:---:|:---|:---|:---|:---|:---|:---:|
@@ -450,10 +450,10 @@ Tính trên **toàn bộ phạm vi nghiệp vụ SRS (`Report-3_Software Require
 | **166** | `M-15` | `POST` | `/api/v1/staff/attendance/check-out` | Staff / Admin | `CheckOutShift` | Nhân viên chấm công kết thúc ca trực vận hành và lưu ghi chú bàn giao ca (`S-11`). | Staff / Admin | Đã triển khai |
 | **167** | `M-15` | `GET` | `/api/v1/staff/attendance/me` | Staff / Admin | `GetMyAttendanceLogs` | Nhân viên tra cứu bảng chấm công cá nhân và lịch sử các ca trực trong tháng (`S-11`). | Staff / Admin | Đã triển khai |
 | **168** | `M-15` | `GET` | `/api/v1/admin/staff/attendance` | Admin | `GetAllStaffAttendance` | Quản trị viên theo dõi báo cáo chuyên cần và nhật ký ca trực hàng ngày của toàn bộ đội ngũ Nhân viên (`S-11`, `A-03`). | Staff / Admin | Đã triển khai |
-| **169** | `M-15` | `GET` | `/api/v1/notifications` | Authenticated | `GetMyNotifications` | Lấy danh sách thông báo hệ thống của người dùng (đơn thu gom, biên nhận, phán quyết khiếu nại, duyệt hồ sơ, thanh toán VietQR) (`SU-04`). | Authenticated (All) | Dự kiến |
-| **170** | `M-15` | `PATCH` | `/api/v1/notifications/{notificationId:guid}/read` | Authenticated | `MarkNotificationRead` | Đánh dấu một thông báo cụ thể là đã đọc (`is_read = true`) (`SU-04`). | Authenticated (All) | Dự kiến |
-| **171** | `M-15` | `PUT` | `/api/v1/notifications/read-all` | Authenticated | `MarkAllNotificationsRead` | Đánh dấu toàn bộ thông báo chưa đọc của tài khoản hiện tại là đã xem (`SU-04`). | Authenticated (All) | Dự kiến |
-| **172** | `M-15` | `WS` | `/hubs/notifications` | Authenticated | `NotificationHub` | Kênh WebSocket SignalR đẩy thông báo thời gian thực (`ReceiveNotification`) ngay khi phát sinh sự kiện nghiệp vụ (`SU-04`, `EI-07`). | Authenticated (All) | Dự kiến |
+| **169** | `M-15` | `GET` | `/api/v1/notifications` | Authenticated | `GetMyNotifications` | Lấy danh sách thông báo hệ thống của người dùng (đơn thu gom, biên nhận, phán quyết khiếu nại, duyệt hồ sơ, thanh toán VietQR) (`SU-04`). | Authenticated (All) | Đã triển khai |
+| **170** | `M-15` | `PATCH` | `/api/v1/notifications/{notificationId:guid}/read` | Authenticated | `MarkNotificationRead` | Đánh dấu một thông báo cụ thể là đã đọc (`is_read = true`) (`SU-04`). | Authenticated (All) | Đã triển khai |
+| **171** | `M-15` | `PUT` | `/api/v1/notifications/read-all` | Authenticated | `MarkAllNotificationsRead` | Đánh dấu toàn bộ thông báo chưa đọc của tài khoản hiện tại là đã xem (`SU-04`). | Authenticated (All) | Đã triển khai |
+| **172** | `M-15` | `WS` | `/hubs/notifications` | Authenticated | `NotificationHub` | Kênh WebSocket SignalR đẩy thông báo thời gian thực (`ReceiveNotification`, `UnreadCountUpdated`) ngay khi phát sinh sự kiện nghiệp vụ (`SU-04`, `EI-07`). | Authenticated (All) | Đã triển khai |
 
 ---
 

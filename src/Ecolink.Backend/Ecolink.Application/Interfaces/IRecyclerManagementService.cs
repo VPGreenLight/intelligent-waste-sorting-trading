@@ -10,6 +10,10 @@ public interface IRecyclerManagementService
 {
     // Danh mục chuẩn
     Task<IReadOnlyList<WasteCategoryDto>> GetWasteCategoriesAsync(CancellationToken ct = default);
+    Task<IReadOnlyList<WasteCategoryDto>> GetAllWasteCategoriesAsync(bool includeInactive, bool includeNonRecyclable, CancellationToken ct = default);
+    Task<WasteCategoryDto> CreateWasteCategoryAsync(Guid adminUserId, CreateWasteCategoryRequest request, CancellationToken ct = default);
+    Task<WasteCategoryDto> UpdateWasteCategoryAsync(Guid adminUserId, Guid categoryId, UpdateWasteCategoryRequest request, CancellationToken ct = default);
+    Task<WasteCategoryDto> ToggleWasteCategoryStatusAsync(Guid adminUserId, Guid categoryId, ToggleWasteCategoryStatusRequest request, CancellationToken ct = default);
 
     // Profile
     Task<RecyclerProfileDto> GetProfileAsync(Guid recyclerId, CancellationToken ct = default);

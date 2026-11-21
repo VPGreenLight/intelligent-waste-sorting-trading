@@ -43,9 +43,11 @@ builder.Services.AddApplicationServices();
 // Thêm dịch vụ tầng Infrastructure (AI Client, Rule Engine, Geo Matching, Gamification, Auth, Negotiation Chat)
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-// Đăng ký SignalR Real-Time Hub & Notifier cho Module In-App Real-Time Negotiation Chatbox (U-08 & R-05)
+// Đăng ký SignalR Real-Time Hub & Notifier cho Module Chatbox + System Notifications (STT 172)
 builder.Services.AddSignalR();
 builder.Services.AddScoped<INegotiationChatNotifier, SignalRNegotiationChatNotifier>();
+builder.Services.AddScoped<INotificationRealtimeNotifier, SignalRNotificationNotifier>();
+builder.Services.AddHostedService<Ecolink.WebApi.Services.EventBackgroundWorker>();
 
 // Lấy thông tin người dùng hiện tại (UserId/Role) từ JWT cho Controller và Audit Interceptor
 builder.Services.AddHttpContextAccessor();
@@ -85,15 +87,26 @@ builder.Services.AddAuthentication(options =>
     };
 
     // Cho phép SignalR WebSocket truyền JWT qua query parameter ?access_token=...
+    // và tự động trích xuất JWT từ HttpOnly Cookie "accessToken" cho mọi request trình duyệt
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
             var accessToken = context.Request.Query["access_token"];
             var path = context.HttpContext.Request.Path;
-            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/negotiation-chat"))
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/hubs/negotiation-chat") || path.StartsWithSegments("/hubs/notifications")))
             {
                 context.Token = accessToken;
+                return Task.CompletedTask;
+            }
+
+            if (string.IsNullOrEmpty(context.Token) &&
+                string.IsNullOrEmpty(context.Request.Headers.Authorization) &&
+                context.Request.Cookies.TryGetValue("accessToken", out var cookieToken) &&
+                !string.IsNullOrWhiteSpace(cookieToken))
+            {
+                context.Token = cookieToken.Trim();
             }
             return Task.CompletedTask;
         }
@@ -191,5 +204,6 @@ app.MapGet("/health", () => Results.Ok(new
 
 app.MapControllers();
 app.MapHub<NegotiationChatHub>("/hubs/negotiation-chat");
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

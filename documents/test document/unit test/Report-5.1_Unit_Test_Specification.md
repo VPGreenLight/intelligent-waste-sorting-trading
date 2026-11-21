@@ -1,25 +1,25 @@
 # REPORT 5.1 – UNIT TEST SPECIFICATION (TÀI LIỆU ĐẶC TẢ KIỂM THỬ ĐƠN VỊ)
 
 - **Dự án:** Hệ thống Phân loại Rác Thông minh & Giao dịch Phế liệu (**EcoLink**)
-- **Phiên bản:** 2.0
-- **Ngày cập nhật:** 2026-11-19
+- **Phiên bản:** 2.1
+- **Ngày cập nhật:** 2026-11-20
 - **Nhóm thực hiện:** Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức
 - **Phạm vi kiểm thử (14 Core Modules):**
   1. **Module 1:** Authentication & Account Management (`AuthService`) — **22 TCs**
-  2. **Module 2:** AI Waste Classification & Rule Engine (`AiVisionHttpClient`, `WasteRuleEngineService`, `classify_waste_image`) — **18 TCs**
+  2. **Module 2:** AI Waste Classification & Rule Engine (`AiVisionHttpClient`, `WasteRuleEngineService`, `AiFeedbackService.GetMyScanHistoryAsync`, `RecyclerManagementService` Categories CRUD, `WasteCatalogValidators`, `classify_waste_image`) — **28 TCs**
   3. **Module 3:** Recycler Onboarding & Verification (`RecyclerOnboardingService`, `CloudflareR2StorageService`) — **20 TCs**
   4. **Module 4:** Recycler Profile, Pricing & Availability (`RecyclerManagementService` – `R-01` & `R-02`) — **20 TCs**
   5. **Module 5:** Location-Based Recycler Discovery (`GeoMatchingService` & `NearbyRecyclerFilterValidator` – `U-05`) — **20 TCs**
   6. **Module 6:** Handover Request Management (`HandoverRequestService` – `U-06`, `U-07`, `R-03`, `R-04`, `JOB-03`) — **24 TCs**
   7. **Module 7:** Handover Completion & Transaction Receipt (`HandoverReceiptService` – `R-06`, `U-09`, `U-12`, `JOB-01`) — **24 TCs**
   8. **Module 8:** In-App Real-Time Negotiation Chatbox (`NegotiationChatService` & `NegotiationChatValidators` – `U-08` & `R-05`) — **20 TCs**
-  9. **Module 9:** Account, Staff & System Governance / Analytics (`AdminAnalyticsService`, `AccountGovernanceService`, `StaffManagementService`, `StaffAttendanceService`, `AuditLogService` & `GovernanceValidators` – `A-01..A-04`, `S-06`, `S-07`, `S-11`) — **22 TCs**
+  9. **Module 9:** Account, Staff, Notifications & System Governance / Analytics (`AdminAnalyticsService`, `AccountGovernanceService`, `StaffManagementService`, `StaffAttendanceService`, `NotificationService`, `InMemoryChannelEventBus`, `AuditLogService` & `GovernanceValidators` – `A-01..A-04`, `S-06`, `S-07`, `S-11`, `SU-04`) — **30 TCs**
   10. **Module 10:** In-System Service Packages & VietQR Integration (`PaymentService`, `ServicePackageService`, `SubscriptionEntitlementService`, `AdminReconciliationService` & `ServicePackageValidators` – `U-16`, `R-07`, `A-10`, `A-11`) — **22 TCs**
   11. **Module 11:** AI Misclassification Feedback & Dataset Curation (`AiFeedbackService`, `AiDatasetCurationService`, `AiDatasetExportBuilder`, `AiCurationValidators` – `U-04`, `S-01`, `S-02`, `S-03`) — **22 TCs**
   12. **Module 12:** Rating, Review & Complaint Resolution (`ReviewService`, `ComplaintService`, `HandoverReceiptService.DisputeAsync`, `ReviewAndComplaintValidators` – `U-10`, `U-11`, `S-05`) — **22 TCs**
   13. **Module 13:** Gamification & Rewards (`LeaderboardService`, `CheckinService`, `PointsService`, `GiftService`, `VirtualTreeService`, `EcoFactService`, `GamificationConfigService`, `GamificationService`, `ComplaintService` clawback & `Validators` – `U-13..U-15`, `S-09..S-10`, `A-07..A-08`) — **22 TCs**
   14. **Module 14:** Blog & Content Management (`BlogPostService` & `BlogValidators` – `G-01`, `S-08`, `A-09`) — **20 TCs**
-- **Tổng số lượng Unit Test Cases:** **298 TCs** (`136 Normal`, `107 Abnormal`, `55 Boundary`) *(Thực thi tự động `302 / 302 Passed` trên `Ecolink.UnitTests.csproj` bao gồm cả các biến thể tham số hóa)*
+- **Tổng số lượng Unit Test Cases:** **316 TCs** (`147 Normal`, `111 Abnormal`, `58 Boundary`) *(Thực thi tự động `323 / 323 Passed` trên `Ecolink.UnitTests.csproj` bao gồm cả các `[Theory]` và bài test tích hợp Rule Engine/Feedback AI)*
 
 ---
 
@@ -80,13 +80,13 @@
 
 | Code Module | `AI Waste Classification & Rule Engine` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **18** | | |
+| **Number of TCs** | **28** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 18 | 0 | 0 |
-| *Round 2* | 0 | 0 | 18 |
-| *Round 3* | 0 | 0 | 18 |
+| *Round 1* | 28 | 0 | 0 |
+| *Round 2* | 0 | 0 | 28 |
+| *Round 3* | 0 | 0 | 28 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **9** | **5** | **4** |
+| **Count** | **15** | **7** | **6** |
 
 ---
 
@@ -115,6 +115,8 @@
 | **UTC016** | `_ruleCache` đang chứa đầy đủ 6 danh mục mặc định | *(Không có tham số)* | `Return: IEnumerable<WasteSortingGuideDto> (Count = 6: plastic, paper, glass, metal, cardboard, trash)`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Lấy toàn bộ danh mục hướng dẫn |
 | **UTC017** | `_ruleCache` đang có khóa `"plastic"` | `categoryCode="plastic"` | `Return: Task.CompletedTask` (`GetSortingGuideAsync("plastic")` sau đó trả về `null`)<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Xóa cache cục bộ của 1 danh mục |
 | **UTC018** | `_ruleCache` đã bị xóa 1 phần trước đó | `categoryCode=null` | `Return: Task.CompletedTask` (`_ruleCache` được làm mới lại đủ 6 quy tắc mặc định)<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Khôi phục toàn bộ `_ruleCache` |
+| **`GetMyScanHistoryAsync`, `WasteCategory CRUD`, `RuleEngine Publish` (`v2.6.0`)** | | | | | | | | | | | |
+| **UTC019–UTC028** | *(Chi tiết đầy đủ xem tại [`02_unit_test_ai_classification.md`](./02_unit_test_ai_classification.md#L42))* | `GetMyScanHistoryAsync`, `CreateWasteCategoryAsync`, `UpdateWasteCategoryAsync`, `ToggleWasteCategoryStatusAsync`, `UpsertSortingRuleAsync`, `PublishSortingRuleAsync`, `WasteCatalogValidators` | `6 Normal`, `2 Abnormal`, `2 Boundary` đều đạt 100% (`BR-CLS-08`, `BR-SRT-01..04`) | Mixed | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Phần mở rộng `M-03` (`+10` TCs) |
 
 ---
 
@@ -415,13 +417,13 @@
 
 | Code Module | `Governance Module Services & GovernanceValidators (M-15 / FE-17, FE-18)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **22** | | |
+| **Number of TCs** | **30** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 22 | 0 | 0 |
-| *Round 2* | 0 | 0 | 22 |
-| *Round 3* | 0 | 0 | 22 |
+| *Round 1* | 30 | 0 | 0 |
+| *Round 2* | 0 | 0 | 30 |
+| *Round 3* | 0 | 0 | 30 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **10** | **8** | **4** |
+| **Count** | **15** | **10** | **5** |
 
 ---
 
@@ -453,6 +455,8 @@
 | **UTC020** | `CheckOut` trước `CheckIn`, `CheckIn` lần 2 hoặc `CheckOut` lần 2 | `StaffAttendanceService` | Cả 3 ca đều ném `BusinessRuleException ("BR-GAM-09")` | Abnormal | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | 1 lần/ngày theo UTC+7 |
 | **UTC021** | Biên chuỗi: Ngày 6 $\rightarrow$ 7 (`+15đ`), Ngày 7 $\rightarrow$ 1, Đứt chuỗi $\rightarrow$ 1 | `CheckInAsync` | Tính đúng `CurrentStreakDay` (`7`, `1`, `1`) và điểm thưởng (`15`, `10`, `10`) | Boundary | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chuỗi 7 ngày (`BR-GAM-09`) |
 | **UTC022** | Cả 8 FluentValidators với giá trị độ dài biên | `ValidateAsync` | Từ chối đúng biên sai (`Reason` 9/501, `Password` 7, `ShiftNote` 501) | Boundary | Passed | 2026-11-16 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Toàn bộ `GovernanceValidators` |
+| **`NotificationService` & `InMemoryChannelEventBus` (`SU-04`, `EI-07`, `v2.6.0`)** | | | | | | | | | | | |
+| **UTC023–UTC030** | *(Chi tiết đầy đủ xem tại [`09_unit_test_account_staff_system_governance_analytics.md`](./09_unit_test_account_staff_system_governance_analytics.md#L46))* | `GetMyNotificationsAsync`, `MarkAsReadAsync`, `MarkAllAsReadAsync`, `CreateAndPushAsync`, `MaskSensitivePii`, `InMemoryChannelEventBus` | `5 Normal`, `2 Abnormal`, `1 Boundary` đều đạt 100% (`BR-NTF-01`, `BR-NTF-05`, `BR-EVT-03`, IDOR 403) | Mixed | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Phần mở rộng `M-15 Notifications` (`+8` TCs) |
 
 ---
 
@@ -462,13 +466,13 @@
 
 | Code Module | `PaymentService`, `ServicePackageService`, `SubscriptionEntitlementService`, `AdminReconciliationService`, `ServicePackageValidators` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **22** | | |
+| **Number of TCs** | **30** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 22 | 0 | 0 |
-| *Round 2* | 0 | 0 | 22 |
-| *Round 3* | 0 | 0 | 22 |
+| *Round 1* | 30 | 0 | 0 |
+| *Round 2* | 0 | 0 | 30 |
+| *Round 3* | 0 | 0 | 30 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **10** | **8** | **4** |
+| **Count** | **15** | **10** | **5** |
 
 ### 10.2. Chi tiết Các Ca Kiểm thử (Test Cases)
 *(Chi tiết đầy đủ 22 test cases `UTC001` $\rightarrow$ `UTC022` xem tại: [`10_unit_test_in_system_service_packages_vietqr.md`](./10_unit_test_in_system_service_packages_vietqr.md) / [`ServicePackagePaymentTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module12_ServicePackages/ServicePackagePaymentTests.cs))*
@@ -506,13 +510,13 @@
 
 | Code Module | `AiFeedbackService`, `AiDatasetCurationService`, `AiDatasetExportBuilder`, `AiCurationValidators` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **22** | | |
+| **Number of TCs** | **30** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 22 | 0 | 0 |
-| *Round 2* | 0 | 0 | 22 |
-| *Round 3* | 0 | 0 | 22 |
+| *Round 1* | 30 | 0 | 0 |
+| *Round 2* | 0 | 0 | 30 |
+| *Round 3* | 0 | 0 | 30 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **10** | **8** | **4** |
+| **Count** | **15** | **10** | **5** |
 
 ### 11.2. Chi tiết Các Ca Kiểm thử (Test Cases)
 *(Chi tiết đầy đủ 22 test cases `UTC001` $\rightarrow$ `UTC022` xem tại: [`11_unit_test_ai_misclassification_feedback_dataset_curation.md`](./11_unit_test_ai_misclassification_feedback_dataset_curation.md) / [`AiFeedbackCurationTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module13_AiFeedbackCuration/AiFeedbackCurationTests.cs))*
@@ -550,13 +554,13 @@
 
 | Code Module | `ReviewService`, `ComplaintService`, `HandoverReceiptService.DisputeAsync`, `ReviewAndComplaintValidators` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **22** | | |
+| **Number of TCs** | **30** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 22 | 0 | 0 |
-| *Round 2* | 0 | 0 | 22 |
-| *Round 3* | 0 | 0 | 22 |
+| *Round 1* | 30 | 0 | 0 |
+| *Round 2* | 0 | 0 | 30 |
+| *Round 3* | 0 | 0 | 30 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **10** | **8** | **4** |
+| **Count** | **15** | **10** | **5** |
 
 ### 12.2. Chi tiết Các Ca Kiểm thử (Test Cases)
 *(Chi tiết đầy đủ 22 test cases `UTC001` $\rightarrow$ `UTC022` xem tại: [`12_unit_test_rating_review_complaint_resolution.md`](./12_unit_test_rating_review_complaint_resolution.md) / [`ReviewComplaintTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module11_ReviewsComplaints/ReviewComplaintTests.cs))*
@@ -594,13 +598,13 @@
 
 | Code Module | `LeaderboardService`, `CheckinService`, `PointsService`, `GiftService`, `VirtualTreeService`, `EcoFactService`, `GamificationConfigService`, `GamificationService`, `ComplaintService` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **22** | | |
+| **Number of TCs** | **30** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 22 | 0 | 0 |
-| *Round 2* | 0 | 0 | 22 |
-| *Round 3* | 0 | 0 | 22 |
+| *Round 1* | 30 | 0 | 0 |
+| *Round 2* | 0 | 0 | 30 |
+| *Round 3* | 0 | 0 | 30 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **10** | **8** | **4** |
+| **Count** | **15** | **10** | **5** |
 
 ### 13.2. Chi tiết Các Ca Kiểm thử (`UTC001` – `UTC022`)
 *(Chi tiết đầy đủ xem tại: [`13_unit_test_gamification_and_rewards.md`](./13_unit_test_gamification_and_rewards.md) / [`GamificationAndBlogUnitTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module10_GamificationAndBlog/GamificationAndBlogUnitTests.cs))*
