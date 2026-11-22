@@ -74,23 +74,56 @@ public class AIFeedbackLogConfiguration : IEntityTypeConfiguration<AIFeedbackLog
 
         builder.Property(f => f.Id).HasColumnName("id");
         builder.Property(f => f.UserId).HasColumnName("user_id");
+        builder.Property(f => f.ScanId).HasColumnName("scan_id");
         builder.Property(f => f.ImageUrl).HasColumnName("image_url").IsRequired();
+        builder.Property(f => f.ImageSha256).HasColumnName("image_sha256").HasMaxLength(64);
+        builder.Property(f => f.ModelUsed).HasColumnName("model_used").HasMaxLength(50).HasDefaultValue("yolov8_detect").IsRequired();
+        builder.Property(f => f.DetectedObjectsSnapshot).HasColumnName("detected_objects_snapshot").HasColumnType("jsonb").HasDefaultValueSql("'[]'::jsonb").IsRequired();
+
         builder.Property(f => f.PredictedLabel).HasColumnName("predicted_label").HasMaxLength(50).IsRequired();
         builder.Property(f => f.ConfidenceScore).HasColumnName("confidence_score").IsRequired();
         builder.Property(f => f.UserReportedLabel).HasColumnName("user_reported_label").HasMaxLength(50).IsRequired();
         builder.Property(f => f.AdminVerifiedLabel).HasColumnName("admin_verified_label").HasMaxLength(50);
         builder.Property(f => f.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(f => f.Note).HasColumnName("note");
+
+        builder.Property(f => f.ReviewDecision).HasColumnName("review_decision").HasConversion<string>().HasMaxLength(30);
+        builder.Property(f => f.ReviewedByStaffId).HasColumnName("reviewed_by_staff_id");
+        builder.Property(f => f.ReviewedAt).HasColumnName("reviewed_at");
+        builder.Property(f => f.ReviewNote).HasColumnName("review_note");
+        builder.Property(f => f.DatasetItemId).HasColumnName("dataset_item_id");
+
         builder.Property(f => f.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()").IsRequired();
         builder.Property(f => f.UpdatedAt).HasColumnName("updated_at");
 
+        builder.Property<uint>("xmin")
+            .IsRowVersion();
+
         builder.HasIndex(f => f.UserId).HasDatabaseName("idx_ai_feedback_logs_user_id");
+        builder.HasIndex(f => f.ScanId).IsUnique().HasDatabaseName("uq_ai_feedback_logs_scan_id");
+        builder.HasIndex(f => new { f.Status, f.CreatedAt }).HasDatabaseName("idx_ai_feedback_logs_status_created");
+        builder.HasIndex(f => f.DatasetItemId).HasDatabaseName("idx_ai_feedback_logs_dataset_item_id");
 
         builder.HasOne(f => f.User)
             .WithMany(u => u.Feedbacks)
             .HasForeignKey(f => f.UserId)
             .HasConstraintName("fk_ai_feedback_logs_users")
-            .OnDelete(DeleteBehavior.SetNull);
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
+
+        builder.HasOne(f => f.Scan)
+            .WithMany()
+            .HasForeignKey(f => f.ScanId)
+            .HasConstraintName("fk_ai_feedback_logs_scan")
+            .OnDelete(DeleteBehavior.SetNull)
+            .IsRequired(false);
+
+        builder.HasOne(f => f.ReviewedByStaff)
+            .WithMany()
+            .HasForeignKey(f => f.ReviewedByStaffId)
+            .HasConstraintName("fk_ai_feedback_logs_reviewer")
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
     }
 }
 

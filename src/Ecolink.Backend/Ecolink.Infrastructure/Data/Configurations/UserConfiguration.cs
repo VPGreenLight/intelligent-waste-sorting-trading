@@ -23,6 +23,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.Status).HasColumnName("status").HasConversion<string>().HasMaxLength(30).IsRequired();
         builder.Property(u => u.FailedLoginAttempts).HasColumnName("failed_login_attempts").HasDefaultValue(0);
         builder.Property(u => u.LockoutUntil).HasColumnName("lockout_until");
+        builder.Property(u => u.WarningCount).HasColumnName("warning_count").HasDefaultValue(0).IsRequired();
+        builder.Property(u => u.ModerationReason).HasColumnName("moderation_reason").HasMaxLength(500);
+        builder.Property(u => u.ModeratedAt).HasColumnName("moderated_at");
+        builder.Property(u => u.ModeratedBy).HasColumnName("moderated_by");
 
         // Audit fields
         builder.Property(u => u.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()").IsRequired();
@@ -32,9 +36,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         builder.Property(u => u.IsDeleted).HasColumnName("is_deleted").HasDefaultValue(false);
         builder.Property(u => u.DeletedAt).HasColumnName("deleted_at");
 
-        // Unique Indexes (BR-AUTH-01)
+        // Unique Indexes (BR-AUTH-01) & Governance Query Index (S-06)
         builder.HasIndex(u => u.Username).IsUnique().HasDatabaseName("uq_users_username");
         builder.HasIndex(u => u.Email).IsUnique().HasDatabaseName("uq_users_email");
+        builder.HasIndex(u => new { u.Role, u.Status, u.CreatedAt }).HasDatabaseName("idx_users_role_status_created_at");
 
         // Soft delete query filter
         builder.HasQueryFilter(u => !u.IsDeleted);

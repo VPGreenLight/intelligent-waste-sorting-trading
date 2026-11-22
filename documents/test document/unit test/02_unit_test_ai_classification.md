@@ -4,13 +4,13 @@
 
 | Code Module | `AI Waste Classification & Rule Engine` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **18** | | |
+| **Number of TCs** | **28** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 18 | 0 | 0 |
-| *Round 2* | 0 | 0 | 18 |
-| *Round 3* | 0 | 0 | 18 |
+| *Round 1* | 28 | 0 | 0 |
+| *Round 2* | 0 | 0 | 28 |
+| *Round 3* | 0 | 0 | 28 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **9** | **5** | **4** |
+| **Count** | **15** | **7** | **6** |
 
 ---
 
@@ -39,4 +39,15 @@
 | **UTC016** | `_ruleCache` đang chứa đầy đủ 6 danh mục mặc định | *(Không có tham số)* | `Return: IEnumerable<WasteSortingGuideDto> (Count = 6: plastic, paper, glass, metal, cardboard, trash)`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Lấy toàn bộ danh mục hướng dẫn |
 | **UTC017** | `_ruleCache` đang có khóa `"plastic"` | `categoryCode="plastic"` | `Return: Task.CompletedTask` (`GetSortingGuideAsync("plastic")` sau đó trả về `null`)<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Xóa cache cục bộ của 1 danh mục |
 | **UTC018** | `_ruleCache` đã bị xóa 1 phần trước đó | `categoryCode=null` | `Return: Task.CompletedTask` (`_ruleCache` được làm mới lại đủ 6 quy tắc mặc định)<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Khôi phục toàn bộ `_ruleCache` |
+| **`GetMyScanHistoryAsync`, `WasteCategory CRUD` & `Rule Engine Publish` (`v2.6.0`)** | | | | | | | | | | | |
+| **UTC019** | Có bản ghi `AiScanHistory` của `userA` và `userB` trong InMemory DB | `userId = userA`, `WasteScanHistoryFilterRequest()` | Return: `TotalRecords = 1`, chỉ chứa lịch sử của `userA`, `SortingGuide` được hydrate đúng (`StandardBinColor = "Cam"`) (`BR-CLS-08`) | Normal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Cô lập lịch sử quét cá nhân |
+| **UTC020** | Có 3 bản ghi quét của cùng User ở các ngày và nhãn khác nhau | `CategoryCode = "  PLASTIC "`, `FromDate`/`ToDate` trong khoảng 2 giờ | Return: `TotalRecords = 1`, chỉ trả đúng bản ghi `"plastic"` nằm trong khung giờ lọc | Normal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kiểm thử bộ lọc lịch sử quét |
+| **UTC021** | Chưa có danh mục mã `"e_waste"` trong `waste_categories` | `CreateWasteCategoryRequest { Code = " E_Waste ", Name = "Pin & Thiết bị điện tử", StandardBinColor = "Đỏ", IsRecyclable = false }` | Return: `Code = "e_waste"`, `Status = "Active"`; ghi `AuditLog` `"CREATE_WASTE_CATEGORY"` (`BR-SRT-02`) | Normal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Tạo danh mục mới chuẩn hóa mã |
+| **UTC022** | Đã tồn tại danh mục mã `"electronic"` | `CreateWasteCategoryRequest { Code = "Electronic", ... }` | Throw: `ConflictException("BR-SRT-02", "MSG-SRT-02")` | Abnormal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chặn trùng mã danh mục |
+| **UTC023** | Danh mục `"plastic"` tồn tại trong DB | `UpdateWasteCategoryRequest { Name = "Nhựa PET/HDPE Chuẩn", StandardBinColor = "Vàng Cam" }` | Return: `Name`/`StandardBinColor` cập nhật, giữ nguyên `Code`, gọi `InvalidateRuleCacheAsync("plastic")`, ghi `AuditLog` | Normal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Sửa metadata & làm mới cache |
+| **UTC024** | Danh mục `"plastic"` đang `Active` kèm quy tắc `ACTIVE` | `ToggleWasteCategoryStatusRequest { Status = "Inactive" }` | DB giữ nguyên bản ghi ở `Status = "Inactive"` (`BR-SRT-04`); `GetWasteCategoriesAsync()` & `GetSortingGuideAsync("plastic")` không trả về | Normal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Xóa mềm danh mục bảo toàn FK |
+| **UTC025** | Danh mục `"organic_compost"` đã tồn tại | Gọi `UpsertSortingRuleAsync` lần 1 và lần 2 trên cùng `categoryId` | Tạo/cập nhật đè trên đúng 1 dòng `SortingRule` (`1-1` `BR-SRT-01`) ở trạng thái `DRAFT`, ghi `AuditLog` | Normal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Quản trị bản nháp Rule Engine |
+| **UTC026** | Có quy tắc `DRAFT` cho `"tetrapak"` & mock `IAiVisionClient` | `PublishSortingRuleAsync(adminId, ruleId)` | `Rule.Status = "ACTIVE"`, `AiServiceSynced = true`, gọi `SyncSortingRuleAsync`, `GetSortingGuideAsync("tetrapak")` khả dụng ngay (`BR-SRT-03`) | Normal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Phát hành & đồng bộ AI Service |
+| **UTC027** | `ruleId` không tồn tại hoặc nội dung `PreparationSteps` rỗng | `PublishSortingRuleAsync` | Throw `NotFoundException` với ID lạ và `BusinessRuleException("BR-SRT-03", "MSG-SRT-03")` khi thiếu nội dung | Abnormal | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Ràng buộc điều kiện phát hành |
+| **UTC028** | Khởi tạo 4 FluentValidators trong `WasteCatalogValidators.cs` | Biên độ dài & regex `Code` (`^[a-z0-9_]+$`, 50), `Name` (100), `Status` (`Active`/`Inactive`), `Title` (150), `ApplicableRegion` (100) | Từ chối đúng toàn bộ trường hợp sai regex/biên vượt, chấp nhận biên hợp lệ | Boundary | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kiểm tra biên Validator `M-03` |
 

@@ -1,0 +1,48 @@
+sequenceDiagram
+    autonumber
+    actor Staff as Staff MANAGE_INVENTORY
+    actor Buyer as Citizen / Recycler
+    participant Ctrl as PointsAndRewardsController / StaffGamificationController
+    participant GiftSvc as GiftService
+    participant PtsSvc as PointsService
+    participant DB as PostgreSQL 16
+
+    Note over Staff,DB: U-14 & S-10: Quan tri kho qua, nhap voucher, doi qua nguyen tu va xu ly giao nhan / hoan diem
+
+    Staff->>Ctrl: POST /api/v1/staff/gifts/{giftId}/vouchers/import (danh sach ma)
+    Ctrl->>GiftSvc: ImportVouchersAsync(giftId, request)
+    GiftSvc->>DB: Khu trung lap ma & UPDATE gift_inventory.stock_quantity += importCount
+    Ctrl-->>Staff: 200 OK ImportVouchersResultDto
+
+    Buyer->>Ctrl: POST /api/v1/gamification/redemptions (giftId, quantity, deliveryAddress)
+    Ctrl->>GiftSvc: RedeemAsync(userId, giftId, request)
+    GiftSvc->>DB: BeginTransaction: Check status == ACTIVE & Validate Voucher qty == 1 hoac Physical co dia chi
+    GiftSvc->>DB: UPDATE gift_inventory SET stock_quantity -= qty WHERE id = giftId AND status = 'ACTIVE' AND stock_quantity >= qty
+    alt stockOk == 0
+        GiftSvc-->>Ctrl: BusinessRuleException (BR-GAM-04, MSG-GAM-04)
+        Ctrl-->>Buyer: 400 Het hang / khong kha dung
+    else Con du ton kho
+        GiftSvc->>DB: INSERT gift_redemptions (Voucher -> ECO-XXXX-XXXX-XXXX + ExpiresAt; Physical -> Pending)
+        GiftSvc->>PtsSvc: TryDebitAsync(userId, cost, RedeemGift, idemKey = REDEEM:id)
+        PtsSvc->>DB: UPDATE user_point_wallets SET current_balance -= cost WHERE current_balance >= cost
+        alt Khong du diem (affected == 0)
+            PtsSvc-->>GiftSvc: false -> Rollback toan bo transaction (hoan ton kho)
+            GiftSvc-->>Ctrl: BusinessRuleException (BR-GAM-03, MSG-GAM-03)
+            Ctrl-->>Buyer: 400 Khong du diem
+        else Tru diem thanh cong
+            PtsSvc->>DB: INSERT point_transactions (-cost)
+            GiftSvc->>DB: Commit Transaction
+            Ctrl-->>Buyer: 201 Created MSG-GAM-02 (RedeemResultDto)
+        end
+    end
+
+    Staff->>Ctrl: PATCH /api/v1/staff/redemptions/{redemptionId}/fulfill (Fulfill hoac Cancel)
+    Ctrl->>GiftSvc: FulfillAsync(redemptionId, request)
+    alt action == Cancel
+        GiftSvc->>DB: BeginTransaction: UPDATE status = Cancelled & Cong lai stock_quantity += qty
+        GiftSvc->>PtsSvc: CreditAsync(userId, pointsSpent, Adjustment, GiftRedemptionRefund, REFUND:id)
+        GiftSvc->>DB: Commit Transaction
+    else action == Fulfill
+        GiftSvc->>DB: UPDATE status = Delivered, fulfilled_at = NOW()
+    end
+    Ctrl-->>Staff: 200 OK RedemptionDto

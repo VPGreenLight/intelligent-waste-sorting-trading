@@ -24,6 +24,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<HandoverRequest> HandoverRequests => Set<HandoverRequest>();
     public DbSet<HandoverRequestItem> HandoverRequestItems => Set<HandoverRequestItem>();
     public DbSet<HandoverReceipt> HandoverReceipts => Set<HandoverReceipt>();
+    public DbSet<BlogPost> BlogPosts => Set<BlogPost>();
+    public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<StaffPermissionAssignment> StaffPermissionAssignments => Set<StaffPermissionAssignment>();
     public DbSet<PasswordResetToken> PasswordResetTokens => Set<PasswordResetToken>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
@@ -38,7 +40,49 @@ public class ApplicationDbContext : DbContext
     public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
     public DbSet<TransactionReceipt> TransactionReceipts => Set<TransactionReceipt>();
     public DbSet<WasteCategory> WasteCategories => Set<WasteCategory>();
+    public DbSet<SortingRule> SortingRules => Set<SortingRule>();
+    public DbSet<PlatformPolicySection> PlatformPolicySections => Set<PlatformPolicySection>();
     public DbSet<AIFeedbackLog> AIFeedbackLogs => Set<AIFeedbackLog>();
+    public DbSet<UserPointWallet> UserPointWallets => Set<UserPointWallet>();
+    public DbSet<PointTransaction> PointTransactions => Set<PointTransaction>();
+    public DbSet<DailyCheckinLog> DailyCheckinLogs => Set<DailyCheckinLog>();
+    public DbSet<VirtualTreeProgress> VirtualTreeProgresses => Set<VirtualTreeProgress>();
+    public DbSet<Gift> Gifts => Set<Gift>();
+    public DbSet<GiftRedemption> GiftRedemptions => Set<GiftRedemption>();
+    public DbSet<EcoFact> EcoFacts => Set<EcoFact>();
+    public DbSet<GamificationConfig> GamificationConfigs => Set<GamificationConfig>();
+    public DbSet<PointRateRule> PointRateRules => Set<PointRateRule>();
+    public DbSet<TreeLevelThreshold> TreeLevelThresholds => Set<TreeLevelThreshold>();
+    public DbSet<LeaderboardCycle> LeaderboardCycles => Set<LeaderboardCycle>();
+
+    // ==========================================
+    // MODULE M-15: GOVERNANCE, STAFF, ATTENDANCE & AUDIT TRAIL (FE-17, FE-18)
+    // ==========================================
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<AccountModerationLog> AccountModerationLogs => Set<AccountModerationLog>();
+    public DbSet<StaffAttendance> StaffAttendances => Set<StaffAttendance>();
+
+    // ==========================================
+    // MODULE M-12: IN-SYSTEM SERVICE PACKAGES & VIETQR PAYMENT (FE-14)
+    // ==========================================
+    public DbSet<ServicePackage> ServicePackages => Set<ServicePackage>();
+    public DbSet<ServiceOrder> ServiceOrders => Set<ServiceOrder>();
+    public DbSet<UserSubscription> UserSubscriptions => Set<UserSubscription>();
+    public DbSet<PaymentWebhookLog> PaymentWebhookLogs => Set<PaymentWebhookLog>();
+
+    // ==========================================
+    // MODULE M-13: AI MISCLASSIFICATION FEEDBACK & DATASET CURATION (FE-15)
+    // ==========================================
+    public DbSet<AiScanHistory> AiScanHistories => Set<AiScanHistory>();
+    public DbSet<AiDatasetItem> AiDatasetItems => Set<AiDatasetItem>();
+    public DbSet<AiDatasetVersion> AiDatasetVersions => Set<AiDatasetVersion>();
+    public DbSet<AiDatasetVersionItem> AiDatasetVersionItems => Set<AiDatasetVersionItem>();
+
+    // ==========================================
+    // MODULE M-11: RATING, REVIEW & COMPLAINT RESOLUTION (FE-10)
+    // ==========================================
+    public DbSet<TransactionReview> TransactionReviews => Set<TransactionReview>();
+    public DbSet<TransactionComplaint> TransactionComplaints => Set<TransactionComplaint>();
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
@@ -55,5 +99,8 @@ public class ApplicationDbContext : DbContext
 
         // Quét tự động tất cả các cấu hình Fluent API trong tầng Infrastructure
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+
+        modelBuilder.HasSequence<long>("seq_handover_request_code").StartsAt(1).IncrementsBy(1);
+        modelBuilder.HasSequence<long>("seq_handover_receipt_code").StartsAt(1).IncrementsBy(1);
     }
 }

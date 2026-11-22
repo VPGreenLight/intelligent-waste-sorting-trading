@@ -6,4 +6,6 @@ public interface ICurrentUserService
     string? Email { get; }
     string? Role { get; }
     bool IsAuthenticated { get; }
+    string? IpAddress => null;
+    string? UserAgent => null;
 }

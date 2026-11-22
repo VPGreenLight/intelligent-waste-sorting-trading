@@ -33,7 +33,7 @@ public class CreateHandoverRequest
     [MaxLength(5, ErrorMessage = "Tối đa 5 ảnh.")]
     public List<string> PhotoUrls { get; set; } = new();
 
-    /// <summary>Khung giờ mong muốn: tối thiểu 2 giờ nữa, tối đa 7 ngày tới.</summary>
+    /// <summary>Khung giờ mong muốn: tối thiểu 2 giờ nữa, từ hôm nay đến tối đa 30 ngày tới.</summary>
     [Required(ErrorMessage = "Vui lòng chọn khung giờ thu gom.")]
     public DateTimeOffset? ProposedTimeSlot { get; set; }
 

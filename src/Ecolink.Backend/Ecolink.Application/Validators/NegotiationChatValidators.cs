@@ -56,6 +56,14 @@ public class SendProposalRequestValidator : AbstractValidator<SendProposalReques
             .NotEmpty().WithMessage("Khung giờ thu gom đề xuất không được để trống (BR-NEG-04).")
             .MaximumLength(150).WithMessage("Khung giờ thu gom đề xuất không được vượt quá 150 ký tự.");
 
+        RuleFor(x => x.CategoryCode)
+            .MaximumLength(50).WithMessage("Mã loại phế liệu không được vượt quá 50 ký tự.")
+            .When(x => !string.IsNullOrWhiteSpace(x.CategoryCode));
+
+        RuleFor(x => x.PickupAddress)
+            .MaximumLength(300).WithMessage("Địa chỉ điểm hẹn thu gom không được vượt quá 300 ký tự.")
+            .When(x => !string.IsNullOrWhiteSpace(x.PickupAddress));
+
         RuleFor(x => x.Note)
             .MaximumLength(1000).WithMessage("Ghi chú đề xuất không được vượt quá 1000 ký tự.")
             .When(x => !string.IsNullOrWhiteSpace(x.Note));

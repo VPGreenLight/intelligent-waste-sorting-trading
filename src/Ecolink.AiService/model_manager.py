@@ -481,9 +481,21 @@ class ModelManager:
         crops = [self._crop_with_padding(pil_image, c["bbox"], pad_ratio=0.06) for c in raw_candidates]
         primary_dists = self._classify_crops_batch(crops, stage2_classifier_id)
 
-        # Với vật thể do COCO khôi phục (chai nước cầm tay), tham khảo thêm MobileNetV3 nếu stage2 đang là EfficientNet
+        # Kích hoạt MobileNetV3 làm trọng tài bỏ phiếu ở chế độ đồng thuận đa mô hình khi vật thể do COCO
+        # khôi phục, Stage-1 và EfficientNet-B0 bất đồng quan điểm, hoặc độ tự tin phát hiện < 0.78
+        needs_consensus = any(
+            c["source"] == "coco_container_assisted"
+            or (
+                not strict_stage2
+                and (
+                    max(CLASS_NAMES, key=lambda k: primary_dists[i][k]) != c["label"]
+                    or c["det_confidence"] < 0.78
+                )
+            )
+            for i, c in enumerate(raw_candidates)
+        )
         aux_mob_dists: Optional[List[Dict[str, float]]] = None
-        if any(c["source"] == "coco_container_assisted" for c in raw_candidates) and stage2_classifier_id != "mobilenet_v3":
+        if needs_consensus and stage2_classifier_id != "mobilenet_v3":
             if (self.models_dir / self.registry["mobilenet_v3"]["file"]).exists():
                 aux_mob_dists = self._classify_crops_batch(crops, "mobilenet_v3")
 
@@ -537,7 +549,15 @@ class ModelManager:
                 refined.append(cand)
                 continue
 
-            # Chế độ mặc định SOTA (yolov8_detect + EfficientNet-B0 hậu kiểm)
+            # Chế độ mặc định hợp nhất đa mô hình (yolov8_detect + EfficientNet-B0 + MobileNetV3 trọng tài)
+            if aux_mob_dists is not None:
+                mob_d = aux_mob_dists[idx]
+                cls_dist = {k: 0.65 * primary_dists[idx][k] + 0.35 * mob_d[k] for k in CLASS_NAMES}
+                source_tag = "multi_model_consensus"
+            else:
+                cls_dist = primary_dists[idx]
+                source_tag = "two_stage_ensemble"
+
             best_cls = max(CLASS_NAMES, key=lambda k: cls_dist[k])
             best_cls_prob = cls_dist[best_cls]
             det_cls_prob = cls_dist.get(det_lbl, 0.0)
@@ -548,6 +568,9 @@ class ModelManager:
                 if det_cls_prob < 0.03 and fiber_prob >= 0.72 and best_cls in ("paper", "cardboard"):
                     final_lbl = best_cls
                     final_conf = min(0.95, 0.55 * fiber_prob + 0.25 * det_conf)
+                elif det_cls_prob < 0.06 and best_cls_prob >= 0.78:
+                    final_lbl = best_cls
+                    final_conf = min(0.95, 0.65 * best_cls_prob + 0.25 * det_conf)
                 elif best_cls == det_lbl:
                     final_lbl = det_lbl
                     final_conf = min(0.99, 0.82 * det_conf + 0.18 * det_cls_prob)
@@ -574,7 +597,7 @@ class ModelManager:
             cand["display_name"] = DISPLAY_NAMES.get(final_lbl, final_lbl.capitalize())
             cand["confidence"] = round(float(final_conf), 4)
             cand["prob_dist"] = cls_dist
-            cand["source"] = "two_stage_ensemble"
+            cand["source"] = source_tag
             refined.append(cand)
 
         deduped = self._deduplicate_candidates(refined)
@@ -652,7 +675,7 @@ class ModelManager:
             primary = detected_objects[0]
             primary_dist = primary.get("_prob_dist") or {c: 0.0 for c in CLASS_NAMES}
 
-            # Kết hợp điểm của vật thể chính (#1) và các vật thể phụ để xây dựng bảng phân phối 6 lớp hợp lý
+            # Kết hợp điểm của vật thể chính (#1) và các vật thể phụ rồi chuẩn hóa phân phối về tổng = 1.0
             class_scores: Dict[str, float] = {c: round(float(primary_dist.get(c, 0.0)) * 0.35, 4) for c in CLASS_NAMES}
             for obj in detected_objects:
                 lbl = obj["label"]
@@ -661,10 +684,16 @@ class ModelManager:
                     class_scores[lbl] = max(class_scores[lbl], round(obj["confidence"] * weight, 4))
             class_scores[primary["label"]] = primary["confidence"]
 
+            total_score = sum(class_scores.values())
+            if total_score > 0:
+                norm_scores = {c: round(class_scores[c] / total_score, 4) for c in CLASS_NAMES}
+            else:
+                norm_scores = {c: round(1.0 / len(CLASS_NAMES), 4) for c in CLASS_NAMES}
+
             all_predictions = [
                 {
                     "label": c,
-                    "confidence": round(class_scores[c], 4),
+                    "confidence": norm_scores[c],
                     "display_name": DISPLAY_NAMES.get(c, c.capitalize()),
                 }
                 for c in CLASS_NAMES
@@ -780,4 +809,16 @@ class ModelManager:
             "detected_objects": detected_items,
             "annotated_image_base64": f"data:image/jpeg;base64,{base64_img}",
             "inference_time_ms": latency_ms,
+        }
+
+    def reload_models(self) -> Dict[str, Any]:
+        """Xóa bộ nhớ đệm trọng số trên RAM và quét nạp lại danh sách mô hình mới từ đĩa."""
+        self._loaded_models.clear()
+        available = self.list_available_models()
+        ready_count = len([m for m in available if m.get("is_ready")])
+        return {
+            "success": True,
+            "reloaded_at": time.strftime("%Y-%m-%d %H:%M:%S"),
+            "ready_count": ready_count,
+            "models": available,
         }

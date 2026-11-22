@@ -16,6 +16,7 @@ namespace Ecolink.Infrastructure.Services;
 /// </summary>
 internal static class HandoverTradeSyncHelper
 {
+    public const int MaxAppointmentAheadDays = 30;
     private static readonly TimeSpan LocalOffset = TimeSpan.FromHours(7); // ICT (GMT+7)
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -74,15 +75,36 @@ internal static class HandoverTradeSyncHelper
 
     public static DateTime ParseSlotToUtc(string? slotText, DateTime fallbackUtc)
     {
+        TryParseAppointmentSlotUtc(slotText, fallbackUtc, out var utcResult, out _, out _);
+        return utcResult;
+    }
+
+    public static bool TryParseAppointmentSlotUtc(
+        string? slotText,
+        DateTime fallbackUtc,
+        out DateTime utcResult,
+        out bool hasExplicitDate,
+        out bool hasTime)
+    {
+        utcResult = DateTime.SpecifyKind(fallbackUtc, DateTimeKind.Utc);
+        hasExplicitDate = false;
+        hasTime = false;
+
         if (string.IsNullOrWhiteSpace(slotText))
-            return DateTime.SpecifyKind(fallbackUtc, DateTimeKind.Utc);
+            return false;
 
         var trimmed = slotText.Trim();
         if (DateTimeOffset.TryParse(trimmed, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal, out var dto))
-            return dto.UtcDateTime;
+        {
+            utcResult = dto.UtcDateTime;
+            hasExplicitDate = true;
+            hasTime = true;
+            return true;
+        }
 
         var fallbackLocal = DateTime.SpecifyKind(fallbackUtc, DateTimeKind.Utc) + LocalOffset;
         var datePart = fallbackLocal.Date;
+        var timeSearchStart = 0;
 
         // Kiểm tra xem chuỗi có chứa yyyy-MM-dd hoặc dd/MM/yyyy không
         var dateMatch = Regex.Match(trimmed, @"(?<y>\d{4})-(?<m>\d{2})-(?<d>\d{2})");
@@ -91,22 +113,36 @@ internal static class HandoverTradeSyncHelper
             int.TryParse(dateMatch.Groups["m"].Value, out var m) &&
             int.TryParse(dateMatch.Groups["d"].Value, out var d))
         {
-            try { datePart = new DateTime(y, m, d); } catch { /* ignore */ }
+            try
+            {
+                datePart = new DateTime(y, m, d);
+                hasExplicitDate = true;
+                timeSearchStart = dateMatch.Index + dateMatch.Length;
+            }
+            catch { /* ignore */ }
         }
         else
         {
-            var vnDateMatch = Regex.Match(trimmed, @"(?<d>\d{2})/(?<m>\d{2})/(?<y>\d{4})");
+            var vnDateMatch = Regex.Match(trimmed, @"(?<d>\d{1,2})/(?<m>\d{1,2})/(?<y>\d{4})");
             if (vnDateMatch.Success &&
                 int.TryParse(vnDateMatch.Groups["y"].Value, out var vy) &&
                 int.TryParse(vnDateMatch.Groups["m"].Value, out var vm) &&
                 int.TryParse(vnDateMatch.Groups["d"].Value, out var vd))
             {
-                try { datePart = new DateTime(vy, vm, vd); } catch { /* ignore */ }
+                try
+                {
+                    datePart = new DateTime(vy, vm, vd);
+                    hasExplicitDate = true;
+                    timeSearchStart = vnDateMatch.Index + vnDateMatch.Length;
+                }
+                catch { /* ignore */ }
             }
         }
 
         // Tìm giờ bắt đầu HH:mm (sau phần ngày nếu có)
-        var timeSearchText = dateMatch.Success ? trimmed[(dateMatch.Index + dateMatch.Length)..] : trimmed;
+        var timeSearchText = timeSearchStart > 0 && timeSearchStart < trimmed.Length
+            ? trimmed[timeSearchStart..]
+            : trimmed;
         var timeMatch = TimeRangeStartRegex.Match(timeSearchText);
         if (timeMatch.Success &&
             int.TryParse(timeMatch.Groups["hour"].Value, out var hour) &&
@@ -114,10 +150,45 @@ internal static class HandoverTradeSyncHelper
             hour is >= 0 and <= 23 && min is >= 0 and <= 59)
         {
             var localDt = new DateTime(datePart.Year, datePart.Month, datePart.Day, hour, min, 0, DateTimeKind.Unspecified);
-            return DateTime.SpecifyKind(localDt - LocalOffset, DateTimeKind.Utc);
+            utcResult = DateTime.SpecifyKind(localDt - LocalOffset, DateTimeKind.Utc);
+            hasTime = true;
+            return true;
         }
 
-        return DateTime.SpecifyKind(fallbackUtc, DateTimeKind.Utc);
+        if (hasExplicitDate)
+        {
+            var localDt = new DateTime(datePart.Year, datePart.Month, datePart.Day, 10, 0, 0, DateTimeKind.Unspecified);
+            utcResult = DateTime.SpecifyKind(localDt - LocalOffset, DateTimeKind.Utc);
+            return true;
+        }
+
+        return false;
+    }
+
+    public static void ValidateAppointmentWindowUtc(DateTime utcTime, bool checkTimeToo = true)
+    {
+        var nowUtc = DateTime.UtcNow;
+        var todayLocalDate = (nowUtc + LocalOffset).Date;
+        var targetUtc = utcTime.Kind == DateTimeKind.Utc
+            ? utcTime
+            : DateTime.SpecifyKind(utcTime, DateTimeKind.Utc);
+        var targetLocal = targetUtc + LocalOffset;
+
+        if (targetLocal.Date < todayLocalDate || (checkTimeToo && targetUtc < nowUtc.AddMinutes(-1)))
+        {
+            throw new Domain.Exceptions.BusinessRuleException(
+                "BR-NEG-04",
+                "MSG-GEN-01",
+                "Không thể chọn ngày hoặc khung giờ hẹn trong quá khứ.");
+        }
+
+        if (targetLocal.Date > todayLocalDate.AddDays(MaxAppointmentAheadDays))
+        {
+            throw new Domain.Exceptions.BusinessRuleException(
+                "BR-NEG-04",
+                "MSG-GEN-01",
+                $"Chỉ được chọn ngày hẹn từ hôm nay đến tối đa {MaxAppointmentAheadDays} ngày tới.");
+        }
     }
 
     /// <summary>
@@ -198,8 +269,14 @@ internal static class HandoverTradeSyncHelper
                     initialPrice = primaryItem.AgreedPricePerKg;
             }
 
-            var agreedPrice = primaryItem?.AgreedPricePerKg
-                              ?? handover.Items.Select(i => i.AgreedPricePerKg).FirstOrDefault(p => p.HasValue);
+            var isConfirmedOrLater = handover.Status is HandoverStatus.Accepted
+                                     or HandoverStatus.Scheduled
+                                     or HandoverStatus.AwaitingConfirmation
+                                     or HandoverStatus.Completed;
+            var agreedPrice = isConfirmedOrLater
+                ? (primaryItem?.AgreedPricePerKg
+                   ?? handover.Items.Select(i => i.AgreedPricePerKg).FirstOrDefault(p => p.HasValue))
+                : null;
 
             var linesMeta = handover.Items
                 .Select(i => new TradeOrderLineDto
@@ -258,8 +335,18 @@ internal static class HandoverTradeSyncHelper
                 tradeOrder.EstimatedWeightKg = handover.Items.Sum(i => i.EstimatedWeightKg);
                 tradeOrder.CategoryCode = primaryCode;
                 tradeOrder.InitialPricePerKg = initialPrice ?? tradeOrder.InitialPricePerKg;
-                tradeOrder.AgreedPricePerKg = agreedPrice ?? tradeOrder.AgreedPricePerKg;
-                tradeOrder.ProposedTimeSlot = proposedSlotText;
+                if (isConfirmedOrLater)
+                {
+                    tradeOrder.AgreedPricePerKg = agreedPrice ?? tradeOrder.AgreedPricePerKg;
+                }
+                else if (tradeOrder.Status is OrderStatus.Pending or OrderStatus.Negotiating)
+                {
+                    tradeOrder.AgreedPricePerKg = null;
+                }
+                if (string.IsNullOrWhiteSpace(tradeOrder.ProposedTimeSlot) || !string.IsNullOrWhiteSpace(systemChatText))
+                {
+                    tradeOrder.ProposedTimeSlot = proposedSlotText;
+                }
                 if (confirmedSlotText != null)
                     tradeOrder.ConfirmedTimeSlot = confirmedSlotText;
                 if (handover.Status == HandoverStatus.Accepted)
@@ -317,7 +404,15 @@ internal static class HandoverTradeSyncHelper
 
         if (handover != null)
         {
-            await SyncHandoverToTradeOrderAsync(db, orderId, null, null, ct);
+            var existingOrder = await db.TradeOrders
+                .AsNoTracking()
+                .Select(o => new { o.Id, o.Status })
+                .FirstOrDefaultAsync(o => o.Id == orderId, ct);
+
+            if (existingOrder == null || existingOrder.Status != ToOrderStatus(handover.Status))
+            {
+                await SyncHandoverToTradeOrderAsync(db, orderId, null, null, ct);
+            }
         }
 
         return await db.TradeOrders
@@ -352,7 +447,21 @@ internal static class HandoverTradeSyncHelper
 
             var now = DateTime.UtcNow;
             handover.Status = ToHandoverStatus(order.Status);
+            if (!string.IsNullOrWhiteSpace(order.PickupAddress))
+            {
+                handover.PickupAddress = order.PickupAddress.Trim();
+            }
             handover.UpdatedAt = now;
+
+            if (!string.IsNullOrWhiteSpace(order.CategoryCode) && handover.Items.Count == 1)
+            {
+                var categories = await db.WasteCategories.AsNoTracking().ToListAsync(ct);
+                var matchedCat = MatchWasteCategory(categories, order.CategoryCode);
+                if (matchedCat != null)
+                {
+                    handover.Items.First().WasteCategoryId = matchedCat.Id;
+                }
+            }
 
             if (!string.IsNullOrWhiteSpace(timeSlotText))
             {
@@ -450,6 +559,10 @@ internal static class HandoverTradeSyncHelper
                 var suffix = order.Id.ToString("N")[..4].ToUpperInvariant();
                 var code = $"{prefix}{suffix}";
 
+                var lockAgreedPrice = order.Status is OrderStatus.Accepted
+                                      or OrderStatus.Scheduled
+                                      or OrderStatus.AwaitingConfirmation
+                                      or OrderStatus.Completed;
                 var items = await BuildHandoverItemsFromTradeOrderAsync(
                     db,
                     order.Id,
@@ -458,6 +571,7 @@ internal static class HandoverTradeSyncHelper
                     order.EstimatedWeightKg,
                     order.AgreedPricePerKg ?? order.InitialPricePerKg,
                     parsedLines,
+                    lockAgreedPrice,
                     ct);
 
                 if (items.Count == 0) return null;
@@ -659,6 +773,7 @@ internal static class HandoverTradeSyncHelper
         decimal totalEstimatedKg,
         decimal? unitPrice,
         List<TradeOrderLineDto>? parsedLines,
+        bool lockAgreedPrice,
         CancellationToken ct)
     {
         var categories = await db.WasteCategories.AsNoTracking().ToListAsync(ct);
@@ -681,7 +796,9 @@ internal static class HandoverTradeSyncHelper
 
                 if (usedCategoryIds.Add(cat.Id))
                 {
-                    var price = activePrices.TryGetValue(cat.Id, out var lp) ? lp : unitPrice;
+                    var price = lockAgreedPrice
+                        ? (activePrices.TryGetValue(cat.Id, out var lp) ? lp : unitPrice)
+                        : null;
                     result.Add(new HandoverRequestItem
                     {
                         Id = Guid.NewGuid(),
@@ -702,7 +819,9 @@ internal static class HandoverTradeSyncHelper
         if (result.Count == 0)
         {
             var fallbackCat = MatchWasteCategory(categories, categoryCode) ?? categories.First();
-            var price = unitPrice ?? (activePrices.TryGetValue(fallbackCat.Id, out var lp) ? lp : (decimal?)null);
+            var price = lockAgreedPrice
+                ? (unitPrice ?? (activePrices.TryGetValue(fallbackCat.Id, out var lp) ? lp : (decimal?)null))
+                : null;
             result.Add(new HandoverRequestItem
             {
                 Id = Guid.NewGuid(),

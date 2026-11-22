@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
+using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
+using Ecolink.Application.Events;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
@@ -23,7 +25,7 @@ public class HandoverRequestService : IHandoverRequestService
     public const int MaxActiveRequestsPerUser = 3;
     public const int LateCancelWindowHours = 4;      // BR-HND-06 / MSG-HND-06 (phải lớn hơn MinLeadHours để hủy muộn xảy ra được)
     private const int MinLeadHours = 2;              // SCR-USR-06: tối thiểu 2 giờ
-    private const int MaxAheadDays = 7;               // SCR-USR-06: tối đa 7 ngày
+    private const int MaxAheadDays = 30;             // Cho phép hẹn từ hôm nay đến +30 ngày tới
     private static readonly TimeSpan LocalOffset = TimeSpan.FromHours(7); // ICT (GMT+7)
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
@@ -41,11 +43,16 @@ public class HandoverRequestService : IHandoverRequestService
 
     private readonly ApplicationDbContext _db;
     private readonly ILogger<HandoverRequestService> _logger;
+    private readonly IEventBus? _eventBus;
 
-    public HandoverRequestService(ApplicationDbContext db, ILogger<HandoverRequestService> logger)
+    public HandoverRequestService(
+        ApplicationDbContext db,
+        ILogger<HandoverRequestService> logger,
+        IEventBus? eventBus = null)
     {
         _db = db;
         _logger = logger;
+        _eventBus = eventBus;
     }
 
     // ============================================================
@@ -91,6 +98,13 @@ public class HandoverRequestService : IHandoverRequestService
         await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(_db, entity.Id, userId, null, ct);
 
         _logger.LogInformation("Người dùng {UserId} tạo yêu cầu bàn giao {Code} tới {RecyclerId}.", userId, entity.RequestCode, recyclerId);
+        await PublishNotificationSafeAsync(
+            recyclerId,
+            "Yêu cầu thu gom mới",
+            $"Bạn nhận được yêu cầu bàn giao #{entity.RequestCode}. Vui lòng kiểm tra và phản hồi.",
+            "HANDOVER_REQUESTED",
+            entity.Id,
+            ct);
         return await ToDtoAsync(entity.Id, viewerIsRecycler: false, ct);
     }
 
@@ -138,29 +152,94 @@ public class HandoverRequestService : IHandoverRequestService
         await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(
             _db, entity.Id, userId, $"Người dân đã hủy yêu cầu bàn giao. Lý do: {entity.CancelReason}", ct);
 
+        await PublishNotificationSafeAsync(
+            entity.RecyclerId,
+            "Người dân đã hủy yêu cầu thu gom",
+            $"Yêu cầu bàn giao #{entity.RequestCode} đã bị người dân hủy.",
+            "HANDOVER_CANCELLED",
+            entity.Id,
+            ct);
+
         return await ToDtoAsync(entity.Id, false, ct);
     }
 
+    public Task<HandoverPagedResult<HandoverRequestDto>> GetUserRequestsAsync(
+        Guid userId, string? status, int page, int pageSize, CancellationToken ct = default) =>
+        GetUserRequestsAsync(userId, status, page, pageSize, null, ct);
+
     public async Task<HandoverPagedResult<HandoverRequestDto>> GetUserRequestsAsync(
-        Guid userId, string? status, int page, int pageSize, CancellationToken ct = default)
+        Guid userId, string? status, int page, int pageSize, string? search, CancellationToken ct = default)
     {
         await SyncUnsyncedTradeOrdersForUserAsync(userId, isRecycler: false, ct);
         var query = _db.HandoverRequests.AsNoTracking().Where(h => h.UserId == userId);
-        return await PageAsync(query, status, page, pageSize, viewerIsRecycler: false, ct);
+        return await PageAsync(query, status, page, pageSize, viewerIsRecycler: false, search, ct);
     }
 
-    public Task<HandoverRequestDto> GetUserRequestAsync(Guid userId, Guid requestId, CancellationToken ct = default) =>
-        GetOwnedAsync(h => h.Id == requestId && h.UserId == userId, false, ct);
+    public async Task<HandoverRequestDto> GetUserRequestAsync(Guid userId, Guid requestId, CancellationToken ct = default)
+    {
+        await SyncSingleTradeOrderForViewerAsync(requestId, userId, isRecycler: false, ct);
+        return await GetOwnedAsync(h => h.Id == requestId && h.UserId == userId, false, ct);
+    }
 
     // ============================================================
     // Recycler
     // ============================================================
+    public Task<HandoverPagedResult<HandoverRequestDto>> GetRecyclerRequestsAsync(
+        Guid recyclerId, string? status, int page, int pageSize, CancellationToken ct = default) =>
+        GetRecyclerRequestsAsync(recyclerId, status, page, pageSize, null, ct);
+
     public async Task<HandoverPagedResult<HandoverRequestDto>> GetRecyclerRequestsAsync(
-        Guid recyclerId, string? status, int page, int pageSize, CancellationToken ct = default)
+        Guid recyclerId, string? status, int page, int pageSize, string? search, CancellationToken ct = default)
     {
         await SyncUnsyncedTradeOrdersForUserAsync(recyclerId, isRecycler: true, ct);
         var query = _db.HandoverRequests.AsNoTracking().Where(h => h.RecyclerId == recyclerId); // BR-HND-03
-        return await PageAsync(query, status, page, pageSize, viewerIsRecycler: true, ct);
+        return await PageAsync(query, status, page, pageSize, viewerIsRecycler: true, search, ct);
+    }
+
+    private static bool ShouldSyncTradeOrderIntoHandover(HandoverStatus? currentStatus, TradeOrder order)
+    {
+        if (!currentStatus.HasValue)
+        {
+            return true;
+        }
+
+        var targetStatus = HandoverTradeSyncHelper.ToHandoverStatus(order.Status);
+        if (currentStatus.Value is HandoverStatus.Pending or HandoverStatus.Negotiating)
+        {
+            return targetStatus != currentStatus.Value || order.AgreedPricePerKg.HasValue;
+        }
+
+        if (currentStatus.Value is HandoverStatus.Accepted or HandoverStatus.Scheduled)
+        {
+            return targetStatus is HandoverStatus.Cancelled or HandoverStatus.Completed;
+        }
+
+        return false;
+    }
+
+    private async Task SyncSingleTradeOrderForViewerAsync(Guid requestId, Guid viewerId, bool isRecycler, CancellationToken ct)
+    {
+        try
+        {
+            var existingStatus = await _db.HandoverRequests
+                .AsNoTracking()
+                .Where(h => h.Id == requestId)
+                .Select(h => (HandoverStatus?)h.Status)
+                .FirstOrDefaultAsync(ct);
+
+            var orderQuery = isRecycler
+                ? _db.TradeOrders.Include(o => o.Partner).Where(o =>
+                    o.Id == requestId &&
+                    (o.RecyclerUserId == viewerId || o.PartnerId == viewerId || (o.Partner != null && o.Partner.UserId == viewerId)))
+                : _db.TradeOrders.Include(o => o.Partner).Where(o => o.Id == requestId && o.UserId == viewerId);
+
+            var order = await orderQuery.FirstOrDefaultAsync(ct);
+            if (order != null && ShouldSyncTradeOrderIntoHandover(existingStatus, order))
+            {
+                await HandoverTradeSyncHelper.EnsureHandoverFromTradeOrderAsync(_db, order, ct);
+            }
+        }
+        catch { /* ignore in isolated tests */ }
     }
 
     private async Task SyncUnsyncedTradeOrdersForUserAsync(Guid userId, bool isRecycler, CancellationToken ct)
@@ -169,22 +248,38 @@ public class HandoverRequestService : IHandoverRequestService
         {
             var ordersQuery = isRecycler
                 ? _db.TradeOrders.Include(o => o.Partner).Where(o =>
-                    (o.RecyclerUserId == userId || o.PartnerId == userId || (o.Partner != null && o.Partner.UserId == userId)) &&
-                    !_db.HandoverRequests.Any(h => h.Id == o.Id))
-                : _db.TradeOrders.Include(o => o.Partner).Where(o =>
-                    o.UserId == userId && !_db.HandoverRequests.Any(h => h.Id == o.Id));
+                    o.RecyclerUserId == userId || o.PartnerId == userId || (o.Partner != null && o.Partner.UserId == userId))
+                : _db.TradeOrders.Include(o => o.Partner).Where(o => o.UserId == userId);
 
-            var unsynced = await ordersQuery.ToListAsync(ct);
-            foreach (var order in unsynced)
+            var orders = await ordersQuery.ToListAsync(ct);
+            if (orders.Count == 0) return;
+
+            var orderIds = orders.Select(o => o.Id).ToList();
+            var existingHandovers = await _db.HandoverRequests
+                .AsNoTracking()
+                .Where(h => orderIds.Contains(h.Id))
+                .Select(h => new { h.Id, h.Status })
+                .ToDictionaryAsync(h => h.Id, h => h.Status, ct);
+
+            foreach (var order in orders)
             {
-                await HandoverTradeSyncHelper.EnsureHandoverFromTradeOrderAsync(_db, order, ct);
+                HandoverStatus? currentStatus = existingHandovers.TryGetValue(order.Id, out var foundStatus)
+                    ? foundStatus
+                    : null;
+                if (ShouldSyncTradeOrderIntoHandover(currentStatus, order))
+                {
+                    await HandoverTradeSyncHelper.EnsureHandoverFromTradeOrderAsync(_db, order, ct);
+                }
             }
         }
         catch { /* ignore in isolated tests */ }
     }
 
-    public Task<HandoverRequestDto> GetRecyclerRequestAsync(Guid recyclerId, Guid requestId, CancellationToken ct = default) =>
-        GetOwnedAsync(h => h.Id == requestId && h.RecyclerId == recyclerId, true, ct);
+    public async Task<HandoverRequestDto> GetRecyclerRequestAsync(Guid recyclerId, Guid requestId, CancellationToken ct = default)
+    {
+        await SyncSingleTradeOrderForViewerAsync(requestId, recyclerId, isRecycler: true, ct);
+        return await GetOwnedAsync(h => h.Id == requestId && h.RecyclerId == recyclerId, true, ct);
+    }
 
     public async Task<HandoverRequestDto> AcceptAsync(Guid recyclerId, Guid requestId, string? note, CancellationToken ct = default)
     {
@@ -210,6 +305,14 @@ public class HandoverRequestService : IHandoverRequestService
             $"Cơ sở thu gom đã chấp nhận yêu cầu bàn giao. Khung giờ chốt: {HandoverTradeSyncHelper.FormatSlotText(entity.ConfirmedTimeSlot.Value)}.",
             ct);
 
+        await PublishNotificationSafeAsync(
+            entity.UserId,
+            "Yêu cầu thu gom đã được chấp nhận",
+            $"Cơ sở thu gom đã chấp nhận yêu cầu #{entity.RequestCode}.",
+            "HANDOVER_ACCEPTED",
+            entity.Id,
+            ct);
+
         return await ToDtoAsync(entity.Id, true, ct);
     }
 
@@ -219,14 +322,23 @@ public class HandoverRequestService : IHandoverRequestService
         if (entity.Status is not (HandoverStatus.Pending or HandoverStatus.Negotiating))
             throw new BusinessRuleException("BR-HND-02", "MSG-GEN-01", $"Không thể từ chối yêu cầu đang ở trạng thái {entity.Status}.");
 
+        var cleanedReason = RequireReason(reason);
         entity.Status = HandoverStatus.Rejected;
-        entity.CancelReason = RequireReason(reason);
+        entity.CancelReason = cleanedReason;
         entity.CancelledBy = recyclerId;
         entity.UpdatedAt = DateTime.UtcNow;
         await _db.SaveChangesAsync(ct);
 
         await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(
             _db, entity.Id, recyclerId, $"Cơ sở thu gom đã từ chối yêu cầu bàn giao. Lý do: {entity.CancelReason}", ct);
+
+        await PublishNotificationSafeAsync(
+            entity.UserId,
+            "Yêu cầu thu gom bị từ chối",
+            $"Cơ sở thu gom đã từ chối yêu cầu #{entity.RequestCode}. Lý do: {entity.CancelReason}",
+            "HANDOVER_REJECTED",
+            entity.Id,
+            ct);
 
         return await ToDtoAsync(entity.Id, true, ct);
     }
@@ -240,7 +352,36 @@ public class HandoverRequestService : IHandoverRequestService
         await HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync(
             _db, entity.Id, recyclerId, $"Cơ sở thu gom đã hủy lịch hẹn. Lý do: {entity.CancelReason}", ct);
 
+        await PublishNotificationSafeAsync(
+            entity.UserId,
+            "Cơ sở thu gom đã hủy lịch hẹn",
+            $"Lịch hẹn cho yêu cầu #{entity.RequestCode} đã bị cơ sở thu gom hủy.",
+            "HANDOVER_CANCELLED",
+            entity.Id,
+            ct);
+
         return await ToDtoAsync(entity.Id, true, ct);
+    }
+
+    private ValueTask PublishNotificationSafeAsync(
+        Guid recipientUserId,
+        string title,
+        string message,
+        string notificationType,
+        Guid referenceId,
+        CancellationToken ct)
+    {
+        if (_eventBus == null || recipientUserId == Guid.Empty) return ValueTask.CompletedTask;
+
+        return _eventBus.PublishAsync(
+            new SystemNotificationDispatchedEvent(
+                recipientUserId,
+                title,
+                message,
+                notificationType,
+                "HandoverRequest",
+                referenceId),
+            ct);
     }
 
     // ============================================================
@@ -250,12 +391,29 @@ public class HandoverRequestService : IHandoverRequestService
     {
         var cutoff = DateTime.UtcNow - timeout;
         var now = DateTime.UtcNow;
-        // Cập nhật nguyên tử có điều kiện Status = Pending: nếu Recycler vừa Accept thì bản ghi bị bỏ qua.
-        var count = await _db.HandoverRequests
-            .Where(h => h.Status == HandoverStatus.Pending && h.CreatedAt < cutoff)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(h => h.Status, HandoverStatus.Expired)
-                .SetProperty(h => h.UpdatedAt, now), ct);
+        int count;
+        if (_db.Database.IsRelational())
+        {
+            // Cập nhật nguyên tử có điều kiện Status = Pending: nếu Recycler vừa Accept thì bản ghi bị bỏ qua.
+            count = await _db.HandoverRequests
+                .Where(h => h.Status == HandoverStatus.Pending && h.CreatedAt < cutoff)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(h => h.Status, HandoverStatus.Expired)
+                    .SetProperty(h => h.UpdatedAt, now), ct);
+        }
+        else
+        {
+            var pendingExpired = await _db.HandoverRequests
+                .Where(h => h.Status == HandoverStatus.Pending && h.CreatedAt < cutoff)
+                .ToListAsync(ct);
+            foreach (var h in pendingExpired)
+            {
+                h.Status = HandoverStatus.Expired;
+                h.UpdatedAt = now;
+            }
+            count = pendingExpired.Count;
+            if (count > 0) await _db.SaveChangesAsync(ct);
+        }
 
         try
         {
@@ -354,10 +512,12 @@ public class HandoverRequestService : IHandoverRequestService
     {
         var utc = proposed.UtcDateTime;
         var now = DateTime.UtcNow;
+        if (utc <= now)
+            throw new BusinessRuleException("BR-NEG-04", "MSG-GEN-01", "Không thể đặt lịch hẹn trong quá khứ.");
         if (utc < now.AddHours(MinLeadHours))
             throw new BusinessRuleException("BR-NEG-04", "MSG-GEN-01", $"Khung giờ thu gom phải cách hiện tại tối thiểu {MinLeadHours} giờ.");
         if (utc > now.AddDays(MaxAheadDays))
-            throw new BusinessRuleException("BR-NEG-04", "MSG-GEN-01", $"Chỉ được hẹn trong vòng {MaxAheadDays} ngày tới.");
+            throw new BusinessRuleException("BR-NEG-04", "MSG-GEN-01", $"Chỉ được chọn ngày hẹn từ hôm nay đến tối đa {MaxAheadDays} ngày tới.");
 
         // Nếu cơ sở đã khai báo lịch tuần, khung giờ phải nằm trong giờ mở cửa (ICT)
         if (!string.IsNullOrWhiteSpace(recycler.WeeklyScheduleJson))
@@ -409,6 +569,21 @@ public class HandoverRequestService : IHandoverRequestService
     private async Task<string> GenerateCodeAsync(CancellationToken ct)
     {
         var prefix = $"HND-{(DateTime.UtcNow + LocalOffset):yyyyMMdd}-";
+        if (_db.Database.IsRelational())
+        {
+            // Số thứ tự lấy từ sequence PostgreSQL (nguyên tử, không trùng khi tạo đồng thời
+            // và tự động bỏ qua các mã cũ đã tạo trước khi bổ sung sequence)
+            while (true)
+            {
+                var n = await _db.Database
+                    .SqlQuery<long>($"SELECT nextval('seq_handover_request_code') AS \"Value\"")
+                    .SingleAsync(ct);
+                var candidate = $"{prefix}{n:D4}";
+                if (!await _db.HandoverRequests.AnyAsync(h => h.RequestCode == candidate, ct))
+                    return candidate;
+            }
+        }
+
         var count = await _db.HandoverRequests.CountAsync(h => h.RequestCode.StartsWith(prefix), ct);
         return $"{prefix}{count + 1:D4}";
     }
@@ -416,13 +591,38 @@ public class HandoverRequestService : IHandoverRequestService
     private static bool Contains(HandoverStatus[] arr, HandoverStatus s) => arr.Contains(s);
 
     private async Task<HandoverPagedResult<HandoverRequestDto>> PageAsync(
-        IQueryable<HandoverRequest> query, string? status, int page, int pageSize, bool viewerIsRecycler, CancellationToken ct)
+        IQueryable<HandoverRequest> query, string? status, int page, int pageSize, bool viewerIsRecycler, string? search, CancellationToken ct)
     {
         if (!string.IsNullOrWhiteSpace(status))
         {
             if (!Enum.TryParse<HandoverStatus>(status, true, out var parsed) || !Enum.IsDefined(parsed))
                 throw new BusinessRuleException("BR-HND-02", "MSG-GEN-01", "Trạng thái lọc không hợp lệ.");
             query = query.Where(h => h.Status == parsed);
+        }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var kw = search.Trim();
+            if (_db.Database.IsRelational())
+            {
+                var p = GamErrors.Like(kw);
+                var matchedRecyclers = _db.RecyclerProfiles.Where(r => EF.Functions.ILike(r.FacilityName, p)).Select(r => r.UserId);
+                var matchedUsers = _db.Users.Where(u => EF.Functions.ILike(u.FullName, p)).Select(u => u.Id);
+                query = query.Where(h =>
+                    EF.Functions.ILike(h.RequestCode, p) ||
+                    EF.Functions.ILike(h.PickupAddress, p) ||
+                    matchedRecyclers.Contains(h.RecyclerId) ||
+                    matchedUsers.Contains(h.UserId));
+            }
+            else
+            {
+                var matchedRecyclers = _db.RecyclerProfiles.Where(r => r.FacilityName.Contains(kw, StringComparison.OrdinalIgnoreCase)).Select(r => r.UserId);
+                var matchedUsers = _db.Users.Where(u => u.FullName.Contains(kw, StringComparison.OrdinalIgnoreCase)).Select(u => u.Id);
+                query = query.Where(h =>
+                    h.RequestCode.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                    h.PickupAddress.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                    matchedRecyclers.Contains(h.RecyclerId) ||
+                    matchedUsers.Contains(h.UserId));
+            }
         }
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);

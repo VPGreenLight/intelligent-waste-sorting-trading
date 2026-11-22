@@ -1,0 +1,134 @@
+classDiagram
+    direction TB
+
+    namespace Presentation_WebApi {
+        class PublicBlogController {
+            -IBlogPostService _service
+            +List(string? search, string? tag, int page, int pageSize) Task~ActionResult~
+            +GetBySlug(string slug) Task~ActionResult~
+        }
+
+        class StaffBlogController {
+            -IBlogPostService _service
+            -ICurrentUserService _currentUser
+            -IFileStorageService _fileStorage
+            +UploadMedia(IFormFile? file) Task~ActionResult~
+            +List(string? status, string? search, int page, int pageSize) Task~ActionResult~
+            +GetById(Guid id) Task~ActionResult~
+            +Create(SaveBlogPostRequest) Task~ActionResult~
+            +Update(Guid id, SaveBlogPostRequest) Task~ActionResult~
+            +Submit(Guid id) Task~ActionResult~
+            +Recall(Guid id) Task~ActionResult~
+            +Delete(Guid id) Task~ActionResult~
+        }
+
+        class AdminBlogController {
+            -IBlogPostService _service
+            -ICurrentUserService _currentUser
+            +Queue(string? search, string? sort, int page, int pageSize) Task~ActionResult~
+            +GetById(Guid id) Task~ActionResult~
+            +Review(Guid id, ReviewBlogPostRequest) Task~ActionResult~
+            +Approve(Guid id) Task~ActionResult~
+            +Reject(Guid id, RejectBlogPostRequest) Task~ActionResult~
+        }
+    }
+
+    namespace Application_Layer {
+        class IBlogPostService {
+            <<interface>>
+            +CreateAsync(Guid authorId, SaveBlogPostRequest) Task~BlogPostDto~
+            +UpdateAsync(Guid authorId, Guid postId, SaveBlogPostRequest) Task~BlogPostDto~
+            +SubmitAsync(Guid authorId, Guid postId) Task~BlogPostDto~
+            +RecallAsync(Guid authorId, Guid postId) Task~BlogPostDto~
+            +DeleteAsync(Guid authorId, Guid postId) Task
+            +GetMineAsync(Guid authorId, Guid postId) Task~BlogPostDto~
+            +ListMineAsync(Guid authorId, ...) Task~BlogPagedResult~
+            +ListQueueAsync(...) Task~BlogPagedResult~
+            +GetForReviewAsync(Guid postId) Task~BlogPostDto~
+            +ApproveAsync(Guid adminId, Guid postId) Task~BlogPostDto~
+            +RejectAsync(Guid adminId, Guid postId, string feedback) Task~BlogPostDto~
+            +ListPublishedAsync(...) Task~BlogPagedResult~
+            +GetPublishedBySlugAsync(string slug) Task~PublicBlogPostDto~
+        }
+
+        class IFileStorageService {
+            <<interface>>
+            +UploadRecyclerDocumentAsync(Stream, string, string, string) Task~RecyclerDocumentUploadResponseDto~
+        }
+
+        class BlogValidators {
+            +SaveBlogPostRequestValidator
+            +RejectBlogPostRequestValidator
+            +ReviewBlogPostRequestValidator
+        }
+    }
+
+    namespace Infrastructure_Layer {
+        class BlogPostService {
+            -ApplicationDbContext _db
+            -IAuditLogService? _auditLog
+            -Slugify(string title) string
+            -UniqueSlugAsync(string, Guid) Task~string~
+            -SubmitCoreAsync(Guid, Guid) Task
+            -NotifyAdminsAsync(string, string, Guid) Task
+        }
+
+        class CloudflareR2StorageService {
+            +UploadRecyclerDocumentAsync(...) Task~RecyclerDocumentUploadResponseDto~
+        }
+
+        class AuditLogService {
+            +LogAsync(string action, string entityType, string entityId, ...) Task
+        }
+    }
+
+    namespace Domain_Entities {
+        class BlogPost {
+            +Guid Id
+            +Guid AuthorId
+            +string Title
+            +string Slug
+            +string? Summary
+            +string Content
+            +string? CoverImageUrl
+            +string Tags
+            +BlogPostStatus Status
+            +Guid? ApprovedByAdminId
+            +string? RejectionReason
+            +DateTime? SubmittedAt
+            +DateTime? ApprovedAt
+            +DateTime? PublishedAt
+        }
+
+        class Notification {
+            +Guid Id
+            +Guid UserId
+            +string Title
+            +string Message
+            +string ReferenceType
+            +Guid? ReferenceId
+        }
+
+        class AuditLog {
+            +Guid Id
+            +Guid? ActorUserId
+            +string Action
+            +string EntityType
+            +string EntityId
+            +string? OldValues
+            +string? NewValues
+        }
+    }
+
+    PublicBlogController --> IBlogPostService : queries published
+    StaffBlogController --> IBlogPostService : authors S-08
+    StaffBlogController --> IFileStorageService : uploads blog-media
+    AdminBlogController --> IBlogPostService : reviews A-09
+
+    BlogPostService ..|> IBlogPostService : implements
+    CloudflareR2StorageService ..|> IFileStorageService : implements
+    BlogPostService --> AuditLogService : writes BLOG_APPROVE / BLOG_REJECT
+    BlogPostService ..> BlogPost : manages lifecycle
+    BlogPostService ..> Notification : notifies Admins & Author
+    BlogPostService ..> AuditLog : logs editorial decisions
+    BlogValidators ..> Application_Layer : validates

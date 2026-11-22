@@ -10,8 +10,9 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructureServices(this IServiceCollection services, IConfiguration configuration)
     {
-        // Đăng ký Interceptor kiểm toán tự động & xóa mềm
+        // Đăng ký Interceptor kiểm toán tự động, xóa mềm & bảo vệ bất biến AuditLog (BR-ADM-05)
         services.AddScoped<Data.Interceptors.AuditableEntityInterceptor>();
+        services.AddSingleton<Data.Interceptors.AuditLogImmutabilityInterceptor>();
 
         // Đăng ký CSDL PostgreSQL + PostGIS NetTopologySuite
         var connectionString = configuration.GetConnectionString("DefaultConnection") 
@@ -22,13 +23,14 @@ public static class DependencyInjection
             services.AddDbContext<Data.ApplicationDbContext>((sp, options) =>
             {
                 var interceptor = sp.GetRequiredService<Data.Interceptors.AuditableEntityInterceptor>();
+                var auditGuard = sp.GetRequiredService<Data.Interceptors.AuditLogImmutabilityInterceptor>();
                 options.UseNpgsql(connectionString, npgsqlOptions =>
                 {
                     npgsqlOptions.UseNetTopologySuite();
                     npgsqlOptions.MigrationsAssembly(typeof(Data.ApplicationDbContext).Assembly.FullName);
                 })
                 .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning))
-                .AddInterceptors(interceptor);
+                .AddInterceptors(interceptor, auditGuard);
             });
         }
 
@@ -44,14 +46,21 @@ public static class DependencyInjection
             client.Timeout = TimeSpan.FromSeconds(8);
         });
 
-        // Đăng ký Rule Engine
-        services.AddSingleton<IWasteRuleEngineService, WasteRuleEngineService>();
+        // Đăng ký Rule Engine (Scoped để đọc/cập nhật DB WasteCategory & SortingRule kèm cache)
+        services.AddScoped<IWasteRuleEngineService, WasteRuleEngineService>();
+        services.AddScoped<IPlatformPolicyService, PlatformPolicyService>();
+
+        // Đăng ký EventBus nội bộ bất đồng bộ & Dịch vụ Thông báo (SU-04, EI-07)
+        services.AddSingleton<Messaging.InMemoryChannelEventBus>();
+        services.AddSingleton<Application.Common.IEventBus>(sp =>
+            sp.GetRequiredService<Messaging.InMemoryChannelEventBus>());
+        services.AddScoped<INotificationService, NotificationService>();
 
         // Đăng ký Geo Matching
         services.AddScoped<IGeoMatchingService, GeoMatchingService>();
 
         // Đăng ký Gamification & Trade Services
-        services.AddSingleton<IGamificationService, GamificationService>();
+        services.AddScoped<IGamificationService, GamificationService>();
         services.AddScoped<ITradeTransactionService, TradeTransactionService>();
 
         // Đăng ký In-App Real-Time Negotiation Chatbox Service (Module NEG: U-08 & R-05)
@@ -62,19 +71,57 @@ public static class DependencyInjection
         services.AddScoped<IEmailService, GmailSmtpEmailService>();
         services.AddScoped<IAuthService, AuthService>();
 
+        // Đăng ký HttpClient cho Cloudflare R2 Object Storage (KYB Permits, Facility Photos, Chat Attachments)
+        services.AddHttpClient<IFileStorageService, CloudflareR2StorageService>();
+
+        // Đăng ký Recycler Onboarding & Verification Service (Module 3: U-17 & S-04)
+        services.AddScoped<IRecyclerOnboardingService, RecyclerOnboardingService>();
+
         // Đăng ký Recycler Profile, Pricing & Availability Service (R-01, R-02)
         services.AddScoped<IRecyclerManagementService, RecyclerManagementService>();
 
         // Handover Request Management (U-06, U-07, R-03, R-04)
         services.AddScoped<IHandoverRequestService, HandoverRequestService>();
 
+        // Handover Receipt Management
         services.AddScoped<IHandoverReceiptService, HandoverReceiptService>();
 
-        // Đăng ký Payment Service (VietQR & Webhook)
-        services.AddSingleton<IPaymentService, PaymentService>();
+        // Đăng ký Module M-12: In-System Service Packages & VietQR Payment (FE-14)
+        services.AddScoped<ISubscriptionEntitlementService, SubscriptionEntitlementService>();
+        services.AddScoped<IServicePackageService, ServicePackageService>();
+        services.AddScoped<IAdminReconciliationService, AdminReconciliationService>();
+        services.AddScoped<IPaymentService, PaymentService>();
 
         // Đăng ký PayOS Gateway Service (Pay-in & Pay-out)
         services.AddSingleton<IPayOsService, PayOsService>();
+
+        // Đăng ký Module M-15: Governance, Staff, Attendance, Analytics & Audit Trail (FE-17, FE-18)
+        services.AddSingleton<IAuthStateCacheInvalidator, MemoryAuthStateCacheInvalidator>();
+        services.AddScoped<IAuditLogService, AuditLogService>();
+        services.AddScoped<IAccountGovernanceService, AccountGovernanceService>();
+        services.AddScoped<IStaffManagementService, StaffManagementService>();
+        services.AddScoped<IStaffAttendanceService, StaffAttendanceService>();
+        services.AddScoped<IAdminAnalyticsService, AdminAnalyticsService>();
+
+        // Đăng ký Module M-13: AI Misclassification Feedback & Dataset Curation (FE-15)
+        services.AddScoped<IAiFeedbackService, AiFeedbackService>();
+        services.AddScoped<IAiDatasetCurationService, AiDatasetCurationService>();
+
+        // Đăng ký Module M-11: Rating, Review & Complaint Resolution (FE-10: U-10, U-11, S-05)
+        services.AddScoped<IReviewService, ReviewService>();
+        services.AddScoped<IComplaintService, ComplaintService>();
+
+        // Đăng ký Module M-14: Blog Content Management (FE-16: S-08, A-09)
+        services.AddScoped<IBlogPostService, BlogPostService>();
+
+        // Đăng ký Module M-10: Gamification & Rewards (Points, Check-in, Virtual Tree, Gifts, Eco Facts)
+        services.AddScoped<IPointsService, PointsService>();
+        services.AddScoped<IGamificationConfigService, GamificationConfigService>();
+        services.AddScoped<ICheckinService, CheckinService>();
+        services.AddScoped<IGiftService, GiftService>();
+        services.AddScoped<IVirtualTreeService, VirtualTreeService>();
+        services.AddScoped<IEcoFactService, EcoFactService>();
+        services.AddScoped<ILeaderboardService, LeaderboardService>();
 
         return services;
     }

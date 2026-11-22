@@ -133,4 +133,150 @@ public class AiVisionHttpClient : IAiVisionClient
             return false;
         }
     }
+
+    public async Task<CurateDatasetSyncResponseDto> CurateDatasetAsync(
+        CurateDatasetSyncRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var endpoint = $"{_aiServiceBaseUrl.TrimEnd('/')}/api/v1/datasets/curate";
+            var payload = new
+            {
+                version_code = request.VersionCode,
+                version_name = request.VersionName,
+                train_ratio = request.TrainRatio,
+                val_ratio = request.ValRatio,
+                test_ratio = request.TestRatio,
+                items = request.Items.Select(i => new
+                {
+                    item_id = i.ItemId.ToString(),
+                    image_url = i.ImageUrl,
+                    image_sha256 = i.ImageSha256,
+                    split = i.Split,
+                    category_code = i.CategoryCode,
+                    annotations = i.Annotations.Select(b => new
+                    {
+                        category_code = b.CategoryCode,
+                        x_center = b.XCenter,
+                        y_center = b.YCenter,
+                        width = b.Width,
+                        height = b.Height
+                    }).ToList()
+                }).ToList()
+            };
+
+            var response = await _httpClient.PostAsJsonAsync(endpoint, payload, cancellationToken);
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new CurateDatasetSyncResponseDto
+                {
+                    Success = false,
+                    VersionCode = request.VersionCode,
+                    ErrorMessage = $"AI Service trả về HTTP {(int)response.StatusCode}: {json}"
+                };
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+            };
+            return JsonSerializer.Deserialize<CurateDatasetSyncResponseDto>(json, options)
+                ?? new CurateDatasetSyncResponseDto { Success = true, VersionCode = request.VersionCode };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Không thể đồng bộ Dataset {VersionCode} sang AI Service.", request.VersionCode);
+            return new CurateDatasetSyncResponseDto
+            {
+                Success = false,
+                VersionCode = request.VersionCode,
+                ErrorMessage = $"Không thể kết nối AI Service: {ex.Message}"
+            };
+        }
+    }
+
+    public async Task<AiModelReloadResponseDto> ReloadModelsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var endpoint = $"{_aiServiceBaseUrl.TrimEnd('/')}/api/v1/models/reload";
+            var response = await _httpClient.PostAsync(endpoint, content: null, cancellationToken);
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+            if (!response.IsSuccessStatusCode)
+            {
+                return new AiModelReloadResponseDto
+                {
+                    Success = false,
+                    ErrorMessage = $"AI Service trả về HTTP {(int)response.StatusCode}: {json}"
+                };
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+            };
+            return JsonSerializer.Deserialize<AiModelReloadResponseDto>(json, options)
+                ?? new AiModelReloadResponseDto { Success = true };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Không thể gọi nạp nóng mô hình sang AI Service.");
+            return new AiModelReloadResponseDto
+            {
+                Success = false,
+                ErrorMessage = $"Không thể kết nối AI Service: {ex.Message}"
+            };
+        }
+    }
+
+    public async Task<AiRuleSyncResponseDto> SyncSortingRuleAsync(
+        string categoryCode,
+        string binColorName,
+        string instructions,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var endpoint = $"{_aiServiceBaseUrl.TrimEnd('/')}/api/v1/rules";
+            var payload = JsonSerializer.Serialize(new
+            {
+                category = categoryCode,
+                bin_color_name = binColorName,
+                instructions
+            });
+            using var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
+            var response = await _httpClient.PutAsync(endpoint, content, cancellationToken);
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new AiRuleSyncResponseDto
+                {
+                    Success = false,
+                    Message = $"AI Service trả về HTTP {(int)response.StatusCode}: {json}"
+                };
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+            };
+            return JsonSerializer.Deserialize<AiRuleSyncResponseDto>(json, options)
+                ?? new AiRuleSyncResponseDto { Success = true, Message = "Đã đồng bộ quy tắc phân loại sang AI Service." };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Không thể đồng bộ quy tắc phân loại {CategoryCode} sang AI Service.", categoryCode);
+            return new AiRuleSyncResponseDto
+            {
+                Success = false,
+                Message = $"Không thể kết nối AI Service: {ex.Message}"
+            };
+        }
+    }
 }

@@ -14,12 +14,17 @@ __pycache__/
 runs/
 *.pt
 !models/best.pt
+!models/yolov8n.pt
+!models/yolov8n_waste_detect.pt
 !src/Ecolink.AiService/models/best.pt
+!src/Ecolink.AiService/models/yolov8n.pt
+!src/Ecolink.AiService/models/yolov8n_waste_detect.pt
 yolov8n-cls.pt
 
 # Raw Heavy Training Datasets (Only keep sample val for demo)
 data/dataset-resized/
 data/trashnet_split/train/
+data/curated_datasets/
 data/*.zip
 *.cache
 

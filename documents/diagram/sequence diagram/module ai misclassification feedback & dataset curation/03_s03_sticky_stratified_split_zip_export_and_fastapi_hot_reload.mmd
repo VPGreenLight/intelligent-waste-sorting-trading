@@ -1,0 +1,48 @@
+sequenceDiagram
+    autonumber
+    actor Staff as Staff (CURATE_DATASET)
+    participant UI as Staff Dataset (ecolink-web)
+    participant Ctrl as StaffDatasetCurationController
+    participant Svc as AiDatasetCurationService
+    participant Zip as AiDatasetExportBuilder
+    participant AiHttp as AiVisionHttpClient
+    participant FastAPI as Ecolink.AiService
+    participant DB as PostgreSQL 16
+
+    Note over Staff,DB: S-03: Dong goi Dataset Sticky Stratified Split 70/20/10, Export ZIP & FastAPI Sync
+
+    Staff->>UI: Mo trang Tap du lieu kiem chung (/staff/dataset)
+    UI->>Ctrl: GET /api/v1/staff/ai-datasets
+    Ctrl->>Svc: GetDatasetOverviewAsync()
+    Svc->>DB: Query ai_dataset_items + ai_feedback_logs + ai_dataset_versions
+    Svc->>Svc: Tinh ImbalanceRatio = MaxCount / MinCount & Canh bao > 2.5
+    Ctrl-->>UI: 200 OK AiDatasetDashboardDto
+
+    Staff->>UI: Bam Dong goi phien ban moi (v1.1.0, 70/20/10, syncToAiService=true)
+    UI->>Ctrl: POST /api/v1/staff/ai-datasets/versions
+    Ctrl->>Svc: CreateDatasetVersionAsync(staffId, req)
+    Svc->>DB: Load chi cac mau VerifiedLabeled (BR-CLS-06)
+    Svc->>Svc: Group by ImageSha256 -> Lock StickySplit cu -> Chia 70/20/10 phan tang cho mau moi (BR-CLS-07)
+    Svc->>DB: BeginTransaction -> INSERT ai_dataset_versions & ai_dataset_version_items + Save StickySplit -> Commit
+    opt req.SyncToAiService == true
+        Svc->>AiHttp: CurateDatasetAsync(versionCode, items manifest)
+        AiHttp->>FastAPI: POST /api/v1/datasets/curate
+        FastAPI->>FastAPI: Assert train_sha256 & test_sha256 == rong & Ghi manifest.json
+        alt AI Service Online
+            FastAPI-->>AiHttp: 200 OK success=true
+            Svc->>DB: UPDATE Status = SyncedToAi
+        else AI Service Offline / Timeout
+            AiHttp-->>Svc: success=false -> Giu Published + Gan aiSyncWarning
+        end
+    end
+    Ctrl-->>UI: 201 Created (MSG-CLS-08)
+
+    opt Tai goi huan luyen .zip (YOLO hoac ImageFolder)
+        Staff->>UI: Chon dinh dang YOLO -> Bam Tai ZIP
+        UI->>Ctrl: GET /api/v1/staff/ai-datasets/versions/{versionId}/export?format=yolo
+        Ctrl->>Svc: ExportDatasetVersionAsync(staffId, versionId, format)
+        Svc->>Zip: BuildZipAsync(version, items, yolo)
+        Zip-->>Svc: bytes (.zip: data.yaml + labels/*.txt + manifest.json)
+        Svc->>DB: INSERT audit_logs (EXPORT_AI_DATASET_VERSION)
+        Ctrl-->>UI: 200 OK application/zip + Headers X-EcoLink-Message-Code: MSG-ADM-02
+    end

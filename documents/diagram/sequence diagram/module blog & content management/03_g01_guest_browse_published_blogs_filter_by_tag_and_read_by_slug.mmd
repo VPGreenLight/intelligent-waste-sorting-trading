@@ -1,0 +1,30 @@
+sequenceDiagram
+    autonumber
+    actor Guest as Guest / Citizen
+    participant UI as Public EcoBlog Page
+    participant Ctrl as PublicBlogController
+    participant Svc as BlogPostService
+    participant DB as PostgreSQL 16
+
+    Note over Guest,DB: G-01: Khach / Nguoi dan duyet bai viet da xuat ban, loc theo tag/tu khoa va doc theo slug (BR-ADM-08)
+
+    Guest->>UI: Truy cap /blog (AllowAnonymous)
+    UI->>Ctrl: GET /api/v1/blogs?search=...&tag=...&page=1&pageSize=12
+    Ctrl->>Svc: ListPublishedAsync(search, tag, page, pageSize)
+    Svc->>DB: Query blog_posts WHERE status = Approved AND published_at IS NOT NULL AND published_at <= NOW()
+    opt Co tham so tag
+        Svc->>DB: Loc khop nguyen the JSON %"tag"% (khong khop nham tien to)
+    end
+    Svc->>DB: OrderByDescending(published_at) + Skip/Take (pageSize max 50)
+    Ctrl-->>UI: 200 OK BlogPagedResult~BlogPostSummaryDto~
+
+    Guest->>UI: Chon mot bai viet de doc chi tiet
+    UI->>Ctrl: GET /api/v1/blogs/{slug}
+    Ctrl->>Svc: GetPublishedBySlugAsync(slug)
+    Svc->>DB: FirstOrDefault(slug == normSlug AND status == Approved AND published_at <= NOW())
+    alt Khong ton tai hoac bai van la Draft / Pending_Approval
+        Svc-->>Ctrl: NotFoundException ("Khong tim thay bai viet")
+        Ctrl-->>UI: 404 Not Found
+    else Hop le va da xuat ban
+        Ctrl-->>UI: 200 OK PublicBlogPostDto (khong ro ri rejectionReason hay trang thai noi bo)
+    end

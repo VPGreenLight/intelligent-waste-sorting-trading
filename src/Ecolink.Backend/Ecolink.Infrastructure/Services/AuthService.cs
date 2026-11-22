@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text.Json;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using Ecolink.Domain.Constants;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
 using Ecolink.Domain.Exceptions;
@@ -185,11 +186,11 @@ public class AuthService : IAuthService
             throw new BusinessRuleException("BR-AUTH-03", "MSG-AUTH-01", "Tên đăng nhập, email hoặc mật khẩu không chính xác.");
         }
 
-        // BR-AUTH-05: Chặn tài khoản đang bị đình chỉ hoạt động (Suspended)
-        if (user.Status == UserStatus.Suspended)
+        // BR-AUTH-05: Chặn tài khoản đang bị đình chỉ hoạt động (Suspended) hoặc đã vô hiệu hóa mềm (Deactivated)
+        if (user.Status is UserStatus.Suspended or UserStatus.Deactivated)
         {
             throw new BusinessRuleException("BR-AUTH-05", "MSG-AUTH-04",
-                "Tài khoản của bạn đã bị tạm đình chỉ hoạt động do vi phạm quy chuẩn nền tảng. Vui lòng liên hệ bộ phận hỗ trợ.");
+                "Tài khoản của bạn đã bị tạm đình chỉ hoặc ngừng kích hoạt do vi phạm quy chuẩn nền tảng. Vui lòng liên hệ bộ phận hỗ trợ.");
         }
 
         // BR-AUTH-04: Kiểm tra trạng thái khóa tạm thời (Lockout)
@@ -387,6 +388,13 @@ public class AuthService : IAuthService
             existingToken.IsRevoked = true;
             await _dbContext.SaveChangesAsync(ct);
             throw new BusinessRuleException("BR-AUTH-05", "MSG-NTF-01", "Phiên làm việc đã hết hạn. Vui lòng đăng nhập lại.");
+        }
+
+        if (existingToken.User.Status is UserStatus.Suspended or UserStatus.Deactivated)
+        {
+            existingToken.IsRevoked = true;
+            await _dbContext.SaveChangesAsync(ct);
+            throw new BusinessRuleException("BR-AUTH-05", "MSG-AUTH-04", "Tài khoản của bạn đã bị đình chỉ hoặc vô hiệu hóa. Phiên làm việc đã bị thu hồi.");
         }
 
         var (newRawToken, newTokenHash) = _tokenService.GenerateRefreshToken();
@@ -642,7 +650,11 @@ public class AuthService : IAuthService
             .Include(u => u.EcoProfile)
             .FirstOrDefaultAsync(u => u.Id == userId, cancellationToken);
 
-        return user != null ? MapToUserInfoDto(user) : null;
+        if (user == null) return null;
+
+        var userDto = MapToUserInfoDto(user);
+        await PopulateUserEntitlementsAsync(userDto, cancellationToken);
+        return userDto;
     }
 
     public async Task<UserInfoDto?> GetUserByTokenAsync(string token, CancellationToken cancellationToken = default)
@@ -656,6 +668,16 @@ public class AuthService : IAuthService
         try
         {
             var principal = _tokenService.GetPrincipalFromExpiredToken(cleanToken);
+            var expClaim = principal?.FindFirst("exp")?.Value;
+            if (long.TryParse(expClaim, out var expUnix))
+            {
+                var expiresAtUtc = DateTimeOffset.FromUnixTimeSeconds(expUnix).UtcDateTime;
+                if (expiresAtUtc <= DateTime.UtcNow)
+                {
+                    return null;
+                }
+            }
+
             var userIdStr = principal?.FindFirst(ClaimTypes.NameIdentifier)?.Value
                             ?? principal?.FindFirst("sub")?.Value;
 
@@ -706,6 +728,9 @@ public class AuthService : IAuthService
         _dbContext.RefreshTokens.Add(refreshTokenRecord);
         await _dbContext.SaveChangesAsync(ct);
 
+        var userDto = MapToUserInfoDto(user);
+        await PopulateUserEntitlementsAsync(userDto, ct);
+
         return new AuthResponseDto
         {
             Success = true,
@@ -713,11 +738,29 @@ public class AuthService : IAuthService
             RefreshToken = rawRefreshToken,
             TokenType = "Bearer",
             ExpiresAt = _tokenService.GetAccessTokenExpiration(),
-            User = MapToUserInfoDto(user),
+            User = userDto,
             Message = messageCode == "MSG-MTH-03"
                 ? "Hồ sơ cơ sở của bạn đang được xem xét và sẽ xuất hiện sau khi duyệt."
                 : "Thao tác xác thực thành công."
         };
+    }
+
+    private async Task PopulateUserEntitlementsAsync(UserInfoDto dto, CancellationToken ct)
+    {
+        var utcNow = DateTime.UtcNow;
+        var activeSubs = await _dbContext.UserSubscriptions
+            .AsNoTracking()
+            .Where(s => s.UserId == dto.Id
+                        && s.Status == SubscriptionStatus.Active
+                        && s.StartsAt <= utcNow
+                        && s.ExpiresAt > utcNow)
+            .ToListAsync(ct);
+
+        var summary = ServicePackageHelpers.AggregateEntitlements(activeSubs);
+        dto.CurrentTier = summary.CurrentTier;
+        dto.IsAdFree = summary.IsAdFree;
+        dto.HasVerifiedBadge = summary.HasVerifiedBlueBadge;
+        dto.IsFeaturedMapMarker = summary.IsFeaturedMapMarker;
     }
 
     private static UserInfoDto MapToUserInfoDto(User user)
@@ -806,26 +849,42 @@ public class AuthService : IAuthService
     }
 
     /// <summary>
-    /// Đảm bảo luôn có các tài khoản Demo cho cả 4 vai trò (citizen, collector, staff, admin),
+    /// Đảm bảo luôn có các tài khoản Demo cho cả 4 vai trò (citizen, recycler, staff, admin),
     /// Danh mục phế liệu chuẩn và Bảng giá mẫu (BR-MTH-03) sẵn sàng trong PostgreSQL.
     /// </summary>
     private async Task EnsureDemoUsersAsync(CancellationToken ct)
     {
         var demoCitizenId = Guid.Parse("11111111-1111-1111-1111-111111111111");
-        var demoCollectorId = Guid.Parse("22222222-2222-2222-2222-222222222222");
+        var demoRecyclerId = Guid.Parse("22222222-2222-2222-2222-222222222222");
         var demoAdminId = Guid.Parse("33333333-3333-3333-3333-333333333333");
         var demoStaffId = Guid.Parse("88888888-8888-8888-8888-888888888888");
 
         var hasCitizen = await _dbContext.Users.IgnoreQueryFilters()
             .AnyAsync(u => u.Id == demoCitizenId || u.Username == "citizen", ct);
-        var hasCollector = await _dbContext.Users.IgnoreQueryFilters()
-            .AnyAsync(u => u.Id == demoCollectorId || u.Username == "collector", ct);
+        var existingDemoRecycler = await _dbContext.Users.IgnoreQueryFilters()
+            .FirstOrDefaultAsync(u => u.Id == demoRecyclerId || u.Username == "recycler" || u.Username == "collector", ct);
+        var hasRecycler = existingDemoRecycler != null;
         var hasAdmin = await _dbContext.Users.IgnoreQueryFilters()
             .AnyAsync(u => u.Id == demoAdminId || u.Username == "admin", ct);
         var hasStaff = await _dbContext.Users.IgnoreQueryFilters()
             .AnyAsync(u => u.Id == demoStaffId || u.Username == "staff", ct);
 
-        if (!hasCitizen || !hasCollector || !hasAdmin || !hasStaff)
+        if (existingDemoRecycler != null &&
+            existingDemoRecycler.Id == demoRecyclerId &&
+            !string.Equals(existingDemoRecycler.Username, "recycler", StringComparison.OrdinalIgnoreCase))
+        {
+            var conflict = await _dbContext.Users.IgnoreQueryFilters()
+                .AnyAsync(u => u.Id != existingDemoRecycler.Id && (u.Username == "recycler" || u.Email == "recycler@ecolink.vn"), ct);
+            if (!conflict)
+            {
+                existingDemoRecycler.Username = "recycler";
+                existingDemoRecycler.Email = "recycler@ecolink.vn";
+                existingDemoRecycler.PasswordHash = BCrypt.Net.BCrypt.HashPassword("recycler123");
+                await _dbContext.SaveChangesAsync(ct);
+            }
+        }
+
+        if (!hasCitizen || !hasRecycler || !hasAdmin || !hasStaff)
         {
             if (!hasCitizen)
             {
@@ -851,21 +910,21 @@ public class AuthService : IAuthService
                 });
             }
 
-            if (!hasCollector)
+            if (!hasRecycler)
             {
                 _dbContext.Users.Add(new User
                 {
-                    Id = demoCollectorId,
-                    Username = "collector",
-                    Email = "collector@ecolink.vn",
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("collector123"),
+                    Id = demoRecyclerId,
+                    Username = "recycler",
+                    Email = "recycler@ecolink.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("recycler123"),
                     FullName = "Trần Thu Gom (Vựa phế liệu EcoGreen)",
                     PhoneNumber = "0988776655",
                     Role = UserRole.Recycler,
                     Status = UserStatus.Active,
                     RecyclerProfile = new RecyclerProfile
                     {
-                        UserId = demoCollectorId,
+                        UserId = demoRecyclerId,
                         FacilityName = "Vựa phế liệu EcoGreen",
                         RepresentativeName = "Trần Thu Gom",
                         BusinessAddress = "123 Đường Nguyễn Hữu Cảnh, P. 22, Bình Thạnh, TP.HCM",
@@ -911,7 +970,31 @@ public class AuthService : IAuthService
             }
 
             await _dbContext.SaveChangesAsync(ct);
-            _logger.LogInformation("Đảm bảo đầy đủ tài khoản Demo (citizen, collector, staff, admin) trong PostgreSQL");
+            _logger.LogInformation("Đảm bảo đầy đủ tài khoản Demo (citizen, recycler, staff, admin) trong hệ thống.");
+        }
+
+        // Đảm bảo tài khoản demoStaff luôn có StaffProfile (NV-001) và bộ quyền chuẩn phục vụ vận hành (A-03, A-04)
+        if (await _dbContext.Users.AnyAsync(u => u.Id == demoStaffId, ct) &&
+            !await _dbContext.StaffProfiles.AnyAsync(s => s.UserId == demoStaffId, ct))
+        {
+            var staffProfile = new StaffProfile
+            {
+                UserId = demoStaffId,
+                StaffCode = "NV-001",
+                Department = "Vận hành tổng hợp",
+                Position = "Trưởng ca vận hành",
+                Status = "ACTIVE",
+                Permissions = StaffPermissions.AllCodes.Select(code => new StaffPermissionAssignment
+                {
+                    Id = Guid.NewGuid(),
+                    StaffId = demoStaffId,
+                    PermissionCode = code,
+                    GrantedBy = demoAdminId,
+                    GrantedAt = DateTime.UtcNow
+                }).ToList()
+            };
+            _dbContext.StaffProfiles.Add(staffProfile);
+            await _dbContext.SaveChangesAsync(ct);
         }
 
         // Seed 6 danh mục rác chuẩn (waste_categories) nếu chưa có
@@ -943,9 +1026,9 @@ public class AuthService : IAuthService
             await _dbContext.SaveChangesAsync(ct);
         }
 
-        // Đảm bảo tài khoản demoCollector (đang Online) luôn có bảng giá niêm yết hợp lệ theo BR-MTH-03
-        var hasCollectorPrices = await _dbContext.RecyclerPrices.AnyAsync(p => p.RecyclerId == demoCollectorId, ct);
-        if (!hasCollectorPrices && await _dbContext.RecyclerProfiles.AnyAsync(r => r.UserId == demoCollectorId, ct))
+        // Đảm bảo tài khoản demoRecycler (đang Online) luôn có bảng giá niêm yết hợp lệ theo BR-MTH-03
+        var hasRecyclerPrices = await _dbContext.RecyclerPrices.AnyAsync(p => p.RecyclerId == demoRecyclerId, ct);
+        if (!hasRecyclerPrices && await _dbContext.RecyclerProfiles.AnyAsync(r => r.UserId == demoRecyclerId, ct))
         {
             var categoriesByCode = await _dbContext.WasteCategories
                 .Where(c => c.IsRecyclable)
@@ -965,7 +1048,7 @@ public class AuthService : IAuthService
                 {
                     _dbContext.RecyclerPrices.Add(new RecyclerPrice
                     {
-                        RecyclerId = demoCollectorId,
+                        RecyclerId = demoRecyclerId,
                         WasteCategoryId = cat.Id,
                         PricePerKg = price,
                         MinQuantityKg = minKg,

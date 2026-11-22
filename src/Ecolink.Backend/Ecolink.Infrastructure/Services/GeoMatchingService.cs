@@ -24,6 +24,7 @@ public class GeoMatchingService : IGeoMatchingService
     private readonly ILogger<GeoMatchingService> _logger;
     private readonly ApplicationDbContext? _db;
     private readonly IWasteRuleEngineService? _ruleEngine;
+    private readonly ISubscriptionEntitlementService? _entitlementService;
 
     // Danh sách dự phòng khi chạy ở chế độ không kết nối CSDL (ưu tiên khu vực Hòa Lạc & Hà Nội)
     private static readonly List<CollectionPartnerDto> _mockPartners = new()
@@ -158,11 +159,13 @@ public class GeoMatchingService : IGeoMatchingService
     public GeoMatchingService(
         ILogger<GeoMatchingService> logger,
         ApplicationDbContext? db = null,
-        IWasteRuleEngineService? ruleEngine = null)
+        IWasteRuleEngineService? ruleEngine = null,
+        ISubscriptionEntitlementService? entitlementService = null)
     {
         _logger = logger;
         _db = db;
         _ruleEngine = ruleEngine;
+        _entitlementService = entitlementService;
     }
 
     public async Task<IEnumerable<CollectionPartnerDto>> FindNearestPartnersAsync(
@@ -188,7 +191,7 @@ public class GeoMatchingService : IGeoMatchingService
         {
             try
             {
-                await EnsureDemoCollectorPricesSeededAsync(cancellationToken);
+                await EnsureDemoRecyclerPricesSeededAsync(cancellationToken);
 
                 // Quy đổi bán kính km sang ngưỡng độ (degrees) bao phủ an toàn theo vĩ độ hiện tại để PostgreSQL lọc trước
                 // bằng chỉ mục tọa độ (Bounding Box), sau đó tinh chỉnh chính xác tuyệt đối bằng Haversine.
@@ -240,7 +243,12 @@ public class GeoMatchingService : IGeoMatchingService
 
                 if (results.Count > 0)
                 {
-                    return results.OrderBy(p => p.DistanceKm).ToList();
+                    await EnrichPartnerEntitlementsAsync(results, cancellationToken);
+                    return results
+                        .OrderByDescending(p => p.IsFeatured)
+                        .ThenByDescending(p => p.HasVerifiedBadge)
+                        .ThenBy(p => p.DistanceKm)
+                        .ToList();
                 }
             }
             catch (Exception ex)
@@ -272,6 +280,8 @@ public class GeoMatchingService : IGeoMatchingService
                     ContactPhone = partner.ContactPhone,
                     OperatingHours = partner.OperatingHours,
                     DistanceKm = Math.Round(distance, 2),
+                    AverageRating = partner.AverageRating,
+                    TotalReviews = partner.TotalReviews,
                     Materials = partner.Materials
                 });
             }
@@ -307,6 +317,14 @@ public class GeoMatchingService : IGeoMatchingService
             partners = partners
                 .OrderByDescending(p => p.Materials
                     .FirstOrDefault(m => m.CategoryCode.Equals(cat, StringComparison.OrdinalIgnoreCase))?.PricePerKg ?? 0m)
+                .ThenBy(p => p.DistanceKm)
+                .ToList();
+        }
+        else if (string.Equals(filter.SortBy, "rating_desc", StringComparison.OrdinalIgnoreCase))
+        {
+            partners = partners
+                .OrderByDescending(p => p.AverageRating)
+                .ThenByDescending(p => p.TotalReviews)
                 .ThenBy(p => p.DistanceKm)
                 .ToList();
         }
@@ -351,7 +369,7 @@ public class GeoMatchingService : IGeoMatchingService
         {
             try
             {
-                await EnsureDemoCollectorPricesSeededAsync(cancellationToken);
+                await EnsureDemoRecyclerPricesSeededAsync(cancellationToken);
 
                 var profile = await _db.RecyclerProfiles
                     .AsNoTracking()
@@ -370,7 +388,9 @@ public class GeoMatchingService : IGeoMatchingService
                         ? Math.Round(CalculateDistanceKm(userLat.Value, userLng.Value, (double)profile.Latitude, (double)profile.Longitude), 2)
                         : 0.0;
 
-                    return MapProfileToPartnerDto(profile, distanceKm);
+                    var detailDto = MapProfileToPartnerDto(profile, distanceKm);
+                    await EnrichPartnerEntitlementsAsync([detailDto], cancellationToken);
+                    return detailDto;
                 }
             }
             catch (Exception ex)
@@ -419,11 +439,54 @@ public class GeoMatchingService : IGeoMatchingService
             OperatingHours = profile.OperatingHours,
             Description = profile.Description,
             BusinessPhotoUrl = profile.BusinessPhotoUrl,
+            HasVerifiedBadge = false,
+            IsFeatured = false,
+            AverageRating = profile.AverageRating,
+            TotalReviews = profile.TotalReviews,
             Materials = activeMaterials
         };
     }
 
-    private async Task EnsureDemoCollectorPricesSeededAsync(CancellationToken ct)
+    private async Task EnrichPartnerEntitlementsAsync(List<CollectionPartnerDto> partners, CancellationToken ct)
+    {
+        if (partners.Count == 0) return;
+
+        IReadOnlyDictionary<Guid, UserEntitlementSummaryDto>? entitlementMap = null;
+
+        if (_entitlementService != null)
+        {
+            entitlementMap = await _entitlementService.GetBatchEntitlementsAsync(partners.Select(p => p.Id), ct);
+        }
+        else if (_db != null)
+        {
+            var ids = partners.Select(p => p.Id).Distinct().ToList();
+            var utcNow = DateTime.UtcNow;
+            var activeSubs = await _db.UserSubscriptions
+                .AsNoTracking()
+                .Where(s => ids.Contains(s.UserId)
+                            && s.Status == SubscriptionStatus.Active
+                            && s.StartsAt <= utcNow
+                            && s.ExpiresAt > utcNow)
+                .ToListAsync(ct);
+
+            entitlementMap = activeSubs
+                .GroupBy(s => s.UserId)
+                .ToDictionary(g => g.Key, g => ServicePackageHelpers.AggregateEntitlements(g));
+        }
+
+        if (entitlementMap == null) return;
+
+        foreach (var partner in partners)
+        {
+            if (entitlementMap.TryGetValue(partner.Id, out var ent))
+            {
+                partner.HasVerifiedBadge = ent.HasVerifiedBlueBadge;
+                partner.IsFeatured = ent.IsFeaturedMapMarker;
+            }
+        }
+    }
+
+    private async Task EnsureDemoRecyclerPricesSeededAsync(CancellationToken ct)
     {
         if (_db == null || _demoSeedChecked) return;
 
@@ -485,8 +548,8 @@ public class GeoMatchingService : IGeoMatchingService
             {
                 (
                     Guid.Parse("22222222-2222-2222-2222-222222222222"),
-                    "collector",
-                    "collector@ecolink.vn",
+                    "recycler",
+                    "recycler@ecolink.vn",
                     "Vựa phế liệu EcoGreen",
                     "Trần Thu Gom",
                     "123 Đường Nguyễn Hữu Cảnh, P. 22, Bình Thạnh, TP.HCM",
@@ -505,8 +568,8 @@ public class GeoMatchingService : IGeoMatchingService
                 ),
                 (
                     Guid.Parse("44444444-4444-4444-4444-444444444444"),
-                    "collector_q1",
-                    "collector_q1@ecolink.vn",
+                    "recycler_q1",
+                    "recycler_q1@ecolink.vn",
                     "Vựa Phế Liệu Xanh Quận 1",
                     "Nguyễn Văn Minh",
                     "123 Nguyễn Thị Minh Khai, P. Bến Thành, Quận 1, TP.HCM",
@@ -525,8 +588,8 @@ public class GeoMatchingService : IGeoMatchingService
                 ),
                 (
                     Guid.Parse("55555555-5555-5555-5555-555555555555"),
-                    "collector_tb",
-                    "collector_tb@ecolink.vn",
+                    "recycler_tb",
+                    "recycler_tb@ecolink.vn",
                     "Trạm Thu Gom Tái Chế Tân Bình",
                     "Lê Hoàng Phúc",
                     "88 Cộng Hòa, Phường 4, Quận Tân Bình, TP.HCM",
@@ -545,8 +608,8 @@ public class GeoMatchingService : IGeoMatchingService
                 ),
                 (
                     Guid.Parse("66666666-6666-6666-6666-666666666666"),
-                    "collector_q7",
-                    "collector_q7@ecolink.vn",
+                    "recycler_q7",
+                    "recycler_q7@ecolink.vn",
                     "Cơ Sở Phế Liệu Nam Sài Gòn",
                     "Phạm Thị Lan",
                     "45 Nguyễn Thị Thập, P. Tân Phú, Quận 7, TP.HCM",
@@ -564,8 +627,8 @@ public class GeoMatchingService : IGeoMatchingService
                 ),
                 (
                     Guid.Parse("77777777-7777-7777-7777-777777777777"),
-                    "collector_hn",
-                    "collector_hn@ecolink.vn",
+                    "recycler_hn",
+                    "recycler_hn@ecolink.vn",
                     "Trạm Tái Chế Xanh Cầu Giấy",
                     "Hoàng Minh Tuấn",
                     "68 Xuân Thủy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội",
@@ -584,8 +647,8 @@ public class GeoMatchingService : IGeoMatchingService
                 ),
                 (
                     Guid.Parse("99999991-9999-9999-9999-999999999991"),
-                    "collector_hl1",
-                    "collector_hl1@ecolink.vn",
+                    "recycler_hl1",
+                    "recycler_hl1@ecolink.vn",
                     "Trạm Thu Gom Tái Chế Xanh Hòa Lạc",
                     "Đỗ Văn Hùng",
                     "Thôn 3, Xã Tân Xã (Gần Khu CNC Hòa Lạc & ĐH FPT), Huyện Thạch Thất, Hà Nội",
@@ -604,8 +667,8 @@ public class GeoMatchingService : IGeoMatchingService
                 ),
                 (
                     Guid.Parse("99999992-9999-9999-9999-999999999992"),
-                    "collector_hl2",
-                    "collector_hl2@ecolink.vn",
+                    "recycler_hl2",
+                    "recycler_hl2@ecolink.vn",
                     "Cơ Sở Phế Liệu Minh Tâm — Ngã Tư Hòa Lạc",
                     "Nguyễn Thị Tâm",
                     "Km28 Quốc lộ 21A, Xã Thạch Hòa, Huyện Thạch Thất, Hà Nội",
@@ -624,8 +687,8 @@ public class GeoMatchingService : IGeoMatchingService
                 ),
                 (
                     Guid.Parse("99999993-9999-9999-9999-999999999993"),
-                    "collector_hl3",
-                    "collector_hl3@ecolink.vn",
+                    "recycler_hl3",
+                    "recycler_hl3@ecolink.vn",
                     "Vựa Tái Chế Bình Yên — Hòa Lạc",
                     "Chu Văn Khánh",
                     "Đường Tỉnh lộ 420, Xã Bình Yên, Huyện Thạch Thất, Hà Nội",
@@ -645,8 +708,8 @@ public class GeoMatchingService : IGeoMatchingService
                 ),
                 (
                     Guid.Parse("99999994-9999-9999-9999-999999999994"),
-                    "collector_hl4",
-                    "collector_hl4@ecolink.vn",
+                    "recycler_hl4",
+                    "recycler_hl4@ecolink.vn",
                     "Điểm Thu Mua Phế Liệu Phú Cát — Hòa Lạc",
                     "Bùi Văn Thành",
                     "Khu Công nghiệp Phú Cát - Nam Hòa Lạc, Huyện Quốc Oai, Hà Nội",
@@ -665,8 +728,8 @@ public class GeoMatchingService : IGeoMatchingService
                 ),
                 (
                     Guid.Parse("99999995-9999-9999-9999-999999999995"),
-                    "collector_hndd",
-                    "collector_hndd@ecolink.vn",
+                    "recycler_hndd",
+                    "recycler_hndd@ecolink.vn",
                     "Vựa Phế Liệu Sạch Đống Đa",
                     "Vũ Quang Huy",
                     "142 Tây Sơn, Phường Quang Trung, Quận Đống Đa, Hà Nội",
@@ -685,8 +748,8 @@ public class GeoMatchingService : IGeoMatchingService
                 ),
                 (
                     Guid.Parse("99999996-9999-9999-9999-999999999996"),
-                    "collector_hnhbt",
-                    "collector_hnhbt@ecolink.vn",
+                    "recycler_hnhbt",
+                    "recycler_hnhbt@ecolink.vn",
                     "Điểm Thu Mua Tái Chế Bách Khoa",
                     "Phạm Thu Hương",
                     "55 Trần Đại Nghĩa, Phường Bách Khoa, Quận Hai Bà Trưng, Hà Nội",
@@ -705,7 +768,7 @@ public class GeoMatchingService : IGeoMatchingService
                 )
             };
 
-            string? sharedCollectorPasswordHash = null;
+            string? sharedRecyclerPasswordHash = null;
 
             foreach (var f in demoFacilities)
             {
@@ -716,7 +779,7 @@ public class GeoMatchingService : IGeoMatchingService
                 Guid targetUserId;
                 if (existingUser == null)
                 {
-                    sharedCollectorPasswordHash ??= BCrypt.Net.BCrypt.HashPassword("collector123");
+                    sharedRecyclerPasswordHash ??= BCrypt.Net.BCrypt.HashPassword("recycler123");
                     targetUserId = f.UserId;
 
                     var newUser = new User
@@ -724,7 +787,7 @@ public class GeoMatchingService : IGeoMatchingService
                         Id = targetUserId,
                         Username = f.Username,
                         Email = f.Email,
-                        PasswordHash = sharedCollectorPasswordHash,
+                        PasswordHash = sharedRecyclerPasswordHash,
                         FullName = $"{f.RepresentativeName} ({f.FacilityName})",
                         PhoneNumber = f.Phone,
                         Role = UserRole.Recycler,
@@ -752,6 +815,21 @@ public class GeoMatchingService : IGeoMatchingService
                 else
                 {
                     targetUserId = existingUser.Id;
+                    if (existingUser.Id == f.UserId &&
+                        existingUser.Username.StartsWith("collector", StringComparison.OrdinalIgnoreCase))
+                    {
+                        var conflict = await _db.Users
+                            .IgnoreQueryFilters()
+                            .AnyAsync(u => u.Id != existingUser.Id && (u.Username == f.Username || u.Email == f.Email), ct);
+                        if (!conflict)
+                        {
+                            sharedRecyclerPasswordHash ??= BCrypt.Net.BCrypt.HashPassword("recycler123");
+                            existingUser.Username = f.Username;
+                            existingUser.Email = f.Email;
+                            existingUser.PasswordHash = sharedRecyclerPasswordHash;
+                            await _db.SaveChangesAsync(ct);
+                        }
+                    }
                     var existingProfile = await _db.RecyclerProfiles
                         .IgnoreQueryFilters()
                         .FirstOrDefaultAsync(r => r.UserId == targetUserId, ct);

@@ -1,0 +1,46 @@
+sequenceDiagram
+    autonumber
+    actor Citizen as Citizen (Author)
+    actor Public as Public / Guest
+    actor Staff as Staff HANDLE_COMPLAINT
+    participant UI as EcoLink Web UI
+    participant RevCtrl as ReviewsController
+    participant StfCtrl as StaffComplaintsController
+    participant RevSvc as ReviewService
+    participant GeoSvc as GeoMatchingService
+    participant DB as PostgreSQL 16
+
+    Note over Citizen,DB: U-10: Cham 1-5 sao don Completed trong 14 ngay -> Tinh AverageRating -> Tu xoa / Kiem duyet
+
+    Citizen->>UI: Chon so sao 1-5 va nhap nhan xet tren Receipt / History
+    UI->>RevCtrl: POST /api/v1/handover-requests/{requestId}/reviews
+    RevCtrl->>RevSvc: CreateReviewAsync(userId, requestId, dto)
+    RevSvc->>DB: Check quyen so huu + Completed + <= 14 ngay + chua tung review (BR-RVW-01)
+    alt Don chua Completed hoac qua 14 ngay / da danh gia
+        RevSvc-->>RevCtrl: Throw BusinessRuleException (400) hoac ConflictException (409)
+        RevCtrl-->>UI: Hien thi loi MSG-RVW-02
+    else Hop le
+        RevSvc->>DB: INSERT transaction_reviews (Visible) + RECALC recycler_profiles
+        RevSvc-->>RevCtrl: 201 Created MSG-RVW-01 + updatedRecyclerAverageRating
+        RevCtrl-->>UI: Cap nhat the danh gia & sao trung binh
+    end
+
+    Public->>UI: Xem ban do tim vua hoac danh sach doi tac
+    UI->>GeoSvc: GET /api/v1/recyclers/{recyclerId} & GET /reviews
+    GeoSvc->>DB: Doc average_rating & total_reviews tu recycler_profiles
+    RevSvc->>DB: SELECT reviews (chi Visible/Reported) + thong ke 1..5 sao
+    GeoSvc-->>UI: 200 OK diem uy tin & phan bo sao
+
+    opt Bao cao vi pham & Staff kiem duyet (BR-RVW-03)
+        Public->>RevCtrl: POST /api/v1/reviews/{reviewId}/report (reason >= 5 chars)
+        RevSvc->>DB: UPDATE status = Reported, report_count += 1
+        Staff->>StfCtrl: PATCH /api/v1/staff/reviews/{reviewId}/moderate (Hide / Restore)
+        RevSvc->>DB: UPDATE status = Hidden/Visible + RECALC average_rating + INSERT audit_logs
+        StfCtrl-->>Staff: 200 OK MSG-RVW-03
+    end
+
+    opt Tac gia tu xoa vinh vien danh gia cua minh (BR-RVW-03)
+        Citizen->>RevCtrl: DELETE /api/v1/reviews/{reviewId}
+        RevSvc->>DB: Verify ReviewerId == callerId (else 403) -> Deleted + RECALC + AuditLog
+        RevCtrl-->>Citizen: 200 OK MSG-RVW-03
+    end

@@ -1,0 +1,46 @@
+sequenceDiagram
+    autonumber
+    actor Admin as Quan tri vien (Admin)
+    actor Citizen as Nguoi dan (Map Discovery)
+    participant PkgCtrl as ServicePackagesController
+    participant RecCtrl as RecyclerDiscoveryController
+    participant PkgSvc as ServicePackageService
+    participant GeoSvc as GeoMatchingService
+    participant EntSvc as SubscriptionEntitlementService
+    participant Audit as AuditLogService
+    participant DB as PostgreSQL & IMemoryCache
+
+    Note over Admin,DB: A-10 Cau hinh goi + Grandfathering & R-07 Hien thi Tich xanh / Ghim noi bat ban do
+
+    Admin->>PkgCtrl: POST /api/v1/admin/service-packages (UpsertServicePackageRequest)
+    PkgCtrl->>PkgSvc: CreatePackageAsync(adminId, request)
+    PkgSvc->>DB: Validate duplicate code & INSERT ServicePackage
+    PkgSvc->>Audit: LogAsync(CREATE_SERVICE_PACKAGE)
+    PkgCtrl-->>Admin: 201 Created (MSG-PAY-07)
+
+    Admin->>PkgCtrl: PUT /api/v1/admin/service-packages/{packageId} (Doi gia moi)
+    PkgCtrl->>PkgSvc: UpdatePackageAsync(adminId, packageId, request)
+    alt Doi PackageCode cua goi da co ServiceOrder
+        PkgSvc-->>PkgCtrl: BusinessRuleException (BR-PAY-05)
+        PkgCtrl-->>Admin: 400 BadRequest
+    else Cap nhat goi BASIC (Chi doi ten/mo ta, khoa Price=0) hoac goi thuong mai (Grandfathering)
+        PkgSvc->>DB: UPDATE ServicePackage (Chi ap dung don moi - Snapshot cu giu nguyen)
+        PkgSvc->>Audit: LogAsync(UPDATE_SERVICE_PACKAGE)
+        PkgCtrl-->>Admin: 200 OK (MSG-PAY-07)
+    end
+
+    Admin->>PkgCtrl: PATCH /api/v1/admin/service-packages/{basicId}/status (isActive=false)
+    PkgCtrl->>PkgSvc: TogglePackageStatusAsync(adminId, basicId, false)
+    PkgSvc-->>PkgCtrl: BusinessRuleException (BR-PAY-05 - Chan tat goi BASIC)
+    PkgCtrl-->>Admin: 400 BadRequest
+
+    Note over Citizen,DB: Phan tang hien thi Co so thu mua theo goi PRO tren ban do (U-05 / R-07)
+    Citizen->>RecCtrl: GET /api/v1/recyclers/nearby?lat=...&lng=...&radiusKm=...
+    RecCtrl->>GeoSvc: FindNearestPartnersAsync(lat, lng, category, radius)
+    GeoSvc->>DB: Query Verified Online RecyclerProfiles + Active Prices
+    GeoSvc->>GeoSvc: EnrichPartnerEntitlementsAsync(partners)
+    GeoSvc->>EntSvc: GetBatchEntitlementsAsync(recyclerUserIds)
+    EntSvc->>DB: Doc IMemoryCache sub_entitlements:{id} hoac Active UserSubscriptions
+    EntSvc-->>GeoSvc: Map UserEntitlementSummaryDto (hasVerifiedBlueBadge, isFeaturedMapMarker)
+    GeoSvc->>GeoSvc: OrderByDescending(IsFeatured) ThenBy(HasVerifiedBadge) ThenBy(DistanceKm)
+    RecCtrl-->>Citizen: 200 OK (Danh sach Recycler uu tien ghim Pro Tich xanh len dau)

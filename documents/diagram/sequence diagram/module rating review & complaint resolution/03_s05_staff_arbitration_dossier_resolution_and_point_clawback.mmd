@@ -1,0 +1,50 @@
+sequenceDiagram
+    autonumber
+    actor Staff as Staff HANDLE_COMPLAINT
+    participant UI as Staff Complaints Console
+    participant StfCtrl as StaffComplaintsController
+    participant CmpSvc as ComplaintService
+    participant PtsSvc as PointsService
+    participant AuditSvc as AuditLogService
+    participant DB as PostgreSQL 16
+
+    Note over Staff,DB: S-05: Staff mo Ho so Trong tai 360 va ban hanh Phan quyet rang buoc (BR-DSP-04)
+
+    Staff->>UI: Mo hang doi /staff/complaints
+    UI->>StfCtrl: GET /api/v1/staff/complaints?status=...&includeReportedReviews=true
+    StfCtrl->>CmpSvc: GetStaffComplaintQueueAsync(filter)
+    CmpSvc->>DB: Query transaction_complaints + dem Open/Investigating/Resolved + ReportedReviews
+    StfCtrl-->>UI: 200 OK danh sach cho xu ly & bo dem ton dong
+
+    Staff->>UI: Bam vao 1 phieu de xem Ho so 360 & nhan xu ly
+    UI->>StfCtrl: GET /api/v1/staff/complaints/{complaintId}?claim=true
+    StfCtrl->>CmpSvc: GetStaffComplaintDossierAsync(staffId, complaintId, claim=true)
+    alt Phieu dang Open
+        CmpSvc->>DB: UPDATE status = Investigating, assigned_staff_id = staffId
+        CmpSvc->>AuditSvc: LogAsync("CLAIM_COMPLAINT")
+    end
+    CmpSvc->>DB: Load HandoverRequest + Items + HandoverReceipt (anh can) + ChatMessages bat bien
+    StfCtrl-->>UI: 200 OK StaffComplaintDossierDto (anh R2 2 ben + anh can + chat)
+
+    Staff->>UI: Chon ResolutionOutcome + bien ban >= 10 ky tu + tuy chon canh cao
+    UI->>StfCtrl: PATCH /api/v1/staff/complaints/{complaintId}/resolve
+    StfCtrl->>CmpSvc: ResolveComplaintAsync(staffId, complaintId, request)
+    CmpSvc->>DB: BeginTransaction: Check status != Resolved/Dismissed (else 409)
+    alt ResolutionOutcome == CancelDisputedOrder
+        CmpSvc->>DB: UPDATE handover_requests = Cancelled & handover_receipts.points_awarded = 0
+        CmpSvc->>DB: ClawBack GreenPoints tren user_eco_profiles (Math.Max(0, balance - pts) BR-GAM-03)
+        CmpSvc->>DB: Tru user_point_wallets >= 0 & INSERT point_transactions (ComplaintClawback, idemKey duy nhat)
+    else ResolutionOutcome == ConfirmReceiptAsIs hoac CompensateUser
+        CmpSvc->>DB: UPDATE handover_requests = Completed + SaveChanges
+        CmpSvc->>PtsSvc: AwardHandoverPointsAsync(receipt.Id)
+        PtsSvc->>DB: Credit User & Recycler user_point_wallets + SyncReceiptCompletionAsync
+    else ResolutionOutcome == Dismissed
+        CmpSvc->>DB: Khoi phuc trang thai don truoc khi tranh chap
+    end
+    opt issueWarningToRespondent == true
+        CmpSvc->>DB: UPDATE users.warning_count += 1 & INSERT account_moderation_logs (RelatedComplaintId)
+    end
+    CmpSvc->>DB: UPDATE transaction_complaints (Resolved/Dismissed) + SyncHandoverToTradeOrderAsync
+    CmpSvc->>AuditSvc: LogAsync("RESOLVE_COMPLAINT", oldValues, newValues, resolutionNote)
+    AuditSvc->>DB: Commit Transaction
+    StfCtrl-->>UI: 200 OK MSG-DSP-02

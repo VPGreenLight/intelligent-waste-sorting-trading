@@ -1,0 +1,53 @@
+sequenceDiagram
+    autonumber
+    actor User as Citizen / Guest
+    participant UI as Scanner Page (ecolink-web)
+    participant ScanCtrl as WasteScanController
+    participant AiHttp as AiVisionHttpClient
+    participant FastAPI as Ecolink.AiService
+    participant FbSvc as AiFeedbackService
+    participant R2 as Cloudflare R2 Storage
+    participant DB as PostgreSQL 16
+
+    Note over User,DB: U-04: Quet anh (luu SHA-256 + tu thu thap OOD) & Gui bao cao phan loai sai
+
+    User->>UI: Tai anh rac len Scanner & chon model
+    UI->>ScanCtrl: POST /api/v1/waste-scan/classify (file, model)
+    ScanCtrl->>AiHttp: ClassifyWasteImageAsync(stream, fileName, model)
+    AiHttp->>FastAPI: POST /api/v1/classify
+    FastAPI-->>AiHttp: predictedLabel, confidence, isOod, detectedObjects
+    AiHttp-->>ScanCtrl: AiScanResultDto
+
+    ScanCtrl->>FbSvc: RecordScanHistoryAsync(bytes, userId, aiResult)
+    FbSvc->>FbSvc: Tinh SHA-256 hex (64 ky tu)
+    FbSvc->>R2: Upload ai-scans/yyyy/MM/sha256.ext (fallback local an toan)
+    R2-->>FbSvc: imageUrl
+    FbSvc->>DB: INSERT ai_scan_histories
+    opt IsOutOfDistribution == true OR confidence < 0.60
+        FbSvc->>DB: Check ImageSha256 & INSERT ai_dataset_items (LowConfidenceAuto, Unlabeled)
+    end
+    FbSvc-->>ScanCtrl: (scanId, imageUrl)
+    ScanCtrl-->>UI: 200 OK (scanId, imageUrl, aiResult, sortingGuide)
+
+    User->>UI: Nhan Bao nhan sai, chon nhan dung & nhap ghi chu
+    UI->>ScanCtrl: POST /api/v1/waste-scan/feedback (scanId, userReportedLabel, note)
+    ScanCtrl->>FbSvc: SubmitFeedbackAsync(userId, dto)
+    FbSvc->>DB: Check WasteCategory Active (BR-CLS-02)
+    alt Nhan khong ton tai hoac Inactive
+        FbSvc-->>ScanCtrl: BusinessRuleException (BR-CLS-02)
+        ScanCtrl-->>UI: 400 Bad Request
+    else ScanId da duoc bao cao truoc do
+        FbSvc-->>ScanCtrl: ConflictException (BR-CLS-05)
+        ScanCtrl-->>UI: 409 Conflict
+    else Hop le
+        FbSvc->>DB: INSERT ai_feedback_logs (Status=Pending, ImageSha256)
+        FbSvc-->>AiHttp: Best-effort POST /api/v1/feedback
+        ScanCtrl-->>UI: 200 OK (MSG-CLS-06, reportId)
+    end
+
+    opt Nguoi dung da dang nhap xem lich su bao cao (U-04)
+        UI->>ScanCtrl: GET /api/v1/waste-scan/feedback/me
+        ScanCtrl->>FbSvc: GetMyFeedbackReportsAsync(userId)
+        FbSvc->>DB: SELECT ai_feedback_logs WHERE user_id = userId (BR-CLS-08)
+        ScanCtrl-->>UI: 200 OK PagedResult
+    end

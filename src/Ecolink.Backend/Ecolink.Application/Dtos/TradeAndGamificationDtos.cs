@@ -13,6 +13,10 @@ public class CollectionPartnerDto
     public string OperatingHours { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? BusinessPhotoUrl { get; set; }
+    public bool HasVerifiedBadge { get; set; }
+    public bool IsFeatured { get; set; }
+    public decimal AverageRating { get; set; }
+    public int TotalReviews { get; set; }
     public List<AcceptedMaterialDto> Materials { get; set; } = new();
 }
 
@@ -82,6 +86,11 @@ public class CreateTradeOrderRequest
     public double? PickupLatitude { get; set; }
     public double? PickupLongitude { get; set; }
     public List<TradeOrderLineDto>? Lines { get; set; }
+    /// <summary>
+    /// true khi tạo đơn nháp từ luồng Chat trước rồi mới lên đơn/chốt điều khoản (BR-NEG-01).
+    /// Hệ thống sẽ tái sử dụng đơn Pending/Negotiating đang mở giữa cùng người dân và cơ sở nếu đã tồn tại.
+    /// </summary>
+    public bool IsInquiryDraft { get; set; }
 }
 
 public class UpdateTradeOrderStatusRequest
@@ -117,6 +126,7 @@ public class TradeOrderDto
     public string? Note { get; set; }
     public string? CancelReason { get; set; }
     public List<TradeOrderLineDto>? Lines { get; set; }
+    public bool IsInquiryOnly { get; set; }
     public string QrCodeValue { get; set; } = string.Empty;
 }
 
@@ -144,16 +154,27 @@ public class EcoProfileDto
     public int CurrentGreenPoints { get; set; }
     public int TotalLifetimePoints { get; set; }
     public int TreeLevel { get; set; }
+    public string TreeStageTitle { get; set; } = "Seedling";
     public int TreeExperience { get; set; }
     public int ExperienceToNextLevel { get; set; }
     public int TotalWasteScanned { get; set; }
     public decimal TotalRecycledKg { get; set; }
+    public int CurrentStreak { get; set; }
+    public double Co2SavedKg { get; set; }
 }
 
 public class LeaderboardEntryDto
 {
     public int Rank { get; set; }
+    public Guid UserId { get; set; }
     public string FullName { get; set; } = string.Empty;
+    public string Role { get; set; } = "User";
+    public string Area { get; set; } = string.Empty;
     public int TotalPoints { get; set; }
+    public long PeriodPoints { get; set; }
+    public long SpendablePoints { get; set; }
     public int TreeLevel { get; set; }
+    public decimal TotalRecycledKg { get; set; }
+    public bool IsCurrentUser { get; set; }
+    public long PointsNeededForNextRank { get; set; }
 }

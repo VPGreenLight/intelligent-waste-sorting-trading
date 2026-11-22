@@ -38,6 +38,8 @@ public class RecyclerProfileConfiguration : IEntityTypeConfiguration<RecyclerPro
         builder.Property(r => r.RejectionReason).HasColumnName("rejection_reason");
         builder.Property(r => r.BusyReason).HasColumnName("busy_reason").HasMaxLength(100);
         builder.Property(r => r.WeeklyScheduleJson).HasColumnName("weekly_schedule").HasColumnType("jsonb");
+        builder.Property(r => r.AverageRating).HasColumnName("average_rating").HasPrecision(3, 2).HasDefaultValue(0m).IsRequired();
+        builder.Property(r => r.TotalReviews).HasColumnName("total_reviews").HasDefaultValue(0).IsRequired();
 
         // Audit fields
         builder.Property(r => r.CreatedAt).HasColumnName("created_at").HasDefaultValueSql("NOW()").IsRequired();

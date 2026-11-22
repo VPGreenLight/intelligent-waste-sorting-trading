@@ -1,0 +1,44 @@
+sequenceDiagram
+    autonumber
+    actor Admin as Administrator
+    actor Guest as Public / Citizen
+    participant AdmCtrl as AdminGamificationController
+    participant PubCtrl as GamificationController
+    participant CfgSvc as GamificationConfigService
+    participant LbSvc as LeaderboardService
+    participant PtsSvc as PointsService
+    participant AuditSvc as AuditLogService
+    participant DB as PostgreSQL 16
+
+    Note over Admin,DB: A-07 & A-08: Cau hinh he so diem, bang cap cay, chu ky BXH & chot thuong Top 3 (BR-GAM-07, BR-ADM-05)
+
+    Admin->>AdmCtrl: PUT /api/v1/admin/gamification/config (PointRates, TreeLevels, DailyCap)
+    AdmCtrl->>CfgSvc: UpdateAsync(adminId, dto)
+    CfgSvc->>DB: Validate cap cay lien tuc tu 1 tang dan nghiem ngat & Khong bo cap con EcoFact ACTIVE
+    CfgSvc->>DB: BeginTransaction -> Update gamification_config + Replace point_rate_rules & tree_level_thresholds
+    CfgSvc->>AuditSvc: LogAsync("GAMIFICATION_CONFIG_UPDATE", oldValues, newValues)
+    CfgSvc->>DB: Commit Transaction
+    AdmCtrl-->>Admin: 200 OK GamificationConfigDto
+
+    Admin->>AdmCtrl: POST /api/v1/admin/gamification/leaderboard-cycles (StartsAt, EndsAt, Top1/2/3 Bonus, IsActive)
+    AdmCtrl->>LbSvc: CreateCycleAsync(adminId, request)
+    LbSvc->>DB: If IsActive == true -> DeactivateOtherActiveCycles & INSERT leaderboard_cycles
+    LbSvc->>AuditSvc: LogAsync("LEADERBOARD_CYCLE_CREATE")
+    AdmCtrl-->>Admin: 201 Created LeaderboardCycleDto
+
+    Guest->>PubCtrl: GET /api/v1/gamification/leaderboard?top=10&period=Monthly
+    PubCtrl->>LbSvc: GetLeaderboardViewAsync(top, period, cycleId, viewerUserId)
+    LbSvc->>DB: Load Active Users (Role=User) + UserPointWallet + PointTransactions (Points > 0, != LeaderboardBonus)
+    PubCtrl-->>Guest: 200 OK LeaderboardViewDto (Items, MyEntry, ActiveCycle)
+
+    Admin->>AdmCtrl: POST /api/v1/admin/gamification/leaderboard-cycles/{cycleId}/finalize
+    AdmCtrl->>LbSvc: FinalizeCycleAsync(adminId, cycleId)
+    LbSvc->>DB: Check Status != Finalized/Cancelled & ComputeRankedEntriesAsync(cycle)
+    LbSvc->>DB: BeginTransaction
+    loop Top 1 -> Top 3 co TotalPoints > 0
+        LbSvc->>PtsSvc: CreditAsync(userId, bonus, LeaderboardBonus, LEADERBOARD:cycleId:RANK:i:userId)
+    end
+    LbSvc->>DB: UPDATE leaderboard_cycles SET Status = Finalized, IsActive = false, WinnersSnapshotJson
+    LbSvc->>AuditSvc: LogAsync("LEADERBOARD_CYCLE_FINALIZE")
+    LbSvc->>DB: Commit Transaction
+    AdmCtrl-->>Admin: 200 OK LeaderboardCycleDto (Winners snapshot + bonuses)

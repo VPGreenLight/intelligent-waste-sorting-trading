@@ -1,7 +1,9 @@
 using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using Ecolink.WebApi.Hubs;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
 
 namespace Ecolink.WebApi.Controllers;
 
@@ -13,17 +15,20 @@ public class TradeController : ControllerBase
     private readonly ITradeTransactionService _tradeService;
     private readonly ICurrentUserService _currentUser;
     private readonly ILogger<TradeController> _logger;
+    private readonly IHubContext<NegotiationChatHub>? _chatHub;
 
     public TradeController(
         IGeoMatchingService geoMatchingService,
         ITradeTransactionService tradeService,
         ICurrentUserService currentUser,
-        ILogger<TradeController> logger)
+        ILogger<TradeController> logger,
+        IHubContext<NegotiationChatHub>? chatHub = null)
     {
         _geoMatchingService = geoMatchingService;
         _tradeService = tradeService;
         _currentUser = currentUser;
         _logger = logger;
+        _chatHub = chatHub;
     }
 
     /// <summary>
@@ -64,6 +69,7 @@ public class TradeController : ControllerBase
         }
 
         var order = await _tradeService.CreateTradeOrderAsync(request, ct);
+        await BroadcastOrderUpdatedAsync(order, "OrderCreated", ct);
         return Ok(new
         {
             success = true,
@@ -84,6 +90,7 @@ public class TradeController : ControllerBase
     {
         var callerId = _currentUser.UserId ?? Guid.Empty;
         var updated = await _tradeService.UpdateOrderStatusAsync(orderId, callerId, request, ct);
+        await BroadcastOrderUpdatedAsync(updated, "OrderStatusUpdated", ct);
         return Ok(ApiResponse<TradeOrderDto>.Ok(updated, "Cập nhật trạng thái đơn bàn giao thành công."));
     }
 
@@ -98,6 +105,7 @@ public class TradeController : ControllerBase
     {
         var callerId = _currentUser.UserId ?? Guid.Empty;
         var updated = await _tradeService.UpdateOrderTimeSlotAsync(orderId, callerId, request.ProposedTimeSlot, ct);
+        await BroadcastOrderUpdatedAsync(updated, "OrderTimeSlotUpdated", ct);
         return Ok(ApiResponse<TradeOrderDto>.Ok(updated, "Đã cập nhật khung giờ thu gom đề xuất."));
     }
 
@@ -120,6 +128,34 @@ public class TradeController : ControllerBase
         catch (KeyNotFoundException ex)
         {
             return NotFound(new { message = ex.Message });
+        }
+    }
+
+    private async Task BroadcastOrderUpdatedAsync(TradeOrderDto order, string eventType, CancellationToken ct)
+    {
+        if (_chatHub == null) return;
+
+        try
+        {
+            var targets = new HashSet<Guid>();
+            if (order.UserId != Guid.Empty) targets.Add(order.UserId);
+            if (order.RecyclerUserId.HasValue && order.RecyclerUserId.Value != Guid.Empty)
+                targets.Add(order.RecyclerUserId.Value);
+            if (order.PartnerId != Guid.Empty) targets.Add(order.PartnerId);
+
+            foreach (var uid in targets)
+            {
+                await _chatHub.Clients.Group(NegotiationChatHub.GetUserGroupName(uid)).SendAsync("OrderChatUpdated", new
+                {
+                    orderId = order.Id,
+                    eventType,
+                    updatedAt = DateTime.UtcNow
+                }, ct);
+            }
+        }
+        catch
+        {
+            // Không làm gián đoạn phản hồi HTTP nếu phát tín hiệu realtime phụ trợ thất bại
         }
     }
 }

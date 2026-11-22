@@ -1,0 +1,53 @@
+# ĐẶC TẢ KIỂM THỬ ĐƠN VỊ (UNIT TEST SPECIFICATION)
+## PHÂN HỆ M-10 / FE-13: GAMIFICATION, CÂY ẢO & ĐỔI QUÀ THƯỞNG (`GAMIFICATION & REWARDS`)
+
+* **Dự án:** Hệ thống Phân loại Rác Thông minh & Giao dịch Phế liệu (**EcoLink**)
+* **Phân hệ / Module trong Report 5.1:** `Module 13` (`M-10` / `FE-13`)
+* **Dịch vụ & Validator kiểm thử:** `LeaderboardService`, `GamificationService`, `CheckinService`, `PointsService`, `GiftService`, `VirtualTreeService`, `EcoFactService`, `GamificationConfigService`, `ComplaintService` (clawback ví điểm) & `BlogAndGamificationValidators`
+* **Use Cases bao phủ:** `U-13`, `U-14`, `U-15`, `S-09`, `S-10`, `A-07`, `A-08`
+* **Tệp mã kiểm thử tự động:** [`GamificationAndBlogUnitTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module10_GamificationAndBlog/GamificationAndBlogUnitTests.cs)
+* **Ngày thực thi gần nhất:** `2026-11-19`
+* **Kết quả thực thi:** **`22 / 22 Passed` (`100%` Pass Rate — `10 Normal`, `8 Abnormal`, `4 Boundary`)**
+
+---
+
+## 1. BẢNG TỔNG HỢP KIỂM THỬ ĐƠN VỊ (SUMMARY TABLE)
+
+| Code Module | `LeaderboardService`, `CheckinService`, `PointsService`, `GiftService`, `VirtualTreeService`, `EcoFactService`, `GamificationConfigService`, `GamificationService`, `ComplaintService`, `Validators` (`M-10`) | | |
+| :--- | :---: | :---: | :---: |
+| **Number of TCs** | **22** | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** |
+| *Round 1* | 22 | 0 | 0 |
+| *Round 2* | 0 | 0 | 22 |
+| *Round 3* | 0 | 0 | 22 |
+| **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
+| **Count** | **10** | **8** | **4** |
+
+---
+
+## 2. CHI TIẾT 22 UNIT TEST CASES (`UTC001` – `UTC022`)
+
+| Test Case ID | Tên Method Kiểm thử (`GamificationAndBlogUnitTests`) | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Note |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- | :--- |
+| **UTC001** | `UTC001_CreateCycle_WithIsActiveTrue_ShouldDeactivatePreviousActiveCycle` | Admin tồn tại; chưa có chu kỳ trùng | `CreateCycleAsync("Tuần 1", IsActive=true)` $\rightarrow$ `CreateCycleAsync("Tháng 11", IsActive=true)` | Chỉ có `1` chu kỳ `IsActive=true` (chu kỳ mới), chu kỳ cũ tắt về `false`, ghi `2` bản ghi `AuditLog` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | `A-08` duy nhất 1 kỳ active |
+| **UTC002** | `UTC002_CreateCycle_WhenEndsAtBeforeStartsAt_ShouldThrowMSGAuth02` | DbContext sạch | `StartsAt=now, EndsAt=now.AddHours(-1)` | Ném `BusinessRuleException ("BR-GAM-07", "MSG-AUTH-02")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Chặn mốc ngày ngược |
+| **UTC003** | `UTC003_CreateCycle_WhenPeriodTypeOrBonusOrderInvalid_ShouldThrowMSGAuth02` | DbContext sạch | `PeriodType="Yearly"` & `Top1=100 < Top2=200` | Cả 2 trường hợp đều ném `BusinessRuleException ("MSG-AUTH-02")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Kiểm định chu kỳ & thưởng |
+| **UTC004** | `UTC004_ActivateCycle_ShouldSwitchActiveCycleAndWriteAuditLog` | Có `2` chu kỳ (Tuần active, Tháng inactive) | `ActivateCycleAsync(adminId, month.Id)` | Chu kỳ Tháng bật `IsActive=true`, Tuần về `false`, ghi `LEADERBOARD_CYCLE_ACTIVATE` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Chuyển chu kỳ |
+| **UTC005** | `UTC005_GetLeaderboardView_ShouldRankByPeriodEarnedWithoutRedeemPenalty` | Có `2` Citizen & `1` Recycler; Citizen 1 kiếm `200` tiêu `180`, Citizen 2 kiếm `80` + thưởng `LeaderboardBonus` | `GetLeaderboardViewAsync(10, "Weekly", null, second.Id)` | Chỉ đưa Citizen vào BXH (loại Recycler); Hạng 1 là người tiêu điểm (`PeriodPoints=200`), không cộng dồn `LeaderboardBonus` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | `BR-GAM-07`, `BR-GAM-08` |
+| **UTC006** | `UTC006_FinalizeCycle_ShouldCreditTop3BonusesSaveSnapshotAndWriteAuditLog` | Chu kỳ Active; `3` Citizen đạt điểm `300`, `200`, `100` | `FinalizeCycleAsync(adminId, cycle.Id)` | `Status="Finalized"`, `IsActive=false`, `Winners[3]`, cộng lần lượt `+500/+300/+150`, ghi `LEADERBOARD_CYCLE_FINALIZE` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Chốt giải Top 3 `A-08` |
+| **UTC007** | `UTC007_FinalizeOrActivateCycle_WhenAlreadyFinalized_ShouldThrowMSGGen01` | Chu kỳ đã `Finalized` | `ActivateCycleAsync` & `FinalizeCycleAsync` | Đều ném `BusinessRuleException ("MSG-GEN-01")`, không cộng thưởng lặp | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Khóa tái kích hoạt/chốt |
+| **UTC008** | `UTC008_GamificationService_GetUserProfile_ShouldAggregateRealDbWalletTreeScansAndStreak` | Citizen có ví (`240/440`), cây cấp `2`, `2` AI scan, biên nhận `10kg`, check-in hôm nay chuỗi `4` | `GetUserProfileAsync(citizen.Id)` | Trả đúng `240đ`, cấp `2` ("Cây non"), `TotalWasteScanned=2`, `10kg`, `Streak=4`, `CO2=18.5` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Dữ liệu thật `STT 076` |
+| **UTC009** | `UTC009_ComplaintService_CancelDisputedOrder_ShouldClawBackBothEcoProfileAndPointWallet` | Citizen `120đ`, Recycler `80đ` ở cả `UserEcoProfile` & `UserPointWallet`; biên nhận `+50đ` | `ResolveComplaintAsync("CancelDisputedOrder")` | `PointsRevoked=true`, ví Citizen còn `70`, Recycler còn `30`, ghi `2` bút toán `-50 ComplaintClawback` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Đồng bộ clawback `M-11` |
+| **UTC010** | `UTC010_ComplaintService_CancelDisputedOrder_WhenWalletLowerThanRevoke_ShouldClampToZero` | Citizen chỉ còn `15đ` trong ví nhưng cần thu hồi `50đ` | `ResolveComplaintAsync("CancelDisputedOrder")` | Ví kẹp sàn `CurrentBalance=0` (`>= 0`), bút toán thu hồi chỉ ghi `-15đ` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | `BR-GAM-03` Floor 0 |
+| **UTC011** | `UTC011_CheckinService_ConsecutiveDayAndMissedDayReset_ShouldComputeStreakAndCreditWallet` | User A check-in hôm qua (chuỗi `3`); User B bỏ lỡ từ `3 ngày trước` | `GetStatusAsync` & `CheckInAsync` theo giờ `ICT` | A lên chuỗi `4` (+`8đ`); B báo `StreakWillReset=true` và điểm danh về chuỗi `1` (+`5đ`) | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | `U-13`, `ICT UTC+7` |
+| **UTC012** | `UTC012_CheckinService_DuplicateSameDay_ShouldThrowBRGam09MSGGen01` | User đã check-in hôm nay | Gọi `CheckInAsync(user.Id)` lần 2 trong ngày | Ném `BusinessRuleException ("BR-GAM-09", "MSG-GEN-01")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Chặn check-in trùng |
+| **UTC013** | `UTC013_CheckinService_WhenDailyCapRemainingTight_ShouldClampOrThrowMSGGam05` | `DailyNonTransactionCap = 50`; U1 đã nhận `47đ`, U2 đã nhận `50đ` | `CheckInAsync(uClamp)` & `CheckInAsync(uFull)` | U1 chỉ nhận `3đ` (`LimitedByDailyCap=true`); U2 chạm `0` dư địa ném `MSG-GAM-05` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | `BR-GAM-02` Daily Cap |
+| **UTC014** | `UTC014_GiftService_RedeemVoucherAndPhysical_ShouldDebitWalletDecrementStockAndSetStatus` | User có `500đ`; có `1` quà Voucher (`150đ`) và `1` quà Physical (`100đ`) | `RedeemAsync` Voucher (`qty=1`) & Physical (`qty=2` + địa chỉ) | Voucher trả mã `ECO-...` (`Redeemed`), Physical ở `Pending`, trừ đúng `350đ` & tồn kho | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | `U-14`, `BR-GAM-04` |
+| **UTC015** | `UTC015_GiftService_RedeemAsync_WhenInsufficientBalanceOrOutOfStock_ShouldThrowProperMsgCode` | User có `20đ`; quà A giá `200đ` tồn `5`; quà B hết hàng tồn `0` | `RedeemAsync(expensive)` & `RedeemAsync(emptyStock)` | Ném `MSG-GAM-03` (giữ nguyên tồn kho `5`) và `MSG-GAM-04` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | `BR-GAM-03`, `BR-GAM-04` |
+| **UTC016** | `UTC016_GiftService_ImportVouchersAndFulfillCancel_ShouldIncreaseStockAndRefundPoints` | Có quà Voucher & Physical; User đã đổi `120đ` Physical | `ImportVouchersAsync` (`3` mã duy nhất + `1` trùng) & `FulfillAsync("Cancel")` | Nhập `3` mã mới (`StockQuantity=4`); hủy đơn trả `Status="Cancelled"`, hoàn `120đ` & tồn kho `4` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | `S-10` Import & Refund |
+| **UTC017** | `UTC017_GiftService_ExpireVouchersAsync_ShouldExpireOnlyVouchersPastExpiresAt` | `1` Voucher hết hạn `1 giây trước`, `1` Voucher còn hạn `24 giờ` | `ExpireVouchersAsync()` | Cập nhật đúng `1` voucher quá hạn sang `Expired`, giữ nguyên voucher còn hạn | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Biên hạn dùng `ExpiresAt` |
+| **UTC018** | `UTC018_VirtualTreeService_WaterAndUpgradeAsync_ShouldUpgradeLevelDebitPointsAndUnlockFacts` | User có `250đ`, cây cấp `1`; Staff đã tạo EcoFact cấp `2` | `WaterAndUpgradeAsync(user.Id)` | Trừ `100đ`, nâng lên cấp `2`, mở khóa EcoFact cấp `2` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | `U-15`, `BR-GAM-06` |
+| **UTC019** | `UTC019_VirtualTreeService_WhenDailyLimitReachedOrInsufficientPoints_ShouldThrowRuleException` | User nghèo `0đ`; User khác đã chăm đủ `3/3` lượt hôm nay | `WaterAndUpgradeAsync` cho từng user | Ném `MSG-GAM-03` (thiếu điểm) và `MSG-GEN-01` (vượt giới hạn ngày) | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Bảo vệ giới hạn chăm cây |
+| **UTC020** | `UTC020_EcoFactService_DeleteAsync_ShouldSoftDeactivateIfUnlockedAndHardDeleteOtherwise` | Đã có User đạt cây cấp `2` (chưa ai đạt cấp `4`) | `DeleteAsync` trên Fact cấp `2` và Fact cấp `4` | Fact cấp `2` chuyển `INACTIVE` (giữ lịch sử mở khóa); Fact cấp `4` xóa cứng | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | `S-09`, `BR-GAM-06` |
+| **UTC021** | `UTC021_GamificationConfigService_WhenRemovingLevelWithActiveEcoFact_ShouldThrowBRGam06` | Có `EcoFact ACTIVE` gắn `UnlockTreeLevel = 4` | `UpdateAsync` cắt `TreeLevels` xuống chỉ còn `2` cấp | Ném `BusinessRuleException ("BR-GAM-06", "MSG-AUTH-02")` bảo vệ cấp đang có Fact | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | `A-07` khóa xóa cấp đang dùng |
+| **UTC022** | `UTC022_GamificationValidators_AndCheckinFormula_ShouldValidatePayloadsCorrectly` | Khởi tạo 4 Validators & `GamSettings` | Input hợp lệ vs sai cho Gift, EcoFact, Config nhảy cóc cấp `1->3`, Cycle & Streak `20` ngày | Validator chặn toàn bộ input sai, formula kẹp trần `5 + min(19*2, 10) = 15đ` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | FluentValidation & Formula |

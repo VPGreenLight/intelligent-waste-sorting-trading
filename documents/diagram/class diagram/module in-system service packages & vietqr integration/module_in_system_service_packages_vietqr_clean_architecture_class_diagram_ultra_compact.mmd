@@ -1,0 +1,236 @@
+classDiagram
+    direction TB
+
+    namespace Presentation_WebApi {
+        class ServicePaymentController {
+            -IPaymentService _paymentService
+            +CreateServicePayment(CreateServicePaymentRequest) Task~ActionResult~
+            +GetOrderStatus(string orderCode) Task~ActionResult~
+            +GetAllOrders(string? status, int page, int size) Task~ActionResult~
+            +CancelPendingOrder(string orderCode) Task~ActionResult~
+            +ReceivePaymentWebhook(VietQrWebhookPayload) Task~ActionResult~
+            +SimulateTransfer(string orderCode, SimulateTransferRequest) Task~ActionResult~
+        }
+
+        class ServicePackagesController {
+            -IServicePackageService _packageService
+            +GetAvailablePackages(string? targetRole) Task~ActionResult~
+            +GetMySubscriptions() Task~ActionResult~
+            +GetAllServicePackages(string?, string?, bool?) Task~ActionResult~
+            +CreateServicePackage(UpsertServicePackageRequest) Task~ActionResult~
+            +UpdateServicePackage(Guid, UpsertServicePackageRequest) Task~ActionResult~
+            +TogglePackageStatus(Guid, ToggleServicePackageStatusRequest) Task~ActionResult~
+        }
+
+        class AdminReconciliationController {
+            -IAdminReconciliationService _reconciliationService
+            +GetPaymentLedger(ReconciliationLedgerQuery) Task~ActionResult~
+            +ResolvePaymentAnomaly(string, ResolvePaymentAnomalyRequest) Task~ActionResult~
+            +ExportReconciliationReport(ReconciliationExportQuery) Task~IActionResult~
+        }
+    }
+
+    namespace Application_Layer {
+        class IPaymentService {
+            <<interface>>
+            +CreateOrderAsync(Guid, CreateServicePaymentRequest) Task~PayInOrderDto~
+            +GetOrderForUserAsync(string, Guid, UserRole) Task~PayInOrderDto~
+            +GetUserOrdersAsync(Guid, string?, int, int) Task~PagedResult~
+            +CancelPendingOrderAsync(string, Guid) Task~bool~
+            +HandleWebhookAsync(VietQrWebhookPayload, string?, string?) Task~WebhookResponseDto~
+            +SimulateTransferAsync(string, SimulateTransferRequest) Task~WebhookResponseDto~
+        }
+
+        class IServicePackageService {
+            <<interface>>
+            +GetAvailablePackagesAsync(Guid, UserRole, string?) Task~IReadOnlyList~
+            +GetMySubscriptionsAsync(Guid) Task~MySubscriptionsResponseDto~
+            +GetAllPackagesForAdminAsync(string?, string?, bool?) Task~IReadOnlyList~
+            +CreatePackageAsync(Guid, UpsertServicePackageRequest) Task~AdminServicePackageDto~
+            +UpdatePackageAsync(Guid, Guid, UpsertServicePackageRequest) Task~AdminServicePackageDto~
+            +TogglePackageStatusAsync(Guid, Guid, ToggleServicePackageStatusRequest) Task~AdminServicePackageDto~
+        }
+
+        class ISubscriptionEntitlementService {
+            <<interface>>
+            +GetUserEntitlementsAsync(Guid userId) Task~UserEntitlementSummaryDto~
+            +GetBatchEntitlementsAsync(IEnumerable~Guid~) Task~IReadOnlyDictionary~
+            +InvalidateUserEntitlements(Guid userId) void
+        }
+
+        class IAdminReconciliationService {
+            <<interface>>
+            +GetPaymentLedgerAsync(ReconciliationLedgerQuery) Task~ReconciliationLedgerResponseDto~
+            +ResolvePaymentAnomalyAsync(Guid, string, ResolvePaymentAnomalyRequest) Task~ReconciliationLedgerItemDto~
+            +ExportReconciliationReportAsync(Guid, ReconciliationExportQuery) Task~ExportedReportFileResult~
+        }
+
+        class UpsertServicePackageRequestValidator {
+            +Validate(UpsertServicePackageRequest) ValidationResult
+        }
+
+        class ResolvePaymentAnomalyRequestValidator {
+            +Validate(ResolvePaymentAnomalyRequest) ValidationResult
+        }
+
+        class UserEntitlementSummaryDto {
+            +string CurrentTier
+            +bool IsAdFree
+            +bool HasEcoPlusBadge
+            +bool HasVerifiedBlueBadge
+            +bool IsFeaturedMapMarker
+            +decimal DailyPointMultiplier
+            +int MapPriorityBoost
+        }
+    }
+
+    namespace Domain_Layer {
+        class ServicePackage {
+            +Guid Id
+            +string PackageCode
+            +string PackageName
+            +ServiceTargetRole TargetRole
+            +bool IsDefaultFree
+            +bool RequiresVerifiedKyb
+            +decimal PriceVnd
+            +int DurationDays
+            +string FeaturesJson
+            +bool IsActive
+            +int DisplayOrder
+        }
+
+        class ServiceOrder {
+            +Guid Id
+            +Guid UserId
+            +Guid PackageId
+            +string PackageCodeSnapshot
+            +int DurationDaysSnapshot
+            +string FeaturesSnapshot
+            +string OrderCode
+            +decimal ExpectedAmountVnd
+            +decimal? PaidAmountVnd
+            +string QrCodeUrl
+            +string QrPayload
+            +ServiceOrderStatus OrderStatus
+            +ServicePaymentStatus PaymentStatus
+            +ReconciliationStatus ReconciliationStatus
+            +PaymentAnomalyType AnomalyType
+            +DateTime QrExpiresAt
+            +DateTime? PaidAt
+        }
+
+        class UserSubscription {
+            +Guid Id
+            +Guid UserId
+            +Guid PackageId
+            +Guid SourceOrderId
+            +string PackageCode
+            +DateTime StartsAt
+            +DateTime ExpiresAt
+            +SubscriptionStatus Status
+            +string FeaturesSnapshot
+        }
+
+        class PaymentWebhookLog {
+            +Guid Id
+            +string WebhookCode
+            +string IdempotencyKey
+            +Guid? MatchedOrderId
+            +string ParsedOrderCode
+            +decimal ReceivedAmountVnd
+            +string BankReference
+            +bool SignatureValid
+            +string ProcessingResult
+            +PaymentAnomalyType AnomalyType
+            +DateTime ReceivedAt
+            +DateTime? ResolvedAt
+        }
+
+        class CanonicalServicePackages {
+            <<static>>
+            +Guid BasicId
+            +Guid PremiumId
+            +Guid ProId
+            +string BasicCode
+            +string PremiumCode
+            +string ProCode
+        }
+    }
+
+    namespace Infrastructure_Persistence {
+        class PaymentService {
+            -ApplicationDbContext _dbContext
+            -IPayOsService _payOsService
+            -ISubscriptionEntitlementService _entitlementService
+            -IAuditLogService _auditLogService
+            +VerifyWebhookSignature(VietQrWebhookPayload, string?, string?) bool
+            +BuildDynamicVietQrImageUrl(...) string
+            +FindMatchingOrderAsync(...) Task~ServiceOrder~
+            +SweepOrderExpiryIfNeededAsync(ServiceOrder) Task
+        }
+
+        class ServicePackageService {
+            -ApplicationDbContext _dbContext
+            -ISubscriptionEntitlementService _entitlementService
+            -IAuditLogService _auditLogService
+            -EvaluateEligibility(ServicePackage, UserRole, RecyclerProfile?) tuple
+        }
+
+        class SubscriptionEntitlementService {
+            -ApplicationDbContext _dbContext
+            -IMemoryCache _cache
+            +GetUserEntitlementsAsync(Guid) Task~UserEntitlementSummaryDto~
+            +GetBatchEntitlementsAsync(IEnumerable~Guid~) Task~IReadOnlyDictionary~
+            +InvalidateUserEntitlements(Guid) void
+        }
+
+        class AdminReconciliationService {
+            -ApplicationDbContext _dbContext
+            -ISubscriptionEntitlementService _entitlementService
+            -IAuditLogService _auditLogService
+            -ResolveOrphanWebhookAsync(...) Task~ReconciliationLedgerItemDto~
+            -LoadUnifiedRecordsAsync(...) Task~tuple~
+        }
+
+        class ServicePackageHelpers {
+            <<static>>
+            +ParseFeatures(string?) ServicePackageFeaturesDto
+            +AggregateEntitlements(IEnumerable~UserSubscription~) UserEntitlementSummaryDto
+            +EnsureCanonicalPackagesExistAsync(ApplicationDbContext) Task
+            +ActivateSubscriptionForOrderAsync(ApplicationDbContext, ServiceOrder, DateTime) Task~UserSubscription~
+        }
+
+        class GeoMatchingService {
+            -ISubscriptionEntitlementService? _entitlementService
+            -EnrichPartnerEntitlementsAsync(List~CollectionPartnerDto~) Task
+        }
+    }
+
+    ServicePaymentController --> IPaymentService : delegates
+    ServicePackagesController --> IServicePackageService : delegates
+    AdminReconciliationController --> IAdminReconciliationService : delegates
+
+    PaymentService ..|> IPaymentService : implements
+    ServicePackageService ..|> IServicePackageService : implements
+    SubscriptionEntitlementService ..|> ISubscriptionEntitlementService : implements
+    AdminReconciliationService ..|> IAdminReconciliationService : implements
+
+    PaymentService --> ISubscriptionEntitlementService : invalidates cache
+    ServicePackageService --> ISubscriptionEntitlementService : reads & invalidates
+    AdminReconciliationService --> ISubscriptionEntitlementService : invalidates on resolve
+    GeoMatchingService --> ISubscriptionEntitlementService : enriches map pins
+
+    ServicePackagesController ..> UpsertServicePackageRequestValidator : validates
+    AdminReconciliationController ..> ResolvePaymentAnomalyRequestValidator : validates
+    SubscriptionEntitlementService ..> UserEntitlementSummaryDto : returns
+
+    PaymentService ..> ServicePackageHelpers : activates subscription
+    ServicePackageService ..> ServicePackageHelpers : seeds & parses
+    SubscriptionEntitlementService ..> ServicePackageHelpers : aggregates tier
+    AdminReconciliationService ..> ServicePackageHelpers : resolves & activates
+
+    ServicePackage "1" --> "0..*" ServiceOrder : purchased via
+    ServicePackage "1" --> "0..*" UserSubscription : grants
+    ServiceOrder "1" --> "0..1" UserSubscription : source order
+    ServiceOrder "1" --> "0..*" PaymentWebhookLog : correlated logs
+    CanonicalServicePackages ..> ServicePackage : seeds defaults

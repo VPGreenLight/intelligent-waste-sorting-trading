@@ -1,0 +1,59 @@
+sequenceDiagram
+    autonumber
+    actor Staff as Staff (REVIEW_AI)
+    participant UI as Staff AiReview (ecolink-web)
+    participant Ctrl as StaffAiFeedbackController
+    participant Guard as HasPermission(REVIEW_AI)
+    participant FbSvc as AiFeedbackService
+    participant DsSvc as AiDatasetCurationService
+    participant Audit as AuditLogService
+    participant DB as PostgreSQL 16
+
+    Note over Staff,DB: S-01 & S-02: Tham dinh bao cao sai va gan nhan Ground-Truth + Hop bao YOLO
+
+    Staff->>UI: Mo trang Anh AI nhan dien sai (/staff/ai-review)
+    UI->>Ctrl: GET /api/v1/staff/ai-feedback?status=Pending
+    Ctrl->>Guard: Kiem tra quyen REVIEW_AI (hoac Admin)
+    Ctrl->>FbSvc: GetStaffFeedbackQueueAsync(filter)
+    FbSvc->>DB: SELECT ai_feedback_logs + Dem Pending/Reviewed/Rejected
+    Ctrl-->>UI: 200 OK StaffAiFeedbackQueueDto
+
+    Staff->>UI: Xem chi tiet & chon quyet dinh tham dinh
+    UI->>Ctrl: PATCH /api/v1/staff/ai-feedback/{reportId}/review
+    Ctrl->>FbSvc: ReviewFeedbackAsync(staffId, reportId, request)
+
+    alt Bao cao khong con o trang thai Pending
+        FbSvc-->>Ctrl: ConflictException (409 Conflict)
+    else Decision == ApproveAndLabel
+        FbSvc->>DB: Check Active WasteCategory + Validate YOLO Boxes [0..1]
+        FbSvc->>DB: UPDATE ai_feedback_logs = Verified (Reviewed) + UPSERT ai_dataset_items = VerifiedLabeled
+        FbSvc->>Audit: Log REVIEW_AI_FEEDBACK
+        Ctrl-->>UI: 200 OK (MSG-CLS-07)
+    else Decision == ApproveToQueue
+        FbSvc->>DB: UPDATE ai_feedback_logs = Verified + UPSERT ai_dataset_items = Unlabeled
+        FbSvc->>Audit: Log REVIEW_AI_FEEDBACK
+        Ctrl-->>UI: 200 OK (MSG-CLS-07)
+    else Decision == Reject
+        FbSvc->>DB: Check reviewNote >= 5 ky tu -> UPDATE Rejected + Exclude linked auto item (BR-CLS-06)
+        FbSvc->>Audit: Log REVIEW_AI_FEEDBACK
+        Ctrl-->>UI: 200 OK (MSG-CLS-07)
+    end
+
+    Note over Staff,DB: S-02: Gan nhan chi tiet YOLO hoac Gan hang loat nguyen tu
+
+    Staff->>UI: Chon tab Kho gan nhan (S-02)
+    UI->>Ctrl: GET /api/v1/staff/ai-labeling/queue?unlabeledOnly=true
+    Ctrl-->>UI: 200 OK PagedResult (AiDatasetItemDto)
+
+    alt Gan nhan don le kem toa do YOLO
+        UI->>Ctrl: PUT /api/v1/staff/ai-labeling/{itemId}
+        Ctrl->>DsSvc: AssignGroundTruthLabelAsync(staffId, itemId, req)
+        DsSvc->>DB: UPDATE VerifiedLabeled + yolo_annotations_json + ASSIGN_GROUND_TRUTH_LABEL
+        Ctrl-->>UI: 200 OK (MSG-CLS-07)
+    else Gan hang loat nguyen tu (1..200 anh)
+        UI->>Ctrl: POST /api/v1/staff/ai-labeling/batch-assign (itemIds, groundTruthLabel)
+        Ctrl->>DsSvc: BatchAssignLabelsAsync(staffId, req)
+        DsSvc->>DB: BeginTransaction -> Verify tat ca itemIds -> Rollback neu thieu (404)
+        DsSvc->>DB: UPDATE tat ca -> VerifiedLabeled + Commit + BATCH_ASSIGN_AI_LABELS
+        Ctrl-->>UI: 200 OK (MSG-CLS-07)
+    end

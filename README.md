@@ -113,7 +113,9 @@ c:\Projects\EcoLink\
     │   ├── Ecolink.Application/              # DTOs, Service Interfaces, Validators FluentValidation
     │   ├── Ecolink.Infrastructure/           # EF Core DbContext, Configurations, PostGIS, Cloudflare R2
     │   │   └── Data/Migrations/              # 100% EF Core Migrations đã áp dụng vào CSDL
-    │   └── Ecolink.WebApi/                   # 15 API Controllers, SignalR Hub, Middlewares, Program.cs
+    │   ├── Ecolink.WebApi/                   # 15 API Controllers, SignalR Hub, Middlewares, Program.cs
+    │   ├── Ecolink.UnitTests/                # 168 Unit Tests cho 8 Core Modules (xUnit, Moq, EF InMemory)
+    │   └── EcoLink.ApiTests/                 # 236 API Integration Tests cho 8 Core Modules (415 kịch bản)
     │
     ├── models/                               # Trọng số mô hình AI đã train (YOLOv8n best.pt, MobileNet...)
     ├── data/                                 # Quy tắc rác thông minh (rules.json) và tập ảnh mẫu
@@ -124,11 +126,11 @@ c:\Projects\EcoLink\
     │   │   ├── 00_api_inventory_and_endpoint_statistics.md  # Bảng thống kê & danh mục 86 API toàn hệ thống
     │   │   ├── 00_api_overview_and_response_contract.md      # Quy chuẩn ApiResponse<T>, JWT & MSG-* Codes
     │   │   └── 01_module_authentication_api.md ...           # Tài liệu chi tiết từng module
+    │   ├── test document/                    # Tài liệu đặc tả kiểm thử Unit Test (5.1) & Integration Test (5.2)
     │   ├── guideline/                        # Clean Architecture, DB snake_case, PostGIS, Git Workflow
     │   └── log/                              # Báo cáo sự cố kỹ thuật runtime (Incident Bug Reports)
     │       └── log document/                 # Tài liệu log lỗi chi tiết (INC-01, INC-02, INC-03)
     │
-    ├── automation test/                      # Bộ kiểm thử tự động Unit Tests & Integration Tests
     ├── scripts/                              # Các kịch bản tự động hóa hỗ trợ phát triển
     │   └── scan_api_inventory.ps1            # Script PowerShell quét đối chiếu 86 API endpoints
     │
@@ -268,11 +270,14 @@ powershell -ExecutionPolicy Bypass -File scripts/scan_api_inventory.ps1
 
 ## 🧪 KIỂM THỬ TỰ ĐỘNG (TESTING & QUALITY ASSURANCE)
 
-Dự án trang bị đầy đủ bộ kiểm thử Unit Tests và Integration Tests tại thư mục [`automation test/`](automation%20test/):
+Dự án trang bị đầy đủ cả **Unit Tests** ([`src/Ecolink.Backend/Ecolink.UnitTests/`](src/Ecolink.Backend/Ecolink.UnitTests/)) và **API Integration Tests** ([`src/Ecolink.Backend/EcoLink.ApiTests/`](src/Ecolink.Backend/EcoLink.ApiTests/)):
 
 ```powershell
-# Chạy toàn bộ Unit Tests trong solution
-dotnet test "automation test/Ecolink.UnitTests.csproj" --logger "console;verbosity=detailed"
+# 1. Chạy 168 Unit Tests độc lập trong bộ nhớ (8 Core Modules)
+dotnet test "src/Ecolink.Backend/Ecolink.UnitTests/Ecolink.UnitTests.csproj" --logger "console;verbosity=normal"
+
+# 2. Chạy 236 API Integration Tests (415 kịch bản tích hợp End-to-End)
+dotnet test "src/Ecolink.Backend/EcoLink.ApiTests/EcoLink.ApiTests.csproj" --logger "console;verbosity=normal"
 ```
 
 * **Phạm vi kiểm thử:**

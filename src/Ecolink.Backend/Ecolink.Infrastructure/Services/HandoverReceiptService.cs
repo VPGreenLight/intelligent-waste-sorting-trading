@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Text.Json;
+using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
+using Ecolink.Application.Events;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
@@ -42,14 +44,22 @@ public class HandoverReceiptService : IHandoverReceiptService
 
     private readonly ApplicationDbContext _db;
     private readonly IGamificationService _gamification;
+    private readonly IPointsService? _points;
     private readonly ILogger<HandoverReceiptService> _logger;
+    private readonly IEventBus? _eventBus;
 
-    public HandoverReceiptService(ApplicationDbContext db, IGamificationService gamification,
-        ILogger<HandoverReceiptService> logger)
+    public HandoverReceiptService(
+        ApplicationDbContext db,
+        IGamificationService gamification,
+        ILogger<HandoverReceiptService> logger,
+        IPointsService? points = null,
+        IEventBus? eventBus = null)
     {
         _db = db;
         _gamification = gamification;
         _logger = logger;
+        _points = points;
+        _eventBus = eventBus;
     }
 
     // ============================================================
@@ -126,6 +136,14 @@ public class HandoverReceiptService : IHandoverReceiptService
             $"Cơ sở thu gom đã phát hành biên nhận #{receipt.ReceiptCode}: Tổng khối lượng cân thực tế {receipt.TotalWeightKg:0.##} kg • Tổng thành tiền {receipt.TotalAmountCash:N0} VNĐ. Đang chờ người dân xác nhận.",
             ct);
 
+        await PublishNotificationSafeAsync(
+            entity.UserId,
+            "Đã có biên nhận thu gom",
+            $"Biên nhận #{receipt.ReceiptCode} ({receipt.TotalWeightKg:0.##} kg • {receipt.TotalAmountCash:N0} VNĐ) đã được lập, vui lòng kiểm tra và xác nhận.",
+            "RECEIPT_ISSUED",
+            receipt.Id,
+            ct);
+
         return await LoadDtoAsync(requestId, Viewer.Recycler, ct);
     }
 
@@ -138,7 +156,10 @@ public class HandoverReceiptService : IHandoverReceiptService
     }
 
     public Task<TransactionHistoryDto> GetRecyclerHistoryAsync(Guid recyclerId, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default) =>
-        HistoryAsync(recyclerId, Viewer.Recycler, from, to, page, pageSize, ct);
+        GetRecyclerHistoryAsync(recyclerId, from, to, page, pageSize, null, ct);
+
+    public Task<TransactionHistoryDto> GetRecyclerHistoryAsync(Guid recyclerId, DateTime? from, DateTime? to, int page, int pageSize, string? search, CancellationToken ct = default) =>
+        HistoryAsync(recyclerId, Viewer.Recycler, from, to, page, pageSize, search, ct);
 
     // ============================================================
     // Người dân: U-09, U-12
@@ -212,6 +233,41 @@ public class HandoverReceiptService : IHandoverReceiptService
         entity.Status = HandoverStatus.Disputed;
         entity.CancelReason = reason;
         entity.UpdatedAt = now;
+
+        // Tự động hợp nhất luồng Dispute biên nhận sang hàng đợi S-05 (U-09 -> U-11 -> S-05)
+        var hasActiveComplaint = await _db.TransactionComplaints
+            .AnyAsync(c => c.RequestId == requestId &&
+                           (c.Status == ComplaintStatus.Open || c.Status == ComplaintStatus.Investigating), ct);
+
+        if (!hasActiveComplaint)
+        {
+            var dateTag = now.AddHours(7).ToString("yyyyMMdd", CultureInfo.InvariantCulture);
+            var evidenceJson = JsonSerializer.Serialize(
+                (request.EvidencePhotoUrls ?? new List<string>())
+                    .Where(u => !string.IsNullOrWhiteSpace(u))
+                    .Select(u => u.Trim())
+                    .Take(5)
+                    .ToList(),
+                JsonOptions);
+
+            _db.TransactionComplaints.Add(new TransactionComplaint
+            {
+                Id = Guid.NewGuid(),
+                ComplaintCode = $"CMP-{dateTag}-{Random.Shared.Next(1000, 9999)}",
+                RequestId = entity.Id,
+                ReceiptId = receipt.Id,
+                ComplainantId = userId,
+                ComplainantRole = "Citizen",
+                RespondentId = entity.RecyclerId,
+                Category = ComplaintCategory.ScaleDiscrepancy,
+                Description = reason,
+                EvidenceUrlsJson = evidenceJson,
+                Status = ComplaintStatus.Open,
+                CreatedAt = now,
+                CreatedBy = userId.ToString()
+            });
+        }
+
         await _db.SaveChangesAsync(ct);
 
         var evidenceNote = request.EvidencePhotoUrls is { Count: > 0 }
@@ -225,12 +281,23 @@ public class HandoverReceiptService : IHandoverReceiptService
             $"Người dân đã gửi khiếu nại biên nhận #{receipt.ReceiptCode}. Lý do: {reason}{evidenceNote}. Đơn chuyển sang trạng thái Disputed chờ Staff phân xử (BR-DSP-06).",
             ct);
 
+        await PublishNotificationSafeAsync(
+            entity.RecyclerId,
+            "Biên nhận thu gom đang bị khiếu nại",
+            $"Người dân đã gửi khiếu nại cho biên nhận #{receipt.ReceiptCode}. Lý do: {reason}",
+            "RECEIPT_DISPUTED",
+            receipt.Id,
+            ct);
+
         _logger.LogInformation("Người dùng {UserId} khiếu nại biên nhận {Code} của yêu cầu {RequestId}.", userId, receipt.ReceiptCode, requestId);
         return await LoadDtoAsync(requestId, Viewer.User, ct);
     }
 
     public Task<TransactionHistoryDto> GetUserHistoryAsync(Guid userId, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct = default) =>
-        HistoryAsync(userId, Viewer.User, from, to, page, pageSize, ct);
+        GetUserHistoryAsync(userId, from, to, page, pageSize, null, ct);
+
+    public Task<TransactionHistoryDto> GetUserHistoryAsync(Guid userId, DateTime? from, DateTime? to, int page, int pageSize, string? search, CancellationToken ct = default) =>
+        HistoryAsync(userId, Viewer.User, from, to, page, pageSize, search, ct);
 
     // ============================================================
     // JOB-01
@@ -274,27 +341,45 @@ public class HandoverReceiptService : IHandoverReceiptService
         var now = DateTime.UtcNow;
         var points = CalculatePoints(receipt.TotalWeightKg);
 
-        await using var tx = await _db.Database.BeginTransactionAsync(ct);
+        if (_db.Database.IsRelational())
+        {
+            await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
-        // Cập nhật nguyên tử có điều kiện: nếu người dân và job cùng chạy, chỉ một bên thắng -> điểm chỉ cộng một lần
-        var changed = await _db.HandoverRequests
-            .Where(h => h.Id == requestId && h.Status == HandoverStatus.AwaitingConfirmation)
-            .ExecuteUpdateAsync(s => s
-                .SetProperty(h => h.Status, HandoverStatus.Completed)
-                .SetProperty(h => h.UpdatedAt, now), ct);
-        if (changed == 0) return null;
+            // Cập nhật nguyên tử có điều kiện: nếu người dân và job cùng chạy, chỉ một bên thắng -> điểm chỉ cộng một lần
+            var changed = await _db.HandoverRequests
+                .Where(h => h.Id == requestId && h.Status == HandoverStatus.AwaitingConfirmation)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(h => h.Status, HandoverStatus.Completed)
+                    .SetProperty(h => h.UpdatedAt, now), ct);
+            if (changed == 0) return null;
 
-        receipt.ConfirmedByUserAt = now;
-        receipt.PointsAwarded = points;
-        await _db.SaveChangesAsync(ct);
-        await tx.CommitAsync(ct);
+            receipt.ConfirmedByUserAt = now;
+            receipt.PointsAwarded = points;
+            await _db.SaveChangesAsync(ct);
+            await tx.CommitAsync(ct);
+        }
+        else
+        {
+            var reqEntity = await _db.HandoverRequests
+                .FirstOrDefaultAsync(h => h.Id == requestId && h.Status == HandoverStatus.AwaitingConfirmation, ct);
+            if (reqEntity == null) return null;
 
-        // BR-GAM-01: cộng điểm cho cả người dân và Recycler. Điểm gốc đã lưu ở points_awarded;
-        // GamificationService hiện là bộ nhớ tạm nên lỗi ở đây không được làm hỏng giao dịch.
+            reqEntity.Status = HandoverStatus.Completed;
+            reqEntity.UpdatedAt = now;
+            receipt.ConfirmedByUserAt = now;
+            receipt.PointsAwarded = points;
+            await _db.SaveChangesAsync(ct);
+        }
+
+        // BR-GAM-01: cộng điểm cho cả người dân và Recycler.
         try
         {
             await _gamification.AwardPointsForRecyclingAsync(receipt.UserId, receipt.TotalWeightKg, ct);
             await _gamification.AwardPointsForRecyclingAsync(receipt.RecyclerId, receipt.TotalWeightKg, ct);
+            if (_points != null)
+            {
+                await _points.AwardHandoverPointsAsync(receipt.Id, ct);
+            }
         }
         catch (Exception ex)
         {
@@ -303,7 +388,44 @@ public class HandoverReceiptService : IHandoverReceiptService
 
         await HandoverTradeSyncHelper.SyncReceiptCompletionAsync(_db, receipt, ct);
 
+        await PublishNotificationSafeAsync(
+            receipt.UserId,
+            "Giao dịch thu gom hoàn tất",
+            $"Giao dịch #{receipt.ReceiptCode} ({receipt.TotalWeightKg:0.##} kg) đã hoàn tất và cộng {receipt.PointsAwarded} điểm xanh.",
+            "RECEIPT_COMPLETED",
+            receipt.Id,
+            ct);
+
+        await PublishNotificationSafeAsync(
+            receipt.RecyclerId,
+            "Giao dịch thu gom đã được xác nhận",
+            $"Biên nhận #{receipt.ReceiptCode} ({receipt.TotalWeightKg:0.##} kg) đã hoàn tất.",
+            "RECEIPT_COMPLETED",
+            receipt.Id,
+            ct);
+
         return receipt;
+    }
+
+    private ValueTask PublishNotificationSafeAsync(
+        Guid recipientUserId,
+        string title,
+        string message,
+        string notificationType,
+        Guid referenceId,
+        CancellationToken ct)
+    {
+        if (_eventBus == null || recipientUserId == Guid.Empty) return ValueTask.CompletedTask;
+
+        return _eventBus.PublishAsync(
+            new SystemNotificationDispatchedEvent(
+                recipientUserId,
+                title,
+                message,
+                notificationType,
+                "HandoverReceipt",
+                referenceId),
+            ct);
     }
 
     private static long CalculatePoints(decimal weightKg) =>
@@ -319,12 +441,13 @@ public class HandoverReceiptService : IHandoverReceiptService
                           .Include(h => h.Items).ThenInclude(i => i.WasteCategory)
                           .FirstOrDefaultAsync(h => h.Id == requestId && h.RecyclerId == recyclerId, ct);
 
-        if (request == null)
+        if (request == null || request.Status is HandoverStatus.Pending or HandoverStatus.Negotiating)
         {
             var legacyTradeOrder = await _db.TradeOrders
                 .Include(o => o.Partner)
                 .FirstOrDefaultAsync(o => o.Id == requestId, ct);
-            if (legacyTradeOrder != null)
+            if (legacyTradeOrder != null &&
+                (request == null || legacyTradeOrder.Status is OrderStatus.Accepted or OrderStatus.Scheduled))
             {
                 await HandoverTradeSyncHelper.EnsureHandoverFromTradeOrderAsync(_db, legacyTradeOrder, ct);
                 request = await _db.HandoverRequests
@@ -355,6 +478,7 @@ public class HandoverReceiptService : IHandoverReceiptService
 
         var existingById = request.Items.ToDictionary(i => i.Id);
         var requestCategories = request.Items.Select(i => i.WasteCategoryId).ToHashSet();
+        var explicitRequestedItemIds = req.Items.Where(x => x.ItemId.HasValue).Select(x => x.ItemId!.Value).ToHashSet();
         var seenItems = new HashSet<Guid>();
         var seenExtras = new HashSet<Guid>();
         var raw = new List<(HandoverRequestItem? Item, Guid Category, decimal Weight)>();
@@ -375,6 +499,30 @@ public class HandoverReceiptService : IHandoverReceiptService
             }
             else
             {
+                HandoverRequestItem? matchedExisting = null;
+                if (it.WasteCategoryId.HasValue)
+                {
+                    matchedExisting = request.Items.FirstOrDefault(x =>
+                        x.WasteCategoryId == it.WasteCategoryId.Value &&
+                        !seenItems.Contains(x.Id) &&
+                        !explicitRequestedItemIds.Contains(x.Id));
+                }
+                else if (request.Items.Count == 1 && req.Items.Count == 1)
+                {
+                    var only = request.Items.First();
+                    if (!seenItems.Contains(only.Id) && !explicitRequestedItemIds.Contains(only.Id))
+                    {
+                        matchedExisting = only;
+                    }
+                }
+
+                if (matchedExisting != null)
+                {
+                    seenItems.Add(matchedExisting.Id);
+                    raw.Add((matchedExisting, matchedExisting.WasteCategoryId, w));
+                    continue;
+                }
+
                 if (!it.WasteCategoryId.HasValue)
                     throw new BusinessRuleException("BR-HND-05", "MSG-AUTH-02", "Dòng phát sinh cần chọn loại phế liệu.");
                 var cat = it.WasteCategoryId.Value;
@@ -528,7 +676,7 @@ public class HandoverReceiptService : IHandoverReceiptService
     // Lịch sử giao dịch (U-12)
     // ============================================================
     private async Task<TransactionHistoryDto> HistoryAsync(
-        Guid ownerId, Viewer viewer, DateTime? from, DateTime? to, int page, int pageSize, CancellationToken ct)
+        Guid ownerId, Viewer viewer, DateTime? from, DateTime? to, int page, int pageSize, string? search, CancellationToken ct)
     {
         page = Math.Max(1, page);
         pageSize = Math.Clamp(pageSize, 1, 50);
@@ -548,6 +696,33 @@ public class HandoverReceiptService : IHandoverReceiptService
             // "to" chỉ có ngày (00:00) -> gồm cả ngày đó
             var t = ToUtc(to.Value.TimeOfDay == TimeSpan.Zero ? to.Value.AddDays(1) : to.Value);
             query = query.Where(r => r.ConfirmedByUserAt < t);
+        }
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var kw = search.Trim();
+            if (_db.Database.IsRelational())
+            {
+                var p = GamErrors.Like(kw);
+                var matchedRequests = _db.HandoverRequests.Where(h => EF.Functions.ILike(h.RequestCode, p)).Select(h => h.Id);
+                var matchedRecyclers = _db.RecyclerProfiles.Where(rp => EF.Functions.ILike(rp.FacilityName, p)).Select(rp => rp.UserId);
+                var matchedUsers = _db.Users.Where(u => EF.Functions.ILike(u.FullName, p)).Select(u => u.Id);
+                query = query.Where(r =>
+                    EF.Functions.ILike(r.ReceiptCode, p) ||
+                    matchedRequests.Contains(r.RequestId) ||
+                    matchedRecyclers.Contains(r.RecyclerId) ||
+                    matchedUsers.Contains(r.UserId));
+            }
+            else
+            {
+                var matchedRequests = _db.HandoverRequests.Where(h => h.RequestCode.Contains(kw, StringComparison.OrdinalIgnoreCase)).Select(h => h.Id);
+                var matchedRecyclers = _db.RecyclerProfiles.Where(rp => rp.FacilityName.Contains(kw, StringComparison.OrdinalIgnoreCase)).Select(rp => rp.UserId);
+                var matchedUsers = _db.Users.Where(u => u.FullName.Contains(kw, StringComparison.OrdinalIgnoreCase)).Select(u => u.Id);
+                query = query.Where(r =>
+                    r.ReceiptCode.Contains(kw, StringComparison.OrdinalIgnoreCase) ||
+                    matchedRequests.Contains(r.RequestId) ||
+                    matchedRecyclers.Contains(r.RecyclerId) ||
+                    matchedUsers.Contains(r.UserId));
+            }
         }
 
         var total = await query.CountAsync(ct);
@@ -644,9 +819,27 @@ public class HandoverReceiptService : IHandoverReceiptService
         catch (JsonException) { return new List<string> { json }; }
     }
 
+    /// <summary>
+    /// Mã biên nhận lấy số từ sequence PostgreSQL (nextval là nguyên tử) nên hai yêu cầu đồng thời
+    /// không bao giờ nhận cùng một số, và việc xóa bản ghi cũng không làm số bị dùng lại.
+    /// </summary>
     private async Task<string> GenerateCodeAsync(CancellationToken ct)
     {
-        var prefix = $"RCP-{DateTime.UtcNow.AddHours(7).ToString("yyyy", CultureInfo.InvariantCulture)}-";
+        var year = DateTime.UtcNow.AddHours(7).ToString("yyyy", CultureInfo.InvariantCulture);
+        var prefix = $"RCP-{year}-";
+        if (_db.Database.IsRelational())
+        {
+            while (true)
+            {
+                var n = await _db.Database
+                    .SqlQuery<long>($"SELECT nextval('seq_handover_receipt_code') AS \"Value\"")
+                    .SingleAsync(ct);
+                var candidate = $"{prefix}{n:D4}";
+                if (!await _db.HandoverReceipts.AnyAsync(r => r.ReceiptCode == candidate, ct))
+                    return candidate;
+            }
+        }
+
         var count = await _db.HandoverReceipts.CountAsync(r => r.ReceiptCode.StartsWith(prefix), ct);
         return $"{prefix}{count + 1:D4}";
     }

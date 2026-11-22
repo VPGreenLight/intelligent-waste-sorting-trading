@@ -223,4 +223,8 @@ public class UserInfoDto
     public int CurrentGreenPoints { get; set; }
     public int TreeLevel { get; set; }
     public decimal TotalRecycledKg { get; set; }
+    public string CurrentTier { get; set; } = "Basic";
+    public bool IsAdFree { get; set; }
+    public bool HasVerifiedBadge { get; set; }
+    public bool IsFeaturedMapMarker { get; set; }
 }

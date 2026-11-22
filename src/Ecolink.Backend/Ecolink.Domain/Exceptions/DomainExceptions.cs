@@ -39,3 +39,19 @@ public class ForbiddenAccessException : Exception
         MessageCode = messageCode;
     }
 }
+
+/// <summary>
+/// Ngoại lệ xung đột trạng thái hoặc trùng lặp dữ liệu (Conflict Exception -> HTTP 409)
+/// </summary>
+public class ConflictException : Exception
+{
+    public string RuleCode { get; }
+    public string MessageCode { get; }
+
+    public ConflictException(string ruleCode, string messageCode, string message)
+        : base(message)
+    {
+        RuleCode = ruleCode;
+        MessageCode = messageCode;
+    }
+}

@@ -37,6 +37,12 @@ public class RecyclerProfile : BaseAuditableEntity
     /// <summary>Lịch hoạt động cố định theo tuần, lưu dạng JSON (xem ScheduleDayDto).</summary>
     public string? WeeklyScheduleJson { get; set; }
 
+    /// <summary>Điểm đánh giá sao trung bình tính sẵn O(1) cho GeoMatchingService (U-10, BR-RVW-03).</summary>
+    public decimal AverageRating { get; set; } = 0m;
+
+    /// <summary>Tổng số lượt đánh giá hợp lệ (không tính bài Hidden/Deleted).</summary>
+    public int TotalReviews { get; set; } = 0;
+
     /// <summary>Bảng giá thu mua phế liệu của cơ sở (R-01).</summary>
     public ICollection<RecyclerPrice> Prices { get; set; } = new List<RecyclerPrice>();
 }
@@ -55,6 +61,7 @@ public class StaffProfile : BaseAuditableEntity
     public string Status { get; set; } = "ACTIVE";
 
     public ICollection<StaffPermissionAssignment> Permissions { get; set; } = new List<StaffPermissionAssignment>();
+    public ICollection<StaffAttendance> Attendances { get; set; } = new List<StaffAttendance>();
 }
 
 /// <summary>

@@ -1,0 +1,61 @@
+sequenceDiagram
+    autonumber
+    actor Admin as Admin (Governance Role - A-01 & A-02)
+    participant Ctrl as AdminAnalyticsController
+    participant Svc as AdminAnalyticsService
+    participant Audit as AuditLogService
+    participant Helper as TabularReportExportHelper & PiiMaskingHelper
+    participant Interceptor as AuditLogImmutabilityInterceptor
+    participant AI as FastAPI AI Service
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Admin, DB: 1. Xem KPI điều hành & Biểu đồ phân tích từ dữ liệu xác thực (UC A-01 - BR-ADM-07)
+    Admin->>Ctrl: GET /api/v1/admin/analytics/kpi-summary?period=30d [JWT Admin]
+    Ctrl->>Svc: GetExecutiveKpiSummaryAsync(query, ct)
+    Svc->>DB: Query Users (Active), RecyclerProfiles (Verified), HandoverReceipts (Status == Completed)
+    DB-->>Svc: ActiveCitizens, VerifiedRecyclers, RecycledWeightKg, GrossTradeValueVnd
+    Svc->>DB: Query ServiceOrders (OrderStatus == Paid) & Operational Backlog
+    DB-->>Svc: VietQrServiceRevenueVnd + Pending Queues
+    Svc->>AI: GET /api/stats (Timeout 2s)
+    alt AI Vision Service Online
+        AI-->>Svc: { total_scans, ood_count, accuracy }
+    else AI Vision Service Offline
+        Svc-->>Svc: Fallback calculate from AIFeedbackLogs
+    end
+    Svc-->>Ctrl: ExecutiveKpiSummaryDto
+    Ctrl-->>Admin: 200 OK ApiResponse<ExecutiveKpiSummaryDto> (MSG-GEN-01)
+
+    Admin->>Ctrl: GET /api/v1/admin/analytics/charts?months=6
+    Ctrl->>Svc: GetAnalyticsChartsAsync(6, ct)
+    Svc->>DB: Aggregate Completed HandoverReceipts, HandoverRequestItems & AIFeedbackLogs
+    DB-->>Svc: MonthlyTrend, WasteCategoryBreakdown, AiQualityByGroup
+    Svc-->>Ctrl: AnalyticsChartsDto
+    Ctrl-->>Admin: 200 OK ApiResponse<AnalyticsChartsDto> (MSG-GEN-01)
+
+    Note over Admin, DB: 2. Trích xuất báo cáo CSV/XLSX che PII & tự động ghi Audit Log (UC A-02 - BR-ADM-05, BR-ADM-06)
+    Admin->>Ctrl: GET /api/v1/admin/reports/export?dataset=accounts&format=xlsx
+    Ctrl->>Svc: ExportSystemReportAsync(adminUserId, query, ct)
+    alt Định dạng không thuộc {csv, xlsx} hoặc dataset không hợp lệ
+        Svc-->>Ctrl: Throw BusinessRuleException("BR-ADM-06")
+        Ctrl-->>Admin: 400 Bad Request (MSG-GEN-01)
+    else Hợp lệ
+        Svc->>DB: Load dataset records in requested UTC date window
+        DB-->>Svc: Raw User / Handover / VietQR / Audit records
+        Svc->>Helper: MaskEmail() & MaskPhone() (BR-ADM-06) -> BuildUtf8BomCsv / BuildMinimalOpenXmlWorkbook
+        Helper-->>Svc: Anonymized CSV / XLSX byte[] + rowCount
+        Svc->>Audit: LogAsync("EXPORT_REPORT", "SystemReport", dataset, newValues={dataset, format, piiMasked=true})
+        Audit->>DB: Add AuditLog & SaveChangesAsync()
+        DB->>Interceptor: SavingChangesAsync() -> Verify Append-Only (No Update/Delete)
+        Interceptor-->>DB: Allow INSERT
+        Audit-->>Svc: Audit entry committed
+        Svc-->>Ctrl: ExportedReportFileResult
+        Ctrl-->>Admin: 200 OK FileContentResult + Header X-EcoLink-Message-Code: MSG-ADM-02
+    end
+
+    Note over Admin, DB: 3. Tra cứu Nhật ký kiểm toán bất biến chỉ đọc (UC A-02 - BR-ADM-05)
+    Admin->>Ctrl: GET /api/v1/admin/audit-logs?action=EXPORT_REPORT&pageNumber=1&pageSize=20
+    Ctrl->>Audit: GetAuditLogsAsync(filter, ct)
+    Audit->>DB: Query AuditLogs AsNoTracking().OrderByDescending(CreatedAt)
+    DB-->>Audit: PagedResult<AuditLogItemDto>
+    Audit-->>Ctrl: PagedResult<AuditLogItemDto>
+    Ctrl-->>Admin: 200 OK ApiResponse<PagedResult<AuditLogItemDto>> (MSG-GEN-01)

@@ -1,0 +1,76 @@
+sequenceDiagram
+    autonumber
+    actor Staff as Staff (Account Moderator - S-06 & S-07)
+    actor TargetUser as Target Citizen / Recycler
+    participant Guard as AccountStatusGuardMiddleware
+    participant Perm as PermissionAuthorizationHandler
+    participant Ctrl as StaffAccountsController
+    participant Val as LockOrUnlockAccountValidator / DeactivateAccountValidator
+    participant Svc as AccountGovernanceService
+    participant Cache as MemoryAuthStateCacheInvalidator
+    participant Audit as AuditLogService
+    participant Mail as IEmailService
+    participant DB as ApplicationDbContext (PostgreSQL)
+
+    Note over Staff, DB: 1. Nhân viên tra cứu danh sách & chi tiết tài khoản (UC S-06 - RBAC MANAGE_ACCOUNTS)
+    Staff->>Guard: Request GET /api/v1/staff/accounts [JWT Staff]
+    Guard->>DB: Load UserAuthSnapshot (check Active)
+    Guard-->>Perm: Next -> Check [HasPermission("MANAGE_ACCOUNTS")]
+    alt Staff không có quyền MANAGE_ACCOUNTS
+        Perm-->>Staff: 403 Forbidden (BR-ADM-02, MSG-ADM-04)
+    else Có quyền MANAGE_ACCOUNTS hoặc Admin
+        Perm->>Ctrl: Forward to StaffAccountsController
+        Ctrl->>Svc: GetAccountsAsync(filter, ct)
+        Svc->>DB: Query Users WHERE Role IN (User, Recycler) + HandoverRequests Completed count
+        DB-->>Svc: PagedResult<ManagedAccountSummaryDto>
+        Svc-->>Ctrl: PagedResult<ManagedAccountSummaryDto>
+        Ctrl-->>Staff: 200 OK ApiResponse (MSG-GEN-01)
+    end
+
+    Staff->>Ctrl: GET /api/v1/staff/accounts/{userId}
+    Ctrl->>Svc: GetAccountDetailAsync(userId, ct)
+    Svc->>DB: Load User, RecyclerProfile, EcoProfile, ActivityStats & 20 ModerationLogs
+    DB-->>Svc: ManagedAccountDetailDto
+    Ctrl-->>Staff: 200 OK ApiResponse<ManagedAccountDetailDto>
+
+    Note over Staff, TargetUser: 2. Tạm khóa tài khoản vi phạm & thu hồi phiên tức thời (UC S-07 - BR-ADM-03)
+    Staff->>Ctrl: PATCH /api/v1/staff/accounts/{userId}/lock { isLocked: true, reason }
+    Ctrl->>Val: ValidateAsync(request)
+    alt Reason rỗng hoặc < 10 ký tự
+        Val-->>Ctrl: IsValid = false
+        Ctrl-->>Staff: 400 Bad Request (MSG-GEN-01)
+    else Hợp lệ
+        Val-->>Ctrl: IsValid = true
+        Ctrl->>Svc: LockOrUnlockAccountAsync(actorId, targetUserId, request)
+        alt Target là Staff/Admin hoặc actorId == targetUserId
+            Svc-->>Ctrl: Throw ForbiddenAccessException("BR-ADM-03", "MSG-ADM-04")
+            Ctrl-->>Staff: 403 Forbidden (MSG-ADM-04)
+        else Target là Citizen hoặc Recycler
+            Svc->>DB: Set User.Status = Suspended, Increment WarningCount, Save ModerationReason
+            Svc->>DB: Revoke all active RefreshTokens (IsRevoked = true)
+            opt Target là Recycler
+                Svc->>DB: Set RecyclerProfile.ActiveStatus = Offline
+            end
+            Svc->>DB: Insert AccountModerationLog & SaveChangesAsync()
+            Svc->>Cache: InvalidateUserAuthState(targetUserId) [Remove auth_snapshot:{userId}]
+            Svc->>Audit: LogAsync("LOCK_ACCOUNT", "User", targetUserId, reason)
+            Svc->>Mail: TryNotifyAccountStatusChangedAsync(user, reason)
+            Svc-->>Ctrl: ManagedAccountSummaryDto
+            Ctrl-->>Staff: 200 OK ApiResponse (MSG-ADM-03)
+        end
+    end
+
+    Note over TargetUser, DB: Tài khoản vừa bị khóa gửi request bằng JWT Access Token cũ vẫn còn hạn
+    TargetUser->>Guard: GET /api/v1/auth/me [Old valid JWT]
+    Guard->>DB: Cache missed -> Reload UserAuthSnapshot -> Status == Suspended
+    Guard-->>TargetUser: 403 Forbidden (BR-AUTH-05, MSG-AUTH-04)
+
+    Note over Staff, DB: 3. Vô hiệu hóa mềm bảo toàn biên nhận lịch sử (UC S-07 - BR-ADM-04)
+    Staff->>Ctrl: DELETE /api/v1/staff/accounts/{userId} { reason }
+    Ctrl->>Val: DeactivateAccountValidator.ValidateAsync(request)
+    Ctrl->>Svc: DeactivateAccountAsync(actorId, targetUserId, request)
+    Svc->>DB: Soft-Deactivate User.Status = Deactivated (Giữ nguyên User & HandoverReceipts FK)
+    Svc->>DB: Revoke RefreshTokens, Set Recycler Offline, Insert AccountModerationLog
+    Svc->>Cache: InvalidateUserAuthState(targetUserId)
+    Svc->>Audit: LogAsync("DEACTIVATE_ACCOUNT", "User", targetUserId, newValues={preservedCompletedDeals})
+    Ctrl-->>Staff: 200 OK ApiResponse (MSG-ADM-03)

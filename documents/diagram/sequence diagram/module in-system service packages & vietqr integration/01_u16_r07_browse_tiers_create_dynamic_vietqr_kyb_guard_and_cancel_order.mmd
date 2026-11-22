@@ -1,0 +1,59 @@
+sequenceDiagram
+    autonumber
+    actor User as Citizen / Recycler
+    participant UI as EcoLink Web UI
+    participant PkgCtrl as ServicePackagesController
+    participant PayCtrl as ServicePaymentController
+    participant PkgSvc as ServicePackageService
+    participant PaySvc as PaymentService
+    participant PayOs as PayOS / VietQR NAPAS
+    participant DB as PostgreSQL (EF Core)
+
+    Note over User,DB: U-16 & R-07: Xem danh muc goi, KIEM TRA DIEU KIEN KYB, tao VietQR dong 15p & Huy don cho
+
+    User->>UI: Mo trang nang cap goi (User Payout / Recycler Upgrades)
+    UI->>PkgCtrl: GET /api/v1/service-packages
+    PkgCtrl->>PkgSvc: GetAvailablePackagesAsync(userId, currentRole)
+    PkgSvc->>DB: EnsureCanonicalPackagesExistAsync() & Query ServicePackages(IsActive)
+    PkgSvc->>DB: Query UserSubscriptions(Active) & RecyclerProfiles(VerificationStatus)
+    PkgSvc->>PkgSvc: EvaluateEligibility(pkg, currentRole, recyclerProfile)
+    PkgCtrl-->>UI: 200 OK (BASIC 0d, PREMIUM 59k/30d, PRO 1tr/365d + isEligible)
+
+    User->>UI: Chon goi PREMIUM hoac PRO -> Nhan Thanh toan VietQR
+    UI->>PayCtrl: POST /api/v1/service-payments/create (packageCode)
+    PayCtrl->>PaySvc: CreateOrderAsync(userId, request)
+    PaySvc->>DB: Load User & RecyclerProfile + Target ServicePackage
+
+    alt Package IsDefaultFree (BASIC) or Inactive
+        PaySvc-->>PayCtrl: BusinessRuleException (BR-PAY-03)
+        PayCtrl-->>UI: 400 BadRequest (MSG-PAY-03)
+    else TargetRole mismatch or PRO without Verified KYB
+        PaySvc-->>PayCtrl: ForbiddenException / BusinessRuleException (BR-PAY-03)
+        PayCtrl-->>UI: 403 Forbidden (Yeu cau ho so KYB Verified)
+    else Hop le (PREMIUM 59k hoac PRO 1tr)
+        PaySvc->>PaySvc: Lay gia goc tu DB (bo qua amount tu Client), dat QrExpiresAt = now + 15m
+        PaySvc->>PayOs: CreatePaymentLinkAsync(payOsCode, priceVnd, content)
+        alt PayOS Configured & Thanh cong
+            PayOs-->>PaySvc: qrCode (EMVCo), checkoutUrl
+        else PayOS chua cau hinh / Fallback NAPAS 24/7
+            PaySvc->>PaySvc: BuildEmvCoQrPayload() + BuildDynamicVietQrImageUrl()
+        end
+        PaySvc->>DB: INSERT ServiceOrders (Status=Pending, Reconciliation=PendingMatch)
+        PayCtrl-->>UI: 200 OK ApiResponse (MSG-PAY-01, orderCode, qrCodeUrl, expiresAt)
+    end
+
+    UI-->>User: Hien thi QR dong + Dong ho dem nguoc 15 phut & Polling GET orders/{orderCode}
+
+    opt Nguoi dung doi y muon huy don Pending de chon goi khac
+        User->>UI: Nhan Huy don cho
+        UI->>PayCtrl: POST /api/v1/service-payments/orders/{orderCode}/cancel
+        PayCtrl->>PaySvc: CancelPendingOrderAsync(orderCode, userId)
+        PaySvc->>DB: Kiem tra OwnerId (403 IDOR) & Trang thai don
+        alt Don da Paid
+            PaySvc-->>PayCtrl: ConflictException (BR-PAY-01 / MSG-PAY-03)
+            PayCtrl-->>UI: 409 Conflict
+        else Don dang Pending / Expired
+            PaySvc->>DB: UPDATE OrderStatus = Cancelled
+            PayCtrl-->>UI: 200 OK (MSG-PAY-03, status = CANCELLED)
+        end
+    end

@@ -9,11 +9,15 @@ public interface IHandoverRequestService
     Task<HandoverRequestDto> CreateAsync(Guid userId, CreateHandoverRequest request, CancellationToken ct = default);
     Task<HandoverRequestDto> UpdateAsync(Guid userId, Guid requestId, UpdateHandoverRequest request, CancellationToken ct = default);
     Task<HandoverRequestDto> CancelByUserAsync(Guid userId, Guid requestId, string reason, CancellationToken ct = default);
-    Task<HandoverPagedResult<HandoverRequestDto>> GetUserRequestsAsync(Guid userId, string? status, int page, int pageSize, CancellationToken ct = default);
+    Task<HandoverPagedResult<HandoverRequestDto>> GetUserRequestsAsync(Guid userId, string? status, int page, int pageSize, CancellationToken ct = default) =>
+        GetUserRequestsAsync(userId, status, page, pageSize, null, ct);
+    Task<HandoverPagedResult<HandoverRequestDto>> GetUserRequestsAsync(Guid userId, string? status, int page, int pageSize, string? search, CancellationToken ct = default);
     Task<HandoverRequestDto> GetUserRequestAsync(Guid userId, Guid requestId, CancellationToken ct = default);
 
     // Recycler
-    Task<HandoverPagedResult<HandoverRequestDto>> GetRecyclerRequestsAsync(Guid recyclerId, string? status, int page, int pageSize, CancellationToken ct = default);
+    Task<HandoverPagedResult<HandoverRequestDto>> GetRecyclerRequestsAsync(Guid recyclerId, string? status, int page, int pageSize, CancellationToken ct = default) =>
+        GetRecyclerRequestsAsync(recyclerId, status, page, pageSize, null, ct);
+    Task<HandoverPagedResult<HandoverRequestDto>> GetRecyclerRequestsAsync(Guid recyclerId, string? status, int page, int pageSize, string? search, CancellationToken ct = default);
     Task<HandoverRequestDto> GetRecyclerRequestAsync(Guid recyclerId, Guid requestId, CancellationToken ct = default);
     Task<HandoverRequestDto> AcceptAsync(Guid recyclerId, Guid requestId, string? note, CancellationToken ct = default);
     Task<HandoverRequestDto> RejectAsync(Guid recyclerId, Guid requestId, string reason, CancellationToken ct = default);

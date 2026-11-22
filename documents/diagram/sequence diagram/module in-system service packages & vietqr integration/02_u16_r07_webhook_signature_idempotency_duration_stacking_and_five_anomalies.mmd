@@ -1,0 +1,56 @@
+sequenceDiagram
+    autonumber
+    participant Bank as Bank / PayOS Webhook
+    participant PayCtrl as ServicePaymentController
+    participant PaySvc as PaymentService
+    participant Audit as AuditLogService
+    participant Helpers as ServicePackageHelpers
+    participant Cache as SubscriptionEntitlementService
+    participant DB as PostgreSQL (EF Core)
+
+    Note over Bank,DB: BR-PAY-02, BR-PAY-04 & BR-PAY-06: Xac thuc HMAC, Idempotency, Cong don goi & 5 Bat thuong
+
+    Bank->>PayCtrl: POST /api/v1/service-payments/webhook (payload + X-VietQr-Webhook-Secret)
+    PayCtrl->>PaySvc: HandleWebhookAsync(payload, rawBody, headerSecret)
+    PaySvc->>PaySvc: VerifyWebhookSignature(payload, rawBody, headerSecret)
+
+    alt Chu ky / Header Secret khong hop le
+        PaySvc->>DB: INSERT PaymentWebhookLog (ProcessingResult=InvalidSignature, SignatureValid=false)
+        PaySvc->>Audit: LogAsync(WEBHOOK_INVALID_SIGNATURE)
+        PaySvc-->>PayCtrl: BusinessRuleException (MSG-PAY-05)
+        PayCtrl-->>Bank: 400 BadRequest (MSG-PAY-05)
+    else Chu ky hop le
+        PaySvc->>PaySvc: FindMatchingOrderAsync(orderCode, gatewayOrderCode, description)
+        PaySvc->>PaySvc: ComputeSha256Hex(gatewaySource | refToken | resolvedOrderCode)
+        PaySvc->>DB: Check PaymentWebhookLogs.AnyAsync(IdempotencyKey == key)
+
+        alt IdempotencyKey da ton tai OR Order da Paid
+            PayCtrl-->>Bank: 200 OK (Status=ALREADY_PROCESSED, MSG-PAY-02)
+        else Don tim thay = null (Khong khop ma don)
+            PaySvc->>DB: INSERT PaymentWebhookLog (MatchedOrderId=null, Anomaly=UnmatchedReference)
+            PayCtrl-->>Bank: 200 OK (Status=ANOMALY_FLAGGED, Reconciliation=UnmatchedReference)
+        else Order Expired / Cancelled OR utcNow > QrExpiresAt
+            PaySvc->>DB: UPDATE Order (Status=Expired, Payment=Anomaly, Reconciliation=LateTransfer)
+            PaySvc->>DB: INSERT PaymentWebhookLog (ProcessingResult=LateTransfer)
+            PayCtrl-->>Bank: 200 OK (Status=ANOMALY_FLAGGED, Reconciliation=LateTransfer)
+        else ReceivedAmount < ExpectedAmount (Chuyen thieu tien)
+            PaySvc->>DB: UPDATE Order (Giu Pending, Payment=Anomaly, Reconciliation=Underpaid)
+            PaySvc->>DB: INSERT PaymentWebhookLog (ProcessingResult=Underpaid)
+            PayCtrl-->>Bank: 200 OK (Status=ANOMALY_FLAGGED, Reconciliation=Underpaid)
+        else ReceivedAmount >= ExpectedAmount trong han QR (Matched / Overpaid)
+            PaySvc->>DB: BeginTransactionAsync()
+            PaySvc->>DB: UPDATE Order (OrderStatus=Paid, Payment=Success, Matched or Overpaid)
+            PaySvc->>DB: INSERT PaymentWebhookLog (ProcessingResult=Matched or Overpaid)
+            PaySvc->>Helpers: ActivateSubscriptionForOrderAsync(db, order, utcNow)
+            Helpers->>DB: Check SourceOrderId idempotency in UserSubscriptions
+            alt Cung PackageCode (VD gia han PREMIUM)
+                Helpers->>Helpers: StartsAt = MAX(utcNow, latestSamePackageExpiry), cong don DurationDays
+            else Nang bac khac goi (VD PREMIUM -> PRO)
+                Helpers->>Helpers: StartsAt = utcNow (Kich hoat ngay), ExpiresAt = utcNow + DurationDays
+            end
+            Helpers->>DB: INSERT UserSubscription (FeaturesSnapshot)
+            PaySvc->>DB: CommitTransactionAsync()
+            PaySvc->>Cache: InvalidateUserEntitlements(userId)
+            PayCtrl-->>Bank: 200 OK (Status=PAID, MSG-PAY-02)
+        end
+    end

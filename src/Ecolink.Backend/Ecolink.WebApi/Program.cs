@@ -2,11 +2,14 @@ using System.Text;
 using Ecolink.Application;
 using Ecolink.Application.Common;
 using Ecolink.Application.Interfaces;
+using Ecolink.Domain.Constants;
 using Ecolink.Infrastructure;
 using Ecolink.WebApi.Hubs;
 using Ecolink.WebApi.Middlewares;
+using Ecolink.WebApi.Security;
 using Ecolink.WebApi.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -40,15 +43,21 @@ builder.Services.AddApplicationServices();
 // Thêm dịch vụ tầng Infrastructure (AI Client, Rule Engine, Geo Matching, Gamification, Auth, Negotiation Chat)
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
-// Đăng ký SignalR Real-Time Hub & Notifier cho Module In-App Real-Time Negotiation Chatbox (U-08 & R-05)
+// Đăng ký SignalR Real-Time Hub & Notifier cho Module Chatbox + System Notifications (STT 172)
 builder.Services.AddSignalR();
 builder.Services.AddScoped<INegotiationChatNotifier, SignalRNegotiationChatNotifier>();
+builder.Services.AddScoped<INotificationRealtimeNotifier, SignalRNotificationNotifier>();
+builder.Services.AddHostedService<Ecolink.WebApi.Services.EventBackgroundWorker>();
 
 // Lấy thông tin người dùng hiện tại (UserId/Role) từ JWT cho Controller và Audit Interceptor
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddHostedService<Ecolink.WebApi.Services.HandoverExpirationJob>(); // JOB-03
 builder.Services.AddHostedService<Ecolink.WebApi.Services.ReceiptAutoCompleteJob>(); // JOB-01
+
+
+//  Xử lý Voucher hết hạn .
+builder.Services.AddHostedService<Ecolink.WebApi.Services.VoucherExpirationJob>();
 
 // Cấu hình JWT Bearer Authentication & Authorization (Hỗ trợ cả REST Header và SignalR WebSocket access_token)
 var jwtSecret = builder.Configuration["JwtSettings:SecretKey"]
@@ -78,21 +87,41 @@ builder.Services.AddAuthentication(options =>
     };
 
     // Cho phép SignalR WebSocket truyền JWT qua query parameter ?access_token=...
+    // và tự động trích xuất JWT từ HttpOnly Cookie "accessToken" cho mọi request trình duyệt
     options.Events = new JwtBearerEvents
     {
         OnMessageReceived = context =>
         {
             var accessToken = context.Request.Query["access_token"];
             var path = context.HttpContext.Request.Path;
-            if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs/negotiation-chat"))
+            if (!string.IsNullOrEmpty(accessToken) &&
+                (path.StartsWithSegments("/hubs/negotiation-chat") || path.StartsWithSegments("/hubs/notifications")))
             {
                 context.Token = accessToken;
+                return Task.CompletedTask;
+            }
+
+            if (string.IsNullOrEmpty(context.Token) &&
+                string.IsNullOrEmpty(context.Request.Headers.Authorization) &&
+                context.Request.Cookies.TryGetValue("accessToken", out var cookieToken) &&
+                !string.IsNullOrWhiteSpace(cookieToken))
+            {
+                context.Token = cookieToken.Trim();
             }
             return Task.CompletedTask;
         }
     };
 });
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    foreach (var code in StaffPermissions.AllCodes)
+    {
+        options.AddPolicy(
+            $"{HasPermissionAttribute.PolicyPrefix}{code}",
+            policy => policy.Requirements.Add(new PermissionRequirement(code)));
+    }
+});
+builder.Services.AddScoped<IAuthorizationHandler, PermissionAuthorizationHandler>();
 
 // Cấu hình Swagger / OpenAPI Documentation
 builder.Services.AddEndpointsApiExplorer();
@@ -105,7 +134,7 @@ builder.Services.AddSwaggerGen(c =>
         Description = "Hệ thống Phân loại rác thông minh kết hợp Giao dịch thu gom & Đổi thưởng phế liệu EcoLink.\n\n" +
                       "- **Tài khoản Demo có sẵn:**\n" +
                       "  - Người dân: `citizen` / `citizen123`\n" +
-                      "  - Cơ sở thu gom: `collector` / `collector123`\n" +
+                      "  - Cơ sở thu gom (Recycler): `recycler` / `recycler123`\n" +
                       "  - Nhân viên vận hành: `staff` / `staff123`\n" +
                       "  - Quản trị viên: `admin` / `admin123`\n" +
                       "- **Hướng dẫn xác thực:** Đăng nhập tại `POST /api/v1/auth/login`, copy trường `token`, bấm nút **Authorize** ở góc trên bên phải, nhập `Bearer <token>` rồi bấm Authorize."
@@ -139,6 +168,7 @@ builder.Services.AddCors(options =>
         policy.SetIsOriginAllowed(_ => true)
               .AllowAnyMethod()
               .AllowAnyHeader()
+              .WithExposedHeaders("Content-Disposition", "X-EcoLink-Message-Code", "X-EcoLink-Row-Count", "X-EcoLink-Sample-Count")
               .AllowCredentials();
     });
 });
@@ -151,6 +181,7 @@ app.UseMiddleware<GlobalExceptionMiddleware>();
 app.UseCors("AllowAll");
 
 app.UseAuthentication();
+app.UseMiddleware<AccountStatusGuardMiddleware>();
 app.UseAuthorization();
 
 // Kích hoạt Swagger UI cho cả Local và Tunnel (ngrok)
@@ -173,5 +204,6 @@ app.MapGet("/health", () => Results.Ok(new
 
 app.MapControllers();
 app.MapHub<NegotiationChatHub>("/hubs/negotiation-chat");
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

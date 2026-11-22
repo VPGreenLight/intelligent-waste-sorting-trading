@@ -32,4 +32,11 @@ public class CurrentUserService : ICurrentUserService
     public string? Role => Principal?.FindFirstValue(ClaimTypes.Role);
 
     public bool IsAuthenticated => Principal?.Identity?.IsAuthenticated ?? false;
+
+    public string? IpAddress =>
+        _httpContextAccessor.HttpContext?.Request.Headers["X-Forwarded-For"].FirstOrDefault()
+        ?? _httpContextAccessor.HttpContext?.Connection.RemoteIpAddress?.ToString();
+
+    public string? UserAgent =>
+        _httpContextAccessor.HttpContext?.Request.Headers["User-Agent"].FirstOrDefault();
 }

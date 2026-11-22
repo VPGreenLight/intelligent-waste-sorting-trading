@@ -1,0 +1,299 @@
+classDiagram
+    direction TB
+
+    namespace Presentation_WebApi {
+        class GamificationController {
+            -IGamificationService _gamificationService
+            -ILeaderboardService _leaderboardService
+            -ICurrentUserService _currentUser
+            +GetMyProfile() Task~ActionResult~
+            +GetProfile(Guid userId) Task~ActionResult~
+            +GetLeaderboard(int top, string? period, Guid? cycleId) Task~ActionResult~
+        }
+
+        class UserGamificationController {
+            -ICheckinService _checkin
+            -IVirtualTreeService _tree
+            -ICurrentUserService _currentUser
+            +CheckinStatus() Task~ActionResult~
+            +CheckIn() Task~ActionResult~
+            +Tree() Task~ActionResult~
+            +Water() Task~ActionResult~
+            +Facts() Task~ActionResult~
+            +Fact(Guid id) Task~ActionResult~
+        }
+
+        class PointsAndRewardsController {
+            -IPointsService _points
+            -IGiftService _gifts
+            -ICurrentUserService _currentUser
+            +Wallet() Task~ActionResult~
+            +Transactions(...) Task~ActionResult~
+            +Gifts(string? type, string? sort, string? search) Task~ActionResult~
+            +Redeem(Guid id, RedeemGiftRequest?) Task~ActionResult~
+            +RedeemFromBody(CreateRedemptionRequest) Task~ActionResult~
+            +MyRedemptions(...) Task~ActionResult~
+        }
+
+        class StaffGamificationController {
+            -IGiftService _gifts
+            -IEcoFactService _facts
+            +Gifts(...) Task~ActionResult~
+            +CreateGift(SaveGiftRequest) Task~ActionResult~
+            +Restock(Guid id, RestockGiftRequest) Task~ActionResult~
+            +ImportVouchers(Guid id, ImportVouchersRequest) Task~ActionResult~
+            +GiftStatus(Guid id, SetStatusRequest) Task~ActionResult~
+            +Fulfill(Guid id, FulfillRedemptionRequest?) Task~ActionResult~
+            +CreateFact(SaveEcoFactRequest) Task~ActionResult~
+            +DeleteFact(Guid id) Task~ActionResult~
+        }
+
+        class AdminGamificationController {
+            -IGamificationConfigService _config
+            -ILeaderboardService _leaderboard
+            +Get() Task~ActionResult~
+            +Update(GamificationConfigDto) Task~ActionResult~
+            +Reset() Task~ActionResult~
+            +GetCycles() Task~ActionResult~
+            +CreateCycle(SaveLeaderboardCycleRequest) Task~ActionResult~
+            +ActivateCycle(Guid cycleId) Task~ActionResult~
+            +FinalizeCycle(Guid cycleId) Task~ActionResult~
+        }
+    }
+
+    namespace Application_Layer {
+        class IGamificationService {
+            <<interface>>
+            +GetUserProfileAsync(Guid userId) Task~EcoProfileDto~
+            +GetLeaderboardAsync(int top) Task~IEnumerable~
+        }
+
+        class IPointsService {
+            <<interface>>
+            +GetWalletAsync(Guid userId) Task~WalletDto~
+            +GetTransactionsAsync(...) Task~GamPagedResult~
+            +CreditAsync(...) Task~long~
+            +TryDebitAsync(...) Task~bool~
+            +AwardHandoverPointsAsync(Guid receiptId) Task~long~
+        }
+
+        class ICheckinService {
+            <<interface>>
+            +GetStatusAsync(Guid userId) Task~CheckinStatusDto~
+            +CheckInAsync(Guid userId) Task~CheckinResultDto~
+        }
+
+        class IGiftService {
+            <<interface>>
+            +ListStoreAsync(...) Task~List~
+            +RedeemAsync(Guid userId, Guid giftId, RedeemGiftRequest) Task~RedeemResultDto~
+            +ImportVouchersAsync(Guid giftId, ImportVouchersRequest) Task~ImportVouchersResultDto~
+            +FulfillAsync(Guid redemptionId, FulfillRedemptionRequest?) Task~RedemptionDto~
+            +ExpireVouchersAsync() Task~int~
+        }
+
+        class IVirtualTreeService {
+            <<interface>>
+            +GetAsync(Guid userId) Task~VirtualTreeDto~
+            +WaterAndUpgradeAsync(Guid userId) Task~WaterTreeResultDto~
+            +ListUnlockedFactsAsync(Guid userId) Task~List~
+        }
+
+        class IEcoFactService {
+            <<interface>>
+            +ListAsync(...) Task~GamPagedResult~
+            +CreateAsync(Guid staffId, SaveEcoFactRequest) Task~EcoFactDto~
+            +SetStatusAsync(Guid id, string status) Task~EcoFactDto~
+            +DeleteAsync(Guid id) Task
+        }
+
+        class IGamificationConfigService {
+            <<interface>>
+            +GetAsync() Task~GamificationConfigDto~
+            +GetSettingsAsync() Task~GamSettings~
+            +UpdateAsync(Guid adminId, GamificationConfigDto) Task~GamificationConfigDto~
+            +ResetToDefaultsAsync(Guid adminId) Task~GamificationConfigDto~
+        }
+
+        class ILeaderboardService {
+            <<interface>>
+            +GetCyclesAsync() Task~List~
+            +CreateCycleAsync(Guid adminId, SaveLeaderboardCycleRequest) Task~LeaderboardCycleDto~
+            +ActivateCycleAsync(Guid adminId, Guid cycleId) Task~LeaderboardCycleDto~
+            +FinalizeCycleAsync(Guid adminId, Guid cycleId) Task~LeaderboardCycleDto~
+            +GetLeaderboardViewAsync(...) Task~LeaderboardViewDto~
+        }
+
+        class GamificationValidators {
+            +SaveGiftRequestValidator
+            +RedeemGiftRequestValidator
+            +CreateRedemptionRequestValidator
+            +SaveEcoFactRequestValidator
+            +GamificationConfigDtoValidator
+            +SaveLeaderboardCycleRequestValidator
+        }
+    }
+
+    namespace Infrastructure_Layer {
+        class PointsService {
+            -ApplicationDbContext _db
+            -IGamificationConfigService _config
+            -EnsureWalletAsync(Guid) Task~Guid~
+        }
+
+        class CheckinService {
+            -ApplicationDbContext _db
+            -IPointsService _points
+            -IGamificationConfigService _config
+            -CapRemainingAsync(Guid, GamSettings, DateOnly) Task~long~
+        }
+
+        class GiftService {
+            -ApplicationDbContext _db
+            -IPointsService _points
+            -IGamificationConfigService _config
+        }
+
+        class VirtualTreeService {
+            -ApplicationDbContext _db
+            -IPointsService _points
+            -IGamificationConfigService _config
+        }
+
+        class EcoFactService {
+            -ApplicationDbContext _db
+            -IGamificationConfigService _config
+        }
+
+        class GamificationConfigService {
+            -ApplicationDbContext _db
+            -IAuditLogService? _auditLog
+        }
+
+        class LeaderboardService {
+            -ApplicationDbContext _db
+            -IPointsService _points
+            -IAuditLogService? _auditLog
+        }
+
+        class GamificationService {
+            -ApplicationDbContext? _db
+            -ILeaderboardService? _leaderboard
+        }
+    }
+
+    namespace Domain_Entities {
+        class UserPointWallet {
+            +Guid Id
+            +Guid UserId
+            +long CurrentBalance
+            +long TotalEarned
+            +long TotalSpent
+        }
+
+        class PointTransaction {
+            +Guid Id
+            +Guid WalletId
+            +Guid UserId
+            +long Points
+            +PointActionType ActionType
+            +string? IdempotencyKey
+        }
+
+        class DailyCheckinLog {
+            +Guid Id
+            +Guid UserId
+            +DateOnly CheckinDate
+            +int StreakCount
+            +long PointsAwarded
+        }
+
+        class VirtualTreeProgress {
+            +Guid Id
+            +Guid UserId
+            +int TreeLevel
+            +long GrowthPoints
+            +int DailyWaterCount
+        }
+
+        class Gift {
+            +Guid Id
+            +string Name
+            +GiftType Type
+            +long PointsRequired
+            +int StockQuantity
+            +string Status
+        }
+
+        class GiftRedemption {
+            +Guid Id
+            +Guid UserId
+            +Guid GiftId
+            +string RedemptionCode
+            +string? VoucherCode
+            +RedemptionStatus Status
+        }
+
+        class EcoFact {
+            +Guid Id
+            +string Title
+            +string Content
+            +int UnlockTreeLevel
+            +string Status
+        }
+
+        class GamificationConfig {
+            +int Id
+            +long DailyNonTransactionCap
+            +long CheckinBasePoints
+            +int DailyTreeCareLimit
+            +int VoucherValidityDays
+        }
+
+        class PointRateRule {
+            +Guid Id
+            +string WasteCategoryCode
+            +long PointsPerKg
+        }
+
+        class TreeLevelThreshold {
+            +int Level
+            +string Title
+            +long RequiredPoints
+        }
+
+        class LeaderboardCycle {
+            +Guid Id
+            +string Name
+            +LeaderboardPeriodType PeriodType
+            +bool IsActive
+            +LeaderboardCycleStatus Status
+            +long Top1BonusPoints
+            +string? WinnersSnapshotJson
+        }
+    }
+
+    GamificationController --> IGamificationService : uses
+    GamificationController --> ILeaderboardService : uses
+    UserGamificationController --> ICheckinService : uses
+    UserGamificationController --> IVirtualTreeService : uses
+    PointsAndRewardsController --> IPointsService : uses
+    PointsAndRewardsController --> IGiftService : uses
+    StaffGamificationController --> IGiftService : manages
+    StaffGamificationController --> IEcoFactService : manages
+    AdminGamificationController --> IGamificationConfigService : configures
+    AdminGamificationController --> ILeaderboardService : configures
+
+    PointsService ..|> IPointsService : implements
+    CheckinService ..|> ICheckinService : implements
+    GiftService ..|> IGiftService : implements
+    VirtualTreeService ..|> IVirtualTreeService : implements
+    EcoFactService ..|> IEcoFactService : implements
+    GamificationConfigService ..|> IGamificationConfigService : implements
+    LeaderboardService ..|> ILeaderboardService : implements
+    GamificationService ..|> IGamificationService : implements
+
+    UserPointWallet "1" o-- "0..*" PointTransaction : records
+    Gift "1" <-- "0..*" GiftRedemption : redeemed in
+    TreeLevelThreshold "1" <-- "0..*" EcoFact : unlocks at level
+    GamificationValidators ..> Application_Layer : validates
