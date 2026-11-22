@@ -37,14 +37,16 @@ WASTE_RULES = {
 }
 
 def predict(image_path, model_path=None):
-    # Các vị trí có thể có của file best.pt
+    # Ưu tiên trọng số YOLO26 đã huấn luyện tại thư mục chuẩn src/Ecolink.AiService/models
     candidates = [
         model_path,
-        "runs/classify/runs/classify/waste_yolov8n/weights/best.pt",
-        "runs/classify/waste_yolov8n/weights/best.pt",
-        "models/best.pt",
-        "best.pt",
-        "yolov8n-cls.pt"
+        "runs/classify/waste_yolo26s_cls/weights/best.pt",
+        "src/Ecolink.AiService/models/yolo26s_waste_cls.pt",
+        "runs/classify/waste_yolo26n_cls/weights/best.pt",
+        "src/Ecolink.AiService/models/yolo26n_waste_cls.pt",
+        "src/Ecolink.AiService/models/best.pt",
+        "yolo26s-cls.pt",
+        "yolo26n-cls.pt",
     ]
     resolved_model = None
     for cand in candidates:
@@ -53,14 +55,15 @@ def predict(image_path, model_path=None):
             break
 
     if not resolved_model:
-        resolved_model = "yolov8n-cls.pt"
+        resolved_model = "yolo26s-cls.pt"
         print(f"[!] Không tìm thấy mô hình train, sử dụng mặc định '{resolved_model}'")
     else:
         print(f"[+] Sử dụng mô hình: {resolved_model}")
 
     print(f"[*] Đang nhận diện ảnh: {image_path}")
     model = YOLO(resolved_model)
-    results = model.predict(source=image_path, imgsz=224, verbose=False)
+    infer_imgsz = 256 if "yolo26s" in str(resolved_model) else 224
+    results = model.predict(source=image_path, imgsz=infer_imgsz, verbose=False)
 
     for result in results:
         top1_idx = result.probs.top1

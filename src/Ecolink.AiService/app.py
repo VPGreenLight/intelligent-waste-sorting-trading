@@ -11,7 +11,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 from PIL import Image
 
-from model_manager import ModelManager, DISPLAY_NAMES, CLASS_NAMES, DEVICE
+from model_manager import (
+    CLASS_NAMES,
+    DEFAULT_MODEL_ID,
+    DEVICE,
+    DISPLAY_NAMES,
+    ModelManager,
+)
 
 START_TIME = time.time()
 
@@ -19,19 +25,18 @@ START_TIME = time.time()
 app = FastAPI(
     title="EcoLink Dedicated AI Vision Service",
     description="""
-    Microservice Thị giác Máy tính Phân loại Rác thải Tái chế Đa Mô hình (EcoLink AI Vision Service).
-    
-    Hỗ trợ 4 mô hình học sâu & pipeline đa vật thể 2 giai đoạn:
-    - **YOLOv8 Waste Object Detection (SOTA)**: Khoanh vùng đa vật thể + ưu tiên tâm khung ngắm + hậu kiểm 2 giai đoạn.
-    - **YOLOv8 Nano**: Tốc độ siêu nhanh (~2.5ms), phù hợp cho video và camera thời gian thực.
-    - **MobileNetV3-Small**: Rất nhẹ (2.54M params, Val Acc 91.14%), tối ưu cho thiết bị di động/nhúng.
-    - **EfficientNet-B0**: Độ chính xác cao nhất (Val Acc 92.32%), xử lý ảnh rác biến dạng và góc chụp khó.
-    
+    Microservice Thị giác Máy tính Phân loại Rác thải Tái chế Hợp nhất YOLO26 (EcoLink AI Vision Service).
+
+    Kiến trúc trọng tâm **Unified YOLO26 Two-Stage Engine**:
+    - **YOLO26 Waste Object Detection (`yolo26_detect`)**: Định vị đa vật thể End-to-End NMS-Free & DFL-Free, kết hợp bộ dò COCO `yolo26n.pt` và ưu tiên tâm khung ngắm.
+    - **YOLO26 Nano Classification (`yolo26n_cls`)**: Phân loại tinh 6 nhóm rác chuẩn EcoLink bằng True Batch Inference siêu tốc.
+    - Hỗ trợ tương thích ngược alias (`yolov8_detect`, `yolov8n`) và hai mô hình benchmark Torchvision (`mobilenet_v3`, `efficientnet_b0`).
+
     Tích hợp cơ chế an toàn AI (Safe AI):
     - **Out-of-Distribution (OOD)**: Tự động phát hiện và cảnh báo ảnh có độ tin cậy < 60% hoặc không thuộc 6 nhóm rác.
     - **Knowledge Base Integration**: Tự động liên kết nhãn nhận diện với Quy tắc phân loại rác tĩnh (thùng rác, các bước xử lý).
     """,
-    version="2.1.0",
+    version="3.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -157,9 +162,9 @@ class AiScanResponse(BaseModel):
     success: bool = Field(True, description="Trạng thái thực thi yêu cầu")
     is_out_of_distribution: bool = Field(False, description="Cờ cảnh báo vật thể ngoại lai hoặc độ tin cậy thấp")
     confidence_threshold: float = Field(0.60, description="Ngưỡng tin cậy áp dụng")
-    model_used: str = Field(..., example="yolov8_detect", description="Mã định danh mô hình đã sử dụng")
-    model_name: str = Field(..., example="YOLOv8 Waste Object Detection (SOTA)", description="Tên mô hình")
-    model_family: str = Field(..., example="Two-Stage Object Detection & Ensemble", description="Kiến trúc mạng")
+    model_used: str = Field(..., example="yolo26_detect", description="Mã định danh mô hình đã sử dụng")
+    model_name: str = Field(..., example="YOLO26 Waste Object Detection (End-to-End NMS-Free)", description="Tên mô hình")
+    model_family: str = Field(..., example="YOLO26 End-to-End NMS-Free (Two-Stage)", description="Kiến trúc mạng")
     image_width: int = Field(0, example=1280, description="Chiều rộng pixel của ảnh gốc")
     image_height: int = Field(0, example=720, description="Chiều cao pixel của ảnh gốc")
     top_prediction: Optional[WastePrediction] = None
@@ -169,7 +174,7 @@ class AiScanResponse(BaseModel):
     category_summary: Dict[str, int] = Field(default={}, example={"plastic": 2}, description="Thống kê số lượng theo từng danh mục")
     detected_objects: List[DetectedObjectItem] = Field(default=[], description="Danh sách tọa độ Bounding Box và nhãn của từng vật thể")
     sorting_rule: Optional[Dict[str, Any]] = Field(None, description="Quy tắc phân loại và hướng dẫn xử lý tĩnh")
-    pipeline: Optional[str] = Field("multi_object_two_stage_ensemble", description="Phương thức suy luận")
+    pipeline: Optional[str] = Field("yolo26_unified_two_stage", description="Phương thức suy luận")
     cropped_bbox: Optional[List[float]] = Field(None, description="Tọa độ khung chữ nhật vật thể chính [x1, y1, x2, y2]")
     inference_time_ms: float = Field(..., example=18.4, description="Thời gian suy luận mô hình (mili-giây)")
 
@@ -263,12 +268,12 @@ def health_check():
     return {
         "status": "healthy",
         "service": "EcoLink.AiService",
-        "version": "2.1.0",
+        "version": "3.0.0",
         "uptime_seconds": round(time.time() - START_TIME, 1),
         "hardware_device": str(DEVICE),
         "cuda_available": DEVICE.type == "cuda",
         "models_available": [m["id"] for m in model_manager.list_available_models() if m["is_ready"]],
-        "default_model": "yolov8_detect",
+        "default_model": DEFAULT_MODEL_ID,
         "confidence_threshold": rules.get("confidence_threshold", DEFAULT_THRESHOLD)
     }
 
@@ -278,7 +283,7 @@ def list_models():
     """Lấy danh sách các mô hình AI có sẵn và trạng thái file trọng số"""
     return {
         "models": model_manager.list_available_models(),
-        "default_model": "yolov8_detect",
+        "default_model": DEFAULT_MODEL_ID,
         "supported_classes": CLASS_NAMES,
         "classes_count": len(CLASS_NAMES)
     }
@@ -296,20 +301,22 @@ def get_model_details(model_id: str):
 @app.post("/api/v1/classify", response_model=AiScanResponse, tags=["3. Waste Classification"])
 async def classify_waste_image(
     file: UploadFile = File(..., description="Tập tin hình ảnh rác cần phân loại (jpg, png, webp)"),
-    model: str = Form("yolov8_detect", description="Mô hình AI: yolov8_detect (Khuyên dùng - Object Detection), yolov8n, mobilenet_v3, efficientnet_b0"),
+    model: str = Form(DEFAULT_MODEL_ID, description="Mô hình AI: yolo26_detect (Mặc định - YOLO26 End-to-End + YOLO26s-cls), yolo26s_cls (Độ chính xác cao 256px), yolo26n_cls (Siêu nhẹ 224px), hoặc alias cũ yolov8_detect / yolov8n"),
     use_detection_crop: bool = Form(True, description="Tự động khoanh vùng vật thể & lọc bỏ phông nền nhiễu trước khi phân loại (Two-Stage)"),
     confidence_threshold: Optional[float] = Form(None, description="Ngưỡng tin cậy OOD (Mặc định 0.60)")
 ):
     """
-    Nhận diện và phân loại rác thải đa vật thể qua ảnh:
+    Nhận diện và phân loại rác thải đa vật thể qua ảnh trên kiến trúc YOLO26 Unified Two-Stage:
     - Tự động khoanh vùng Bounding Box từng món rác, ưu tiên vật thể gần tâm khung hình.
-    - Chạy hậu kiểm 2 giai đoạn trên từng vùng vật thể đã cắt.
+    - Chạy phân loại tinh YOLO26n-cls bằng True Batch Inference trên từng vùng đã cắt.
     - Kiểm tra ngoại lai (OOD): Nếu độ tin cậy < ngưỡng (0.60) thì đánh dấu `is_out_of_distribution = true`.
     """
-    if model not in model_manager.registry:
+    try:
+        resolved_model = model_manager.resolve_model_id(model)
+    except ValueError as ve:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Mô hình '{model}' không tồn tại. Danh sách mô hình hỗ trợ: {list(model_manager.registry.keys())}"
+            detail=str(ve)
         )
 
     if not file.content_type or not file.content_type.startswith("image/"):
@@ -338,7 +345,7 @@ async def classify_waste_image(
     threshold = confidence_threshold if confidence_threshold is not None else rules_data.get("confidence_threshold", DEFAULT_THRESHOLD)
 
     try:
-        pred_result = model_manager.predict(pil_image, model_id=model, use_detection_crop=use_detection_crop)
+        pred_result = model_manager.predict(pil_image, model_id=resolved_model, use_detection_crop=use_detection_crop)
     except ValueError as ve:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -347,7 +354,7 @@ async def classify_waste_image(
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Lỗi trong quá trình suy luận mô hình '{model}': {str(e)}"
+            detail=f"Lỗi trong quá trình suy luận mô hình '{resolved_model}': {str(e)}"
         )
 
     top_pred_data = pred_result.get("top_prediction")
@@ -364,7 +371,7 @@ async def classify_waste_image(
     top_label = top_pred.label if top_pred else "unknown"
     top_conf = top_pred.confidence if top_pred else 0.0
 
-    record_scan_stat(top_label, top_conf, is_ood, pred_result["inference_time_ms"], model)
+    record_scan_stat(top_label, top_conf, is_ood, pred_result["inference_time_ms"], resolved_model)
 
     predictions_dto = [WastePrediction(**p) for p in pred_result["predictions"]]
     all_probs_dto = [WastePrediction(**p) for p in pred_result["all_probabilities"]]
@@ -386,7 +393,7 @@ async def classify_waste_image(
         category_summary=pred_result.get("category_summary", {}),
         detected_objects=detected_objs_dto,
         sorting_rule=rule_info,
-        pipeline=pred_result.get("pipeline", "multi_object_two_stage_ensemble"),
+        pipeline=pred_result.get("pipeline", "yolo26_unified_two_stage"),
         cropped_bbox=pred_result.get("cropped_bbox"),
         inference_time_ms=pred_result["inference_time_ms"]
     )
@@ -430,17 +437,19 @@ async def detect_waste_objects(
 @app.post("/api/v1/classify/batch", response_model=BatchScanResponse, tags=["3. Waste Classification"])
 async def classify_waste_batch(
     files: List[UploadFile] = File(..., description="Danh sách các file ảnh cần phân loại"),
-    model: str = Form("yolov8n", description="Mô hình AI sử dụng"),
+    model: str = Form("yolo26n_cls", description="Mô hình AI sử dụng (mặc định yolo26n_cls)"),
     confidence_threshold: Optional[float] = Form(None, description="Ngưỡng tin cậy OOD")
 ):
     """Phân loại rác theo lô nhiều ảnh (Batch Classification) để kiểm thử hiệu năng và độ chính xác"""
     if not files:
         raise HTTPException(status_code=400, detail="Cần cung cấp ít nhất một file ảnh.")
 
-    if model not in model_manager.registry:
+    try:
+        resolved_model = model_manager.resolve_model_id(model)
+    except ValueError as ve:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Mô hình '{model}' không tồn tại. Danh sách mô hình hỗ trợ: {list(model_manager.registry.keys())}"
+            detail=str(ve)
         )
 
     rules_data = load_rules_data()
@@ -453,7 +462,7 @@ async def classify_waste_batch(
         try:
             content = await f.read()
             img = Image.open(io.BytesIO(content)).convert("RGB")
-            pred_data = model_manager.predict(img, model_id=model)
+            pred_data = model_manager.predict(img, model_id=resolved_model)
             top_p = pred_data.get("top_prediction")
             top_pred_dto = WastePrediction(**top_p) if top_p else None
             is_ood = top_pred_dto is None or top_pred_dto.confidence < threshold
@@ -480,7 +489,7 @@ async def classify_waste_batch(
     return BatchScanResponse(
         success=True,
         total_files=len(files),
-        model_used=model,
+        model_used=resolved_model,
         total_inference_time_ms=total_time_ms,
         avg_inference_time_ms=avg_time_ms,
         results=results

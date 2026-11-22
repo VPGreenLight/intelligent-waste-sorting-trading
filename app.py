@@ -15,7 +15,7 @@ import io
 from ultralytics import YOLO
 
 # Khởi tạo App
-app = FastAPI(title="Waste Classification Local AI Demo", version="1.0.0")
+app = FastAPI(title="Waste Classification Local AI Demo (YOLO26 Unified)", version="3.0.0")
 
 # CORS middleware
 app.add_middleware(
@@ -28,7 +28,7 @@ app.add_middleware(
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-MODELS_DIR = BASE_DIR / "models"
+MODELS_DIR = BASE_DIR / "src" / "Ecolink.AiService" / "models"
 STATIC_DIR = BASE_DIR / "static"
 RULES_FILE = DATA_DIR / "rules.json"
 FEEDBACK_FILE = DATA_DIR / "feedback.json"
@@ -102,7 +102,7 @@ def log_scan_stat(category: str, confidence: float, is_ood: bool):
 async def get_available_models():
     return {
         "models": model_manager.list_available_models(),
-        "default": "yolov8n"
+        "default": "yolo26_detect"
     }
 
 # API: Phân loại rác đa mô hình (Hỗ trợ upload ảnh hoặc gửi đường dẫn ảnh mẫu)
@@ -110,7 +110,7 @@ async def get_available_models():
 async def classify_waste(
     file: Optional[UploadFile] = File(None),
     sample_path: Optional[str] = Form(None),
-    model: str = Form("yolov8n")
+    model: str = Form("yolo26_detect")
 ):
     try:
         if file is not None:
@@ -124,27 +124,29 @@ async def classify_waste(
         else:
             raise HTTPException(status_code=400, detail="Cần cung cấp ảnh tải lên hoặc ảnh mẫu")
 
-        # Chạy suy luận qua ModelManager với model được chọn
+        # Chạy suy luận qua ModelManager với model YOLO26 (hỗ trợ alias cũ)
         pred_data = model_manager.predict(image, model_id=model)
         top1 = pred_data["top_prediction"]
         top1_name = top1["label"] if top1 else "trash"
-        confidence = top1["confidence"] if top1 else 0.0
+        raw_conf = float(top1["confidence"]) if top1 else 0.0
+        conf_ratio = raw_conf / 100.0 if raw_conf > 1.0 else raw_conf
+        conf_pct = round(conf_ratio * 100, 1)
 
         rules_data = load_rules()
         threshold = rules_data.get("confidence_threshold", 0.60)
-        is_ood = (confidence / 100.0) < threshold
+        is_ood = conf_ratio < threshold
 
         rule_info = rules_data.get("rules", {}).get(top1_name.lower(), {})
 
         # Ghi log thống kê
-        log_scan_stat(top1_name, confidence / 100.0, is_ood)
+        log_scan_stat(top1_name, conf_ratio, is_ood)
 
         return {
             "success": True,
             "prediction": {
                 "label": top1_name,
-                "confidence": confidence,
-                "confidence_ratio": confidence / 100.0,
+                "confidence": conf_pct,
+                "confidence_ratio": round(conf_ratio, 4),
                 "is_out_of_distribution": is_ood,
                 "threshold": round(threshold * 100, 1),
                 "model_used": pred_data["model_id"],

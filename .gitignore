@@ -13,13 +13,15 @@ __pycache__/
 # Training Outputs & Checkpoints
 runs/
 *.pt
-!models/best.pt
-!models/yolov8n.pt
-!models/yolov8n_waste_detect.pt
 !src/Ecolink.AiService/models/best.pt
-!src/Ecolink.AiService/models/yolov8n.pt
 !src/Ecolink.AiService/models/yolov8n_waste_detect.pt
+!src/Ecolink.AiService/models/yolo26n.pt
+!src/Ecolink.AiService/models/yolo26n_waste_cls.pt
+!src/Ecolink.AiService/models/yolo26n_waste_detect.pt
+!src/Ecolink.AiService/models/yolo26s_waste_cls.pt
 yolov8n-cls.pt
+yolo26n-cls.pt
+yolo26s-cls.pt
 
 # Raw Heavy Training Datasets (Only keep sample val for demo)
 data/dataset-resized/

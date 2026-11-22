@@ -311,15 +311,15 @@ public class AiClassificationUnitTests
     }
 
     [Fact]
-    public async Task UTC014_GetAllRulesAsync_DefaultInitialization_ReturnsAll6StandardCategories()
+    public async Task UTC014_GetAllRulesAsync_DefaultInitialization_ReturnsAll10StandardCategories()
     {
         var sut = CreateRuleEngine();
 
         var rules = (await sut.GetAllRulesAsync()).ToList();
 
-        rules.Should().HaveCount(6);
+        rules.Should().HaveCount(10);
         rules.Select(r => r.CategoryCode).Should().BeEquivalentTo(
-            new[] { "plastic", "paper", "glass", "metal", "cardboard", "trash" });
+            new[] { "plastic", "paper", "glass", "metal", "cardboard", "battery", "biological", "clothes", "shoes", "trash" });
     }
 
     [Fact]
@@ -335,14 +335,14 @@ public class AiClassificationUnitTests
 
         plastic.Should().BeNull();
         paper.Should().NotBeNull();
-        allRemaining.Should().HaveCount(5);
+        allRemaining.Should().HaveCount(9);
 
         // Khôi phục lại cache mặc định sau test
         await sut.InvalidateRuleCacheAsync(null);
     }
 
     [Fact]
-    public async Task UTC016_InvalidateRuleCacheAsync_NullCategory_ResetsAndReloadsAll6DefaultRules()
+    public async Task UTC016_InvalidateRuleCacheAsync_NullCategory_ResetsAndReloadsAll10DefaultRules()
     {
         var sut = CreateRuleEngine();
         await sut.InvalidateRuleCacheAsync("plastic");
@@ -351,7 +351,7 @@ public class AiClassificationUnitTests
         await sut.InvalidateRuleCacheAsync(null);
 
         var rules = (await sut.GetAllRulesAsync()).ToList();
-        rules.Should().HaveCount(6);
+        rules.Should().HaveCount(10);
         (await sut.GetSortingGuideAsync("plastic")).Should().NotBeNull();
         (await sut.GetSortingGuideAsync("metal")).Should().NotBeNull();
     }
@@ -918,5 +918,91 @@ public class AiClassificationUnitTests
         (await sut.GetAdminPoliciesAsync()).Any(x => x.Id == created.Id).Should().BeFalse();
         (await db.AuditLogs.AnyAsync(a => a.Action == "CREATE_PLATFORM_POLICY")).Should().BeTrue();
         (await db.AuditLogs.AnyAsync(a => a.Action == "DELETE_PLATFORM_POLICY")).Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UTC031_ClassifyWasteImageAsync_DefaultModelUsesYolo26Detect_AndRecordsHistoryModelUsed()
+    {
+        var payload = """
+        {
+          "success": true,
+          "is_out_of_distribution": false,
+          "model_used": "yolo26_detect",
+          "pipeline": "yolo26_unified_two_stage",
+          "inference_time_ms": 185.0,
+          "top_prediction": {
+            "label": "plastic",
+            "display_name": "Nhựa tái chế (Plastic)",
+            "confidence": 0.93
+          }
+        }
+        """;
+        var handler = MockHttpMessageHandler.FromJson(HttpStatusCode.OK, payload);
+        var sut = CreateAiClient(handler);
+        using var stream = new MemoryStream(new byte[] { 0x89, 0x50, 0x4E, 0x47, 1, 2, 3 });
+
+        var res = await sut.ClassifyWasteImageAsync(stream, "pet.png");
+
+        res.Success.Should().BeTrue();
+        res.ModelUsed.Should().Be("yolo26_detect");
+        handler.CapturedBodies.Should().ContainSingle()
+            .Which.Should().Contain("yolo26_detect");
+
+        using var db = TestDbContextFactory.Create();
+        var userId = Guid.NewGuid();
+        var feedbackSvc = new AiFeedbackService(
+            db,
+            sut,
+            Substitute.For<IFileStorageService>(),
+            new AuditLogService(db, CreateAdminUserMock(userId)),
+            NullLogger<AiFeedbackService>.Instance);
+
+        var (scanId, _) = await feedbackSvc.RecordScanHistoryAsync(
+            new byte[] { 10, 20, 30, 40 },
+            "pet.png",
+            "image/png",
+            userId,
+            new AiScanResultDto
+            {
+                Success = true,
+                ConfidenceThreshold = 0.60,
+                ModelUsed = null,
+                TopPrediction = new WastePredictionDto { Label = "plastic", Confidence = 0.91 }
+            });
+
+        var saved = await db.AiScanHistories.AsNoTracking().FirstAsync(x => x.Id == scanId);
+        saved.ModelUsed.Should().Be("yolo26_detect");
+    }
+
+    [Fact]
+    public async Task UTC032_ExpandedNonTradableCategories_HaveActiveRulesAndAreBlockedFromRecyclerPurchasing()
+    {
+        AiCategoryNormalizer.NormalizeCode("white-glass").Should().Be("glass");
+        AiCategoryNormalizer.NormalizeCode("green-glass").Should().Be("glass");
+        AiCategoryNormalizer.NormalizeCode("brown-glass").Should().Be("glass");
+        AiCategoryNormalizer.NormalizeCode("battery").Should().Be("battery");
+        AiCategoryNormalizer.NormalizeCode("biological").Should().Be("biological");
+        AiCategoryNormalizer.NormalizeCode("clothes").Should().Be("clothes");
+        AiCategoryNormalizer.NormalizeCode("shoes").Should().Be("shoes");
+
+        using var db = TestDbContextFactory.Create();
+        var adminId = Guid.NewGuid();
+        var auditSvc = new AuditLogService(db, CreateAdminUserMock(adminId));
+        var ruleEngine = new WasteRuleEngineService(NullLogger<WasteRuleEngineService>.Instance, db, auditSvc);
+        var recyclerSvc = new RecyclerManagementService(db, NullLogger<RecyclerManagementService>.Instance, auditSvc, ruleEngine);
+
+        var batteryGuide = await ruleEngine.GetSortingGuideAsync("battery");
+        batteryGuide.Should().NotBeNull();
+        batteryGuide!.HazardWarning.Should().NotBeNullOrWhiteSpace();
+
+        var tradableOnly = await recyclerSvc.GetWasteCategoriesAsync();
+        tradableOnly.Should().HaveCount(5);
+        tradableOnly.Select(c => c.Code).Should().BeEquivalentTo(new[] { "plastic", "paper", "glass", "metal", "cardboard" });
+        tradableOnly.Should().NotContain(c => c.Code == "battery" || c.Code == "biological" || c.Code == "clothes" || c.Code == "shoes" || c.Code == "trash");
+
+        var allIncludingNonTradable = await recyclerSvc.GetAllWasteCategoriesAsync(includeInactive: true, includeNonRecyclable: true);
+        allIncludingNonTradable.Should().HaveCount(10);
+        allIncludingNonTradable.Where(c => !c.IsRecyclable).Select(c => c.Code).Should().BeEquivalentTo(
+            new[] { "battery", "biological", "clothes", "shoes", "trash" });
     }
 }

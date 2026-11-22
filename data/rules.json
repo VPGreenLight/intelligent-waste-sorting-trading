@@ -107,6 +107,79 @@
       ],
       "eco_fact": "Phân loại đúng giúp giảm thiểu tới 70% lượng rác phải chôn lấp tại các bãi rác!",
       "examples": ["Giấy ăn đã qua sử dụng", "Bút bi hết mực", "Đồ nhựa dùng 1 lần dính dầu bẩn"]
+    },
+    "battery": {
+      "id": "battery",
+      "name_en": "Battery",
+      "name_vn": "Pin & Rác Nguy Hại",
+      "category_type": "Rác thải nguy hại (Hazardous)",
+      "bin_color_name": "Thùng Đỏ Nguy Hại / Điểm thu hồi Pin",
+      "bin_color_hex": "#E11D48",
+      "bin_badge_bg": "rgba(225, 29, 72, 0.15)",
+      "bin_badge_border": "rgba(225, 29, 72, 0.4)",
+      "icon": "🔋",
+      "instructions": [
+        "Dán băng keo cách điện kín hai đầu cực của pin đã qua sử dụng",
+        "Đựng trong hũ/lọ nhựa khô ráo, đậy nắp kín và tránh xa nguồn nhiệt",
+        "Mang tới điểm thu hồi pin tại siêu thị, chung cư hoặc UBND phường (đồng nát không thu mua)"
+      ],
+      "hazard_warning": "CẢNH BÁO NGUY HẠI: Tuyệt đối không vứt pin vào thùng rác sinh hoạt hoặc đốt vì nguy cơ cháy nổ và rò rỉ kim loại nặng (chì, thủy ngân, lithium).",
+      "eco_fact": "1 viên pin tiểu thải sai quy định có thể làm ô nhiễm tới 500 lít nước ngầm hoặc 1 m3 đất trong nhiều năm!",
+      "examples": ["Pin AA / AAA", "Pin cúc áo", "Pin sạc dự phòng / Lithium cũ"]
+    },
+    "biological": {
+      "id": "biological",
+      "name_en": "Biological",
+      "name_vn": "Rác Hữu Cơ & Thực Phẩm",
+      "category_type": "Rác hữu cơ dễ phân hủy (Organic)",
+      "bin_color_name": "Thùng Màu Xanh Lá",
+      "bin_color_hex": "#16A34A",
+      "bin_badge_bg": "rgba(22, 163, 74, 0.15)",
+      "bin_badge_border": "rgba(22, 163, 74, 0.4)",
+      "icon": "🥬",
+      "instructions": [
+        "Chắt bỏ nước canh/chất lỏng thừa trước khi bỏ túi để tránh rò rỉ mùi",
+        "Gỡ bỏ túi ni-lông, dây buộc nhựa và tăm tre lẫn trong thức ăn thừa",
+        "Bỏ thùng màu Xanh Lá hoặc ủ phân vi sinh compost tại nhà (đồng nát không thu mua)"
+      ],
+      "eco_fact": "Ủ phân từ rác hữu cơ hộ gia đình giúp giảm mạnh khí mê-tan phát sinh tại bãi chôn lấp và tạo đất sạch trồng cây!",
+      "examples": ["Vỏ rau củ, hoa quả", "Thức ăn thừa", "Bã cà phê, bã trà"]
+    },
+    "clothes": {
+      "id": "clothes",
+      "name_en": "Clothes",
+      "name_vn": "Vải Vóc & Quần Áo Cũ",
+      "category_type": "Đồ tái sử dụng cộng đồng (Textile)",
+      "bin_color_name": "Thùng Đồ Cũ / Điểm Quyên Góp",
+      "bin_color_hex": "#9333EA",
+      "bin_badge_bg": "rgba(147, 51, 234, 0.15)",
+      "bin_badge_border": "rgba(147, 51, 234, 0.4)",
+      "icon": "👕",
+      "instructions": [
+        "Giặt sạch và phơi khô đối với quần áo, chăn màn còn dùng tốt",
+        "Gửi tới tủ quần áo thiện nguyện hoặc điểm thu hồi thời trang tuần hoàn",
+        "Vải rách bẩn dính dầu mỡ bọc túi kín bỏ luồng xử lý riêng (không bán cân ký phế liệu)"
+      ],
+      "eco_fact": "Tái sử dụng 1 kg quần áo cũ giúp tiết kiệm hàng nghìn lít nước sản xuất sợi vải mới!",
+      "examples": ["Áo sơ mi, áo phông cũ", "Quần jean", "Khăn vải, chăn ga sạch"]
+    },
+    "shoes": {
+      "id": "shoes",
+      "name_en": "Shoes",
+      "name_vn": "Giày Dép Cũ",
+      "category_type": "Đồ tái sử dụng cộng đồng (Footwear)",
+      "bin_color_name": "Thùng Đồ Cũ / Điểm Quyên Góp",
+      "bin_color_hex": "#7C3AED",
+      "bin_badge_bg": "rgba(124, 58, 237, 0.15)",
+      "bin_badge_border": "rgba(124, 58, 237, 0.4)",
+      "icon": "👟",
+      "instructions": [
+        "Vệ sinh sơ bùn đất và buộc cố định gọn theo từng đôi",
+        "Tháo pin nếu là giày trẻ em có đèn LED phát sáng trước khi thải bỏ",
+        "Quyên góp nếu còn tốt hoặc bỏ điểm thu gom sinh hoạt (vựa đồng nát không thu mua)"
+      ],
+      "eco_fact": "Đế giày cao su và tổng hợp mất hàng chục năm để phân hủy tự nhiên — quyên góp giúp kéo dài vòng đời sản phẩm!",
+      "examples": ["Giày thể thao cũ", "Dép nhựa, sandal", "Giày da cũ"]
     }
   },
   "confidence_threshold": 0.60
