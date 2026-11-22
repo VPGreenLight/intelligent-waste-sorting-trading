@@ -84,7 +84,47 @@ public class WasteRuleEngineService : IWasteRuleEngineService
             "1. Buộc chặt miệng túi rác.\n2. Không đổ nước lỏng vào túi rác.",
             "Phân loại riêng khỏi các luồng phế liệu có thể tái chế để tránh nhiễm bẩn.",
             "Bỏ vào thùng rác màu Đen hoặc điểm tập kết rác sinh hoạt đô thị.",
-            "Không đốt rác tự phát gây ô nhiễm không khí.")
+            "Không đốt rác tự phát gây ô nhiễm không khí."),
+        new(
+            "battery",
+            "Pin & Rác nguy hại (Battery)",
+            "Đỏ Nguy Hại",
+            false,
+            "Hướng dẫn xử lý an toàn Pin & Rác thải nguy hại",
+            "1. Dán băng keo cách điện kín hai đầu cực của pin đã qua sử dụng.\n2. Cho vào lọ nhựa khô ráo, đậy kín nắp và để xa nguồn nhiệt.\n3. Không tháo rời vỏ pin hoặc làm biến dạng pin phồng.",
+            "Tách biệt hoàn toàn khỏi rác sinh hoạt và phế liệu tái chế thông thường.",
+            "Mang tới điểm thu hồi pin miễn phí tại siêu thị, UBND phường hoặc trạm thu gom rác nguy hại (các cơ sở đồng nát không thu mua loại rác này).",
+            "CẢNH BÁO NGUY HẠI: Tuyệt đối không vứt chung vào thùng rác sinh hoạt hoặc đốt vì nguy cơ cháy nổ xe ép rác và rò rỉ chì, thủy ngân, lithium gây độc nguồn nước."),
+        new(
+            "biological",
+            "Rác hữu cơ & Thực phẩm (Biological)",
+            "Xanh Lá",
+            false,
+            "Hướng dẫn phân loại Rác hữu cơ dễ phân hủy",
+            "1. Chắt bỏ nước canh, chất lỏng thừa trước khi bỏ túi.\n2. Gỡ bỏ tăm tre, túi ni-lông, dây buộc nhựa lẫn trong thức ăn thừa.",
+            "Phân tách vỏ rau củ quả, bã trà, bã cà phê, thức ăn thừa khỏi bao bì nhựa và kim loại.",
+            "Bỏ vào thùng rác màu Xanh Lá (rác hữu cơ) theo giờ thu gom địa phương hoặc ủ phân compost sinh học tại nhà (đồng nát không thu mua).",
+            "Không để tồn đọng lâu ngày trong nhà kín gây mùi hôi và phát sinh vi khuẩn."),
+        new(
+            "clothes",
+            "Vải vóc & Quần áo cũ (Clothes)",
+            "Tím Đồ Cũ",
+            false,
+            "Hướng dẫn xử lý Vải vóc & Quần áo cũ",
+            "1. Giặt sạch và phơi khô quần áo, chăn màn còn sử dụng được.\n2. Gấp gọn và phân loại riêng đồ lành lặn với giẻ rách dính dầu mỡ.",
+            "Tách riêng quần áo còn dùng tốt để tái sử dụng cộng đồng; vải vụn bẩn bỏ riêng vào túi kín.",
+            "Quyên góp tại tủ quần áo từ thiện, điểm thu hồi thời trang tuần hoàn hoặc bỏ đúng điểm tập kết (các vựa đồng nát thông thường không thu mua).",
+            "Không bỏ vải dính hóa chất, dung môi dễ cháy chung với giấy và bìa carton."),
+        new(
+            "shoes",
+            "Giày dép cũ (Shoes)",
+            "Tím Đồ Cũ",
+            false,
+            "Hướng dẫn xử lý Giày dép cũ",
+            "1. Vệ sinh sơ bộ bùn đất và buộc cố định theo từng đôi.\n2. Kiểm tra tháo pin nếu là giày trẻ em có đèn LED phát sáng.",
+            "Phân tách giày dép còn sử dụng tốt để tặng lại khỏi giày dép đã bong đế, mục hỏng.",
+            "Gửi tặng các chương trình thiện nguyện nếu còn tốt, hoặc bỏ vào thùng rác sinh hoạt/điểm thu gom đồ cũ (đồng nát không thu mua cân ký).",
+            "Giày bảo hộ dính hóa chất công nghiệp cần xử lý theo quy định chất thải đặc thù.")
     };
 
     private static readonly ConcurrentDictionary<string, WasteSortingGuideDto> _ruleCache = new(StringComparer.OrdinalIgnoreCase);

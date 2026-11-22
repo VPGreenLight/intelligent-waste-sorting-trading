@@ -21,7 +21,7 @@ public class AiVisionHttpClient : IAiVisionClient
         _aiServiceBaseUrl = configuration["AiService:BaseUrl"] ?? "http://localhost:8000";
     }
 
-    public async Task<AiScanResultDto> ClassifyWasteImageAsync(Stream imageStream, string fileName, string? model = "yolov8_detect", CancellationToken cancellationToken = default)
+    public async Task<AiScanResultDto> ClassifyWasteImageAsync(Stream imageStream, string fileName, string? model = "yolo26_detect", CancellationToken cancellationToken = default)
     {
         try
         {

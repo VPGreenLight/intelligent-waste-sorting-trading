@@ -14,11 +14,15 @@ public static class AiCategoryNormalizer
 {
     public static readonly string[] YoloClassOrder =
     {
+        "battery",
+        "biological",
         "cardboard",
+        "clothes",
         "glass",
         "metal",
         "paper",
         "plastic",
+        "shoes",
         "trash"
     };
 
@@ -54,14 +58,23 @@ public static class AiCategoryNormalizer
         ["white-glass"] = "glass",
         ["thuy_tinh"] = "glass",
 
-        ["trash"] = "trash",
-        ["organic"] = "trash",
-        ["biological"] = "trash",
-        ["battery"] = "trash",
-        ["clothes"] = "trash",
-        ["shoes"] = "trash",
-        ["ewaste"] = "trash",
-        ["ewaste_disposal"] = "trash"
+        ["battery"] = "battery",
+        ["pin"] = "battery",
+        ["ewaste"] = "battery",
+        ["ewaste_disposal"] = "battery",
+
+        ["biological"] = "biological",
+        ["organic"] = "biological",
+        ["huu_co"] = "biological",
+
+        ["clothes"] = "clothes",
+        ["textile"] = "clothes",
+        ["quan_ao"] = "clothes",
+
+        ["shoes"] = "shoes",
+        ["giay_dep"] = "shoes",
+
+        ["trash"] = "trash"
     };
 
     private static readonly (string Code, string Name, string BinColor, bool IsRecyclable)[] DefaultCategories =
@@ -71,6 +84,10 @@ public static class AiCategoryNormalizer
         ("glass", "Thủy tinh (Glass)", "Trắng", true),
         ("metal", "Kim loại & Vỏ lon (Metal)", "Xám Kim Loại", true),
         ("cardboard", "Bìa Carton (Cardboard)", "Nâu Vàng", true),
+        ("battery", "Pin & Rác nguy hại (Battery)", "Đỏ Nguy Hại", false),
+        ("biological", "Rác hữu cơ & Thực phẩm (Biological)", "Xanh Lá", false),
+        ("clothes", "Vải vóc & Quần áo cũ (Clothes)", "Tím Đồ Cũ", false),
+        ("shoes", "Giày dép cũ (Shoes)", "Tím Đồ Cũ", false),
         ("trash", "Rác thải thông thường / Không thể tái chế", "Đen", false)
     };
 

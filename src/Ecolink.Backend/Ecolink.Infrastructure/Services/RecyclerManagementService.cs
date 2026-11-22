@@ -26,14 +26,19 @@ public class RecyclerManagementService : IRecyclerManagementService
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly string[] DayLabels = { "CN", "T2", "T3", "T4", "T5", "T6", "T7" };
 
-    // Danh mục phế liệu chuẩn (khớp mã trong WasteRuleEngineService / AI Service)
-    private static readonly (string Code, string Name, string BinColor)[] DefaultCategories =
+    // Danh mục rác chuẩn (5 nhóm phế liệu thương mại IsRecyclable=true + 5 nhóm chỉ áp dụng Policy xử lý)
+    private static readonly (string Code, string Name, string BinColor, bool IsRecyclable)[] DefaultCategories =
     {
-        ("plastic", "Nhựa tái chế (Plastic)", "Cam"),
-        ("paper", "Giấy báo & Tài liệu (Paper)", "Xanh Dương"),
-        ("glass", "Thủy tinh (Glass)", "Trắng"),
-        ("metal", "Kim loại & Vỏ lon (Metal)", "Xám Kim Loại"),
-        ("cardboard", "Bìa Carton (Cardboard)", "Nâu Vàng")
+        ("plastic", "Nhựa tái chế (Plastic)", "Cam", true),
+        ("paper", "Giấy báo & Tài liệu (Paper)", "Xanh Dương", true),
+        ("glass", "Thủy tinh (Glass)", "Trắng", true),
+        ("metal", "Kim loại & Vỏ lon (Metal)", "Xám Kim Loại", true),
+        ("cardboard", "Bìa Carton (Cardboard)", "Nâu Vàng", true),
+        ("battery", "Pin & Rác nguy hại (Battery)", "Đỏ Nguy Hại", false),
+        ("biological", "Rác hữu cơ & Thực phẩm (Biological)", "Xanh Lá", false),
+        ("clothes", "Vải vóc & Quần áo cũ (Clothes)", "Tím Đồ Cũ", false),
+        ("shoes", "Giày dép cũ (Shoes)", "Tím Đồ Cũ", false),
+        ("trash", "Rác thải thông thường / Không thể tái chế", "Đen", false)
     };
 
     private readonly ApplicationDbContext _db;
@@ -62,7 +67,7 @@ public class RecyclerManagementService : IRecyclerManagementService
 
         return await _db.WasteCategories
             .AsNoTracking()
-            .Where(c => c.Code != NonRecyclableCode && c.Status == "Active")
+            .Where(c => c.IsRecyclable && c.Code != NonRecyclableCode && c.Status == "Active")
             .OrderBy(c => c.Name)
             .Select(c => new WasteCategoryDto
             {
@@ -101,7 +106,7 @@ public class RecyclerManagementService : IRecyclerManagementService
 
         if (!includeNonRecyclable)
         {
-            query = query.Where(c => c.Code != NonRecyclableCode);
+            query = query.Where(c => c.IsRecyclable && c.Code != NonRecyclableCode);
         }
 
         return await query
@@ -307,19 +312,19 @@ public class RecyclerManagementService : IRecyclerManagementService
         var missing = DefaultCategories.Where(d => !existingCodes.Contains(d.Code)).ToList();
         if (missing.Count > 0)
         {
-            foreach (var (code, name, bin) in missing)
+            foreach (var (code, name, bin, isRecyclable) in missing)
             {
                 _db.WasteCategories.Add(new WasteCategory
                 {
                     Code = code,
                     Name = name,
                     StandardBinColor = bin,
-                    IsRecyclable = true,
+                    IsRecyclable = isRecyclable,
                     Status = "Active"
                 });
             }
             await _db.SaveChangesAsync(ct);
-            _logger.LogInformation("Đã khởi tạo {Count} danh mục phế liệu chuẩn.", missing.Count);
+            _logger.LogInformation("Đã khởi tạo {Count} danh mục rác chuẩn.", missing.Count);
         }
     }
 
@@ -687,10 +692,10 @@ public class RecyclerManagementService : IRecyclerManagementService
 
     private static void EnsurePurchasable(WasteCategory category)
     {
-        if (string.Equals(category.Code, NonRecyclableCode, StringComparison.OrdinalIgnoreCase))
+        if (!category.IsRecyclable || string.Equals(category.Code, NonRecyclableCode, StringComparison.OrdinalIgnoreCase))
         {
             throw new BusinessRuleException("BR-MTH-03", "MSG-GEN-01",
-                "Rác thải thông thường không thể đưa vào danh sách phế liệu nhận mua.");
+                "Danh mục rác này chỉ hỗ trợ hướng dẫn xử lý, không thuộc nhóm phế liệu nhận thu mua.");
         }
     }
 

@@ -48,7 +48,7 @@ public class WasteScanController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ClassifyImage(
         IFormFile? file,
-        [FromForm] string? model = "yolov8_detect",
+        [FromForm] string? model = "yolo26_detect",
         CancellationToken ct = default)
     {
         if (file == null || file.Length == 0)
@@ -63,7 +63,19 @@ public class WasteScanController : ControllerBase
             return BadRequest(ApiResponse<object>.Fail("Tập tin tải lên phải là hình ảnh hợp lệ (.jpg, .jpeg, .png, .webp).", "MSG-CLS-05"));
         }
 
-        var validModels = new[] { "yolov8_detect", "mobilenet_v3", "efficientnet_b0", "yolov8n" };
+        var validModels = new[]
+        {
+            "yolo26_detect",
+            "yolo26s_cls",
+            "yolo26n_cls",
+            "yolo26s",
+            "yolo26n",
+            "yolo26",
+            "yolov8_detect",
+            "mobilenet_v3",
+            "efficientnet_b0",
+            "yolov8n"
+        };
         if (!string.IsNullOrWhiteSpace(model) && !validModels.Contains(model.Trim().ToLowerInvariant()))
         {
             return BadRequest(ApiResponse<object>.Fail($"Mô hình '{model}' không tồn tại. Danh sách mô hình hỗ trợ: {string.Join(", ", validModels)}.", "MSG-CLS-06"));
@@ -152,7 +164,7 @@ public class WasteScanController : ControllerBase
     }
 
     /// <summary>
-    /// [STT 022] Lấy danh sách các mô hình AI có sẵn để phân loại rác (yolov8_detect, mobilenet_v3, efficientnet_b0, yolov8n).
+    /// [STT 022] Lấy danh sách các mô hình AI có sẵn để phân loại rác (yolo26_detect, yolo26n_cls, efficientnet_b0, mobilenet_v3).
     /// </summary>
     [HttpGet("models")]
     [AllowAnonymous]
@@ -162,13 +174,14 @@ public class WasteScanController : ControllerBase
         var models = await _aiClient.GetAvailableModelsAsync(ct);
         return Ok(ApiResponse<object>.Ok(models ?? new
         {
-            default_model = "yolov8_detect",
+            default_model = "yolo26_detect",
             models = new[]
             {
-                new { id = "yolov8_detect", name = "YOLOv8 Detection (Khuyên dùng - Định vị & Cắt nền)", is_ready = true },
-                new { id = "mobilenet_v3", name = "MobileNetV3-Small (Siêu nhẹ, tối ưu di động)", is_ready = true },
-                new { id = "efficientnet_b0", name = "EfficientNet-B0 (Độ chính xác cao)", is_ready = true },
-                new { id = "yolov8n", name = "YOLOv8 Nano Classifier", is_ready = true }
+                new { id = "yolo26_detect", name = "YOLO26 Waste Object Detection (End-to-End NMS-Free)", is_ready = true },
+                new { id = "yolo26s_cls", name = "YOLO26 Small Classification", is_ready = true },
+                new { id = "yolo26n_cls", name = "YOLO26 Nano Classification", is_ready = true },
+                new { id = "efficientnet_b0", name = "EfficientNet-B0 (Legacy Benchmark)", is_ready = true },
+                new { id = "mobilenet_v3", name = "MobileNetV3-Small (Legacy Benchmark)", is_ready = true }
             }
         }));
     }
