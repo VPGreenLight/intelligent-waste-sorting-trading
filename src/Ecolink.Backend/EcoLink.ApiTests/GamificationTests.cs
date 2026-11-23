@@ -11,7 +11,9 @@ public static class GamRoutes
     public const string Redemptions = "/api/v1/gift-redemptions";
     public const string CheckIn = "/api/v1/check-in";
     public const string Tree = "/api/v1/virtual-tree";
+    public const string Care = "/api/v1/virtual-tree/care";
     public const string Water = "/api/v1/virtual-tree/water";
+    public const string Harvest = "/api/v1/virtual-tree/harvest";
     public const string EcoFacts = "/api/v1/eco-facts";
     public const string StaffGifts = "/api/v1/staff/gifts";
     public const string StaffFacts = "/api/v1/staff/eco-facts";
@@ -847,7 +849,7 @@ public class GamTreeTests
         Assert.Equal(2, tree.GetProperty("level").GetInt32());
         Assert.Equal("Sprout", tree.GS("levelTitle"));
         Assert.Equal(1, tree.GetProperty("totalWatered").GetInt32());
-        Assert.Equal(1, tree.GetProperty("dailyWaterCount").GetInt32());
+        Assert.Equal(0, tree.GetProperty("dailyWaterCount").GetInt32());
         Assert.Equal(900, tree.GL("walletBalance"));
         Assert.Equal(900, await GamHelper.BalanceAsync(token));
         Assert.Contains((await GamHelper.AllTransactionsAsync(token)), t => t.GS("actionType") == "Tree_Care" && t.GL("points") == -100);
@@ -923,7 +925,7 @@ public class GamTreeTests
     }
 
     [Fact]
-    public async Task Water_DailyLimit_BlocksFurtherUpgrades()
+    public async Task Water_DailyLimit_BlocksFurtherCare_WhileAllowingPaidUpgrade()
     {
         try
         {
@@ -931,13 +933,28 @@ public class GamTreeTests
             (await GamHelper.PutConfigAsync(c => c["dailyTreeCareLimit"] = 1)).ShouldBe(200);
             var token = await GamHelper.FreshUserAsync();
             await GamHelper.EarnAsync(token, 600);
-            (await ApiJson.PostAsync(GamRoutes.Water, null, token)).ShouldBe(200);
-            (await ApiJson.PostAsync(GamRoutes.Water, null, token)).ShouldBe(400);
 
+            // Tưới lần 1 thành công (75% -> 100%, dailyWater = 1/1); tưới lần 2 bị chặn
+            (await ApiJson.PostAsync(GamRoutes.Care, new { actionType = "water" }, token)).ShouldBe(200);
+            (await ApiJson.PostAsync(GamRoutes.Care, new { actionType = "water" }, token)).ShouldBe(400);
+
+            // Bón phân có giới hạn riêng (tối đa 1 lượt miễn phí/ngày khi dailyTreeCareLimit=1), ngoài ra EarnAsync đã tặng +2 túi phân hữu cơ
+            var treeBeforeUpgrade = (await Api.GetAsync(GamRoutes.Tree, token)).ShouldBe(200).Data();
+            Assert.Equal(1, treeBeforeUpgrade.GetProperty("dailyWaterCount").GetInt32());
+            Assert.Equal(0, treeBeforeUpgrade.GetProperty("dailyFertilizeCount").GetInt32());
+            Assert.Equal(100, treeBeforeUpgrade.GetProperty("hydrationPercent").GetInt32());
+            Assert.Equal(2, treeBeforeUpgrade.GetProperty("fertilizerPacks").GetInt32());
+            Assert.True(treeBeforeUpgrade.GetProperty("canUpgrade").GetBoolean());
+
+            (await ApiJson.PostAsync(GamRoutes.Care, new { actionType = "fertilize" }, token)).ShouldBe(200);
+            var afterFert = (await Api.GetAsync(GamRoutes.Tree, token)).ShouldBe(200).Data();
+            Assert.Equal(1, afterFert.GetProperty("dailyFertilizeCount").GetInt32());
+            Assert.Equal(90, afterFert.GetProperty("hydrationPercent").GetInt32());
+
+            (await ApiJson.PostAsync(GamRoutes.Water, null, token)).ShouldBe(200);
             var tree = (await Api.GetAsync(GamRoutes.Tree, token)).ShouldBe(200).Data();
             Assert.Equal(2, tree.GetProperty("level").GetInt32());
             Assert.Equal(1, tree.GetProperty("dailyWaterCount").GetInt32());
-            Assert.False(tree.GetProperty("canUpgrade").GetBoolean());
             Assert.Equal(500, await GamHelper.BalanceAsync(token));
         }
         finally { await GamHelper.ResetConfigAsync(); }

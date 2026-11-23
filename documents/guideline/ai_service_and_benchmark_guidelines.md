@@ -14,13 +14,13 @@ Phân hệ AI của EcoLink giải quyết bài toán cốt lõi: **Tự động
 
 ```mermaid
 flowchart LR
-    RawImage["🖼️ Ảnh gốc từ Camera<br>(Nhiều nền gây nhiễu)"] --> Stage1["1. Object Detection<br>(YOLO26n NMS-Free + Waste Detector)"]
-    Stage1 -->|"BBox + 6% Padding Crop (<=384px)"| CleanCrop["✂️ Tập ảnh rác đã cô lập<br>(Batch Crops)"]
+    RawImage["🖼️ Ảnh gốc từ Camera<br>(Nhiều nền gây nhiễu)"] --> Stage1["1. Object Detection<br>(YOLO26n Waste Detect 640px + COCO NMS-Free)"]
+    Stage1 -->|"Square Context Crop +6% (<=288px)"| CleanCrop["✂️ Tập ảnh rác đã cô lập<br>(Batch Crops)"]
     CleanCrop --> Stage2["2. Batch Classifier Engine<br>(YOLO26s-cls 256px Core / YOLO26n-cls)"]
     Stage2 --> Output["📊 Kết quả Phân loại<br>(Danh mục, Độ tin cậy, OOD flag)"]
 ```
 
-* **Giai đoạn 1 (Localization & Bounding Box):** Hệ thống thu phóng ảnh quá lớn về cạnh tối đa `960px` cho bộ dò `yolo26_detect` (ưu tiên `yolo26n_waste_detect.pt` hoặc fallback `yolov8n_waste_detect.pt` ở `imgsz=352`) và chỉ kích hoạt bộ dò phụ trợ COCO NMS-Free `yolo26n.pt` (`imgsz=320`) khi cần (`0` box, `conf < 0.75`, hoặc box lớn `area_ratio > 0.25`), xếp hạng vật thể theo kích thước & độ gần tâm khung hình, và cắt vùng rác (+6% padding, giới hạn cạnh tối đa `384px`).
+* **Giai đoạn 1 (Localization & Bounding Box):** Hệ thống thu phóng ảnh quá lớn về cạnh tối đa `960px` cho bộ dò chính thức `yolo26n_waste_detect.pt` (`5.19 MB`, `2.58M` params, `90.78% mAP@0.5` chạy thẳng ở `imgsz=640`; chỉ fallback `yolov8n_waste_detect.pt` ở `imgsz=352` nếu thiếu file) và kích hoạt có điều kiện bộ dò phụ trợ COCO NMS-Free `yolo26n.pt` (`imgsz=320`) khi cần (`0` box, `conf < 0.75`, hoặc box lớn `area_ratio > 0.25`), xếp hạng vật thể theo kích thước & độ gần tâm khung hình, và cắt vùng rác theo **Square Context Crop** (+6% padding, thu nhỏ `<= 288px` trước khi đệm viền vuông).
 * **Giai đoạn 2 (Batch Fine-grained Classification):** Gộp toàn bộ các vùng ảnh cắt vào **1 lần suy luận batch (`clf(crops, imgsz=256, verbose=False)`)** bằng **`YOLO26s-cls` (`yolo26s_waste_cls.pt`, `5.46M` params, `97.10%` val / `96.17%` test 12-lớp)** để xuất xác suất 12 lớp và gộp 3 màu thủy tinh (`brown-glass` + `green-glass` + `white-glass` $\rightarrow$ `glass`) thành **10 danh mục chuẩn EcoLink** gồm: 5 nhóm phế liệu thương mại (`plastic`, `cardboard`, `metal`, `paper`, `glass` – `IsRecyclable = true`) và 5 nhóm chỉ áp dụng Policy xử lý môi trường (`battery`, `biological`, `clothes`, `shoes`, `trash` – `IsRecyclable = false`, chặn khỏi luồng thu mua đồng nát). Vẫn duy trì `YOLO26n-cls` (`yolo26n_waste_cls.pt`, `224x224`) cho nhu cầu siêu nhẹ và Torchvision (`efficientnet_b0`, `mobilenet_v3`) cho đối chiếu học thuật cùng các alias tương thích ngược (`yolov8_detect -> yolo26_detect`, `yolov8n -> yolo26n_cls`, `yolo26s -> yolo26s_cls`, `yolo26n -> yolo26n_cls`).
 
 ---
@@ -118,7 +118,7 @@ Mỗi phiên bản mô hình trước khi đóng gói Release phải vượt qua
    * `yolo26n.pt` (COCO End-to-End NMS-Free Object Detector)
    * `yolo26s_waste_cls.pt` (YOLO26s-cls Classifier 256x256 fine-tune trên Garbage Classification 12 lớp -> ánh xạ 10 danh mục EcoLink – Engine Stage-2 mặc định)
    * `yolo26n_waste_cls.pt` (YOLO26n-cls Classifier 224x224 siêu nhẹ cho cấu hình Edge / đối chiếu)
-   * `yolo26n_waste_detect.pt` (Tùy chọn khi fine-tune detector rác riêng qua `train.py --task detect`)
+   * `yolo26n_waste_detect.pt` (YOLO26n Waste Detector `640x640`, `5.19 MB`, `90.78% mAP@0.5`, `83.27% mAP@0.5:0.95`, `P: 84.71%`, `R: 85.28%` – Engine Stage-1 chính thức)
    * *Trọng số đối chiếu / tương thích cũ:* `yolov8n_waste_detect.pt`, `yolov8n_waste_cls.pt`, `mobilenet_v3_waste_cls.pt`, `efficientnet_b0_waste_cls.pt`
 2. **Không commit trọng số thử nghiệm & tránh trùng lặp:**  
    Thư mục `runs/` (chứa hàng trăm file epoch nặng hàng GB) và weight base tiền huấn luyện (`yolo26s-cls.pt`, `yolo26n-cls.pt`) bắt buộc nằm trong `.gitignore`. Toàn bộ trọng số `best.pt` chính thức được lưu tập trung duy nhất tại thư mục `src/Ecolink.AiService/models/` (không nhân đôi bản sao ở thư mục gốc `models/`).

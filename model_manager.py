@@ -208,7 +208,7 @@ class ModelManager:
                 "family": "YOLO26 End-to-End NMS-Free (Two-Stage)",
                 "file": "yolo26n_waste_detect.pt",
                 "fallback_files": ["yolov8n_waste_detect.pt", "yolo26n.pt"],
-                "params": "2.6M",
+                "params": "2.58M",
                 "description": "Định vị đa vật thể End-to-End NMS-Free (bỏ DFL), ưu tiên tâm khung ngắm kết hợp phân loại tinh YOLO26s-cls (256x256) theo batch",
                 "type": "yolo_detect",
                 "is_legacy": False,
@@ -319,8 +319,9 @@ class ModelManager:
 
         benchmark_map = {
             "yolo26_detect": {
-                "pipeline": "YOLO26 End-to-End NMS-Free + YOLO26s-cls Batch Refinement (256x256)",
-                "target_cpu_latency_ms": "< 450 ms",
+                "pipeline": "YOLO26n Waste Detect (640x640, NMS-Free) + YOLO26s-cls Batch Refinement (256x256)",
+                "val_map50": "90.78% mAP@0.5 / 83.27% mAP@0.5:0.95 (P: 84.71%, R: 85.28%)",
+                "target_cpu_latency_ms": "< 300 ms",
                 "recommended_for": "Ảnh thực tế có phông nền phức tạp, cầm trên tay trước camera hoặc ảnh đa vật thể",
             },
             "yolo26s_cls": {
@@ -756,13 +757,31 @@ class ModelManager:
             std_cls, disp_name = DETECT_CLASS_MAPPING.get(raw_cls, ("trash", DISPLAY_NAMES.get("trash", raw_cls.capitalize())))
 
             coco_boost = 0.0
+            upgraded_by_coco: Optional[Dict[str, Any]] = None
             for cc in coco_containers:
-                iou, _ = _box_iou_and_iomin(xyxy, cc["bbox"])
-                if iou >= 0.42:
-                    cc["matched"] = True
-                    _, allowed = COCO_CONTAINER_HINTS[cc["coco_class"]]
+                iou, io_min = _box_iou_and_iomin(xyxy, cc["bbox"])
+                if iou >= 0.42 or io_min >= 0.65:
+                    default_lbl, allowed = COCO_CONTAINER_HINTS[cc["coco_class"]]
                     if std_cls in allowed:
+                        cc["matched"] = True
                         coco_boost = max(coco_boost, cc["confidence"])
+                    elif cc["confidence"] >= conf + 0.15 and conf < 0.70:
+                        cc["matched"] = True
+                        upgraded_by_coco = {
+                            "raw_class": cc["coco_class"],
+                            "label": default_lbl,
+                            "display_name": DISPLAY_NAMES[default_lbl],
+                            "det_confidence": cc["confidence"],
+                            "confidence": cc["confidence"],
+                            "bbox": cc["bbox"],
+                            "allowed_labels": allowed,
+                            "source": "coco_container_assisted",
+                        }
+                        break
+
+            if upgraded_by_coco is not None:
+                raw_candidates.append(upgraded_by_coco)
+                continue
 
             if coco_boost > 0.0:
                 conf = 1.0 - (1.0 - conf) * (1.0 - 0.45 * coco_boost)
@@ -855,6 +874,12 @@ class ModelManager:
                 refined.append(cand)
                 continue
 
+            cand_area_ratio = _box_area(cand["bbox"]) / img_area
+            fiber_prob_raw = cls_dist.get("paper", 0.0) + cls_dist.get("cardboard", 0.0)
+            related_fiber = det_lbl in ("paper", "cardboard") and fiber_prob_raw >= 0.50
+            if cand_area_ratio >= 0.88 and cls_dist.get(det_lbl, 0.0) < 0.03 and not related_fiber:
+                continue
+
             if strict_stage2:
                 best_cls = max(CLASS_NAMES, key=lambda k: cls_dist[k])
                 best_cls_prob = cls_dist[best_cls]
@@ -875,7 +900,7 @@ class ModelManager:
                 refined.append(cand)
                 continue
 
-            # Chế độ mặc định Unified YOLO26 (yolo26_detect + yolo26n_cls)
+            # Chế độ mặc định Unified YOLO26 (yolo26_detect + yolo26s_cls)
             best_cls = max(CLASS_NAMES, key=lambda k: cls_dist[k])
             best_cls_prob = cls_dist[best_cls]
             det_cls_prob = cls_dist.get(det_lbl, 0.0)
@@ -887,6 +912,11 @@ class ModelManager:
                 and best_cls == "battery"
                 and (best_cls_prob < 0.88 or fiber_prob >= 0.15)
             )
+            is_ruled_paper_clothes = (
+                det_lbl in ("paper", "cardboard")
+                and best_cls == "clothes"
+                and (det_conf >= 0.70 or fiber_prob >= 0.12)
+            )
 
             if det_conf >= 0.70:
                 if det_cls_prob < 0.05 and fiber_prob >= 0.72 and best_cls in ("paper", "cardboard"):
@@ -897,6 +927,7 @@ class ModelManager:
                     and best_cls_prob >= 0.78
                     and not is_backlit_pet
                     and not is_false_hazard_battery
+                    and not is_ruled_paper_clothes
                 ):
                     final_lbl = best_cls
                     final_conf = min(0.95, 0.65 * best_cls_prob + 0.25 * det_conf)
@@ -907,12 +938,21 @@ class ModelManager:
                     final_lbl = det_lbl
                     final_conf = det_conf
             else:
-                fused = {k: 0.45 * cls_dist[k] for k in CLASS_NAMES}
-                fused[det_lbl] = fused.get(det_lbl, 0.0) + 0.55 * det_conf
-                if det_lbl in ("paper", "cardboard") and fiber_prob >= 0.70:
+                if (
+                    det_cls_prob < 0.08
+                    and best_cls_prob >= 0.80
+                    and not is_backlit_pet
+                    and not is_false_hazard_battery
+                    and not is_ruled_paper_clothes
+                ):
+                    final_lbl = best_cls
+                    final_conf = min(0.92, 0.68 * best_cls_prob + 0.22 * det_conf)
+                elif det_lbl in ("paper", "cardboard") and fiber_prob >= 0.70:
                     final_lbl = best_cls if best_cls in ("paper", "cardboard") else det_lbl
                     final_conf = min(0.94, 0.50 * det_conf + 0.55 * fiber_prob)
                 else:
+                    fused = {k: 0.45 * cls_dist[k] for k in CLASS_NAMES}
+                    fused[det_lbl] = fused.get(det_lbl, 0.0) + 0.55 * det_conf
                     final_lbl = max(CLASS_NAMES, key=lambda k: fused[k])
                     final_conf = min(0.96, fused[final_lbl] + (0.12 if final_lbl == det_lbl and det_cls_prob >= 0.25 else 0.0))
 

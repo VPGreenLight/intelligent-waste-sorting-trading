@@ -89,6 +89,20 @@ public partial class PaymentService : IPaymentService
     {
         await ServicePackageHelpers.EnsureCanonicalPackagesExistAsync(_dbContext, cancellationToken);
 
+        var effectiveRole = currentRole;
+        if (currentUserId != Guid.Empty)
+        {
+            var dbRole = await _dbContext.Users
+                .AsNoTracking()
+                .Where(u => u.Id == currentUserId)
+                .Select(u => (UserRole?)u.Role)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (dbRole.HasValue)
+            {
+                effectiveRole = dbRole.Value;
+            }
+        }
+
         ServicePackage? package = null;
         if (request.PackageId.HasValue && request.PackageId.Value != Guid.Empty)
         {
@@ -122,7 +136,7 @@ public partial class PaymentService : IPaymentService
         }
 
         // Kiểm tra phân quyền vai trò (U-16 Citizen vs R-07 Recycler)
-        if (package.TargetRole == ServiceTargetRole.Recycler && currentRole == UserRole.User)
+        if (package.TargetRole == ServiceTargetRole.Recycler && effectiveRole == UserRole.User)
         {
             throw new ForbiddenAccessException(
                 "BR-PAY-03",
@@ -130,7 +144,7 @@ public partial class PaymentService : IPaymentService
                 "Gói dịch vụ thương mại Pro chỉ dành riêng cho tài khoản Cơ sở thu mua (Recycler).");
         }
 
-        if (package.TargetRole == ServiceTargetRole.User && currentRole == UserRole.Recycler)
+        if (package.TargetRole == ServiceTargetRole.User && effectiveRole == UserRole.Recycler)
         {
             throw new BusinessRuleException(
                 "BR-PAY-03",
@@ -175,7 +189,7 @@ public partial class PaymentService : IPaymentService
             var proEligibility = await ServicePackageHelpers.EvaluateProEligibilityAsync(
                 _dbContext,
                 currentUserId,
-                currentRole,
+                effectiveRole,
                 utcNow,
                 cancellationToken);
 

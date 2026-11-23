@@ -99,15 +99,9 @@ public class CheckinService : ICheckinService
         };
     }
 
-    /// <summary>Phần còn lại của trần điểm phi giao dịch hôm nay (chỉ tính các khoản cộng từ check-in).</summary>
-    private async Task<long> CapRemainingAsync(Guid userId, GamSettings s, DateOnly today, CancellationToken ct)
-    {
-        var start = GamTime.StartOfDayUtc(today);
-        var earned = await _db.PointTransactions.AsNoTracking()
-            .Where(t => t.UserId == userId && t.ActionType == PointActionType.DailyCheckin && t.Points > 0 && t.CreatedAt >= start)
-            .SumAsync(t => (long?)t.Points, ct) ?? 0;
-        return Math.Max(0, s.DailyCap - earned);
-    }
+    /// <summary>Phần còn lại của trần điểm phi giao dịch hôm nay (BR-GAM-02: gộp Check-in + Thu hoạch Cây Ảo).</summary>
+    private Task<long> CapRemainingAsync(Guid userId, GamSettings s, DateOnly today, CancellationToken ct) =>
+        TreeCareShared.ComputeNonTransactionCapRemainingAsync(_db, userId, s, today, ct);
 
     private static Ecolink.Domain.Exceptions.BusinessRuleException AlreadyCheckedIn() =>
         GamErrors.Rule("BR-GAM-09", "MSG-GEN-01", "Bạn đã điểm danh hôm nay rồi.");

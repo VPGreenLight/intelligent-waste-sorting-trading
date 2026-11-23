@@ -673,9 +673,15 @@ public class GamificationAndBlogUnitTests
             .Should().ThrowAsync<BusinessRuleException>();
         exPoor.Which.MessageCode.Should().Be("MSG-GAM-03");
 
-        var exCap = await FluentActions.Invoking(() => suite.Tree.WaterAndUpgradeAsync(cappedUser.Id))
+        var exCap = await FluentActions.Invoking(() => suite.Tree.CareAsync(cappedUser.Id, "water"))
             .Should().ThrowAsync<BusinessRuleException>();
         exCap.Which.MessageCode.Should().Be("MSG-GEN-01");
+
+        // Dù hết lượt Tưới/Bón phân miễn phí (3/3), người dùng đủ Điểm Xanh vẫn nâng cấp được cây ngay
+        await suite.Points.CreditAsync(cappedUser.Id, 150, PointActionType.HandoverReward, "Handover", "H-CAP", "IDEM-TREE-CAP", "Bàn giao");
+        var upgraded = await suite.Tree.WaterAndUpgradeAsync(cappedUser.Id);
+        upgraded.Tree.Level.Should().Be(2);
+        upgraded.Tree.DailyWaterCount.Should().Be(3);
     }
 
     [Fact]
@@ -759,5 +765,156 @@ public class GamificationAndBlogUnitTests
         settings.CheckinReward(1).Should().Be(5);
         settings.CheckinReward(3).Should().Be(9);
         settings.CheckinReward(20).Should().Be(15);
+    }
+
+    [Fact]
+    public async Task UTC023_VirtualTreeService_WaterRevivesWiltedTree_AndRespectsSaturationGuard()
+    {
+        using var db = TestDbContextFactory.Create();
+        var user = MakeUser("Héo Cây");
+        db.Users.Add(user);
+        // Lưu 75% cách đây 40 giờ -> mất 80% (-2%/giờ) => tụt về 0% (khô héo)
+        db.VirtualTreeProgresses.Add(new VirtualTreeProgress
+        {
+            UserId = user.Id,
+            TreeLevel = 2,
+            HydrationPercent = 75,
+            LastHydrationAt = DateTime.UtcNow.AddHours(-40)
+        });
+        await db.SaveChangesAsync();
+
+        var suite = CreateSuite(db, user.Id, "Citizen");
+        var initial = await suite.Tree.GetAsync(user.Id);
+        initial.IsWilted.Should().BeTrue();
+        initial.HydrationPercent.Should().Be(0);
+        initial.Level.Should().Be(2); // không bị tụt cấp theo BR-GAM-06
+
+        var exFertWilted = await FluentActions.Invoking(() => suite.Tree.CareAsync(user.Id, "fertilize"))
+            .Should().ThrowAsync<BusinessRuleException>();
+        exFertWilted.Which.MessageCode.Should().Be("MSG-GEN-01");
+
+        // Tưới lần 1: hồi sinh 0% -> 35%, +10 EXP
+        var w1 = await suite.Tree.CareAsync(user.Id, "water");
+        w1.IsWilted.Should().BeFalse();
+        w1.HydrationPercent.Should().Be(35);
+        w1.CareExp.Should().Be(10);
+
+        // Tưới lần 2: 35% -> 70%, lần 3: 70% -> 100%
+        await suite.Tree.CareAsync(user.Id, "water");
+        var w3 = await suite.Tree.CareAsync(user.Id, "water");
+        w3.HydrationPercent.Should().Be(100);
+
+        // Thử tưới ở ngưỡng bão hòa >= 95% -> bị chặn ngay (ngay cả khi limit còn)
+        db.VirtualTreeProgresses.First(t => t.UserId == user.Id).DailyWaterCount = 0;
+        await db.SaveChangesAsync();
+        var exSaturated = await FluentActions.Invoking(() => suite.Tree.CareAsync(user.Id, "water"))
+            .Should().ThrowAsync<BusinessRuleException>();
+        exSaturated.Which.MessageCode.Should().Be("MSG-GEN-01");
+    }
+
+    [Fact]
+    public async Task UTC024_VirtualTreeService_FertilizeOptimalZoneDryGuardAndHarvest_ShouldAwardWalletPointsUnderCap()
+    {
+        using var db = TestDbContextFactory.Create();
+        var user = MakeUser("Bón Phân & Thu Hoạch");
+        db.Users.Add(user);
+        db.VirtualTreeProgresses.Add(new VirtualTreeProgress
+        {
+            UserId = user.Id,
+            TreeLevel = 2, // MaxCareExp = 100, HarvestReward = 20
+            HydrationPercent = 25,
+            LastHydrationAt = DateTime.UtcNow
+        });
+        await db.SaveChangesAsync();
+
+        var suite = CreateSuite(db, user.Id, "Citizen");
+        // Độ ẩm 25% < 30% -> chặn bón phân tránh xót rễ
+        var exDry = await FluentActions.Invoking(() => suite.Tree.CareAsync(user.Id, "fertilize"))
+            .Should().ThrowAsync<BusinessRuleException>();
+        exDry.Which.MessageCode.Should().Be("MSG-GEN-01");
+
+        // Tưới +35% -> 60% (vào vùng ẩm vàng 60–90%) và +10 EXP
+        var watered = await suite.Tree.CareAsync(user.Id, "water");
+        watered.HydrationPercent.Should().Be(60);
+        watered.InOptimalHydrationZone.Should().BeTrue();
+        watered.CareExp.Should().Be(10);
+
+        // Bón ở ẩm 60% -> +35 EXP (45/100) & -10% ẩm (50%)
+        var f1 = await suite.Tree.CareAsync(user.Id, "fertilize");
+        f1.HydrationPercent.Should().Be(50);
+        f1.InOptimalHydrationZone.Should().BeFalse();
+        f1.CareExp.Should().Be(45);
+
+        // Tưới tiếp lên 85% (vùng vàng, +10 EXP => 55) -> Bón tiếp (+35 EXP => 90) -> Tưới (+10 EXP => 100 = HarvestReady!)
+        await suite.Tree.CareAsync(user.Id, "water");
+        await suite.Tree.CareAsync(user.Id, "fertilize");
+        var ready = await suite.Tree.CareAsync(user.Id, "water");
+        ready.CareExp.Should().Be(100);
+        ready.HarvestReady.Should().BeTrue();
+
+        var harvested = await suite.Tree.HarvestAsync(user.Id);
+        harvested.PointsAwarded.Should().Be(20);
+        harvested.LimitedByDailyCap.Should().BeFalse();
+        harvested.Tree.CareExp.Should().Be(0);
+        harvested.Tree.HarvestReady.Should().BeFalse();
+        harvested.Tree.TotalHarvested.Should().Be(1);
+        harvested.Tree.WalletBalance.Should().Be(20);
+    }
+
+    [Fact]
+    public async Task UTC025_VirtualTreeService_EcoActionsAwardFertilizerPacks_AndBypassFreeDailyLimit()
+    {
+        using var db = TestDbContextFactory.Create();
+        var citizen = MakeUser("Citizen Eco Pack");
+        var recycler = MakeUser("Recycler Partner", UserRole.Recycler);
+        var category = new WasteCategory { Code = "pet", Name = "Nhựa PET", StandardBinColor = "Cam" };
+        db.Users.AddRange(citizen, recycler);
+        db.WasteCategories.Add(category);
+
+        var req = new HandoverRequest
+        {
+            RequestCode = "HND-FERT-1",
+            UserId = citizen.Id,
+            RecyclerId = recycler.Id,
+            PickupAddress = "123 Lê Lợi",
+            ProposedTimeSlot = DateTime.UtcNow,
+            Status = HandoverStatus.Completed
+        };
+        var item = new HandoverRequestItem
+        {
+            RequestId = req.Id,
+            WasteCategoryId = category.Id,
+            EstimatedWeightKg = 2m,
+            ActualWeightKg = 2m
+        };
+        var receipt = new HandoverReceipt
+        {
+            RequestId = req.Id,
+            UserId = citizen.Id,
+            RecyclerId = recycler.Id,
+            ReceiptCode = "RCP-FERT-1",
+            TotalWeightKg = 2m,
+            TotalAmountCash = 10000m,
+            ScaleProofPhotoUrl = "[]"
+        };
+        db.HandoverRequests.Add(req);
+        db.HandoverRequestItems.Add(item);
+        db.HandoverReceipts.Add(receipt);
+        await db.SaveChangesAsync();
+
+        var suite = CreateSuite(db, citizen.Id, "Citizen");
+        await suite.Points.AwardHandoverPointsAsync(receipt.Id);
+        await suite.Points.AwardHandoverPointsAsync(receipt.Id); // Idempotency: không cộng túi trùng lần 2
+
+        var afterHandover = await suite.Tree.GetAsync(citizen.Id);
+        afterHandover.FertilizerPacks.Should().Be(2);
+
+        // Dùng hết 2 lượt bón phân miễn phí trong ngày, lượt thứ 3 tự động dùng 1 túi phân dự trữ
+        await suite.Tree.CareAsync(citizen.Id, "fertilize");
+        await suite.Tree.CareAsync(citizen.Id, "fertilize");
+        var usedPack = await suite.Tree.CareAsync(citizen.Id, "fertilize");
+        usedPack.DailyFertilizeCount.Should().Be(2);
+        usedPack.TotalFertilized.Should().Be(3);
+        usedPack.FertilizerPacks.Should().Be(1);
     }
 }

@@ -217,6 +217,21 @@ public class VirtualTreeDto
     public int TotalWatered { get; set; }
     public int DailyWaterCount { get; set; }
     public int DailyLimit { get; set; }
+    public int HydrationPercent { get; set; }
+    public bool IsWilted { get; set; }
+    public bool InOptimalHydrationZone { get; set; }
+    public int CareExp { get; set; }
+    public int MaxCareExp { get; set; }
+    public bool HarvestReady { get; set; }
+    public long HarvestRewardPreview { get; set; }
+    public int TotalFertilized { get; set; }
+    public int DailyFertilizeCount { get; set; }
+    public int DailyFertilizeLimit { get; set; }
+    public int FertilizerPacks { get; set; }
+    public int TotalHarvested { get; set; }
+    public bool CanWater { get; set; }
+    public bool CanFertilize { get; set; }
+    public string? LastCareEffect { get; set; }
     public int? NextLevel { get; set; }
     public string? NextLevelTitle { get; set; }
     public long? UpgradeCost { get; set; }
@@ -239,6 +254,13 @@ public class WaterTreeResultDto
     public VirtualTreeDto Tree { get; set; } = new();
     public long PointsSpent { get; set; }
     public List<EcoFactDto> UnlockedFacts { get; set; } = new();
+}
+
+public class HarvestTreeResultDto
+{
+    public VirtualTreeDto Tree { get; set; } = new();
+    public long PointsAwarded { get; set; }
+    public bool LimitedByDailyCap { get; set; }
 }
 
 // ============================================================ Cấu hình (A-07)

@@ -53,7 +53,7 @@ public class UserGamificationController : ControllerBase
     public async Task<IActionResult> Tree(CancellationToken ct) =>
         Ok(ApiResponse<VirtualTreeDto>.Ok(await _tree.GetAsync(UserId, ct)));
 
-    /// <summary>[STT 085b] Chăm sóc cây hàng ngày (Tưới nước / Bón phân) có lưu tiến trình và áp dụng giới hạn lượt/ngày.</summary>
+    /// <summary>[STT 085b] Chăm sóc cây hàng ngày (Tưới nước / Bón phân) có lưu độ ẩm, EXP và áp dụng giới hạn lượt/ngày.</summary>
     [HttpPost("api/v1/gamification/tree/care")]
     [HttpPost("api/v1/virtual-tree/care")]
     [Authorize(Roles = "User,Citizen")]
@@ -63,7 +63,19 @@ public class UserGamificationController : ControllerBase
         CancellationToken ct = default)
     {
         var data = await _tree.CareAsync(UserId, request?.ActionType, ct);
-        return Ok(ApiResponse<VirtualTreeDto>.Ok(data, "Đã chăm sóc cây ảo thành công!", "MSG-GAM-06"));
+        return Ok(ApiResponse<VirtualTreeDto>.Ok(data, data.LastCareEffect ?? "Đã chăm sóc cây ảo thành công!", "MSG-GAM-06"));
+    }
+
+    /// <summary>[STT 085c] Thu hoạch quả chín khi thanh EXP đầy: cộng Điểm Xanh vào ví dưới trần BR-GAM-02.</summary>
+    [HttpPost("api/v1/gamification/tree/harvest")]
+    [HttpPost("api/v1/virtual-tree/harvest")]
+    [Authorize(Roles = "User,Citizen")]
+    [ProducesResponseType(typeof(ApiResponse<HarvestTreeResultDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Harvest(CancellationToken ct)
+    {
+        var data = await _tree.HarvestAsync(UserId, ct);
+        return Ok(ApiResponse<HarvestTreeResultDto>.Ok(data,
+            data.Tree.LastCareEffect ?? $"Thu hoạch thành công +{data.PointsAwarded} Điểm Xanh!", "MSG-GAM-06"));
     }
 
     /// <summary>[STT 085] Tưới &amp; nâng cấp cây: trả điểm theo ngưỡng cấp kế tiếp, lên một cấp, trả về Eco Fact vừa mở khóa (MSG-GAM-06 / MSG-GAM-07).</summary>

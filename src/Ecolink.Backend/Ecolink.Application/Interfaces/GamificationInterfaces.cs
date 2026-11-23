@@ -75,6 +75,7 @@ public interface IVirtualTreeService
     Task<VirtualTreeDto> GetAsync(Guid userId, CancellationToken ct = default);
     Task<VirtualTreeDto> CareAsync(Guid userId, string? actionType, CancellationToken ct = default);
     Task<WaterTreeResultDto> WaterAndUpgradeAsync(Guid userId, CancellationToken ct = default);
+    Task<HarvestTreeResultDto> HarvestAsync(Guid userId, CancellationToken ct = default);
     Task<List<EcoFactDto>> ListUnlockedFactsAsync(Guid userId, CancellationToken ct = default);
     Task<List<EcoFactDto>> ListUnlockedFactsAsync(Guid userId, bool includeLocked, CancellationToken ct = default) =>
         ListUnlockedFactsAsync(userId, ct);

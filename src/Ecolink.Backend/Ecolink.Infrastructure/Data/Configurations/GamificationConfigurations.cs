@@ -102,7 +102,13 @@ public class VirtualTreeProgressConfiguration : IEntityTypeConfiguration<Virtual
 {
     public void Configure(EntityTypeBuilder<VirtualTreeProgress> b)
     {
-        b.ToTable("virtual_tree_progress", t => t.HasCheckConstraint("ck_tree_level_min", "tree_level >= 1"));
+        b.ToTable("virtual_tree_progress", t =>
+        {
+            t.HasCheckConstraint("ck_tree_level_min", "tree_level >= 1");
+            t.HasCheckConstraint("ck_tree_hydration_range", "hydration_percent >= 0 AND hydration_percent <= 100");
+            t.HasCheckConstraint("ck_tree_care_exp_nonneg", "care_exp >= 0");
+            t.HasCheckConstraint("ck_tree_fert_packs_nonneg", "fertilizer_packs >= 0");
+        });
         b.HasKey(x => x.Id).HasName("pk_virtual_tree_progress");
         b.Property(x => x.Id).HasColumnName("progress_id");
         b.Property(x => x.UserId).HasColumnName("user_id").IsRequired();
@@ -112,6 +118,16 @@ public class VirtualTreeProgressConfiguration : IEntityTypeConfiguration<Virtual
         b.Property(x => x.DailyWaterCount).HasColumnName("daily_water_count").HasDefaultValue(0).IsRequired();
         b.Property(x => x.LastWaterDate).HasColumnName("last_water_date").HasColumnType("date");
         b.Property(x => x.LastWateredAt).HasColumnName("last_watered_at");
+        b.Property(x => x.HydrationPercent).HasColumnName("hydration_percent").HasDefaultValue(75).IsRequired();
+        b.Property(x => x.LastHydrationAt).HasColumnName("last_hydration_at").HasDefaultValueSql("NOW()").IsRequired();
+        b.Property(x => x.CareExp).HasColumnName("care_exp").HasDefaultValue(0).IsRequired();
+        b.Property(x => x.HarvestReady).HasColumnName("harvest_ready").HasDefaultValue(false).IsRequired();
+        b.Property(x => x.TotalFertilized).HasColumnName("total_fertilized").HasDefaultValue(0).IsRequired();
+        b.Property(x => x.DailyFertilizeCount).HasColumnName("daily_fertilize_count").HasDefaultValue(0).IsRequired();
+        b.Property(x => x.LastFertilizeDate).HasColumnName("last_fertilize_date").HasColumnType("date");
+        b.Property(x => x.FertilizerPacks).HasColumnName("fertilizer_packs").HasDefaultValue(0).IsRequired();
+        b.Property(x => x.LastScanFertilizerDate).HasColumnName("last_scan_fertilizer_date").HasColumnType("date");
+        b.Property(x => x.TotalHarvested).HasColumnName("total_harvested").HasDefaultValue(0).IsRequired();
         b.Property(x => x.UpdatedAt).HasColumnName("updated_at").HasDefaultValueSql("NOW()").IsRequired();
         b.HasIndex(x => x.UserId).IsUnique().HasDatabaseName("ux_virtual_tree_user");
         b.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).HasConstraintName("fk_virtual_tree_users")

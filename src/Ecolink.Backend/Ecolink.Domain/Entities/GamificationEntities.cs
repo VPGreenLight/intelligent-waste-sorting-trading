@@ -53,6 +53,16 @@ public class VirtualTreeProgress
     public int DailyWaterCount { get; set; }
     public DateOnly? LastWaterDate { get; set; }
     public DateTime? LastWateredAt { get; set; }
+    public int HydrationPercent { get; set; } = 75;
+    public DateTime LastHydrationAt { get; set; } = DateTime.UtcNow;
+    public int CareExp { get; set; }
+    public bool HarvestReady { get; set; }
+    public int TotalFertilized { get; set; }
+    public int DailyFertilizeCount { get; set; }
+    public DateOnly? LastFertilizeDate { get; set; }
+    public int FertilizerPacks { get; set; }
+    public DateOnly? LastScanFertilizerDate { get; set; }
+    public int TotalHarvested { get; set; }
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 }
 

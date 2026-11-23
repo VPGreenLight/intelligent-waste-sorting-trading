@@ -1,7 +1,133 @@
+using Ecolink.Application.Dtos;
+using Ecolink.Domain.Entities;
+using Ecolink.Domain.Enums;
 using Ecolink.Domain.Exceptions;
+using Ecolink.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Ecolink.Infrastructure.Services;
+
+internal static class TreeCareShared
+{
+    internal static async Task EnsureTreeRowAsync(ApplicationDbContext db, Guid userId, CancellationToken ct)
+    {
+        if (await db.VirtualTreeProgresses.AsNoTracking().AnyAsync(t => t.UserId == userId, ct)) return;
+        var id = Guid.NewGuid();
+        var now = DateTime.UtcNow;
+        if (!db.Database.IsRelational())
+        {
+            db.VirtualTreeProgresses.Add(new VirtualTreeProgress
+            {
+                Id = id,
+                UserId = userId,
+                TreeLevel = 1,
+                GrowthPoints = 0,
+                TotalWatered = 0,
+                DailyWaterCount = 0,
+                HydrationPercent = 75,
+                LastHydrationAt = now,
+                CareExp = 0,
+                HarvestReady = false,
+                TotalFertilized = 0,
+                DailyFertilizeCount = 0,
+                FertilizerPacks = 0,
+                TotalHarvested = 0,
+                UpdatedAt = now
+            });
+            await db.SaveChangesAsync(ct);
+            return;
+        }
+
+        await db.Database.ExecuteSqlInterpolatedAsync($@"
+            INSERT INTO virtual_tree_progress (
+                progress_id, user_id, tree_level, growth_points, total_watered, daily_water_count,
+                hydration_percent, last_hydration_at, care_exp, harvest_ready,
+                total_fertilized, daily_fertilize_count, fertilizer_packs, total_harvested, updated_at
+            )
+            VALUES ({id}, {userId}, 1, 0, 0, 0, 75, NOW(), 0, FALSE, 0, 0, 0, 0, NOW())
+            ON CONFLICT (user_id) DO NOTHING", ct);
+    }
+
+    /// <summary>Phần còn lại của trần điểm phi giao dịch hôm nay (BR-GAM-02: gộp Check-in + Thu hoạch Cây Ảo).</summary>
+    internal static async Task<long> ComputeNonTransactionCapRemainingAsync(
+        ApplicationDbContext db,
+        Guid userId,
+        GamSettings s,
+        DateOnly today,
+        CancellationToken ct)
+    {
+        var start = GamTime.StartOfDayUtc(today);
+        var earned = await db.PointTransactions.AsNoTracking()
+            .Where(t => t.UserId == userId
+                && (t.ActionType == PointActionType.DailyCheckin || t.ActionType == PointActionType.TreeCare)
+                && t.Points > 0
+                && t.CreatedAt >= start)
+            .SumAsync(t => (long?)t.Points, ct) ?? 0L;
+        return Math.Max(0L, s.DailyCap - earned);
+    }
+
+    internal static async Task AwardHandoverFertilizerAsync(
+        ApplicationDbContext db,
+        Guid userId,
+        int packs,
+        CancellationToken ct)
+    {
+        if (packs <= 0) return;
+        var isCitizen = await db.Users.AsNoTracking()
+            .AnyAsync(u => u.Id == userId && u.Role == UserRole.User, ct);
+        if (!isCitizen) return;
+
+        await EnsureTreeRowAsync(db, userId, ct);
+        var now = DateTime.UtcNow;
+        if (db.Database.IsRelational())
+        {
+            await db.VirtualTreeProgresses
+                .Where(t => t.UserId == userId)
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(t => t.FertilizerPacks, t => t.FertilizerPacks + packs)
+                    .SetProperty(t => t.UpdatedAt, now), ct);
+        }
+        else
+        {
+            var tracked = await db.VirtualTreeProgresses.FirstAsync(t => t.UserId == userId, ct);
+            tracked.FertilizerPacks += packs;
+            tracked.UpdatedAt = now;
+            await db.SaveChangesAsync(ct);
+        }
+    }
+
+    internal static async Task TryAwardDailyScanFertilizerAsync(
+        ApplicationDbContext db,
+        Guid userId,
+        CancellationToken ct)
+    {
+        var isCitizen = await db.Users.AsNoTracking()
+            .AnyAsync(u => u.Id == userId && u.Role == UserRole.User, ct);
+        if (!isCitizen) return;
+
+        await EnsureTreeRowAsync(db, userId, ct);
+        var today = GamTime.Today();
+        var now = DateTime.UtcNow;
+        if (db.Database.IsRelational())
+        {
+            await db.VirtualTreeProgresses
+                .Where(t => t.UserId == userId && (t.LastScanFertilizerDate == null || t.LastScanFertilizerDate != today))
+                .ExecuteUpdateAsync(s => s
+                    .SetProperty(t => t.FertilizerPacks, t => t.FertilizerPacks + 1)
+                    .SetProperty(t => t.LastScanFertilizerDate, (DateOnly?)today)
+                    .SetProperty(t => t.UpdatedAt, now), ct);
+        }
+        else
+        {
+            var tracked = await db.VirtualTreeProgresses.FirstAsync(t => t.UserId == userId, ct);
+            if (tracked.LastScanFertilizerDate == today) return;
+            tracked.FertilizerPacks += 1;
+            tracked.LastScanFertilizerDate = today;
+            tracked.UpdatedAt = now;
+            await db.SaveChangesAsync(ct);
+        }
+    }
+}
 
 /// <summary>Múi giờ ICT (UTC+7) cho mọi mốc "ngày" của gamification (check-in reset lúc 00:00 ICT).</summary>
 internal static class GamTime

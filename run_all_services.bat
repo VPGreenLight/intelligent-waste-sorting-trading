@@ -1,14 +1,14 @@
 @echo off
-title EcoLink - Start All Dev Services
+title EcoLink - Start All Dev Services (Tunnel Mode)
 cls
 
 echo ==============================================================================
-echo        ECOLINK PLATFORM - KHOI DONG TOAN BO DICH VU DEV
+echo        ECOLINK PLATFORM - KHOI DONG TOAN BO DICH VU DEV + TUNNELS
 echo ==============================================================================
 echo   1. Python FastAPI AI Service   : http://localhost:8000
 echo   2. ASP.NET Core Web API        : http://localhost:5000
 echo   3. EcoLink Frontend Web [Vite] : http://localhost:5173
-echo   4. ngrok Backend Tunnel        : http://localhost:5000 - Public API Tunnel
+echo   4. ngrok Backend + DB Tunnels  : http 5000 + tcp 5432 [Public API ^& DB]
 echo   5. Cloudflare Frontend Tunnel  : http://localhost:5173 - Public Web Tunnel
 echo ==============================================================================
 echo.
@@ -20,18 +20,30 @@ if exist "%ProgramFiles(x86)%\cloudflared\cloudflared.exe" set "PATH=%PATH%;%Pro
 if exist "%ProgramFiles%\cloudflared\cloudflared.exe" set "PATH=%PATH%;%ProgramFiles%\cloudflared"
 
 :: ------------------------------------------------------------------------------
-:: BUOC 0: KIEM TRA DOCKER DESKTOP [PostgreSQL ecolink-db]
+:: BUOC 0: KIEM TRA DOCKER DESKTOP [PostgreSQL ecolink-db & Redis ecolink-redis]
 :: ------------------------------------------------------------------------------
-echo [0/5] Kiem tra Docker Desktop va khoi dong ecolink-db...
+echo [0/5] Kiem tra Docker Desktop va khoi dong ecolink-db / ecolink-redis...
 docker ps >nul 2>&1
 if %ERRORLEVEL% equ 0 goto DOCKER_OK
 echo   [!] Docker Desktop chua bat. Bo qua khoi dong container Docker.
 goto DOCKER_AFTER
 
 :DOCKER_OK
-echo   [+] Docker dang hoat dong. Khoi dong container ecolink-db...
+echo   [+] Docker dang hoat dong. Dang bat container ecolink-db ^& ecolink-redis...
 docker start ecolink-db >nul 2>&1
-echo   [+] Container CSDL PostgreSQL ecolink-db da san sang.
+if %ERRORLEVEL% neq 0 goto DOCKER_COMPOSE
+docker start ecolink-redis >nul 2>&1
+echo   [+] Container PostgreSQL [ecolink-db] ^& Redis [ecolink-redis] da san sang.
+goto DOCKER_AFTER
+
+:DOCKER_COMPOSE
+echo   [*] Container chua ton tai, dang chay docker compose up -d ecolink-db ecolink-redis...
+docker compose up -d ecolink-db ecolink-redis >nul 2>&1
+if %ERRORLEVEL% equ 0 (
+    echo   [+] Da khoi tao va bat container ecolink-db ^& ecolink-redis.
+) else (
+    echo   [!] Khong the khoi dong container Docker. Kiem tra lai Docker Compose.
+)
 
 :DOCKER_AFTER
 echo.
@@ -97,21 +109,39 @@ echo   [!] Khong tim thay thu muc ..\ecolink-web. Hay tu chay npm run dev truoc 
 echo.
 
 :: ------------------------------------------------------------------------------
-:: BUOC 4: KHOI CHAY NGROK TUNNEL CHO BACKEND [Port 5000]
+:: BUOC 4: KHOI CHAY NGROK MULTI-TUNNELS [HTTP 5000 + PostgreSQL TCP 5432]
 :: ------------------------------------------------------------------------------
-echo [4/5] Kiem tra / Khoi chay ngrok Tunnel cho Backend tai cong 5000...
+echo [4/5] Kiem tra / Khoi chay ngrok Tunnels [Backend HTTP 5000 + DB TCP 5432]...
 netstat -aon | findstr :4040 | findstr LISTENING >nul 2>&1
 if %ERRORLEVEL% equ 0 goto NGROK_RUNNING
 
 where ngrok >nul 2>&1
 if %ERRORLEVEL% neq 0 goto NGROK_MISSING
 
+set "NGROK_TUNNEL_CFG=%~dp0scripts\ngrok.tunnels.yml"
+set "NGROK_USER_CFG="
+if exist "%LOCALAPPDATA%\ngrok\ngrok.yml" set "NGROK_USER_CFG=%LOCALAPPDATA%\ngrok\ngrok.yml"
+if not defined NGROK_USER_CFG if exist "%USERPROFILE%\.ngrok2\ngrok.yml" set "NGROK_USER_CFG=%USERPROFILE%\.ngrok2\ngrok.yml"
+
+if not exist "%NGROK_TUNNEL_CFG%" goto NGROK_HTTP_ONLY
+if defined NGROK_USER_CFG goto NGROK_WITH_USER_CFG
+
+start "EcoLink ngrok Tunnels" cmd /k "title EcoLink ngrok Tunnels [HTTP 5000 + TCP 5432] && (ngrok start --all --config "%NGROK_TUNNEL_CFG%" || (echo [!] Khong mo duoc TCP 5432, fallback sang HTTP 5000... && ngrok http 5000))"
+echo   [+] Da mo ngrok Tunnels [ecolink_api HTTP 5000 + ecolink_db TCP 5432]!
+goto NGROK_AFTER
+
+:NGROK_WITH_USER_CFG
+start "EcoLink ngrok Tunnels" cmd /k "title EcoLink ngrok Tunnels [HTTP 5000 + TCP 5432] && (ngrok start --all --config "%NGROK_USER_CFG%" --config "%NGROK_TUNNEL_CFG%" || (echo [!] Khong mo duoc TCP 5432, fallback sang HTTP 5000... && ngrok http 5000))"
+echo   [+] Da mo ngrok Tunnels [ecolink_api HTTP 5000 + ecolink_db TCP 5432] trong 1 phien!
+goto NGROK_AFTER
+
+:NGROK_HTTP_ONLY
 start "EcoLink ngrok Tunnel" cmd /k "title EcoLink ngrok Tunnel && ngrok http 5000"
-echo   [+] Da khoi chay ngrok Backend Tunnel trong cua so rieng!
+echo   [+] Da khoi chay ngrok Backend Tunnel [HTTP 5000] trong cua so rieng!
 goto NGROK_AFTER
 
 :NGROK_RUNNING
-echo   [+] ngrok Backend Tunnel dang chay san [Inspector cong 4040].
+echo   [+] ngrok Tunnels dang chay san [Inspector cong 4040].
 goto NGROK_AFTER
 
 :NGROK_MISSING
@@ -148,10 +178,12 @@ echo   DA KHOI CHAY THANH CONG CAC DICH VU TRONG CAC CUA SO RIENG!
 echo ==============================================================================
 echo   - EcoLink Frontend Web : http://localhost:5173 [kem link *.trycloudflare.com]
 echo   - Swagger Backend API  : http://localhost:5000/swagger [kem link *.ngrok-free.dev]
+echo   - PostgreSQL DB Tunnel : ngrok tcp 5432 [xem host:port tai http://localhost:4040]
 echo   - Swagger AI Vision    : http://localhost:8000/docs
 echo   - ngrok Web Inspector  : http://localhost:4040
 echo ==============================================================================
-echo   De dung tat ca tien trinh tren, chay: stop_all_services.bat
+echo   - Neu chi can chay Local [khong Tunnel], dung: run_local_services.bat
+echo   - De dung tat ca tien trinh tren, chay       : stop_all_services.bat
 echo ==============================================================================
 echo.
 pause

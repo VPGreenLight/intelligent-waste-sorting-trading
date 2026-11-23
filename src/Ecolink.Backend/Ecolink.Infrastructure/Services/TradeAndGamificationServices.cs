@@ -632,7 +632,68 @@ public class TradeTransactionService : ITradeTransactionService
                     .OrderByDescending(o => o.CreatedAt)
                     .ToListAsync(cancellationToken);
 
-                return rawOrders.Select(MapEntityToDto).ToList();
+                var dtos = rawOrders.Select(MapEntityToDto).ToList();
+                if (dtos.Count > 0)
+                {
+                    var orderIds = dtos.Select(d => d.Id).ToList();
+                    var orderTimestamps = rawOrders.ToDictionary(
+                        o => o.Id,
+                        o => o.UpdatedAt ?? o.CreatedAt);
+
+                    var msgSummaries = await _dbContext.ChatMessages
+                        .AsNoTracking()
+                        .Where(m => orderIds.Contains(m.TradeOrderId))
+                        .Select(m => new
+                        {
+                            m.TradeOrderId,
+                            m.SenderUserId,
+                            m.SenderRole,
+                            m.MessageType,
+                            m.MessageContent,
+                            m.ProposedPricePerKg,
+                            m.ProposedWeightKg,
+                            m.IsRead,
+                            m.SentAt
+                        })
+                        .ToListAsync(cancellationToken);
+
+                    var byOrder = msgSummaries
+                        .GroupBy(m => m.TradeOrderId)
+                        .ToDictionary(g => g.Key, g => g.ToList());
+
+                    foreach (var dto in dtos)
+                    {
+                        if (byOrder.TryGetValue(dto.Id, out var msgs) && msgs.Count > 0)
+                        {
+                            dto.UnreadCount = msgs.Count(m =>
+                                !m.IsRead &&
+                                m.SenderUserId != userId &&
+                                !string.Equals(m.SenderRole, "System", StringComparison.OrdinalIgnoreCase));
+
+                            var latest = msgs.OrderByDescending(m => m.SentAt).First();
+                            dto.LastMessageAt = latest.SentAt;
+                            dto.LastMessageSenderId = latest.SenderUserId;
+                            dto.LastMessageSenderRole = latest.SenderRole;
+                            dto.LastMessagePreview = FormatChatMessagePreview(
+                                latest.MessageType,
+                                latest.MessageContent,
+                                latest.ProposedPricePerKg,
+                                latest.ProposedWeightKg);
+                        }
+                        else if (orderTimestamps.TryGetValue(dto.Id, out var fallbackTs))
+                        {
+                            dto.LastMessageAt = fallbackTs;
+                        }
+                    }
+
+                    dtos = dtos
+                        .OrderByDescending(d =>
+                            d.LastMessageAt ??
+                            (orderTimestamps.TryGetValue(d.Id, out var ts) ? ts : DateTime.MinValue))
+                        .ToList();
+                }
+
+                return dtos;
             }
             catch (Exception ex)
             {
@@ -645,6 +706,24 @@ public class TradeTransactionService : ITradeTransactionService
             .OrderByDescending(o => o.ScheduledAt)
             .ToList();
         return userOrders;
+    }
+
+    private static string? FormatChatMessagePreview(
+        ChatMessageType messageType,
+        string? content,
+        decimal? proposedPricePerKg,
+        decimal? proposedWeightKg)
+    {
+        if (messageType == ChatMessageType.Image)
+            return "Đã gửi ảnh phế liệu";
+        if (messageType == ChatMessageType.Proposal)
+            return proposedPricePerKg.HasValue
+                ? $"Đề xuất: {proposedPricePerKg.Value:N0} đ/kg · {proposedWeightKg ?? 0:0.##} kg"
+                : "Bản đề xuất thương lượng";
+        if (string.IsNullOrWhiteSpace(content))
+            return null;
+        var clean = content.Trim().Replace("\r", " ").Replace("\n", " ");
+        return clean.Length > 90 ? clean[..89].TrimEnd() + "…" : clean;
     }
 
     public async Task<TradeOrderDto> UpdateOrderStatusAsync(

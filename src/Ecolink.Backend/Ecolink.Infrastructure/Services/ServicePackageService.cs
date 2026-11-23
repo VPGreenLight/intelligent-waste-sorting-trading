@@ -35,11 +35,25 @@ public class ServicePackageService : IServicePackageService
     {
         await ServicePackageHelpers.EnsureCanonicalPackagesExistAsync(_dbContext, ct);
 
+        var effectiveRole = currentRole;
+        if (currentUserId != Guid.Empty)
+        {
+            var dbRole = await _dbContext.Users
+                .AsNoTracking()
+                .Where(u => u.Id == currentUserId)
+                .Select(u => (UserRole?)u.Role)
+                .FirstOrDefaultAsync(ct);
+            if (dbRole.HasValue)
+            {
+                effectiveRole = dbRole.Value;
+            }
+        }
+
         var query = _dbContext.ServicePackages
             .AsNoTracking()
             .Where(p => p.IsActive);
 
-        if (currentRole == UserRole.User)
+        if (effectiveRole == UserRole.User)
         {
             query = query.Where(p => p.TargetRole == ServiceTargetRole.All || p.TargetRole == ServiceTargetRole.User);
         }
@@ -66,7 +80,7 @@ public class ServicePackageService : IServicePackageService
         var currentEffectiveSubs = validSubs.Where(s => s.StartsAt <= utcNow).ToList();
         var entitlements = ServicePackageHelpers.AggregateEntitlements(currentEffectiveSubs);
         var currentTierRank = ServicePackageHelpers.GetTierRank(entitlements.CurrentTier);
-        var recyclerProfile = currentRole == UserRole.Recycler
+        var recyclerProfile = effectiveRole == UserRole.Recycler
             ? await _dbContext.RecyclerProfiles.AsNoTracking().FirstOrDefaultAsync(r => r.UserId == currentUserId, ct)
             : null;
 
@@ -76,7 +90,7 @@ public class ServicePackageService : IServicePackageService
             proEligibility = await ServicePackageHelpers.EvaluateProEligibilityAsync(
                 _dbContext,
                 currentUserId,
-                currentRole,
+                effectiveRole,
                 utcNow,
                 ct);
         }
@@ -93,7 +107,7 @@ public class ServicePackageService : IServicePackageService
             var isIncludedInHigherPlan = currentTierRank > pkgRank;
             var (eligible, reason) = isPro && proEligibility != null
                 ? (proEligibility.IsEligible, proEligibility.BlockingReasons.FirstOrDefault())
-                : EvaluateEligibility(pkg, currentRole, recyclerProfile);
+                : EvaluateEligibility(pkg, effectiveRole, recyclerProfile);
 
             var isCurrentPlan = pkg.IsDefaultFree
                 ? currentTierRank == 0

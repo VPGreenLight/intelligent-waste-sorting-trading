@@ -952,5 +952,152 @@ public class NegotiationChatUnitTests
         var refreshedOrder = await db.TradeOrders.FirstAsync(o => o.Id == order.Id);
         (refreshedOrder.ScheduledAt + TimeSpan.FromHours(7)).Date.Should().Be(todayLocal.AddDays(30));
     }
+
+    [Fact]
+    public async Task UTC027_GetUserOrdersAsync_EnrichesLastMessagePreviewUnreadCountAndOrdering()
+    {
+        var db = TestDbContextFactory.Create();
+        var citizen = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "citizen_list",
+            Email = "citizen_list@ecolink.vn",
+            FullName = "Nguyễn Văn Dân",
+            Role = UserRole.Citizen,
+            Status = UserStatus.Active
+        };
+        var recyclerUser = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "recycler_list",
+            Email = "recycler_list@ecolink.vn",
+            FullName = "Cơ sở Minh Tâm",
+            Role = UserRole.Recycler,
+            Status = UserStatus.Active
+        };
+        var partner = new CollectionPartner
+        {
+            Id = recyclerUser.Id,
+            UserId = recyclerUser.Id,
+            FacilityName = "Cơ Sở Minh Tâm",
+            Address = "Ngã Tư Hòa Lạc",
+            Latitude = 21.0182,
+            Longitude = 105.5345,
+            OperatingHours = "07:30 - 19:00",
+            ContactPhone = "0968112233",
+            IsVerified = true
+        };
+
+        var now = DateTime.UtcNow;
+        var quietOrder = new TradeOrder
+        {
+            Id = Guid.NewGuid(),
+            UserId = citizen.Id,
+            PartnerId = partner.Id,
+            RecyclerUserId = recyclerUser.Id,
+            Status = OrderStatus.Pending,
+            ScheduledAt = now.AddDays(1),
+            EstimatedWeightKg = 5m,
+            CategoryCode = "plastic",
+            InitialPricePerKg = 5000m,
+            ProposedTimeSlot = "10:00 - 12:00",
+            PickupAddress = "Điểm hẹn A",
+            CreatedAt = now.AddHours(-2),
+            UpdatedAt = now.AddHours(-2)
+        };
+        var activeOldOrder = new TradeOrder
+        {
+            Id = Guid.NewGuid(),
+            UserId = citizen.Id,
+            PartnerId = partner.Id,
+            RecyclerUserId = recyclerUser.Id,
+            Status = OrderStatus.Negotiating,
+            ScheduledAt = now.AddDays(1),
+            EstimatedWeightKg = 8m,
+            CategoryCode = "paper",
+            InitialPricePerKg = 4000m,
+            ProposedTimeSlot = "14:00 - 16:00",
+            PickupAddress = "Điểm hẹn B",
+            CreatedAt = now.AddHours(-4),
+            UpdatedAt = now.AddHours(-4)
+        };
+
+        db.Users.AddRange(citizen, recyclerUser);
+        db.CollectionPartners.Add(partner);
+        db.TradeOrders.AddRange(quietOrder, activeOldOrder);
+        db.ChatMessages.AddRange(
+            // quietOrder: tin của chính Citizen & tin System chưa đọc => UnreadCount cho Citizen vẫn là 0
+            new ChatMessage
+            {
+                TradeOrderId = quietOrder.Id,
+                SenderUserId = citizen.Id,
+                SenderRole = "Citizen",
+                MessageType = ChatMessageType.Text,
+                MessageContent = "Chào vựa",
+                IsRead = false,
+                SentAt = now.AddHours(-2)
+            },
+            new ChatMessage
+            {
+                TradeOrderId = quietOrder.Id,
+                SenderUserId = recyclerUser.Id,
+                SenderRole = "System",
+                MessageType = ChatMessageType.System,
+                MessageContent = "Thông báo hệ thống",
+                IsRead = false,
+                SentAt = now.AddHours(-1)
+            },
+            // activeOldOrder: tạo cũ hơn nhưng có tin nhắn mới nhất cách đây 5 phút + 2 tin chưa đọc từ Recycler
+            new ChatMessage
+            {
+                TradeOrderId = activeOldOrder.Id,
+                SenderUserId = recyclerUser.Id,
+                SenderRole = "Recycler",
+                MessageType = ChatMessageType.Text,
+                MessageContent = "Đã đọc trước đó",
+                IsRead = true,
+                SentAt = now.AddMinutes(-20)
+            },
+            new ChatMessage
+            {
+                TradeOrderId = activeOldOrder.Id,
+                SenderUserId = recyclerUser.Id,
+                SenderRole = "Recycler",
+                MessageType = ChatMessageType.Image,
+                AttachmentUrl = "https://cdn.ecolink.vn/waste.jpg",
+                IsRead = false,
+                SentAt = now.AddMinutes(-10)
+            },
+            new ChatMessage
+            {
+                TradeOrderId = activeOldOrder.Id,
+                SenderUserId = recyclerUser.Id,
+                SenderRole = "Recycler",
+                MessageType = ChatMessageType.Text,
+                MessageContent = "Hẹn bạn 14h nhé",
+                IsRead = false,
+                SentAt = now.AddMinutes(-5)
+            }
+        );
+        await db.SaveChangesAsync();
+
+        var tradeService = new TradeTransactionService(
+            NullLogger<TradeTransactionService>.Instance,
+            new GamificationService(NullLogger<GamificationService>.Instance),
+            db);
+
+        var result = (await tradeService.GetUserOrdersAsync(citizen.Id)).ToList();
+
+        result.Should().HaveCount(2);
+        result[0].Id.Should().Be(activeOldOrder.Id);
+        result[0].UnreadCount.Should().Be(2);
+        result[0].LastMessagePreview.Should().Be("Hẹn bạn 14h nhé");
+        result[0].LastMessageSenderId.Should().Be(recyclerUser.Id);
+        result[0].LastMessageSenderRole.Should().Be("Recycler");
+
+        result[1].Id.Should().Be(quietOrder.Id);
+        result[1].UnreadCount.Should().Be(0);
+        result[1].LastMessagePreview.Should().Be("Thông báo hệ thống");
+    }
 }
 

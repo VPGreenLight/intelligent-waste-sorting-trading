@@ -277,8 +277,8 @@ public class ServicePackagePaymentTests
                 FacilityName = "Vựa Gần Basic",
                 RepresentativeName = "A",
                 BusinessAddress = "Cách 1km",
-                Latitude = 21.0200m,
-                Longitude = 105.5253m,
+                Latitude = 16.0620m,
+                Longitude = 108.2022m,
                 VerificationStatus = VerificationStatus.Verified,
                 ActiveStatus = RecyclerActiveStatus.Online
             },
@@ -288,8 +288,8 @@ public class ServicePackagePaymentTests
                 FacilityName = "Vựa Xa Pro",
                 RepresentativeName = "B",
                 BusinessAddress = "Cách 3km",
-                Latitude = 21.0380m,
-                Longitude = 105.5253m,
+                Latitude = 16.0800m,
+                Longitude = 108.2022m,
                 VerificationStatus = VerificationStatus.Verified,
                 ActiveStatus = RecyclerActiveStatus.Online
             });
@@ -305,7 +305,7 @@ public class ServicePackagePaymentTests
         await paymentSvc.SimulateTransferAsync(proOrder.OrderCode);
 
         var geoSvc = new GeoMatchingService(NullLogger<GeoMatchingService>.Instance, db, null, entitlementSvc);
-        var partners = (await geoSvc.FindNearestPartnersAsync(21.0124, 105.5253, "plastic", 10.0)).ToList();
+        var partners = (await geoSvc.FindNearestPartnersAsync(16.0544, 108.2022, "plastic", 10.0)).ToList();
 
         partners.Should().HaveCount(2);
         partners[0].Id.Should().Be(farProId);
@@ -1168,5 +1168,46 @@ public class ServicePackagePaymentTests
 
         catalog.Select(p => p.PackageCode).Should().BeEquivalentTo(new[] { "BASIC", "PREMIUM" });
         catalog.Should().NotContain(p => p.PackageCode == "PRO");
+    }
+
+    // UTC027 [Normal] [R-07]: Tài khoản vừa được duyệt lên Recycler nhưng vẫn gửi JWT cũ (Role=User) vẫn thấy & mua được gói PRO theo DB role
+    [Fact]
+    public async Task UTC027_UpgradedRecyclerWithStaleUserJwtClaim_ResolvesDbRoleAndExposesEligibleProPackage()
+    {
+        using var db = TestDbContextFactory.Create();
+        var upgradedUserId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = upgradedUserId,
+            Username = "minhthuong",
+            Email = "thangnhhe171276@fpt.edu.vn",
+            FullName = "Nguyen Hoang Thang",
+            PasswordHash = "h",
+            Role = UserRole.Recycler,
+            Status = UserStatus.Active
+        });
+        db.RecyclerProfiles.Add(new RecyclerProfile
+        {
+            UserId = upgradedUserId,
+            FacilityName = "Vựa Minh Thường",
+            RepresentativeName = "Nguyen Hoang Thang",
+            BusinessAddress = "Số 14 Ngõ 2 cây xăng 39",
+            VerificationStatus = VerificationStatus.Verified,
+            ActiveStatus = RecyclerActiveStatus.Online
+        });
+        await db.SaveChangesAsync();
+
+        var (paymentSvc, packageSvc, _, _) = CreateServices(db, upgradedUserId, "User");
+
+        var catalog = await packageSvc.GetAvailablePackagesAsync(upgradedUserId, UserRole.User, "Recycler");
+        catalog.Select(c => c.PackageCode).Should().ContainInOrder("BASIC", "PREMIUM", "PRO");
+        catalog.First(c => c.PackageCode == "PRO").IsEligible.Should().BeTrue();
+
+        var order = await paymentSvc.CreatePayInOrderAsync(
+            upgradedUserId,
+            UserRole.User,
+            new CreatePayInRequest { PackageCode = "PRO" });
+        order.PackageCode.Should().Be("PRO");
+        order.Amount.Should().Be(1_000_000m);
     }
 }

@@ -1,6 +1,8 @@
-# Báo Cáo Kỹ Thuật: Fine-Tune YOLO26s-cls (12 Classes -> 10 Danh Mục EcoLink) & Đánh Giá Benchmark (EcoLink)
+# Báo Cáo Kỹ Thuật: Fine-Tune Full Unified YOLO26 (Stage-1 Detect 640px + Stage-2 12c -> 10 Danh Mục EcoLink)
 
-Hệ thống **EcoLink** đã nâng cấp trọng số Stage-2 **`YOLO26s-cls` (`256x256`, `5.46M` params)** bằng bộ dữ liệu thực tế **Garbage Classification (12 classes)** trên Kaggle GPU Tesla T4 (`7,708` ảnh train / `1,542` ảnh val đạt **`97.10%`**, tập **`1,045` ảnh test mù độc lập** đạt **`96.17%` (12 lớp)** và **`96.65%` (gộp 6 nhóm)**).
+Hệ thống **EcoLink** đã hoàn thiện nâng cấp đồng bộ **cả 2 giai đoạn YOLO26**:
+- **Stage-1 Detector (`yolo26n_waste_detect.pt`, `5.19 MB`, `2.58M` params, `640x640` End-to-End NMS-Free):** Đạt **`90.78% mAP@0.5`**, **`83.27% mAP@0.5:0.95`**, **`Precision 84.71%`**, **`Recall 85.28%`** (vượt chuẩn đồ án $\ge 88\%$ mAP@0.5), thay thế hoàn toàn checkpoint nặng `48.84 MB` cũ và giảm độ trễ Two-Stage trên CPU xuống chỉ còn **`144.93 – 309.78 ms`**.
+- **Stage-2 Classifier (`YOLO26s-cls`, `256x256`, `5.46M` params):** Fine-tune trên **Garbage Classification (12 classes)** bằng Kaggle GPU Tesla T4 (`7,708` ảnh train / `1,542` ảnh val đạt **`97.10%`**, tập **`1,045` ảnh test mù độc lập** đạt **`96.17%` (12 lớp)** và **`96.65%` (gộp 6 nhóm)**).
 
 Trong ứng dụng thực tế, 3 màu thủy tinh (`brown-glass`, `green-glass`, `white-glass`) được cộng gộp xác suất thành **`glass`**, tạo thành **10 danh mục chuẩn EcoLink**:
 1. **5 Nhóm phế liệu thương mại (`IsRecyclable = true`):** `plastic`, `paper`, `cardboard`, `metal`, `glass` — hỗ trợ báo giá tham khảo, tìm vựa thu mua trên bản đồ và bàn giao phế liệu.
@@ -8,11 +10,12 @@ Trong ứng dụng thực tế, 3 màu thủy tinh (`brown-glass`, `green-glass`
 
 ---
 
-## 1. Bảng So Sánh Benchmark 5 Mô Hình (`evaluate_models.py` & Kaggle 12-Class Blind Test)
+## 1. Bảng So Sánh Benchmark 5 Mô Hình (`evaluate_models.py`, Stage-1 `yolo26n_waste_detect` & Kaggle Blind Test)
 
-### A. Kết quả chuẩn 12 lớp trên tập dữ liệu mới (Kaggle GPU Tesla T4, `imgsz=256`, khử trùng SHA-256 + dHash, cân bằng max 1,050 ảnh/lớp):
-- **Validation (`1,542` ảnh, 12 lớp):** `top1_acc = 97.10%`, `top5_acc = 99.8%` (EarlyStopping dừng ở epoch 38, lấy đỉnh **epoch 26**).
-- **Test mù độc lập (`1,045` ảnh chưa từng dùng khi train/val):** **`96.17%`** (đủ 12 lớp chi tiết) / **`96.65%`** (khi gộp về 6 nhóm chuẩn).
+### A. Kết quả nghiệm thu Stage-1 (`yolo26n_waste_detect.pt`, `imgsz=640`) & Stage-2 (`yolo26s_waste_cls.pt`, `imgsz=256`):
+- **Stage-1 Object Detector (`yolo26n_waste_detect.pt`, `5.19 MB`, `640x640`):** **`mAP@0.5 = 90.78%`**, `mAP@0.5:0.95 = 83.27%`, **`Precision = 84.71%`**, **`Recall = 85.28%`** (tổng thời gian Two-Stage CPU: `144.93 – 309.78 ms`).
+- **Stage-2 Classifier Validation (`1,542` ảnh, 12 lớp):** `top1_acc = 97.10%`, `top5_acc = 99.8%` (EarlyStopping dừng ở epoch 38, lấy đỉnh **epoch 26**).
+- **Stage-2 Test mù độc lập (`1,045` ảnh chưa từng dùng khi train/val):** **`96.17%`** (đủ 12 lớp chi tiết) / **`96.65%`** (khi gộp về 6 nhóm chuẩn).
 
 ### B. Đối chiếu chéo trên tập cũ TrashNet Validation (`508` ảnh, CPU `12th Gen Intel Core i9-12900KF`):
 
@@ -29,13 +32,15 @@ Trong ứng dụng thực tế, 3 màu thủy tinh (`brown-glass`, `green-glass`
 | **Plastic (Nhựa)** | **97.9%** | 90.7% | 88.7% | 94.8% | 91.8% | **Đứng #1 (+6.1% vượt EfficientNet-B0)** |
 | **Trash (TrashNet `trash` 28 ảnh)** | 7.1% | 78.6% | **85.7%** | 78.6% | 82.1% | Ảnh `trash` cũ của TrashNet là túi nhựa/giấy vụn nên model 12c đoán chi tiết về đúng `plastic`/`paper` |
 
-### Kết quả kiểm thử End-to-End FastAPI Two-Stage trên CPU (`Ecolink.AiService v3.0.0`, Model 12c -> 10 Danh mục):
-* **`GET /api/v1/models`:** Trả đủ **10 danh mục** (`battery`, `biological`, `cardboard`, `clothes`, `glass`, `metal`, `paper`, `plastic`, `shoes`, `trash`); không rò rỉ 3 nhãn phụ (`brown-glass`, `green-glass`, `white-glass`).
-* **`Chai nhựa.jpg` (4 vật thể, `yolo26_detect`):** `plastic` (confidence **`0.9081`**), đếm đúng **`4` vật thể**, độ trễ warm **`373.77 ms`**.
-* **`Chai nhựa lỗi Carton.jpg` (ảnh 12MP `3472x3472`, `yolo26_detect`):** Nhận diện đúng **`plastic`** (confidence **`0.7727`**), **`1` vật thể**, độ trễ warm **`488.60 ms`**.
-* **`Chai nhựa lỗi Thủy tinh.jpg` (`yolo26_detect`):** Hợp nhất mảnh vỡ dọc thành **`1` vật thể** duy nhất, nhận diện đúng **`plastic`** (confidence **`0.8990`**), độ trễ warm **`420.17 ms`**.
-* **Single-mode & Aliases & OOD:** `yolo26s_cls` (`444.68 ms`), `yolo26n_cls` (`350.94 ms`), alias `yolov8_detect -> yolo26_detect` (`465.91 ms`), alias `yolov8n -> yolo26n_cls` (`347.65 ms`), `SYNTHETIC_NOISE_OOD` (`conf=0.512`, `ood=True`, `468.96 ms`), `OOD_THRESHOLD_CHECK` (`ood=True`, `454.71 ms`).
-* **Kết luận triển khai:** Model mới tăng vọt độ chuẩn xác nhận diện 5 nhóm tái chế thương mại (**94.1% – 98.8%** trên 5 lớp tái chế và **96.17%** trên 12 lớp thực tế) với toàn bộ độ trễ FastAPI Two-Stage CPU đạt **`347–489 ms`** (`< 600 ms`).
+### Kết quả kiểm thử End-to-End FastAPI Two-Stage trên CPU (`Ecolink.AiService v3.0.0`, `yolo26n_waste_detect.pt` 640px + `yolo26s_waste_cls.pt` 256px):
+* **`GET /api/v1/models`:** Trả đủ **10 danh mục** (`battery`, `biological`, `cardboard`, `clothes`, `glass`, `metal`, `paper`, `plastic`, `shoes`, `trash`), xác nhận `yolo26_detect` nạp `active_weight: "yolo26n_waste_detect.pt"` (`5.19 MB`).
+* **`Chai nhựa.jpg` (4 vật thể, `yolo26_detect`):** `plastic` (confidence **`0.8889`**), đếm đúng **`4` vật thể**, độ trễ warm **`254.35 ms`**.
+* **`Chai nhựa lỗi Carton.jpg` (ảnh 12MP `3472x3472`, `yolo26_detect`):** Nâng cấp COCO `bottle` chuẩn xác thành **`plastic`** (confidence **`0.9600`**, `ood=False`), **`1` vật thể**, độ trễ warm **`309.78 ms`**.
+* **`Chai nhựa lỗi Thủy tinh.jpg` (`yolo26_detect`):** Nhận diện đúng **`plastic`** (confidence **`0.8635`**), **`1` vật thể**, độ trễ warm **`144.93 ms`**.
+* **`giấy bìa cứng.jpg` (`1088x1088`, `yolo26_detect`):** Square Context Crop + Full-frame sanity check nhận diện đúng **`cardboard`** (confidence **`0.7624`**, `ood=False`), **`1` vật thể**, độ trễ warm **`212.30 ms`**.
+* **`giấy.jpg` (`960x1280`, `yolo26_detect`):** Stage-1 bắt đúng `paper` (`85.2%`) + Ruled-Paper Guard chốt **`paper`** (confidence **`0.8584`**, `ood=False`), **`1` vật thể**, độ trễ warm **`276.38 ms`**.
+* **Single-mode & Aliases & OOD:** `yolo26s_cls` (`0.9375`, `250.17 ms`), `yolo26n_cls` (`0.9088`, `200.52 ms`), alias `yolov8_detect -> yolo26_detect` (`231.30 ms`), alias `yolov8n -> yolo26n_cls` (`193.56 ms`), `SYNTHETIC_NOISE_OOD` (`conf=0.512`, `ood=True`, `count=0`, `282.54 ms`), `OOD_THRESHOLD_CHECK` (`conf=0.96`, `ood=True`, `269.43 ms`).
+* **Kết luận triển khai:** Nâng cấp đồng bộ cả Stage-1 (`yolo26n_waste_detect.pt` `640px`, `90.78% mAP@0.5`) và Stage-2 (`yolo26s_waste_cls.pt` `12c -> 10c`) giúp giải quyết triệt để ca giấy vở kẻ ngang & bìa cứng trắng đồng thời tăng tốc toàn bộ pipeline Two-Stage CPU xuống **`144.93 – 309.78 ms`** (`< 310 ms`, nhanh hơn gấp ~2 lần so với trước).
 
 ---
 
@@ -59,18 +64,18 @@ graph TD
     Alias --> ModelManager["ModelManager (YOLO26 Unified Engine)"]
     
     subgraph TwoStage ["YOLO26 Unified Two-Stage Pipeline"]
-        ModelManager --> S1["Stage 1: Scaled Detect (<=960px, imgsz=352) + Conditional COCO YOLO26n (imgsz=320)"]
-        S1 --> S2["Stage 2: YOLO26s-cls True Batch Inference (crops <=384px, imgsz=256)"]
+        ModelManager --> S1["Stage 1: YOLO26n Waste Detect (640x640, 5.19 MB) + Conditional COCO YOLO26n (imgsz=320)"]
+        S1 --> S2["Stage 2: YOLO26s-cls True Batch Inference (Square Context Crop <=288px, imgsz=256)"]
     end
 
     ModelManager -.->|Lightweight / Legacy| Legacy["YOLO26n-cls / MobileNetV3 / EfficientNet-B0"]
-    S2 --> Normalizer["Chuẩn hóa kết quả + Backlit PET Guard + Zero-Det OOD Damping (< 0.60)"]
+    S2 --> Normalizer["Chuẩn hóa kết quả + Ruled-Paper/PET/Battery Guards + Full-Bleed OOD Filter (< 0.60)"]
     Legacy --> Normalizer
     Normalizer --> Client
 ```
 
-- **True Batch Inference:** `ModelManager` truyền danh sách ảnh crop (giới hạn cạnh tối đa `384px`) thẳng vào `clf(crops, imgsz=256, verbose=False)` cho `yolo26s_cls`, kết hợp pre-warm `batch=1` khi nạp model giúp loại bỏ giật khung đầu sau warm-up và giữ độ trễ CPU ổn định ở **~401–485 ms**.
-- **Tối ưu & An toàn nhận diện:** Khi Stage-1 tự tin vật thể `plastic` (`det_conf >= 0.72` kết hợp COCO `bottle`), cơ chế **Backlit PET Guard** ngăn chặn việc ghi đè nhầm sang `glass` dưới ánh sáng ngược nền màn hình. Khi Stage-1 không phát hiện vật thể (`detected_count == 0`), hệ thống nhân hệ số giảm nhiễu `0.55x` để từ chối chính xác ảnh OOD.
+- **True Batch Inference:** `ModelManager` cắt ảnh theo **Square Context Crop** (cạnh `<= 288px` trước khi đệm viền vuông) truyền thẳng vào `clf(crops, imgsz=256, verbose=False)` kết hợp `yolo26n_waste_detect.pt` ở **`640x640`**, giúp giữ độ trễ CPU ổn định ở **`144.93 – 309.78 ms`**.
+- **Tối ưu & An toàn nhận diện:** Bảo vệ **Backlit PET Guard** (`det_conf >= 0.72` + COCO `bottle`), **False-Hazard Battery Guard**, **Ruled-Paper vs Clothes Guard** (tránh ghi đè giấy vở kẻ ngang sang vải), **Full-Bleed OOD Filter** (loại khung nhiễu tràn màn hình `>= 88%` bị Stage-2 bác bỏ), và hệ số giảm nhiễu **`0.55x`** khi `detected_count == 0`.
 - **Unified Schema:** Tương thích 100% với `Ecolink.Backend` (`AiVisionHttpClient.cs`, `WasteScanController.cs`) và `ecolink-web` (`wasteScanApi.ts`, `Scanner.tsx`).
 
 ---

@@ -1,0 +1,8 @@
+version: "3"
+tunnels:
+  ecolink_api:
+    proto: http
+    addr: 5000
+  ecolink_db:
+    proto: tcp
+    addr: 5432

@@ -128,6 +128,11 @@ public class TradeOrderDto
     public List<TradeOrderLineDto>? Lines { get; set; }
     public bool IsInquiryOnly { get; set; }
     public string QrCodeValue { get; set; } = string.Empty;
+    public string? LastMessagePreview { get; set; }
+    public Guid? LastMessageSenderId { get; set; }
+    public string? LastMessageSenderRole { get; set; }
+    public DateTime? LastMessageAt { get; set; }
+    public int UnreadCount { get; set; }
 }
 
 public class ConfirmQrReceiptRequest

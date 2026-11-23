@@ -112,6 +112,9 @@ public class AiFeedbackService : IAiFeedbackService
         _db.AiScanHistories.Add(scan);
         await _db.SaveChangesAsync(ct);
 
+        if (userId.HasValue && !isOod && !string.Equals(scan.PredictedLabel, "unknown", StringComparison.OrdinalIgnoreCase))
+            await TreeCareShared.TryAwardDailyScanFertilizerAsync(_db, userId.Value, ct);
+
         // BR-CLS-03: Tự động thu thập mẫu OOD / độ tin cậy thấp (< 60%) vào hàng đợi gán nhãn S-02
         if (isOod)
         {

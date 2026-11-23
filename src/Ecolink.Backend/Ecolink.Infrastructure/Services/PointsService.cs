@@ -166,8 +166,10 @@ public class PointsService : IPointsService
         if (points <= 0) return 0;
 
         var desc = $"Hoàn tất bàn giao {receipt.ReceiptCode}";
-        await CreditAsync(receipt.UserId, points, PointActionType.HandoverReward, "HandoverReceipt", receipt.Id.ToString(),
+        var userCredited = await CreditAsync(receipt.UserId, points, PointActionType.HandoverReward, "HandoverReceipt", receipt.Id.ToString(),
             $"HANDOVER:{receipt.Id}:USER", desc, ct);
+        if (userCredited > 0)
+            await TreeCareShared.AwardHandoverFertilizerAsync(_db, receipt.UserId, 2, ct);
         await CreditAsync(receipt.RecyclerId, points, PointActionType.HandoverReward, "HandoverReceipt", receipt.Id.ToString(),
             $"HANDOVER:{receipt.Id}:RECYCLER", desc, ct);
 
