@@ -63,8 +63,9 @@ public class ToggleWasteCategoryStatusValidator : AbstractValidator<ToggleWasteC
     public ToggleWasteCategoryStatusValidator()
     {
         RuleFor(x => x.Status)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Trạng thái danh mục không được để trống.")
-            .Must(s => AllowedStatuses.Contains(s.Trim()))
+            .Must(s => !string.IsNullOrWhiteSpace(s) && AllowedStatuses.Contains(s.Trim()))
             .WithMessage("Trạng thái danh mục chỉ chấp nhận 'Active' hoặc 'Inactive'.");
     }
 }

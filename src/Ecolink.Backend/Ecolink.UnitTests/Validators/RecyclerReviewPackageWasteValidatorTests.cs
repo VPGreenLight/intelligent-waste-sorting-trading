@@ -276,6 +276,15 @@ public class RecyclerReviewPackageWasteValidatorTests
     public void Schedule_DayOfWeek_0To6(int dow, bool valid)
         => IsValid(_sch, new UpdateScheduleRequest { Days = new() { new ScheduleDayDto { DayOfWeek = dow } } }).Should().Be(valid);
 
+    [Fact]
+    public void Schedule_NullDays_ReturnsValidationError_NotException()
+    {
+        var m = new UpdateScheduleRequest { Days = null! };
+        var act = () => _sch.Validate(m);
+        act.Should().NotThrow();
+        act().IsValid.Should().BeFalse();
+    }
+
     // ───── NearbyRecyclerFilterValidator ─────
     private readonly NearbyRecyclerFilterValidator _near = new();
     private static NearbyRecyclerFilterRequest Near() => new() { Lat = 10.77, Lng = 106.69, RadiusKm = 10 };
@@ -686,8 +695,9 @@ public class RecyclerReviewPackageWasteValidatorTests
     [InlineData(" Active ", true)]
     [InlineData("Deleted", false)]
     [InlineData("", false)]
-    public void ToggleWasteCategory_Status(string status, bool valid)
-        => IsValid(new ToggleWasteCategoryStatusValidator(), new ToggleWasteCategoryStatusRequest { Status = status }).Should().Be(valid);
+    [InlineData(null, false)]
+    public void ToggleWasteCategory_Status(string? status, bool valid)
+        => IsValid(new ToggleWasteCategoryStatusValidator(), new ToggleWasteCategoryStatusRequest { Status = status! }).Should().Be(valid);
 
     private readonly UpsertSortingRuleValidator _rule = new();
     private static UpsertSortingRuleRequest Rule() => new()

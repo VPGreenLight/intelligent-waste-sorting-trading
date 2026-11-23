@@ -128,8 +128,9 @@ public class UpdateScheduleRequestValidator : AbstractValidator<UpdateScheduleRe
     public UpdateScheduleRequestValidator()
     {
         RuleFor(x => x.Days)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Vui lòng khai báo ít nhất một ngày trong lịch tuần.")
-            .Must(d => d.Count <= 7).WithMessage("Lịch tuần tối đa 7 ngày.");
+            .Must(d => d != null && d.Count <= 7).WithMessage("Lịch tuần tối đa 7 ngày.");
 
         RuleForEach(x => x.Days).ChildRules(day =>
         {

@@ -92,8 +92,9 @@ public class UpdateStaffPermissionsValidator : AbstractValidator<UpdateStaffPerm
     public UpdateStaffPermissionsValidator()
     {
         RuleFor(x => x.Permissions)
+            .Cascade(CascadeMode.Stop)
             .NotNull().WithMessage("Danh sách quyền không được null.")
-            .Must(perms => perms.All(StaffPermissions.IsValid))
+            .Must(perms => perms != null && perms.All(StaffPermissions.IsValid))
             .WithMessage("Tồn tại mã quyền không nằm trong danh mục chuẩn RBAC của hệ thống (BR-ADM-02).");
 
         RuleFor(x => x.Reason)

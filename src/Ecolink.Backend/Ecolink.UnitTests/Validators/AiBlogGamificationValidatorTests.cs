@@ -201,6 +201,15 @@ public class AiBlogGamificationValidatorTests
         Has(_batch, m, nameof(m.GroundTruthLabel)).Should().BeTrue();
     }
 
+    [Fact]
+    public void BatchAssign_NullItemIds_ReturnsValidationError_NotException()
+    {
+        var m = new BatchAssignLabelsRequest { ItemIds = null!, GroundTruthLabel = "paper" };
+        var act = () => _batch.Validate(m);
+        act.Should().NotThrow();
+        act().IsValid.Should().BeFalse();
+    }
+
     // ───── CreateDatasetVersionRequestValidator ─────
     private readonly CreateDatasetVersionRequestValidator _ds = new();
     private static CreateDatasetVersionRequest Ver() => new() { VersionCode = "v1.0.0", VersionName = "Ban dau", TrainRatio = 70, ValRatio = 20, TestRatio = 10 };

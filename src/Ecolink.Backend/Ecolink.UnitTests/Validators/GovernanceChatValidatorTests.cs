@@ -215,9 +215,10 @@ public class GovernanceChatValidatorTests
     [InlineData("Image", null, null, false)]
     [InlineData("Proposal", "x", null, false)]       // đề xuất giá phải đi qua /proposals
     [InlineData("", "x", null, false)]
-    public void Chat_MessageType_Matrix(string type, string? content, string? url, bool valid)
+    [InlineData(null, "x", null, false)]
+    public void Chat_MessageType_Matrix(string? type, string? content, string? url, bool valid)
     {
-        var m = new SendChatMessageRequest { MessageType = type, MessageContent = content, AttachmentUrl = url };
+        var m = new SendChatMessageRequest { MessageType = type!, MessageContent = content, AttachmentUrl = url };
         IsValid(_chat, m).Should().Be(valid);
     }
 

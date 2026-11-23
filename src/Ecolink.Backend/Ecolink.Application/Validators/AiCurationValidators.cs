@@ -95,8 +95,9 @@ public sealed class BatchAssignLabelsRequestValidator : AbstractValidator<BatchA
     public BatchAssignLabelsRequestValidator()
     {
         RuleFor(x => x.ItemIds)
+            .Cascade(CascadeMode.Stop)
             .NotNull().WithMessage("Danh sách itemIds không được để trống.")
-            .Must(ids => ids.Count is >= 1 and <= 200)
+            .Must(ids => ids != null && ids.Count is >= 1 and <= 200)
             .WithMessage("Số lượng ảnh gán nhãn hàng loạt phải từ 1 đến 200 mục.");
 
         RuleFor(x => x.GroundTruthLabel)

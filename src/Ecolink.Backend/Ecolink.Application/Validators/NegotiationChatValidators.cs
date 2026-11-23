@@ -13,8 +13,9 @@ public class SendChatMessageRequestValidator : AbstractValidator<SendChatMessage
     public SendChatMessageRequestValidator()
     {
         RuleFor(x => x.MessageType)
+            .Cascade(CascadeMode.Stop)
             .NotEmpty().WithMessage("Loại tin nhắn không được để trống.")
-            .Must(t => AllowedMessageTypes.Contains(t.Trim().ToLowerInvariant()))
+            .Must(t => !string.IsNullOrWhiteSpace(t) && AllowedMessageTypes.Contains(t.Trim().ToLowerInvariant()))
             .WithMessage("Loại tin nhắn thông thường chỉ chấp nhận 'Text' hoặc 'Image'. Để gửi đề xuất giá/khung giờ, vui lòng gọi endpoint '/proposals'.");
 
         When(x => string.Equals(x.MessageType?.Trim(), "Text", StringComparison.OrdinalIgnoreCase), () =>

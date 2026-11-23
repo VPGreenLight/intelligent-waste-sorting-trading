@@ -35,8 +35,11 @@ public class AiCategoryNormalizerTests
     [InlineData("kim_loai", "metal")]
     [InlineData("brown-glass", "glass")]
     [InlineData("thuy_tinh", "glass")]
-    [InlineData("battery", "trash")]
-    [InlineData("ewaste_disposal", "trash")]
+    [InlineData("battery", "battery")]
+    [InlineData("ewaste_disposal", "battery")]
+    [InlineData("huu_co", "biological")]
+    [InlineData("quan_ao", "clothes")]
+    [InlineData("giay_dep", "shoes")]
     [InlineData("UNKNOWN_LABEL", "unknown_label")]     // không có alias → lowercase
     public void NormalizeCode_MapsAliasesToCanonical(string raw, string expected)
         => AiCategoryNormalizer.NormalizeCode(raw).Should().Be(expected);
@@ -56,23 +59,29 @@ public class AiCategoryNormalizerTests
     }
 
     [Theory]
-    [InlineData("cardboard", 0)]
-    [InlineData("glass", 1)]
-    [InlineData("metal", 2)]
-    [InlineData("paper", 3)]
-    [InlineData("plastic", 4)]
-    [InlineData("trash", 5)]
-    [InlineData("pet", 4)]               // alias → plastic
-    [InlineData("carton", 0)]
-    [InlineData("something_else", 5)]    // không biết → trash
-    [InlineData(null, 5)]
-    [InlineData("", 5)]
+    [InlineData("battery", 0)]
+    [InlineData("biological", 1)]
+    [InlineData("cardboard", 2)]
+    [InlineData("clothes", 3)]
+    [InlineData("glass", 4)]
+    [InlineData("metal", 5)]
+    [InlineData("paper", 6)]
+    [InlineData("plastic", 7)]
+    [InlineData("shoes", 8)]
+    [InlineData("trash", 9)]
+    [InlineData("pet", 7)]               // alias → plastic
+    [InlineData("carton", 2)]            // alias → cardboard
+    [InlineData("something_else", 9)]    // không biết → trash
+    [InlineData(null, 9)]
+    [InlineData("", 9)]
     public void GetYoloClassIndex_Matches_YoloOrder(string? code, int expected)
         => AiCategoryNormalizer.GetYoloClassIndex(code).Should().Be(expected);
 
     [Fact]
     public void YoloClassOrder_IsStable_ContractWithAiService()
-        => AiCategoryNormalizer.YoloClassOrder.Should().Equal("cardboard", "glass", "metal", "paper", "plastic", "trash");
+        => AiCategoryNormalizer.YoloClassOrder.Should().Equal(
+            "battery", "biological", "cardboard", "clothes", "glass",
+            "metal", "paper", "plastic", "shoes", "trash");
 
     [Theory]
     [InlineData(FeedbackStatus.Pending, "Pending")]
