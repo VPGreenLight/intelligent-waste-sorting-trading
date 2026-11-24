@@ -73,7 +73,7 @@ public class HandoverRequestService : IHandoverRequestService
                        ?? throw new NotFoundException("Không tìm thấy cơ sở thu gom.");
         EnsureRecyclerAvailable(recycler);
 
-        var items = await ValidateAndBuildItemsAsync(recyclerId, request.Items, ct);
+        var items = await ValidateAndBuildItemsAsync(recyclerId, request.Items, ct, grandfatheredCategoryIds: null);
         var slot = ValidateTimeSlot(request.ProposedTimeSlot!.Value, recycler);
         var photos = ValidatePhotos(request.PhotoUrls);
         var address = ValidateAddress(request.PickupAddress);
@@ -117,7 +117,8 @@ public class HandoverRequestService : IHandoverRequestService
         if (entity.Status != HandoverStatus.Pending)
             throw new BusinessRuleException("BR-HND-02", "MSG-GEN-01", "Chỉ có thể chỉnh sửa yêu cầu đang ở trạng thái Pending.");
 
-        var items = await ValidateAndBuildItemsAsync(entity.RecyclerId, request.Items, ct);
+        var existingCategoryIds = entity.Items.Select(x => x.WasteCategoryId).ToHashSet();
+        var items = await ValidateAndBuildItemsAsync(entity.RecyclerId, request.Items, ct, existingCategoryIds);
         var slot = ValidateTimeSlot(request.ProposedTimeSlot!.Value, entity.Recycler!);
         var photos = ValidatePhotos(request.PhotoUrls);
         var address = ValidateAddress(request.PickupAddress);
@@ -471,7 +472,10 @@ public class HandoverRequestService : IHandoverRequestService
     }
 
     private async Task<List<HandoverRequestItem>> ValidateAndBuildItemsAsync(
-        Guid recyclerId, List<HandoverItemRequest> input, CancellationToken ct)
+        Guid recyclerId,
+        List<HandoverItemRequest> input,
+        CancellationToken ct,
+        IReadOnlySet<Guid>? grandfatheredCategoryIds = null)
     {
         if (input.Count == 0)
             throw new BusinessRuleException("BR-HND-01", "MSG-GEN-01", "Vui lòng thêm ít nhất một loại phế liệu.");
@@ -480,6 +484,10 @@ public class HandoverRequestService : IHandoverRequestService
         if (ids.Distinct().Count() != ids.Count)
             throw new BusinessRuleException("BR-HND-01", "MSG-GEN-01", "Mỗi loại phế liệu chỉ được xuất hiện một lần trong yêu cầu.");
 
+        var categories = await _db.WasteCategories.AsNoTracking()
+            .Where(c => ids.Contains(c.Id))
+            .ToDictionaryAsync(c => c.Id, ct);
+
         var prices = await _db.RecyclerPrices.AsNoTracking()
             .Where(p => p.RecyclerId == recyclerId && ids.Contains(p.WasteCategoryId) && p.Status == PriceStatus.Active)
             .ToDictionaryAsync(p => p.WasteCategoryId, ct);
@@ -487,11 +495,22 @@ public class HandoverRequestService : IHandoverRequestService
         var result = new List<HandoverRequestItem>();
         foreach (var it in input)
         {
+            var catId = it.WasteCategoryId!.Value;
+            if (!categories.TryGetValue(catId, out var category))
+                throw new BusinessRuleException("BR-HND-01", "MSG-GEN-01", "Loại phế liệu đã chọn không tồn tại.");
+
+            if (!string.Equals(category.Status, "Active", StringComparison.OrdinalIgnoreCase)
+                && (grandfatheredCategoryIds == null || !grandfatheredCategoryIds.Contains(catId)))
+            {
+                throw new BusinessRuleException("BR-SRT-04", "MSG-SRT-04",
+                    $"Danh mục phế liệu '{category.Name}' hiện đang tạm ngưng thu mua trên hệ thống.");
+            }
+
             var w = it.EstimatedWeightKg!.Value;
             if (w <= 0 || decimal.Round(w, 2) != w)
                 throw new BusinessRuleException("BR-HND-01", "MSG-GEN-01", "Khối lượng ước tính phải lớn hơn 0 và tối đa 2 chữ số thập phân.");
 
-            if (!prices.TryGetValue(it.WasteCategoryId!.Value, out var price))
+            if (!prices.TryGetValue(catId, out var price))
                 throw new BusinessRuleException("BR-HND-01", "MSG-GEN-01", "Cơ sở thu gom không nhận một trong các loại phế liệu đã chọn.");
 
             if (w < price.MinQuantityKg)
@@ -500,7 +519,7 @@ public class HandoverRequestService : IHandoverRequestService
 
             result.Add(new HandoverRequestItem
             {
-                WasteCategoryId = it.WasteCategoryId.Value,
+                WasteCategoryId = catId,
                 EstimatedWeightKg = w,
                 ItemNote = Normalize(it.ItemNote)
             });

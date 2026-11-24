@@ -1,5 +1,35 @@
 [
   {
+    "id": 53,
+    "predicted_label": "plastic",
+    "user_reported_label": "glass",
+    "confidence_score": 0.72,
+    "note": "Automated test: AI misclassified the item",
+    "image_url": "https://example.com/test.jpg",
+    "status": "pending_verification",
+    "created_at": "2026-11-24 13:36:55"
+  },
+  {
+    "id": 52,
+    "predicted_label": "unknown",
+    "user_reported_label": "paper",
+    "confidence_score": 0.0,
+    "note": "",
+    "image_url": "local://unlinked-feedback",
+    "status": "pending_verification",
+    "created_at": "2026-11-24 13:36:54"
+  },
+  {
+    "id": 51,
+    "predicted_label": "cardboard",
+    "user_reported_label": "cardboard",
+    "confidence_score": 0.5275,
+    "note": "Automated test: classify then feedback flow",
+    "image_url": "local://unlinked-feedback",
+    "status": "pending_verification",
+    "created_at": "2026-11-24 13:36:53"
+  },
+  {
     "id": 50,
     "predicted_label": "plastic",
     "user_reported_label": "glass",

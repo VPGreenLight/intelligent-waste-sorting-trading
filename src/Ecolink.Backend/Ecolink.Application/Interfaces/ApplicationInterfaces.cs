@@ -33,6 +33,16 @@ public interface IAiVisionClient
             Success = false,
             Message = "SyncSortingRuleAsync chưa được triển khai trên client này."
         });
+
+    Task<AiRuleSyncResponseDto> SyncCategoryRuleStatusAsync(
+        string categoryCode,
+        bool isActive,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(new AiRuleSyncResponseDto
+        {
+            Success = false,
+            Message = "SyncCategoryRuleStatusAsync chưa được triển khai trên client này."
+        });
 }
 
 public interface IWasteRuleEngineService

@@ -521,5 +521,45 @@ public class HandoverRequestUnitTests
         var ex = await act.Should().ThrowAsync<BusinessRuleException>();
         ex.Which.RuleCode.Should().Be("BR-HND-02");
     }
+
+    [Fact]
+    public async Task UTC025_CreateAsync_InactiveCategory_ThrowsBrSrt04_WhileExistingOrderUpdateKeepsGrandfatheredItem()
+    {
+        var (sut, db, citizen, recyclerUser, _, plastic, metal) = await CreateSeededSutAsync();
+
+        // Tạo đơn hợp lệ trước khi tạm ngưng
+        var existingOrder = await sut.CreateAsync(citizen.Id, ValidCreateRequest(recyclerUser.Id, plastic.Id, 3.0m));
+
+        // Admin chuyển danh mục plastic sang Inactive
+        plastic.Status = "Inactive";
+        await db.SaveChangesAsync();
+
+        // Tạo đơn MỚI chứa danh mục Inactive phải bị chặn (BR-SRT-04)
+        var createAct = () => sut.CreateAsync(citizen.Id, ValidCreateRequest(recyclerUser.Id, plastic.Id, 2.0m));
+        var ex = await createAct.Should().ThrowAsync<BusinessRuleException>();
+        ex.Which.RuleCode.Should().Be("BR-SRT-04");
+        ex.Which.MessageCode.Should().Be("MSG-SRT-04");
+
+        // Đơn Pending đã tạo trước đó vẫn được cập nhật khối lượng với item cũ
+        var updated = await sut.UpdateAsync(citizen.Id, existingOrder.Id, new UpdateHandoverRequest
+        {
+            ProposedTimeSlot = DateTimeOffset.UtcNow.AddHours(6),
+            PickupAddress = "Cổng chính Hòa Lạc, Thạch Thất, Hà Nội",
+            PhotoUrls = new List<string> { "https://cdn.ecolink.test/waste1.jpg" },
+            Items = new List<HandoverItemRequest>
+            {
+                new() { WasteCategoryId = plastic.Id, EstimatedWeightKg = 4.5m }
+            }
+        });
+        updated.Items.Should().ContainSingle(i => i.WasteCategoryId == plastic.Id && i.EstimatedWeightKg == 4.5m);
+
+        // Chấp nhận đơn đã tạo vẫn thành công
+        await sut.AcceptAsync(recyclerUser.Id, existingOrder.Id, null);
+        (await sut.GetUserRequestAsync(citizen.Id, existingOrder.Id)).Status.Should().Be(HandoverStatus.Accepted.ToString());
+
+        // Tạo đơn với danh mục Active còn lại vẫn thành công
+        var activeOrder = await sut.CreateAsync(citizen.Id, ValidCreateRequest(recyclerUser.Id, metal.Id, 1.5m));
+        activeOrder.Items.Should().ContainSingle(i => i.WasteCategoryId == metal.Id);
+    }
 }
 

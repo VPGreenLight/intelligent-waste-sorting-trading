@@ -193,6 +193,21 @@ public class GeoMatchingService : IGeoMatchingService
             {
                 await EnsureDemoRecyclerPricesSeededAsync(cancellationToken);
 
+                var hasAnyCategories = await _db.WasteCategories.AsNoTracking().AnyAsync(cancellationToken);
+                var activeRecyclableCodes = hasAnyCategories
+                    ? await _db.WasteCategories
+                        .AsNoTracking()
+                        .Where(c => c.IsRecyclable && c.Status == "Active")
+                        .Select(c => c.Code.ToLower())
+                        .ToListAsync(cancellationToken)
+                    : new List<string>();
+                var activeCodeSet = new HashSet<string>(activeRecyclableCodes, StringComparer.OrdinalIgnoreCase);
+
+                if (hasAnyCategories && normalizedCategory != null && !activeCodeSet.Contains(normalizedCategory))
+                {
+                    return new List<CollectionPartnerDto>();
+                }
+
                 // Quy đổi bán kính km sang ngưỡng độ (degrees) bao phủ an toàn theo vĩ độ hiện tại để PostgreSQL lọc trước
                 // bằng chỉ mục tọa độ (Bounding Box), sau đó tinh chỉnh chính xác tuyệt đối bằng Haversine.
                 var cosLat = Math.Max(0.1, Math.Cos(DegreesToRadians(latitude)));
@@ -205,23 +220,27 @@ public class GeoMatchingService : IGeoMatchingService
                 var maxLng = (decimal)(longitude + lngDeltaDeg * 1.05);
 
                 // Truy vấn trực tiếp trên PostgreSQL với điều kiện Bounding Box tiêu chuẩn
-                // Tuân thủ BR-MTH-01 (Verified), BR-MTH-03 & BR-MTH-07 (Prices Active), BR-MTH-06 (Online & User Active)
+                // Tuân thủ BR-MTH-01 (Verified), BR-MTH-03 & BR-MTH-07 (Prices Active & Category Active), BR-MTH-06 (Online & User Active)
                 var query = _db.RecyclerProfiles
                     .AsNoTracking()
                     .Include(r => r.User)
-                    .Include(r => r.Prices.Where(p => p.Status == PriceStatus.Active))
+                    .Include(r => r.Prices.Where(p => p.Status == PriceStatus.Active && p.WasteCategory != null && p.WasteCategory.Status == "Active"))
                         .ThenInclude(p => p.WasteCategory)
                     .Where(r => r.VerificationStatus == VerificationStatus.Verified
                                 && r.ActiveStatus == RecyclerActiveStatus.Online
                                 && r.User != null
                                 && r.User.Status == UserStatus.Active
                                 && r.Latitude >= minLat && r.Latitude <= maxLat
-                                && r.Longitude >= minLng && r.Longitude <= maxLng);
+                                && r.Longitude >= minLng && r.Longitude <= maxLng
+                                && r.Prices.Any(p => p.Status == PriceStatus.Active
+                                                     && p.WasteCategory != null
+                                                     && p.WasteCategory.Status == "Active"));
 
                 if (normalizedCategory != null)
                 {
                     query = query.Where(r => r.Prices.Any(p => p.Status == PriceStatus.Active
                                                                && p.WasteCategory != null
+                                                               && p.WasteCategory.Status == "Active"
                                                                && p.WasteCategory.Code.ToLower() == normalizedCategory));
                 }
 
@@ -237,7 +256,11 @@ public class GeoMatchingService : IGeoMatchingService
 
                     if (distance <= safeRadiusKm)
                     {
-                        results.Add(MapProfileToPartnerDto(profile, Math.Round(distance, 2)));
+                        var dto = MapProfileToPartnerDto(profile, Math.Round(distance, 2));
+                        if (dto.Materials.Count > 0)
+                        {
+                            results.Add(dto);
+                        }
                     }
                 }
 
@@ -249,6 +272,11 @@ public class GeoMatchingService : IGeoMatchingService
                         .ThenByDescending(p => p.HasVerifiedBadge)
                         .ThenBy(p => p.DistanceKm)
                         .ToList();
+                }
+
+                if (await _db.RecyclerProfiles.AsNoTracking().AnyAsync(cancellationToken))
+                {
+                    return results;
                 }
             }
             catch (Exception ex)
@@ -350,9 +378,11 @@ public class GeoMatchingService : IGeoMatchingService
             response.FallbackSuggestion = new DiscoveryFallbackSuggestionDto
             {
                 SuggestedExpandedRadiusKm = Math.Min(50.0, Math.Round(filter.RadiusKm * 2.5, 1)),
-                GuidanceMessage = "Không tìm thấy cơ sở thu mua rác gần bạn trong bán kính hiện tại. Bạn có thể mở rộng bán kính tìm kiếm, hoặc xử lý theo hướng dẫn thùng rác công cộng bên dưới.",
+                GuidanceMessage = !string.IsNullOrWhiteSpace(filter.Category) && sortingGuide == null
+                    ? "Danh mục phế liệu này hiện đang tạm ngưng thu mua trên hệ thống."
+                    : "Không tìm thấy cơ sở thu mua rác gần bạn trong bán kính hiện tại. Bạn có thể mở rộng bán kính tìm kiếm, hoặc xử lý theo hướng dẫn thùng rác công cộng bên dưới.",
                 PublicBinSortingGuide = sortingGuide,
-                AllowCommunityPickupPost = true
+                AllowCommunityPickupPost = !(!string.IsNullOrWhiteSpace(filter.Category) && sortingGuide == null)
             };
         }
 
@@ -413,7 +443,9 @@ public class GeoMatchingService : IGeoMatchingService
     private static CollectionPartnerDto MapProfileToPartnerDto(RecyclerProfile profile, double distanceKm)
     {
         var activeMaterials = profile.Prices
-            .Where(p => p.Status == PriceStatus.Active && p.WasteCategory != null)
+            .Where(p => p.Status == PriceStatus.Active
+                        && p.WasteCategory != null
+                        && string.Equals(p.WasteCategory.Status, "Active", StringComparison.OrdinalIgnoreCase))
             .OrderBy(p => p.WasteCategory!.Name)
             .Select(p => new AcceptedMaterialDto
             {

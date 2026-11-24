@@ -692,6 +692,12 @@ public class RecyclerManagementService : IRecyclerManagementService
 
     private static void EnsurePurchasable(WasteCategory category)
     {
+        if (!string.Equals(category.Status, "Active", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new BusinessRuleException("BR-SRT-04", "MSG-SRT-04",
+                $"Danh mục phế liệu '{category.Name}' hiện đang tạm ngưng trên hệ thống.");
+        }
+
         if (!category.IsRecyclable || string.Equals(category.Code, NonRecyclableCode, StringComparison.OrdinalIgnoreCase))
         {
             throw new BusinessRuleException("BR-MTH-03", "MSG-GEN-01",

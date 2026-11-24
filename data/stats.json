@@ -1,5 +1,5 @@
 {
-  "total_scans": 287,
+  "total_scans": 291,
   "categories": {
     "cardboard": 57,
     "metal": 10,
@@ -9,8 +9,40 @@
     "trash": 4,
     "battery": 2
   },
-  "ood_count": 105,
+  "ood_count": 109,
   "recent": [
+    {
+      "category": "cardboard",
+      "confidence": 52.8,
+      "is_ood": true,
+      "model": "yolo26_detect",
+      "latency_ms": 87.95,
+      "timestamp": "2026-11-24 13:36:55"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 52.8,
+      "is_ood": true,
+      "model": "yolo26_detect",
+      "latency_ms": 90.99,
+      "timestamp": "2026-11-24 13:36:54"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 52.8,
+      "is_ood": true,
+      "model": "yolo26_detect",
+      "latency_ms": 86.82,
+      "timestamp": "2026-11-24 13:36:53"
+    },
+    {
+      "category": "cardboard",
+      "confidence": 52.8,
+      "is_ood": true,
+      "model": "yolo26_detect",
+      "latency_ms": 656.73,
+      "timestamp": "2026-11-24 13:36:51"
+    },
     {
       "category": "cardboard",
       "confidence": 19.5,
@@ -178,39 +210,7 @@
       "model": "yolo26_detect",
       "latency_ms": 6392.95,
       "timestamp": "2026-11-22 15:53:47"
-    },
-    {
-      "category": "plastic",
-      "confidence": 23.9,
-      "is_ood": true,
-      "model": "yolo26_detect",
-      "latency_ms": 8252.12,
-      "timestamp": "2026-11-22 15:53:31"
-    },
-    {
-      "category": "plastic",
-      "confidence": 49.5,
-      "is_ood": true,
-      "model": "yolo26_detect",
-      "latency_ms": 7408.95,
-      "timestamp": "2026-11-22 15:53:13"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 68.4,
-      "is_ood": false,
-      "model": "yolo26_detect",
-      "latency_ms": 18027.28,
-      "timestamp": "2026-11-22 15:52:28"
-    },
-    {
-      "category": "cardboard",
-      "confidence": 86.2,
-      "is_ood": false,
-      "model": "yolo26_detect",
-      "latency_ms": 5715.04,
-      "timestamp": "2026-11-22 15:51:57"
     }
   ],
-  "avg_latency_ms": 1295.26
+  "avg_latency_ms": 1280.63
 }

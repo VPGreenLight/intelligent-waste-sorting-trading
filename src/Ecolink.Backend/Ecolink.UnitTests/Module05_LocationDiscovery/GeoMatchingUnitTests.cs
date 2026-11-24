@@ -8,6 +8,7 @@ using Ecolink.Infrastructure.Data;
 using Ecolink.Infrastructure.Services;
 using Ecolink.UnitTests.Common;
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using NetTopologySuite.Geometries;
 using Xunit;
@@ -354,6 +355,43 @@ public class GeoMatchingUnitTests
         detail.Id.Should().Be(hoaLac2Id);
         detail.DistanceKm.Should().Be(0.0);
         detail.Materials.Should().NotBeEmpty();
+    }
+
+    [Fact]
+    public async Task UTC021_FindNearestPartnersAndDetail_InactiveCategory_ExcludesFromDiscoveryWhilePreservingSavedPrices()
+    {
+        var (sut, db, _) = CreateSut(withDb: true);
+        var plastic = new WasteCategory { Id = Guid.NewGuid(), Code = "plastic", Name = "Nhựa", StandardBinColor = "Cam", IsRecyclable = true, Status = "Inactive" };
+        var paper = new WasteCategory { Id = Guid.NewGuid(), Code = "paper", Name = "Giấy", StandardBinColor = "Xanh", IsRecyclable = true, Status = "Active" };
+        db.WasteCategories.AddRange(plastic, paper);
+
+        var recyclerUser = new User { Id = Guid.NewGuid(), Username = "rcy_geo_inactive", Email = "rcy_geo@test.vn", Role = UserRole.Recycler, Status = UserStatus.Active };
+        var profile = new RecyclerProfile
+        {
+            UserId = recyclerUser.Id,
+            User = recyclerUser,
+            FacilityName = "Vựa Hòa Lạc Test",
+            BusinessAddress = "Tân Xã, Thạch Thất",
+            Latitude = 21.0124m,
+            Longitude = 105.5253m,
+            VerificationStatus = VerificationStatus.Verified,
+            ActiveStatus = RecyclerActiveStatus.Online
+        };
+        db.Users.Add(recyclerUser);
+        db.RecyclerProfiles.Add(profile);
+        db.RecyclerPrices.AddRange(
+            new RecyclerPrice { RecyclerId = recyclerUser.Id, WasteCategoryId = plastic.Id, WasteCategory = plastic, PricePerKg = 5000m, MinQuantityKg = 1m, Status = PriceStatus.Active },
+            new RecyclerPrice { RecyclerId = recyclerUser.Id, WasteCategoryId = paper.Id, WasteCategory = paper, PricePerKg = 3000m, MinQuantityKg = 1m, Status = PriceStatus.Active });
+        await db.SaveChangesAsync();
+
+        var filteredPlastic = (await sut.FindNearestPartnersAsync(21.0124, 105.5253, "plastic", 10.0)).ToList();
+        filteredPlastic.Should().BeEmpty();
+
+        var detail = await sut.GetRecyclerPublicDetailAsync(recyclerUser.Id, 21.0124, 105.5253);
+        detail.Materials.Select(m => m.CategoryCode).Should().Equal("paper");
+
+        var savedPlasticPrice = await db.RecyclerPrices.FirstAsync(p => p.WasteCategoryId == plastic.Id && p.RecyclerId == recyclerUser.Id);
+        savedPlasticPrice.Status.Should().Be(PriceStatus.Active);
     }
 }
 

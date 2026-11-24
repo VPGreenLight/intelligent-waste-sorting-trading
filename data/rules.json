@@ -16,7 +16,11 @@
         "Bóp dẹp thân chai để tiết kiệm thể tích thùng chứa"
       ],
       "eco_fact": "Tái chế 1 chai nhựa có thể tiết kiệm đủ năng lượng để thắp sáng một bóng đèn LED trong 6 giờ!",
-      "examples": ["Chai nước khoáng PET", "Hộp sữa chua sạch", "Can dầu ăn đã rửa sạch"]
+      "examples": [
+        "Chai nước khoáng PET",
+        "Hộp sữa chua sạch",
+        "Can dầu ăn đã rửa sạch"
+      ]
     },
     "paper": {
       "id": "paper",
@@ -34,7 +38,12 @@
         "Gấp phẳng hoặc buộc thành từng tập trước khi bỏ vào thùng"
       ],
       "eco_fact": "Tái chế 1 tấn giấy có thể cứu sống 17 cây xanh và tiết kiệm hơn 26.000 lít nước sạch!",
-      "examples": ["Sách báo cũ", "Giấy in A4 không dùng", "Tờ rơi quảng cáo", "Túi giấy"]
+      "examples": [
+        "Sách báo cũ",
+        "Giấy in A4 không dùng",
+        "Tờ rơi quảng cáo",
+        "Túi giấy"
+      ]
     },
     "cardboard": {
       "id": "cardboard",
@@ -52,7 +61,11 @@
         "Đảm bảo thùng carton không bị dính dầu mỡ thức ăn (ví dụ: hộp pizza bẩn)"
       ],
       "eco_fact": "Carton có thể tái chế tới 5-7 lần trước khi sợi cellulose trở nên quá ngắn!",
-      "examples": ["Hộp bưu kiện Shopee/Lazada", "Hộp đựng giày", "Thùng mì tôm"]
+      "examples": [
+        "Hộp bưu kiện Shopee/Lazada",
+        "Hộp đựng giày",
+        "Thùng mì tôm"
+      ]
     },
     "metal": {
       "id": "metal",
@@ -70,7 +83,11 @@
         "Đạp bẹp lon nhôm để giảm diện tích thu gom"
       ],
       "eco_fact": "Nhôm có thể tái chế vô hạn lần mà không hề suy giảm chất lượng!",
-      "examples": ["Lon nước ngọt Coca/Pepsi", "Hộp cá hộp/sữa đặc", "Nắp chai bia"]
+      "examples": [
+        "Lon nước ngọt Coca/Pepsi",
+        "Hộp cá hộp/sữa đặc",
+        "Nắp chai bia"
+      ]
     },
     "glass": {
       "id": "glass",
@@ -88,7 +105,11 @@
         "Tách riêng nắp đậy (thường bằng kim loại hoặc cao su)"
       ],
       "eco_fact": "Một chai thủy tinh vứt ra bãi rác tự nhiên có thể mất tới 1.000.000 năm để phân hủy!",
-      "examples": ["Chai nước ngọt thủy tinh", "Lọ mứt/gia vị", "Chai nước hoa rỗng"]
+      "examples": [
+        "Chai nước ngọt thủy tinh",
+        "Lọ mứt/gia vị",
+        "Chai nước hoa rỗng"
+      ]
     },
     "trash": {
       "id": "trash",
@@ -106,7 +127,11 @@
         "Nếu là pin hoặc đồ điện tử cũ, hãy tách riêng vào thùng rác nguy hại"
       ],
       "eco_fact": "Phân loại đúng giúp giảm thiểu tới 70% lượng rác phải chôn lấp tại các bãi rác!",
-      "examples": ["Giấy ăn đã qua sử dụng", "Bút bi hết mực", "Đồ nhựa dùng 1 lần dính dầu bẩn"]
+      "examples": [
+        "Giấy ăn đã qua sử dụng",
+        "Bút bi hết mực",
+        "Đồ nhựa dùng 1 lần dính dầu bẩn"
+      ]
     },
     "battery": {
       "id": "battery",
@@ -125,7 +150,11 @@
       ],
       "hazard_warning": "CẢNH BÁO NGUY HẠI: Tuyệt đối không vứt pin vào thùng rác sinh hoạt hoặc đốt vì nguy cơ cháy nổ và rò rỉ kim loại nặng (chì, thủy ngân, lithium).",
       "eco_fact": "1 viên pin tiểu thải sai quy định có thể làm ô nhiễm tới 500 lít nước ngầm hoặc 1 m3 đất trong nhiều năm!",
-      "examples": ["Pin AA / AAA", "Pin cúc áo", "Pin sạc dự phòng / Lithium cũ"]
+      "examples": [
+        "Pin AA / AAA",
+        "Pin cúc áo",
+        "Pin sạc dự phòng / Lithium cũ"
+      ]
     },
     "biological": {
       "id": "biological",
@@ -143,7 +172,11 @@
         "Bỏ thùng màu Xanh Lá hoặc ủ phân vi sinh compost tại nhà (đồng nát không thu mua)"
       ],
       "eco_fact": "Ủ phân từ rác hữu cơ hộ gia đình giúp giảm mạnh khí mê-tan phát sinh tại bãi chôn lấp và tạo đất sạch trồng cây!",
-      "examples": ["Vỏ rau củ, hoa quả", "Thức ăn thừa", "Bã cà phê, bã trà"]
+      "examples": [
+        "Vỏ rau củ, hoa quả",
+        "Thức ăn thừa",
+        "Bã cà phê, bã trà"
+      ]
     },
     "clothes": {
       "id": "clothes",
@@ -161,7 +194,11 @@
         "Vải rách bẩn dính dầu mỡ bọc túi kín bỏ luồng xử lý riêng (không bán cân ký phế liệu)"
       ],
       "eco_fact": "Tái sử dụng 1 kg quần áo cũ giúp tiết kiệm hàng nghìn lít nước sản xuất sợi vải mới!",
-      "examples": ["Áo sơ mi, áo phông cũ", "Quần jean", "Khăn vải, chăn ga sạch"]
+      "examples": [
+        "Áo sơ mi, áo phông cũ",
+        "Quần jean",
+        "Khăn vải, chăn ga sạch"
+      ]
     },
     "shoes": {
       "id": "shoes",
@@ -179,8 +216,22 @@
         "Quyên góp nếu còn tốt hoặc bỏ điểm thu gom sinh hoạt (vựa đồng nát không thu mua)"
       ],
       "eco_fact": "Đế giày cao su và tổng hợp mất hàng chục năm để phân hủy tự nhiên — quyên góp giúp kéo dài vòng đời sản phẩm!",
-      "examples": ["Giày thể thao cũ", "Dép nhựa, sandal", "Giày da cũ"]
+      "examples": [
+        "Giày thể thao cũ",
+        "Dép nhựa, sandal",
+        "Giày da cũ"
+      ]
+    },
+    "qa_cat_056506": {
+      "display_name": "qa_cat_056506",
+      "bin_color_name": "Cam",
+      "instructions": [
+        "Phân loại đúng quy chuẩn EcoLink."
+      ],
+      "handling_action": "Bàn giao cho đối tác thu mua EcoLink.",
+      "hazard_warning": "",
+      "is_active": false
     }
   },
-  "confidence_threshold": 0.60
+  "confidence_threshold": 0.6
 }

@@ -308,5 +308,14 @@ public class WasteScanTests
             status = "Inactive"
         }, adminToken)).ShouldBe(200);
         Assert.Equal("Inactive", deactivated.Body.GetProperty("data").GetProperty("status").GetString());
+
+        // Danh mục Inactive không thể publish rule và bị ẩn khỏi rules/categories công khai
+        (await Api.PatchJsonAsync($"{Routes.ScanRules}/{ruleId}/publish", null, adminToken)).ShouldBe(400);
+
+        var activeCats = (await Api.GetAsync(Routes.WasteCategories)).ShouldBe(200).Body.GetProperty("data");
+        Assert.DoesNotContain(activeCats.EnumerateArray(), c => c.GetProperty("code").GetString() == code);
+
+        var activeRules = (await Api.GetAsync(Routes.ScanRules)).ShouldBe(200).Body.GetProperty("data");
+        Assert.DoesNotContain(activeRules.EnumerateArray(), r => r.GetProperty("categoryCode").GetString() == code);
     }
 }

@@ -456,6 +456,14 @@ public class WasteRuleEngineService : IWasteRuleEngineService
         var category = rule.WasteCategory
             ?? throw new NotFoundException("Quy tắc phân loại không gắn với danh mục rác hợp lệ.");
 
+        if (!string.Equals(category.Status, "Active", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new BusinessRuleException(
+                "BR-SRT-04",
+                "MSG-SRT-04",
+                $"Danh mục rác '{category.Code}' đang tạm ngưng (Inactive), không thể phát hành hoặc đồng bộ quy tắc sang AI Service.");
+        }
+
         if (string.IsNullOrWhiteSpace(rule.PreparationSteps) || string.IsNullOrWhiteSpace(rule.HandlingAction))
         {
             throw new BusinessRuleException(
@@ -549,7 +557,18 @@ public class WasteRuleEngineService : IWasteRuleEngineService
 
         if (_db != null)
         {
-            await GetSortingGuideAsync(key, cancellationToken);
+            var refreshedGuide = await GetSortingGuideAsync(key, cancellationToken);
+            if (_aiVisionClient != null)
+            {
+                try
+                {
+                    await _aiVisionClient.SyncCategoryRuleStatusAsync(key, refreshedGuide != null, cancellationToken);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Không thể đồng bộ trạng thái danh mục {CategoryCode} sang AI Service.", key);
+                }
+            }
         }
     }
 

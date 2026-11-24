@@ -246,7 +246,8 @@ public class AiVisionHttpClient : IAiVisionClient
             {
                 category = categoryCode,
                 bin_color_name = binColorName,
-                instructions
+                instructions,
+                is_active = true
             });
             using var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
             var response = await _httpClient.PutAsync(endpoint, content, cancellationToken);
@@ -272,6 +273,51 @@ public class AiVisionHttpClient : IAiVisionClient
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Không thể đồng bộ quy tắc phân loại {CategoryCode} sang AI Service.", categoryCode);
+            return new AiRuleSyncResponseDto
+            {
+                Success = false,
+                Message = $"Không thể kết nối AI Service: {ex.Message}"
+            };
+        }
+    }
+
+    public async Task<AiRuleSyncResponseDto> SyncCategoryRuleStatusAsync(
+        string categoryCode,
+        bool isActive,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var endpoint = $"{_aiServiceBaseUrl.TrimEnd('/')}/api/v1/rules";
+            var payload = JsonSerializer.Serialize(new
+            {
+                category = categoryCode,
+                is_active = isActive
+            });
+            using var content = new StringContent(payload, System.Text.Encoding.UTF8, "application/json");
+            var response = await _httpClient.PutAsync(endpoint, content, cancellationToken);
+            var json = await response.Content.ReadAsStringAsync(cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new AiRuleSyncResponseDto
+                {
+                    Success = false,
+                    Message = $"AI Service trả về HTTP {(int)response.StatusCode}: {json}"
+                };
+            }
+
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+            };
+            return JsonSerializer.Deserialize<AiRuleSyncResponseDto>(json, options)
+                ?? new AiRuleSyncResponseDto { Success = true, Message = "Đã đồng bộ trạng thái quy tắc sang AI Service." };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Không thể đồng bộ trạng thái danh mục {CategoryCode} sang AI Service.", categoryCode);
             return new AiRuleSyncResponseDto
             {
                 Success = false,

@@ -1005,4 +1005,67 @@ public class AiClassificationUnitTests
         allIncludingNonTradable.Where(c => !c.IsRecyclable).Select(c => c.Code).Should().BeEquivalentTo(
             new[] { "battery", "biological", "clothes", "shoes", "trash" });
     }
+
+    [Fact]
+    public async Task UTC033_PublishSortingRuleAsync_InactiveCategory_ThrowsBusinessRuleBrSrt04_Abnormal()
+    {
+        using var db = TestDbContextFactory.Create();
+        var adminId = Guid.NewGuid();
+        var cat = new WasteCategory
+        {
+            Code = "inactive_plastic",
+            Name = "Nhựa tạm ngưng",
+            StandardBinColor = "Cam",
+            IsRecyclable = true,
+            Status = "Inactive"
+        };
+        db.WasteCategories.Add(cat);
+        var rule = new SortingRule
+        {
+            WasteCategoryId = cat.Id,
+            Title = "Rule Nhựa tạm ngưng",
+            PreparationSteps = "1. Rửa sạch.",
+            SortingInstruction = "Để riêng.",
+            HandlingAction = "Bỏ vào thùng.",
+            Status = "DRAFT"
+        };
+        db.SortingRules.Add(rule);
+        await db.SaveChangesAsync();
+
+        var sut = new WasteRuleEngineService(NullLogger<WasteRuleEngineService>.Instance, db);
+
+        var ex = await FluentActions.Invoking(() => sut.PublishSortingRuleAsync(adminId, rule.Id))
+            .Should().ThrowAsync<BusinessRuleException>();
+        ex.Which.RuleCode.Should().Be("BR-SRT-04");
+        ex.Which.MessageCode.Should().Be("MSG-SRT-04");
+    }
+
+    [Fact]
+    public async Task UTC034_ToggleWasteCategoryStatusAsync_ToInactive_ClearsGuideAndSyncsAiVisionClient()
+    {
+        using var db = TestDbContextFactory.Create();
+        var adminId = Guid.NewGuid();
+        var aiClient = Substitute.For<IAiVisionClient>();
+        aiClient.SyncCategoryRuleStatusAsync(Arg.Any<string>(), Arg.Any<bool>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new AiRuleSyncResponseDto { Success = true, Message = "OK" }));
+
+        var auditSvc = new AuditLogService(db, CreateAdminUserMock(adminId));
+        var ruleEngine = new WasteRuleEngineService(NullLogger<WasteRuleEngineService>.Instance, db, auditSvc, aiClient);
+        var recyclerSvc = new RecyclerManagementService(db, NullLogger<RecyclerManagementService>.Instance, auditSvc, ruleEngine);
+
+        // Warm guide and get seeded plastic category
+        var activePlastic = await ruleEngine.GetSortingGuideAsync("plastic");
+        activePlastic.Should().NotBeNull();
+        var plasticCat = await db.WasteCategories.FirstAsync(c => c.Code == "plastic");
+
+        // Pause -> Guide becomes null & AI service notified isActive = false
+        await recyclerSvc.ToggleWasteCategoryStatusAsync(adminId, plasticCat.Id, new ToggleWasteCategoryStatusRequest { Status = "Inactive" });
+        (await ruleEngine.GetSortingGuideAsync("plastic")).Should().BeNull();
+        await aiClient.Received(1).SyncCategoryRuleStatusAsync("plastic", false, Arg.Any<CancellationToken>());
+
+        // Re-activate -> Guide returns & AI service notified isActive = true
+        await recyclerSvc.ToggleWasteCategoryStatusAsync(adminId, plasticCat.Id, new ToggleWasteCategoryStatusRequest { Status = "Active" });
+        (await ruleEngine.GetSortingGuideAsync("plastic")).Should().NotBeNull();
+        await aiClient.Received(1).SyncCategoryRuleStatusAsync("plastic", true, Arg.Any<CancellationToken>());
+    }
 }

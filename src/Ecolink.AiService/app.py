@@ -251,6 +251,7 @@ class RuleUpdateRequest(BaseModel):
     title: Optional[str] = Field(None, example="Quy tắc phân loại Nhựa tái chế")
     handling_action: Optional[str] = Field(None, example="Bỏ vào thùng chuyên biệt")
     hazard_warning: Optional[str] = Field(None, example="")
+    is_active: Optional[bool] = Field(None, example=True)
 
 
 # --- API Routes ---
@@ -366,7 +367,11 @@ async def classify_waste_image(
 
     rule_info = None
     if top_pred and not is_ood:
-        rule_info = rules_data.get("rules", {}).get(top_pred.label.lower())
+        candidate_rule = rules_data.get("rules", {}).get(top_pred.label.lower())
+        if candidate_rule is not None and candidate_rule.get("is_active", True) is False:
+            is_ood = True
+        else:
+            rule_info = candidate_rule
 
     top_label = top_pred.label if top_pred else "unknown"
     top_conf = top_pred.confidence if top_pred else 0.0
@@ -556,7 +561,8 @@ def update_rules(req: RuleUpdateRequest):
                 "bin_color_name": req.bin_color_name or "Cam",
                 "instructions": req.instructions or ["Phân loại đúng quy chuẩn EcoLink."],
                 "handling_action": req.handling_action or "Bàn giao cho đối tác thu mua EcoLink.",
-                "hazard_warning": req.hazard_warning or ""
+                "hazard_warning": req.hazard_warning or "",
+                "is_active": True if req.is_active is None else req.is_active,
             }
             rules_map[cat_key] = target_rule
         else:
@@ -570,6 +576,8 @@ def update_rules(req: RuleUpdateRequest):
                 target_rule["handling_action"] = req.handling_action
             if req.hazard_warning is not None:
                 target_rule["hazard_warning"] = req.hazard_warning
+            if req.is_active is not None:
+                target_rule["is_active"] = req.is_active
 
     save_rules_data(data)
     return {

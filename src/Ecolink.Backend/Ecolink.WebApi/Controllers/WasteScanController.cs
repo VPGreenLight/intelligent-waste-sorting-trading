@@ -130,7 +130,17 @@ public class WasteScanController : ControllerBase
                     objGuide = await _ruleEngine.GetSortingGuideAsync(obj.Label, ct);
                     guideCache[obj.Label] = objGuide;
                 }
-                obj.SortingGuide = objGuide;
+                if (objGuide == null)
+                {
+                    obj.SortingGuide = null;
+                    obj.IsPrimary = false;
+                    obj.Label = "unknown";
+                    obj.DisplayName = "Loại rác chưa hỗ trợ phân loại";
+                }
+                else
+                {
+                    obj.SortingGuide = objGuide;
+                }
             }
         }
 
@@ -153,6 +163,53 @@ public class WasteScanController : ControllerBase
         if (!guideCache.TryGetValue(categoryCode, out var ruleGuide))
         {
             ruleGuide = await _ruleEngine.GetSortingGuideAsync(categoryCode, ct);
+        }
+
+        if (ruleGuide == null)
+        {
+            var bestActiveObj = aiResult.DetectedObjects?
+                .Where(o => o.SortingGuide != null && o.Confidence >= aiResult.ConfidenceThreshold)
+                .OrderByDescending(o => o.Confidence)
+                .FirstOrDefault();
+
+            if (bestActiveObj != null)
+            {
+                bestActiveObj.IsPrimary = true;
+                ruleGuide = bestActiveObj.SortingGuide;
+                aiResult.TopPrediction = new WastePredictionDto
+                {
+                    Label = bestActiveObj.SortingGuide!.CategoryCode,
+                    DisplayName = bestActiveObj.SortingGuide.CategoryName,
+                    Confidence = bestActiveObj.Confidence
+                };
+            }
+            else
+            {
+                aiResult.IsOutOfDistribution = true;
+                aiResult.CategorySummary = new Dictionary<string, int>();
+                aiResult.TopPrediction = new WastePredictionDto
+                {
+                    Label = "unknown",
+                    DisplayName = "Không xác định",
+                    Confidence = aiResult.TopPrediction.Confidence
+                };
+                response.SortingGuide = null;
+                response.Message = "Loại rác trong ảnh hiện không nằm trong danh mục hỗ trợ phân loại của hệ thống. Vui lòng quét loại rác khác.";
+                return Ok(ApiResponse<WasteScanResponseDto>.Ok(response, response.Message, "MSG-CLS-02"));
+            }
+        }
+
+        if (aiResult.DetectedObjects is { Count: > 0 })
+        {
+            var filteredSummary = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+            foreach (var obj in aiResult.DetectedObjects)
+            {
+                if (obj.SortingGuide == null || obj.Confidence < aiResult.ConfidenceThreshold) continue;
+                var activeCode = obj.SortingGuide.CategoryCode;
+                filteredSummary[activeCode] = filteredSummary.TryGetValue(activeCode, out var cnt) ? cnt + 1 : 1;
+            }
+            aiResult.CategorySummary = filteredSummary;
+            aiResult.DetectedCount = filteredSummary.Values.Sum();
         }
 
         response.SortingGuide = ruleGuide;
