@@ -2,6 +2,7 @@ using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Exceptions;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -15,11 +16,19 @@ public class AdminBlogController : ControllerBase
 {
     private readonly IBlogPostService _service;
     private readonly ICurrentUserService _currentUser;
+    private readonly IValidator<ReviewBlogPostRequest> _reviewValidator;
+    private readonly IValidator<RejectBlogPostRequest> _rejectValidator;
 
-    public AdminBlogController(IBlogPostService service, ICurrentUserService currentUser)
+    public AdminBlogController(
+        IBlogPostService service,
+        ICurrentUserService currentUser,
+        IValidator<ReviewBlogPostRequest> reviewValidator,
+        IValidator<RejectBlogPostRequest> rejectValidator)
     {
         _service = service;
         _currentUser = currentUser;
+        _reviewValidator = reviewValidator;
+        _rejectValidator = rejectValidator;
     }
 
     private Guid AdminId =>
@@ -52,6 +61,15 @@ public class AdminBlogController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<BlogPostDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Review(Guid id, [FromBody] ReviewBlogPostRequest request, CancellationToken ct)
     {
+        var validation = await _reviewValidator.ValidateAsync(request, ct);
+        if (!validation.IsValid)
+        {
+            var errors = validation.Errors
+                .Select(e => string.IsNullOrWhiteSpace(e.PropertyName) ? e.ErrorMessage : $"{e.PropertyName}: {e.ErrorMessage}")
+                .ToList();
+            return BadRequest(ApiResponse<object>.Fail(validation.Errors[0].ErrorMessage, "MSG-AUTH-02", errors));
+        }
+
         var act = (request.Action ?? string.Empty).Trim().ToLowerInvariant();
         bool isApprove;
         if (request.Approve.HasValue && act.Length == 0)
@@ -97,6 +115,15 @@ public class AdminBlogController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<BlogPostDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Reject(Guid id, [FromBody] RejectBlogPostRequest request, CancellationToken ct)
     {
+        var validation = await _rejectValidator.ValidateAsync(request, ct);
+        if (!validation.IsValid)
+        {
+            var errors = validation.Errors
+                .Select(e => string.IsNullOrWhiteSpace(e.PropertyName) ? e.ErrorMessage : $"{e.PropertyName}: {e.ErrorMessage}")
+                .ToList();
+            return BadRequest(ApiResponse<object>.Fail(validation.Errors[0].ErrorMessage, "MSG-AUTH-02", errors));
+        }
+
         var data = await _service.RejectAsync(AdminId, id, request.Feedback, ct);
         return Ok(ApiResponse<BlogPostDto>.Ok(data, "Đã trả bài viết về bản nháp kèm góp ý."));
     }

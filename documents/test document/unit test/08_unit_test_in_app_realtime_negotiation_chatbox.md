@@ -2,15 +2,15 @@
 
 ## 1. Summary Table
 
-| Code Module | `NegotiationChatService & NegotiationChatValidators (U-08 & R-05)` | | |
+| Code Module | `NegotiationChatService, TradeTransactionService & NegotiationChatValidators (U-08 & R-05)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **20** | | |
+| **Number of TCs** | **27** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 20 | 0 | 0 |
-| *Round 2* | 0 | 0 | 20 |
-| *Round 3* | 0 | 0 | 20 |
+| *Round 1* | 27 | 0 | 0 |
+| *Round 2* | 0 | 0 | 27 |
+| *Round 3* | 0 | 0 | 27 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **9** | **8** | **3** |
+| **Count** | **14** | **8** | **5** |
 
 ---
 
@@ -43,4 +43,12 @@
 | **UTC018** | Kiểm tra độ dài biên của nội dung tin nhắn văn bản (`2000` ký tự vs `2001` ký tự) | `MessageType="Text"`;<br>`MessageContent=new string('a', 2000)` (và `2001` ký tự) | `Return: IsValid = true` với `2000` ký tự; `IsValid = false` với `2001` ký tự (`"Nội dung tin nhắn không được vượt quá 2000 ký tự."`)<br>`Exception: N/A`<br>`Log Message: N/A` | Boundary | Passed | 2026-11-03 | Giang Nguyễn Đức | Pending | Pending | N/A | Kiểm tra biên trên độ dài tin nhắn văn bản `MaxLength = 2000` |
 | **UTC019** | Kiểm tra giá trị biên trên của đơn giá và khối lượng trong bản đề xuất | `ProposedPricePerKg=10_000_000`;<br>`ProposedWeightKg=100_000`;<br>`ProposedTimeSlot="2026-11-05 08:00 - 10:00"` | `Return: ValidationResult { IsValid = true, Errors.Count = 0 }`<br>`Exception: N/A`<br>`Log Message: N/A` | Boundary | Passed | 2026-11-03 | Giang Nguyễn Đức | Pending | Pending | N/A | Chấp nhận giá trị biên hợp lệ tối đa `10.000.000 VNĐ/kg` và `100.000 kg` |
 | **UTC020** | Gửi tin nhắn `Image` thiếu `AttachmentUrl` hoặc gửi đề xuất có `ProposedPricePerKg = 0` và bỏ trống `ProposedTimeSlot` | `ProposedPricePerKg=0`;<br>`ProposedWeightKg=-5`;<br>`ProposedTimeSlot=""` | `Return: ValidationResult { IsValid = false, Errors.Count = 3 (đơn giá > 0, khối lượng > 0, khung giờ không được để trống) }`<br>`Exception: N/A`<br>`Log Message: N/A` | Abnormal | Passed | 2026-11-03 | Giang Nguyễn Đức | Pending | Pending | N/A | Bắt lỗi đầu vào khi thiếu khung giờ đề xuất hoặc giá/khối lượng âm (`BR-NEG-04`) |
+| **`TradeTransactionService` (`Inquiry Draft`, `TimeSlot Window`, `Order Inbox`) & `SendProposalAsync` (`v2.7.0`)** | | | | | | | | | | | |
+| **UTC021** | Citizen `citizen_hl` & Recycler `collector_hl1` có `RecyclerProfile` (`Verified`, `Online`) và `CollectionPartner` trong InMemory DB | `CreateTradeOrderAsync(UserId = citizen.Id, PartnerId = recyclerUser.Id, EstimatedWeightKg = 10, CategoryCode = "plastic", InitialPricePerKg = 5500, ProposedTimeSlot = "10:00 - 12:00", PickupAddress = "Cổng phụ Khu CNC Hòa Lạc")` | `Return: TradeOrderDto { PartnerName = "Trạm Thu Gom Tái Chế Xanh Hòa Lạc", RecyclerUserId = recyclerUser.Id, Status = "Pending" }`; đơn xuất hiện ở cả `GetUserOrdersAsync(citizen.Id)` và `GetUserOrdersAsync(recyclerUser.Id)` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khởi tạo đơn thương lượng qua tra cứu `RecyclerProfile` & đồng bộ danh sách đơn cho 2 phía |
+| **UTC022** | Citizen & Recycler (`CollectionPartner`) hợp lệ trong DB | Gọi `CreateTradeOrderAsync(UserId = citizen.Id, PartnerId = recyclerUser.Id, IsInquiryDraft = true)` 2 lần liên tiếp | Lần 1: `Status = "Negotiating"`, `IsInquiryOnly = true`, `EstimatedWeightKg = 0`, `CategoryCode = null`, `AgreedPricePerKg = null`, không tạo dòng `HandoverRequests`; Lần 2: trả lại đúng `Id` đơn cũ (`Count(TradeOrders) == 1`) | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Tạo & tái sử dụng nháp phòng chat hỏi giá (`IsInquiryDraft`) tránh sinh đơn rác |
+| **UTC023** | Đơn `orderId` đang ở trạng thái `Negotiating` | `SendProposalAsync(order.Id, citizen.Id, "Citizen", { ProposedPricePerKg = 24000, ProposedWeightKg = 6.5, ProposedTimeSlot = "14:00 - 16:00", CategoryCode = "metal", PickupAddress = "Cổng phụ Khu CNC Hòa Lạc, Thạch Thất, Hà Nội", Note = "Vỏ lon nhôm đã ép dẹp" })` | `proposalMsg.Proposal.CategoryCode = "metal"`, `PickupAddress` khớp; `TradeOrder` trong DB cập nhật `CategoryCode = "metal"`, `EstimatedWeightKg = 6.5`, `PickupAddress` tương ứng | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Cập nhật loại phế liệu, khối lượng & địa chỉ lấy hàng ngay trong luồng đề xuất chat |
+| **UTC024** | Citizen mở nháp chat hỏi giá (`IsInquiryDraft = true`) với Recycler có bảng giá `"plastic"` (`7,200 đ/kg`) | Nâng cấp qua `CreateTradeOrderAsync(..., EstimatedWeightKg = 10, CategoryCode = "plastic", InitialPricePerKg = 7200, IsInquiryDraft = false)` | Giữ nguyên `Id` của đơn hỏi giá, chuyển `IsInquiryOnly = false`, `Status = "Pending"`, `AgreedPricePerKg = null`; `HandoverRequestItems.AgreedPricePerKg = null`; `GetOrderChatThreadAsync` trả `IsProposalLocked = false` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Nâng cấp đơn hỏi giá thành yêu cầu bàn giao chính thức mà không khóa cứng giá trước khi chốt |
+| **UTC025** | Citizen & Recycler hợp lệ; ngày hiện tại theo ICT (`UTC + 7`) | `CreateTradeOrderAsync` & `UpdateOrderTimeSlotAsync` với ngày quá khứ (`-1` ngày), vượt biên (`+31` ngày), biên hợp lệ (`+30` ngày) và giữa khoảng (`+15` ngày) | Ngày `-1` và `+31` đều ném `BusinessRuleException ("BR-NEG-04")`; ngày `+30` và `+15` thành công và đồng bộ `ScheduledAt` về đúng ngày ICT tương ứng | Boundary | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kiểm tra biên khung ngày đặt lịch `[Today .. Today + 30 ngày]` (`BR-NEG-04`) |
+| **UTC026** | Đơn `orderId` đang `Negotiating`; ngày hiện tại theo ICT (`UTC + 7`) | `SendProposalAsync` với `ProposedTimeSlot` ngày `-1`, ngày `+31` và ngày `+30` | Ngày `-1` và `+31` đều ném `BusinessRuleException ("BR-NEG-04")`; ngày `+30` hợp lệ, `Proposal.ProposedTimeSlot` lưu đúng và `TradeOrder.ScheduledAt` đồng bộ `+30` ngày | Boundary | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kiểm tra biên khung ngày hẹn `[Today .. Today + 30 ngày]` khi gửi đề xuất thương lượng |
+| **UTC027** | `quietOrder` (tạo cách `-2h`, có tin `Citizen` & `System` chưa đọc) và `activeOldOrder` (tạo `-4h`, có tin `Image` `-10m` & `Text` `-5m` chưa đọc từ `Recycler`) | `tradeService.GetUserOrdersAsync(citizen.Id)` | Trả về `2` đơn xếp `activeOldOrder` ở `[0]` (`UnreadCount = 2`, `LastMessagePreview = "Hẹn bạn 14h nhé"`, `LastMessageSenderId = recyclerUser.Id`, `LastMessageSenderRole = "Recycler"`), `quietOrder` ở `[1]` (`UnreadCount = 0`, `LastMessagePreview = "Thông báo hệ thống"`) | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Sắp xếp hộp thư đơn theo tin nhắn mới nhất, đếm đúng tin chưa đọc từ đối phương & hiển thị preview |
 

@@ -15,7 +15,7 @@ public class AuthValidatorTests
 
     private static RegisterUserRequestDto ValidReg() => new()
     {
-        Username = "user_01", Email = "a@b.com", Password = "123456",
+        Username = "user_01", Email = "a@b.com", Password = "password123",
         FullName = "Nguyen Van A", PhoneNumber = "0912345678"
     };
 
@@ -58,8 +58,8 @@ public class AuthValidatorTests
 
     [Theory]
     [InlineData("", true)]
-    [InlineData("12345", true)]
-    [InlineData("123456", false)]
+    [InlineData("1234567", true)]
+    [InlineData("12345678", false)]
     public void Register_Password_MinLength(string value, bool expectError)
     {
         var m = ValidReg(); m.Password = value;
@@ -99,7 +99,7 @@ public class AuthValidatorTests
 
     private static RegisterRecyclerRequestDto ValidRec() => new()
     {
-        Username = "recycler1", Email = "r@b.com", Password = "123456", FullName = "Tran B",
+        Username = "recycler1", Email = "r@b.com", Password = "password123", FullName = "Tran B",
         FacilityName = "Co so A", RepresentativeName = "Tran B", BusinessAddress = "1 Le Loi",
         Latitude = 10.77, Longitude = 106.69
     };
@@ -190,7 +190,7 @@ public class AuthValidatorTests
     private readonly ResetPasswordRequestDtoValidator _reset = new();
 
     private static ResetPasswordRequestDto ValidReset() => new()
-    { Email = "a@b.com", Token = "tok", NewPassword = "abcdef", ConfirmPassword = "abcdef" };
+    { Email = "a@b.com", Token = "tok", NewPassword = "abcdefgh", ConfirmPassword = "abcdefgh" };
 
     [Fact]
     public void ResetPassword_ValidModel_Passes() => IsValid(_reset, ValidReset()).Should().BeTrue();
@@ -198,8 +198,8 @@ public class AuthValidatorTests
     [Theory]
     [InlineData(null, false)]       // không nhập xác nhận → bỏ qua rule Equal
     [InlineData("", false)]
-    [InlineData("abcdef", false)]
-    [InlineData("abcdeX", true)]
+    [InlineData("abcdefgh", false)]
+    [InlineData("abcdefgX", true)]
     public void ResetPassword_Confirm_MustMatchWhenProvided(string? confirm, bool expectError)
     {
         var m = ValidReset(); m.ConfirmPassword = confirm;
@@ -208,8 +208,8 @@ public class AuthValidatorTests
 
     [Theory]
     [InlineData("", true)]
-    [InlineData("12345", true)]
-    [InlineData("123456", false)]
+    [InlineData("1234567", true)]
+    [InlineData("12345678", false)]
     public void ResetPassword_NewPassword_MinLength(string pw, bool expectError)
     {
         var m = ValidReset(); m.NewPassword = pw; m.ConfirmPassword = null;
@@ -255,41 +255,41 @@ public class AuthValidatorTests
     [Fact]
     public void ChangePassword_NewEqualsCurrent_Fails()
     {
-        var m = new ChangePasswordRequestDto { CurrentPassword = "abcdef", NewPassword = "abcdef" };
+        var m = new ChangePasswordRequestDto { CurrentPassword = "abcdefgh", NewPassword = "abcdefgh" };
         Has(_change, m, nameof(m.NewPassword)).Should().BeTrue();
     }
 
     [Fact]
     public void ChangePassword_Valid_Passes()
     {
-        var m = new ChangePasswordRequestDto { CurrentPassword = "old123", NewPassword = "new1234", ConfirmPassword = "new1234" };
+        var m = new ChangePasswordRequestDto { CurrentPassword = "oldpass123", NewPassword = "newpass123", ConfirmPassword = "newpass123" };
         IsValid(_change, m).Should().BeTrue();
     }
 
     [Theory]
     [InlineData("", true)]
-    [InlineData("12345", true)]
-    [InlineData("123456", false)]
+    [InlineData("1234567", true)]
+    [InlineData("12345678", false)]
     public void ChangePassword_NewPassword_MinLength(string pw, bool expectError)
     {
-        var m = new ChangePasswordRequestDto { CurrentPassword = "zzzzzzz", NewPassword = pw };
+        var m = new ChangePasswordRequestDto { CurrentPassword = "zzzzzzzz", NewPassword = pw };
         Has(_change, m, nameof(m.NewPassword)).Should().Be(expectError);
     }
 
     [Fact]
     public void ChangePassword_EmptyCurrent_Fails()
     {
-        var m = new ChangePasswordRequestDto { CurrentPassword = "", NewPassword = "new1234" };
+        var m = new ChangePasswordRequestDto { CurrentPassword = "", NewPassword = "newpass123" };
         Has(_change, m, nameof(m.CurrentPassword)).Should().BeTrue();
     }
 
     [Theory]
     [InlineData(null, false)]
-    [InlineData("new1234", false)]
-    [InlineData("other", true)]
+    [InlineData("newpass123", false)]
+    [InlineData("otherpass", true)]
     public void ChangePassword_Confirm_MustMatchWhenProvided(string? confirm, bool expectError)
     {
-        var m = new ChangePasswordRequestDto { CurrentPassword = "old123", NewPassword = "new1234", ConfirmPassword = confirm };
+        var m = new ChangePasswordRequestDto { CurrentPassword = "oldpass123", NewPassword = "newpass123", ConfirmPassword = confirm };
         Has(_change, m, nameof(m.ConfirmPassword)).Should().Be(expectError);
     }
 }

@@ -1,34 +1,39 @@
-# TÀI LIỆU ĐẶC TẢ API & SIGNALR HUB – MODULE 9: CHATBOX THƯƠNG LƯỢNG & KHUNG GIỜ THU GOM THỜI GIAN THỰC (IN-APP REAL-TIME NEGOTIATION CHATBOX)
-**Mã phân hệ:** `NEG` (`Use Cases U-08: Negotiate via Chatbox (User side)` & `R-05: Negotiate via Chatbox (Recycler side)`)  
-**Controllers & Hubs:** [`NegotiationChatController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/NegotiationChatController.cs), [`NegotiationChatHub.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Hubs/NegotiationChatHub.cs)  
-**Services thực thi:** [`NegotiationChatService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/NegotiationChatService.cs) ([`INegotiationChatService`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Interfaces/INegotiationChatInterfaces.cs)), [`CloudflareR2StorageService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/CloudflareR2StorageService.cs) ([`IFileStorageService`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Interfaces/IRecyclerOnboardingService.cs#L46-L57))  
+# TÀI LIỆU ĐẶC TẢ API & SIGNALR HUB – MODULE 8 & 9: CHATBOX THƯƠNG LƯỢNG & ĐƠN GIAO DỊCH TRỰC TIẾP (IN-APP NEGOTIATION CHATBOX & TRADE ORDERS)
+**Mã phân hệ:** `M-08` (`NEG` – `Use Cases U-08`, `R-05`) & `M-09` (`TRD` – `Use Cases U-07`, `R-03`, `R-04`, `U-09`)  
+**Controllers & Hubs:** [`NegotiationChatController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/NegotiationChatController.cs) (`7` REST + `1` WS = `8` APIs), [`NegotiationChatHub.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Hubs/NegotiationChatHub.cs), [`TradeController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/TradeController.cs) (`5` APIs thuộc `M-09`)  
+**Services thực thi:** [`NegotiationChatService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/NegotiationChatService.cs), [`TradeTransactionService`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/TradeAndGamificationServices.cs), [`HandoverTradeSyncHelper.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/HandoverTradeSyncHelper.cs), [`CloudflareR2StorageService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/CloudflareR2StorageService.cs)  
 **Validators:** [`NegotiationChatValidators.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Validators/NegotiationChatValidators.cs)  
 **Entities:** [`TradeOrder`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/TradeEntities.cs#L36-L68), [`ChatMessage`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/TradeEntities.cs#L73-L97)  
-**DTOs:** [`NegotiationChatDtos.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Dtos/NegotiationChatDtos.cs)  
-**Base REST Route:** `/api/v1/trade/orders/{orderId:guid}`  
+**DTOs:** [`NegotiationChatDtos.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Dtos/NegotiationChatDtos.cs), [`TradeAndGamificationDtos.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Dtos/TradeAndGamificationDtos.cs)  
+**Base REST Routes:** `/api/v1/trade/orders` & `/api/v1/trade/orders/{orderId:guid}` & `/api/v1/trade/receipts`  
 **SignalR WebSocket Endpoint:** `/hubs/negotiation-chat`
 
 ---
 
-## 1. TỔNG QUAN DANH SÁCH ENDPOINTS & KÊNH SIGNALR
+## 1. TỔNG QUAN DANH SÁCH ENDPOINTS (`M-08`: 8 APIs & `M-09`: 5 APIs = `13` APIs)
 
-### 1.1. Danh mục RESTful API Endpoints
+> Tham chiếu Inventory: [`00_api_inventory_and_endpoint_statistics.md`](./00_api_inventory_and_endpoint_statistics.md) (`STT 064` $\rightarrow$ `076`).
 
-| STT | Phương thức | Endpoint URI | Quyền truy cập (`[Authorize]`) | Use Case | Chức năng nghiệp vụ | Mã thông báo / Quy tắc |
-|:---:|:---:|:---|:---:|:---:|:---|:---|
-| 1 | `GET` | `/api/v1/trade/orders/{orderId:guid}/messages` | `Citizen` (Chủ đơn), `Recycler` (Nhận đơn), `Staff`/`Admin` (Khi `Disputed`) | `U-08`, `R-05` | Lấy tổng quan phòng chat (điều khoản hiện tại, cờ `isProposalLocked`, đề xuất `Pending` mới nhất) và danh sách tin nhắn bất biến có phân trang. | `BR-NEG-01`, `BR-NEG-02`, `BR-NEG-03`, `BR-DSP-06`, `MSG-NEG-THREAD-OK` |
-| 2 | `POST` | `/api/v1/trade/orders/{orderId:guid}/messages` | `Citizen` (Chủ đơn), `Recycler` (Nhận đơn) | `U-08`, `R-05` | Gửi tin nhắn văn bản (`Text`) hoặc hình ảnh (`Image`). Kênh chat này vẫn giữ mở sau khi đơn đã `Accepted` hoặc `Completed` để hai bên hỏi đường. | `BR-NEG-01`, `BR-NEG-02`, `MSG-NEG-02` |
-| 3 | `POST` | `/api/v1/trade/orders/{orderId:guid}/messages/attachments` | `Citizen` (Chủ đơn), `Recycler` (Nhận đơn) | `U-08`, `R-05` | Tải ảnh chụp thực tế phế liệu hoặc điểm hẹn (`jpg`, `png`, `webp`, tối đa `5 MB`) lên **Cloudflare R2** và nhận `attachmentUrl`. | `BR-NEG-01`, `MSG-NEG-UPLOAD-OK` |
-| 4 | `POST` | `/api/v1/trade/orders/{orderId:guid}/proposals` | `Citizen` (Chủ đơn), `Recycler` (Nhận đơn) | `U-08`, `R-05` | Gửi đề xuất / phản đề xuất (`Proposal`) về đơn giá (`VNĐ/kg`), khối lượng (`kg`) và khung giờ thu gom. Tự động chuyển đề xuất `Pending` trước đó sang `Superseded`. | `BR-NEG-02`, `BR-NEG-03`, `BR-NEG-04`, `BR-HND-02`, `MSG-NEG-01` |
-| 5 | `POST` | `/api/v1/trade/orders/{orderId:guid}/proposals/{messageId:guid}/respond` | Đối phương của người tạo `Proposal` | `U-08`, `R-05` | Chấp nhận (`isAccepted = true`) hoặc từ chối (`isAccepted = false`) bản đề xuất mới nhất đang hiệu lực. Khi chấp nhận: lưu cứng điều khoản và khóa khung giờ thu gom. | `BR-NEG-02`, `BR-NEG-03`, `BR-NEG-05`, `MSG-NEG-03` |
-| 6 | `POST` | `/api/v1/trade/orders/{orderId:guid}/accept-terms` | `Recycler` (Nhận đơn) | `R-05` | `Recycler` bấm chấp nhận trực tiếp điều khoản & khung giờ đề xuất ban đầu của đơn bàn giao mà không cần tạo phản đề xuất mới. | `BR-NEG-02`, `BR-NEG-05`, `MSG-NEG-03` |
-| 7 | `PUT` | `/api/v1/trade/orders/{orderId:guid}/messages/read` | `Citizen` (Chủ đơn), `Recycler` (Nhận đơn) | `U-08`, `R-05` | Đánh dấu toàn bộ tin nhắn chưa đọc của đối phương trong đơn bàn giao là đã đọc (`isRead = true`, `readAt = UtcNow`). | `BR-NEG-01`, `MSG-NEG-READ-OK` |
+### 1.1. Danh mục RESTful API Endpoints (`NegotiationChatController` + `TradeController`)
 
----
+| STT | Inventory ID | Phân hệ | Phương thức | Endpoint URI | Quyền truy cập | Use Case | Chức năng nghiệp vụ | Mã thông báo / Quy tắc |
+|:---:|:---:|:---:|:---:|:---|:---:|:---:|:---|:---|
+| 1 | `064` | `M-08` | `GET` | `/api/v1/trade/orders/{orderId:guid}/messages` | `[Authorize]` (`Citizen`/`Recycler`, hoặc `Staff`/`Admin` khi `Disputed`) | `U-08`, `R-05` | Lấy tổng quan phòng chat (`OrderChatThreadDto` gồm `isProposalLocked`, `isInquiryOnly`, `pickupAddress`, `activeProposal`, `unreadCount`) và danh sách tin nhắn có phân trang. | `BR-NEG-01`, `BR-NEG-02`, `BR-NEG-03`, `BR-DSP-06`, `MSG-NEG-THREAD-OK` |
+| 2 | `065` | `M-08` | `POST` | `/api/v1/trade/orders/{orderId:guid}/messages` | `[Authorize]` (`Citizen` / `Recycler` của đơn) | `U-08`, `R-05` | Gửi tin nhắn `Text` hoặc `Image`. Tự động phát SignalR `ReceiveChatMessage` vào phòng và `OrderChatUpdated` tới group `user:{uid}`. | `BR-NEG-01`, `BR-NEG-02`, `MSG-NEG-02` |
+| 3 | `066` | `M-08` | `POST` | `/api/v1/trade/orders/{orderId:guid}/messages/attachments` | `[Authorize]` (`Citizen` / `Recycler` của đơn) | `U-08`, `R-05` | Tải ảnh chụp thực tế phế liệu hoặc điểm hẹn (`jpg`, `png`, `webp`, tối đa `5 MB`) lên **Cloudflare R2** và nhận `attachmentUrl`. | `BR-NEG-01`, `MSG-NEG-UPLOAD-OK` |
+| 4 | `067` | `M-08` | `POST` | `/api/v1/trade/orders/{orderId:guid}/proposals` | `[Authorize]` (`Citizen` / `Recycler` của đơn) | `U-08`, `R-05` | Gửi đề xuất (`Proposal`) gồm đơn giá, khối lượng, khung giờ thu gom (ràng buộc `[hôm nay .. +30 ngày]`), `categoryCode`, `pickupAddress`, `pickupLatitude/Longitude`. | `BR-NEG-02`, `BR-NEG-03`, `BR-NEG-04`, `MSG-NEG-01` |
+| 5 | `068` | `M-08` | `POST` | `/api/v1/trade/orders/{orderId:guid}/proposals/{messageId:guid}/respond` | Đối phương của người tạo `Proposal` | `U-08`, `R-05` | Chấp nhận (`isAccepted = true`) hoặc từ chối (`false`) đề xuất `Pending` mới nhất; khi chấp nhận tự nâng cấp đơn `isInquiryDraft` sang yêu cầu chính thức. | `BR-NEG-02`, `BR-NEG-03`, `BR-NEG-05`, `MSG-NEG-03` |
+| 6 | `069` | `M-08` | `POST` | `/api/v1/trade/orders/{orderId:guid}/accept-terms` | `Recycler` (Nhận đơn) | `R-05` | `Recycler` chốt trực tiếp điều khoản & khung giờ đề xuất ban đầu của đơn mà không cần gửi phản đề xuất. | `BR-NEG-02`, `BR-NEG-05`, `MSG-NEG-03` |
+| 7 | `070` | `M-08` | `PUT` | `/api/v1/trade/orders/{orderId:guid}/messages/read` | `[Authorize]` (`Citizen` / `Recycler` của đơn) | `U-08`, `R-05` | Đánh dấu toàn bộ tin nhắn chưa đọc của đối phương là đã đọc (`isRead = true`, `readAt = UtcNow`). | `BR-NEG-01`, `MSG-NEG-READ-OK` |
+| 8 | `072` | `M-09` | `GET` | `/api/v1/trade/orders` | Authenticated (`userId?` query fallback) | `U-07`, `R-03`, `U-08` | Lấy danh sách `TradeOrderDto` của tài khoản (gồm cả đơn nháp `isInquiryOnly`), làm giàu `lastMessagePreview` (plain-text không emoji), `lastMessageSenderId`, `lastMessageSenderRole`, `lastMessageAt`, `unreadCount`. | `200 OK` |
+| 9 | `073` | `M-09` | `POST` | `/api/v1/trade/orders` | Authenticated | `U-06`, `U-08` | Tạo đơn bàn giao (`CreateTradeOrderRequest`) hoặc phiên chat hỏi trước (`isInquiryDraft = true` tái sử dụng phiên `Pending/Negotiating` đang mở giữa cùng hai bên); phát SignalR `OrderChatUpdated`. | `200 OK` |
+| 10 | `074` | `M-09` | `PATCH` | `/api/v1/trade/orders/{orderId:guid}/status` | `[Authorize]` / Participant | `U-07`, `R-03`, `R-04` | Cập nhật trạng thái đơn (`Accepted`, `Rejected`, `Cancelled`, `Scheduled`, `Completed`) kèm `reason`, đồng bộ `HandoverRequest` & phát SignalR `OrderChatUpdated`. | `200 OK` |
+| 11 | `075` | `M-09` | `PATCH` | `/api/v1/trade/orders/{orderId:guid}/time-slot` | `[Authorize]` / Participant | `U-08` | Đổi khung giờ thu gom đề xuất (`proposedTimeSlot`) khi đơn còn mở thương lượng và phát SignalR `OrderChatUpdated`. | `200 OK` |
+| 12 | `076` | `M-09` | `POST` | `/api/v1/trade/receipts/confirm-qr` | Authenticated | `R-06`, `U-09` | Quét mã `qrSecurityCode` chốt `ActualWeightKg`, `UnitPrice`, tạo `TransactionReceiptDto` và cộng Điểm Xanh. | `200 OK` / `404 Not Found` |
 
-### 1.2. Kênh Sự kiện Thời gian thực SignalR (`/hubs/negotiation-chat`)
+### 1.2. Kênh Sự kiện Thời gian thực SignalR (`/hubs/negotiation-chat` – `STT 071`, `M-08`)
 
-* **Xác thực kết nối WebSocket:** Truyền JWT Access Token qua HTTP Header `Authorization: Bearer <token>` hoặc qua Query Parameter `/hubs/negotiation-chat?access_token=<token>`.
+* **Xác thực kết nối WebSocket:** Truyền JWT Access Token qua HTTP Header `Authorization: Bearer <token>`, HttpOnly Cookie `accessToken` hoặc Query Parameter `/hubs/negotiation-chat?access_token=<token>`. Khi kết nối, Hub tự đưa client vào user group `"user:{userId}"` để nhận tín hiệu cập nhật danh sách chat ngay cả khi chưa mở phòng chat cụ thể.
 
 | Chiều giao tiếp | Tên Hub Method / Client Event | Payload / Tham số | Mô tả |
 |:---:|:---|:---|:---|
@@ -39,6 +44,7 @@
 | **Server $\rightarrow$ Client** | `ProposalCreated` | `{ orderId, proposalMessage: ChatMessageDto, supersededMessageIds: Guid[], notification }` | Phát khi có đề xuất `Proposal` mới; giao diện tự động làm mờ các `supersededMessageIds` (`BR-NEG-03`). |
 | **Server $\rightarrow$ Client** | `ProposalResponded` | `{ orderId, result: ProposalAcceptanceResultDto, notification }` | Phát khi đề xuất được chấp nhận/từ chối hoặc khi `Recycler` chốt điều khoản (`MSG-NEG-03`, `BR-NEG-05`). |
 | **Server $\rightarrow$ Client** | `MessagesMarkedAsRead` | `{ orderId, readerUserId, markedCount, readAtUtc }` | Cập nhật trạng thái "Đã xem" trên giao diện người gửi. |
+| **Server $\rightarrow$ Client** | `OrderChatUpdated` | `{ orderId, eventType, updatedAt }` | Đẩy tới SignalR Group `"user:{userId}"` của các bên liên quan khi tạo đơn, đổi trạng thái/khung giờ hoặc phát sinh tin nhắn/đề xuất mới để danh sách hội thoại tự động làm mới. |
 
 ---
 
@@ -162,11 +168,14 @@
 
 #### a. Request Body (`SendProposalRequest`)
 
-| Trường | Kiểu dữ liệu | Bắt buộc | Ràng buộc (`SendProposalRequestValidator`) | Mô tả |
+| Trường | Kiểu dữ liệu | Bắt buộc | Ràng buộc (`SendProposalRequestValidator` & `BR-NEG-04`) | Mô tả |
 |:---|:---:|:---:|:---|:---|
 | `proposedPricePerKg` | `decimal` | Có | `(0, 10_000_000]` | Đơn giá thu mua đề xuất (`VNĐ/kg`). |
 | `proposedWeightKg` | `decimal` | Có | `(0, 100_000]` | Khối lượng ước tính đề xuất (`kg`). |
-| `proposedTimeSlot` | `string` | Có | Không rỗng, `<= 150` ký tự | Khung giờ thu gom đề xuất (VD: `"2026-11-05 14:00 - 16:00"`). |
+| `proposedTimeSlot` | `string` | Có | Không rỗng, `<= 150` ký tự; ngày hẹn phải nằm trong `[hôm nay .. +30 ngày]` (`MaxAppointmentAheadDays = 30`, giờ ICT) | Khung giờ thu gom đề xuất (VD: `"2026-11-05 14:00 - 16:00"`). |
+| `categoryCode` | `string?` | Không | Mã danh mục tái chế hợp lệ (VD: `"plastic"`, `"paper"`) | Cập nhật nhóm phế liệu đang thương lượng (nếu đổi từ nháp chat). |
+| `pickupAddress` | `string?` | Không | Địa chỉ điểm hẹn lấy hàng | Cập nhật địa chỉ thu gom trước khi chốt đơn. |
+| `pickupLatitude` / `pickupLongitude` | `double?` | Không | Tọa độ GPS điểm hẹn | Cập nhật tọa độ điểm hẹn (ẩn khỏi API phía Recycler khi chưa `Accepted`). |
 | `note` | `string?` | Không | `<= 1000` ký tự | Ghi chú giải thích kèm theo đề xuất. |
 
 #### b. Ví dụ Request:
@@ -175,6 +184,8 @@
   "proposedPricePerKg": 7500,
   "proposedWeightKg": 12.5,
   "proposedTimeSlot": "2026-11-05 14:00 - 16:00",
+  "categoryCode": "plastic",
+  "pickupAddress": "45 Lê Duẩn, Bến Nghé, Quận 1, TP.HCM",
   "note": "Buổi sáng xe tải kho mình bận tuyến Quận 9, hẹn bạn đầu giờ chiều mình ghé cân luôn giá 7.500đ/kg nhé!"
 }
 ```
@@ -245,13 +256,29 @@
 
 ---
 
-## 3. BẢNG MÃ LỖI & MÃ THÔNG BÁO TRONG MODULE 9
+### 2.8. Quản lý Đơn Giao dịch Trực tiếp & Phiên Chat Hỏi trước (`TradeController` – `M-09`, `STT 072–076`)
+
+1. **`GET /api/v1/trade/orders` (`STT 072`):**
+   * **Query Parameters:** `[FromQuery] Guid? userId` *(tuy nhiên khi đã đăng nhập qua JWT/Cookie, controller ưu tiên dùng `CurrentUser.UserId`)*. Hiện tại endpoint trả về toàn bộ `TradeOrderDto` mà người dùng tham gia (bao gồm cả đơn nháp khởi tạo từ chat `isInquiryOnly = true`), trong khi `GET /api/v1/handover-requests` lọc bỏ đơn nháp `isInquiryOnly == true` cho đến khi hai bên chốt thành yêu cầu chính thức.
+   * **Các trường làm giàu phòng chat trong `TradeOrderDto`:**
+     * `isInquiryOnly` (`bool`): `true` nếu phiên được tạo chỉ để hỏi/thương lượng trước qua chat (`isInquiryDraft = true`).
+     * `lastMessagePreview` (`string?`): Định dạng plain-text **không dùng emoji** qua `FormatChatMessagePreview` (`"Đã gửi ảnh phế liệu"` nếu `Image`, `"Đề xuất: {price:N0} đ/kg · {weight:0.##} kg"` hoặc `"Bản đề xuất thương lượng"` nếu `Proposal`, tối đa `90` ký tự cắt gọn `"…"` với `Text`/`System`).
+     * `lastMessageSenderId` (`Guid?`), `lastMessageSenderRole` (`string?`), `lastMessageAt` (`DateTime?`), `unreadCount` (`int`).
+2. **`POST /api/v1/trade/orders` (`STT 073`):** Nhận `CreateTradeOrderRequest` (gồm `partnerId`, `scheduledAt`, `estimatedWeightKg`, `categoryCode?`, `initialPricePerKg?`, `proposedTimeSlot?`, `pickupAddress?`, `pickupLatitude/Longitude?`, `lines?`, `isInquiryDraft`). Kiểm tra khung giờ `[hôm nay .. +30 ngày]` (`HandoverTradeSyncHelper.ValidateAppointmentWindowUtc`); nếu `isInquiryDraft = true` sẽ tái sử dụng phiên chat `Pending`/`Negotiating` đang mở giữa cùng hai bên và **không** sinh `HandoverRequest` chính thức cho tới khi có đề xuất được chấp nhận. Trả `{ success, data, order, message }` và phát SignalR `OrderChatUpdated`.
+3. **`PATCH /api/v1/trade/orders/{orderId:guid}/status` (`STT 074`):** Nhận `UpdateTradeOrderStatusRequest { status, reason? }`, cập nhật trạng thái đơn và phát `OrderChatUpdated` (`OrderStatusUpdated`).
+4. **`PATCH /api/v1/trade/orders/{orderId:guid}/time-slot` (`STT 075`):** Nhận `UpdateTradeOrderTimeSlotRequest { proposedTimeSlot }`, kiểm tra cửa sổ `[hôm nay .. +30 ngày]` và phát `OrderChatUpdated` (`OrderTimeSlotUpdated`).
+5. **`POST /api/v1/trade/receipts/confirm-qr` (`STT 076`):** Nhận `ConfirmQrReceiptRequest { tradeOrderId, qrSecurityCode, actualWeightKg, unitPrice }`, đối chiếu `qrSecurityCode` để hoàn tất giao dịch và trả về `TransactionReceiptDto`.
+
+---
+
+## 3. BẢNG MÃ LỖI & MÃ THÔNG BÁO TRONG MODULE 8 & 9
 
 | HTTP Status | `messageCode` | Quy tắc | Trường hợp xảy ra |
 |:---:|:---|:---:|:---|
 | `200` / `201` | `MSG-NEG-01` | `BR-NEG-04` | Yêu cầu trao đổi / đề xuất của người dân đã gửi đến cơ sở thu gom. |
 | `201` | `MSG-NEG-02` | `BR-NEG-01` | Gửi tin nhắn mới thành công và đẩy thông báo cho đối phương. |
 | `200` | `MSG-NEG-03` | `BR-NEG-03`, `BR-NEG-05` | Chấp nhận đề nghị thành công và khóa điều khoản + khung giờ thu gom chính thức. |
+| `400` | `MSG-GEN-01` | `BR-NEG-04` | `"Không thể chọn ngày hoặc khung giờ hẹn trong quá khứ."` / `"Chỉ được chọn ngày hẹn từ hôm nay đến tối đa 30 ngày tới."` |
 | `400` | `MSG-NEG-PROPOSAL-LOCKED` | `BR-NEG-02` | Cố tình gửi hoặc phản hồi `Proposal` khi đơn đã chuyển sang `Accepted`, `Scheduled`, `Completed`, `Rejected` hoặc `Cancelled`. |
 | `400` | `MSG-NEG-SUPERSEDED` | `BR-NEG-03` | Bấm chấp nhận một đề xuất cũ đã bị ghi đè bởi đề xuất mới hơn (`ProposalStatus == Superseded`). |
 | `400` | `MSG-NEG-SELF-RESPONSE` | `BR-NEG-03` | Người gửi đề xuất tự bấm chấp nhận hoặc từ chối đề xuất của chính mình. |

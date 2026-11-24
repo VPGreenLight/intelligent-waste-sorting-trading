@@ -7,24 +7,32 @@
 
 ---
 
-## 1. TỔNG QUAN DANH SÁCH ENDPOINTS
+## 1. TỔNG QUAN DANH SÁCH ENDPOINTS (`M-01` – 14 APIs)
 
-| STT | Phương thức | Endpoint URI | Quyền truy cập | Chức năng nghiệp vụ | Mã thông báo chính |
-|:---:|:---:|:---|:---:|:---|:---|
-| 1 | `POST` | `/api/v1/auth/register` | Public (`Guest`) | Đăng ký tài khoản Người dân (`Citizen`) kèm khởi tạo Hồ sơ Sinh thái (`UserEcoProfile`). | `MSG-AUTH-08`, `MSG-AUTH-01`, `MSG-GEN-01` |
-| 2 | `POST` | `/api/v1/auth/login` | Public (`Guest`) | Đăng nhập bằng Username/Email & Mật khẩu (tích hợp khóa tạm thời 15 phút sau 5 lần sai). | `MSG-GEN-01`, `MSG-AUTH-01`, `MSG-AUTH-03`, `MSG-AUTH-04` |
-| 3 | `POST` | `/api/v1/auth/google` | Public (`Guest`) | Đăng nhập / Đăng ký tự động bằng Google OAuth 2.0 `idToken`. | `MSG-AUTH-09`, `MSG-AUTH-01`, `MSG-AUTH-04` |
-| 4 | `POST` | `/api/v1/auth/refresh-token` | Public (Cookie/Body) | Làm mới cặp JWT Access Token & Refresh Token (Token Rotation & phát hiện Replay Attack). | `MSG-GEN-01`, `MSG-NTF-01`, `MSG-AUTH-10`, `MSG-AUTH-04` |
-| 5 | `POST` | `/api/v1/auth/forgot-password` | Public (`Guest`) | Yêu cầu gửi email đặt lại mật khẩu qua Gmail SMTP (chống dò quét email & giới hạn tần suất 60s). | `MSG-AUTH-05`, `MSG-GEN-01` |
-| 6 | `POST` | `/api/v1/auth/reset-password` | Public (`Guest`) | Đặt lại mật khẩu mới bằng Token bảo mật dùng 1 lần và thu hồi toàn bộ phiên đăng nhập cũ. | `MSG-GEN-01`, `MSG-AUTH-06`, `MSG-AUTH-01` |
-| 7 | `GET` | `/api/v1/auth/me` | Authenticated (`Bearer`) | Lấy thông tin chi tiết tài khoản hiện tại và chỉ số Điểm Xanh (`GreenPoints`, `TreeLevel`). | `200 OK` / `401 Unauthorized` |
-| 8 | `GET` | `/api/v1/auth/demo-users` | Public (Dev/Test) | Lấy danh sách tài khoản mẫu (`citizen`, `collector`, `admin`) để kiểm thử nhanh. | `200 OK` |
+> Tham chiếu Inventory: [`00_api_inventory_and_endpoint_statistics.md`](./00_api_inventory_and_endpoint_statistics.md) (`STT 001` $\rightarrow$ `014`).
+
+| STT | Inventory ID | Phương thức | Endpoint URI | Quyền truy cập | Chức năng nghiệp vụ | Mã thông báo chính |
+|:---:|:---:|:---:|:---|:---:|:---|:---|
+| 1 | `001` | `POST` | `/api/v1/auth/register` | Public (`Guest`) | Đăng ký tài khoản Người dân (`Citizen`) kèm khởi tạo Hồ sơ Sinh thái (`UserEcoProfile`). | `MSG-AUTH-08`, `MSG-AUTH-01`, `MSG-GEN-01` |
+| 2 | `002` | `POST` | `/api/v1/auth/register-recycler` | Public (Legacy) | Đăng ký nhanh tài khoản Recycler kèm tọa độ GPS & hồ sơ cơ sở (Legacy Compatibility). | `MSG-GEN-01`, `MSG-AUTH-01` |
+| 3 | `003` | `POST` | `/api/v1/auth/login` | Public (`Guest`) | Đăng nhập bằng Username/Email & Mật khẩu (khóa tạm thời 15 phút sau 5 lần sai). | `MSG-GEN-01`, `MSG-AUTH-01`, `MSG-AUTH-03`, `MSG-AUTH-04` |
+| 4 | `004` | `GET` | `/api/v1/auth/google-config` | Public (`Guest`) | Trả về cấu hình công khai `{ enabled, clientId }` của Google OAuth 2.0 cho Frontend. | `MSG-GEN-01` |
+| 5 | `005` | `POST` | `/api/v1/auth/google` | Public (`Guest`) | Đăng nhập / Đăng ký tự động bằng Google OAuth 2.0 `idToken`. | `MSG-AUTH-09`, `MSG-AUTH-01`, `MSG-AUTH-04` |
+| 6 | `006` | `POST` | `/api/v1/auth/refresh-token` | Public (Cookie/Body) | Làm mới cặp JWT Access Token & Refresh Token (Token Rotation & phát hiện Replay Attack). | `MSG-GEN-01`, `MSG-NTF-01`, `MSG-AUTH-10`, `MSG-AUTH-04` |
+| 7 | `007` | `POST` | `/api/v1/auth/forgot-password` | Public (`Guest`) | Yêu cầu gửi email đặt lại mật khẩu qua Gmail SMTP (chống dò quét email & giới hạn tần suất 60s). | `MSG-AUTH-05`, `MSG-GEN-01` |
+| 8 | `008` | `POST` | `/api/v1/auth/reset-password` | Public (`Guest`) | Đặt lại mật khẩu mới bằng Token bảo mật dùng 1 lần và thu hồi toàn bộ phiên đăng nhập cũ. | `MSG-GEN-01`, `MSG-AUTH-06`, `MSG-AUTH-01` |
+| 9 | `009` | `PUT` | `/api/v1/auth/profile` | Authenticated (`Bearer`/`Cookie`) | Cập nhật hồ sơ cá nhân (`fullName`, `phoneNumber`, `avatarUrl`) của tài khoản đang đăng nhập (`SU-01`). | `MSG-GEN-01`, `MSG-NTF-01` |
+| 10 | `010` | `POST` | `/api/v1/auth/change-password` | Authenticated (`Bearer`/`Cookie`) | Đổi mật khẩu đang đăng nhập và thu hồi các Refresh Token trên thiết bị khác (`SU-02`). | `MSG-GEN-01`, `MSG-NTF-01` |
+| 11 | `011` | `POST` | `/api/v1/auth/logout` | Public / Cookie | Thu hồi Refresh Token hiện tại và xóa toàn bộ HttpOnly Cookies (`accessToken`, `refreshToken`, `ecolink_session_active`). | `MSG-GEN-01` |
+| 12 | `012` | `GET` | `/api/v1/auth/me` | Authenticated (`Bearer`/`Cookie`/`Query`) | Lấy thông tin chi tiết tài khoản hiện tại, Điểm Xanh (`CurrentGreenPoints`, `TreeLevel`) và gói dịch vụ (`CurrentTier`). | `200 OK` / `401 Unauthorized` |
+| 13 | `013` | `GET` | `/api/v1/auth/demo-users` | Public (Dev/Test) | Lấy danh sách tài khoản mẫu (`citizen`, `recycler`, `staff`, `admin`) để kiểm thử nhanh. | `200 OK` |
+| 14 | `014` | `POST` | `/api/v1/auth/vietqr-token` | Public (Partner Basic Auth) | Sinh Bearer mock token `24h` theo chuẩn Basic Auth cho webhook/đối tác VietQR / TingoPay. | `200 OK` / `401 Unauthorized` |
 
 > [!NOTE]
-> **Lưu ý về phân tách nghiệp vụ Đăng ký (`Guest` $\rightarrow$ `Citizen` vs. `Citizen` $\rightarrow$ `Recycler`):**
-> * Endpoint `POST /api/v1/auth/register` và `POST /api/v1/auth/google` chỉ khởi tạo tài khoản với vai trò **`Citizen`** (`User`).
-> * Để đăng ký trở thành Cơ sở thu gom (**`Recycler`**), người dùng cần đăng nhập tài khoản `Citizen` và thực hiện quy trình nộp hồ sơ nâng cấp tại [**Module 2: Recycler Onboarding & Verification (`02_module_recycler_onboarding_api.md`)**](./02_module_recycler_onboarding_api.md).
-> * Endpoint `POST /api/v1/auth/register-recycler` trong `AuthController` chỉ được giữ lại để tương thích ngược (Legacy Alias) cho dữ liệu seed nội bộ.
+> **Cơ chế Xác thực Kép (`Dual Auth`: HttpOnly Cookie + Bearer JWT):**
+> * `AuthController.SetAuthCookies` đính kèm `refreshToken` (`HttpOnly`, `SameSite=Lax`, `Path=/`, `7 ngày`).
+> * Khi request có header `X-EcoLink-Auth-Mode`, `Origin`, hoặc đang mang cookie `accessToken` / `ecolink_session_active` (trừ khi gửi `X-EcoLink-No-Cookie: 1` hoặc `true`), server đính kèm thêm `accessToken` (`HttpOnly`, `SameSite=Lax`, hết hạn theo `expiresAt` hoặc `30 phút`) và `ecolink_session_active="1"` (`HttpOnly=false`, `7 ngày`) để trình duyệt SPA xác thực tự động mà không lưu JWT trong `localStorage`.
+> * **Đăng ký tài khoản:** `POST /api/v1/auth/register` và `POST /api/v1/auth/google` khởi tạo vai trò **`Citizen`** (`User`). Để nâng cấp trở thành Cơ sở thu gom (**`Recycler`**), người dùng đăng nhập và nộp hồ sơ tại [**Module 2 (`02_module_recycler_onboarding_api.md`)**](./02_module_recycler_onboarding_api.md) (`POST /api/v1/auth/register-recycler` chỉ giữ để tương thích ngược).
 
 ---
 
@@ -133,7 +141,7 @@
 
 ### 2.2. Đăng nhập hệ thống (`POST /api/v1/auth/login`)
 
-* **Mô tả:** Xác thực thông tin đăng nhập bằng `username` hoặc `email` kết hợp mật khẩu. Nếu thành công, trả về `AuthResponseDto` và tự động đính kèm cookie `refreshToken` (`HttpOnly`, `Strict`, `7 ngày`).
+* **Mô tả:** Xác thực thông tin đăng nhập bằng `username` hoặc `email` kết hợp mật khẩu. Nếu thành công, trả về `AuthResponseDto` và gọi `SetAuthCookies(result)` đính kèm cookie `refreshToken` (`HttpOnly`, `SameSite=Lax`, `7 ngày`); nếu là luồng Web/SPA (`Origin`, `X-EcoLink-Auth-Mode`, hoặc có sẵn cookie) và không có header `X-EcoLink-No-Cookie: 1`/`true`, server đính kèm thêm cookie `accessToken` (`HttpOnly`, `SameSite=Lax`) và `ecolink_session_active=1`.
 * **Quy tắc nghiệp vụ áp dụng:**
   * `BR-AUTH-03`: Thông báo lỗi chung, không tiết lộ tài khoản có tồn tại hay mật khẩu bị sai.
   * `BR-AUTH-04`: Nhập sai mật khẩu liên tiếp **5 lần** sẽ bị khóa tạm thời **15 phút** (`LockoutEnd`).
@@ -155,7 +163,9 @@
 ```
 
 #### b. Response Parameters
-* **Header `Set-Cookie`:** `refreshToken=<token>; expires=...; path=/; secure; samesite=strict; httponly`
+* **Header `Set-Cookie` (mặc định trừ khi gửi `X-EcoLink-No-Cookie: 1`/`true`):**
+  * `refreshToken=<token>; expires=<+7d>; path=/; samesite=lax; httponly` *(thêm `secure` khi HTTPS)*
+  * Khi request từ Web/SPA (`Origin`, `X-EcoLink-Auth-Mode` hoặc có cookie phiên): bổ sung `accessToken=<jwt>; expires=<expiresAt/+30m>; path=/; samesite=lax; httponly` và `ecolink_session_active=1; expires=<+7d>; path=/; samesite=lax`
 * **Body JSON:** `ApiResponse<AuthResponseDto>` (cấu trúc giống mục 2.1).
 
 #### c. Các Thông báo Trả về (Response Messages & Error Codes)
@@ -190,7 +200,7 @@
 ```
 
 #### b. Response Parameters
-* **Header `Set-Cookie`:** `refreshToken=<token>; httponly; samesite=strict`
+* **Header `Set-Cookie`:** Tương tự mục `2.2` qua `SetAuthCookies(result)` (`refreshToken` `HttpOnly; SameSite=Lax`, cộng thêm `accessToken` `HttpOnly` và `ecolink_session_active=1` cho luồng Web/SPA trừ khi gửi `X-EcoLink-No-Cookie: 1`/`true`).
 * **Body JSON:** `ApiResponse<AuthResponseDto>` với `user.isGoogleAuth = true`.
 
 #### c. Các Thông báo Trả về (Response Messages & Error Codes)
@@ -225,6 +235,7 @@
 ```
 
 #### b. Response Parameters
+* **Header `Set-Cookie`:** Xoay vòng cập nhật `refreshToken` (và `accessToken` + `ecolink_session_active=1` nếu là luồng Web/SPA qua `SetAuthCookies`).
 * **Body JSON:** `ApiResponse<AuthResponseDto>` chứa cặp `accessToken` và `refreshToken` mới.
 
 #### c. Các Thông báo Trả về (Response Messages & Error Codes)
@@ -328,14 +339,17 @@
 
 ### 2.7. Lấy thông tin người dùng hiện tại (`GET /api/v1/auth/me`)
 
-* **Mô tả:** Giải mã JWT Bearer Token, truy vấn thông tin mới nhất của người dùng từ CSDL kèm theo điểm sinh thái (`CurrentGreenPoints`, `TreeLevel`, `TotalRecycledKg`).
+* **Mô tả:** Đọc JWT từ Header `Authorization`, Query `?token=` hoặc HttpOnly Cookie `accessToken`, truy vấn thông tin mới nhất của người dùng từ CSDL kèm theo điểm sinh thái (`CurrentGreenPoints`, `TreeLevel`, `TotalRecycledKg`) và trạng thái gói dịch vụ (`CurrentTier`, `IsAdFree`, `HasVerifiedBadge`, `IsFeaturedMapMarker`).
 
 #### a. Request Parameters
 
 | Tên tham số | Vị trí | Kiểu dữ liệu | Bắt buộc | Mô tả |
 |:---|:---:|:---:|:---:|:---|
-| `Authorization` | Header | `string` | **Có*** | Định dạng: `Bearer <accessToken>`. |
-| `token` | Query | `string?` | Không* | Hỗ trợ truyền trực tiếp `?token=<accessToken>` khi test nhanh trên trình duyệt. |
+| `Authorization` | Header | `string?` | Tùy chọn* | Định dạng: `Bearer <accessToken>`. |
+| `accessToken` | Cookie | `string?` | Tùy chọn* | HttpOnly Cookie tự động đính kèm trên trình duyệt Web/SPA (`credentials: include`). |
+| `token` | Query | `string?` | Không* | Hỗ trợ truyền trực tiếp `?token=<accessToken>` khi kiểm thử nhanh. |
+
+*(Lưu ý: Phải cung cấp Token ở ít nhất 1 trong 3 vị trí: Header `Authorization`, HttpOnly Cookie `accessToken` hoặc Query `token`.)*
 
 #### b. Response Parameters (`UserInfoDto`)
 
@@ -353,7 +367,11 @@
   "isGoogleAuth": false,
   "currentGreenPoints": 150,
   "treeLevel": 2,
-  "totalRecycledKg": 12.5
+  "totalRecycledKg": 12.5,
+  "currentTier": "Basic",
+  "isAdFree": false,
+  "hasVerifiedBadge": false,
+  "isFeaturedMapMarker": false
 }
 ```
 
@@ -362,6 +380,48 @@
 | HTTP Status | Điều kiện kích hoạt | Nội dung phản hồi |
 |:---:|:---|:---|
 | **`200 OK`** | Token hợp lệ và tài khoản đang hoạt động (`Active`) | Đối tượng JSON `UserInfoDto`. |
-| **`401 Unauthorized`** | Không đính kèm Header `Authorization` và không có query `token` | `{ "message": "Thiếu Authorization Header hoặc query param 'token'. Vui lòng đính kèm Bearer token." }` |
+| **`401 Unauthorized`** | Thiếu đồng thời Header `Authorization`, Cookie `accessToken` và query `token` | `{ "message": "Thiếu Authorization Header, HttpOnly Cookie hoặc query param 'token'." }` |
 | **`401 Unauthorized`** | Token sai chữ ký, đã hết hạn hoặc tài khoản bị vô hiệu hóa | `{ "message": "Token không hợp lệ hoặc đã hết hạn." }` |
+
+---
+
+### 2.8. Cập nhật hồ sơ cá nhân (`PUT /api/v1/auth/profile`)
+
+* **Inventory ID:** `009` | **Yêu cầu quyền:** `[Authorize]` (`Bearer` hoặc HttpOnly Cookie `accessToken`, `SU-01`).
+* **Request Body (`UpdateUserProfileRequestDto`):**
+  * `fullName` (`string`, bắt buộc, `2..100` ký tự)
+  * `phoneNumber` (`string?`, chuẩn số điện thoại)
+  * `avatarUrl` (`string?`, tối đa `500` ký tự)
+* **Response (`200 OK`):** `ApiResponse<UserInfoDto>` (`messageCode: "MSG-GEN-01"`, `message: "Đã lưu hồ sơ cá nhân thành công."`). Trả `401 Unauthorized` (`MSG-NTF-01`) nếu phiên không hợp lệ.
+
+---
+
+### 2.9. Đổi mật khẩu khi đang đăng nhập (`POST /api/v1/auth/change-password`)
+
+* **Inventory ID:** `010` | **Yêu cầu quyền:** `[Authorize]` (`SU-02`).
+* **Request Body (`ChangePasswordRequestDto`):**
+  * `currentPassword` (`string`, bắt buộc)
+  * `newPassword` (`string`, bắt buộc, `6..100` ký tự)
+  * `confirmPassword` (`string?`)
+* **Mô tả:** Xác thực `currentPassword`, cập nhật mật khẩu mới và tự động thu hồi toàn bộ Refresh Token của các phiên đăng nhập trên thiết bị khác (giữ lại phiên tương ứng với cookie `refreshToken` hiện tại nếu có).
+* **Response (`200 OK`):** `ApiResponse<object?>` (`messageCode: "MSG-GEN-01"`, `message: "Đã đổi mật khẩu thành công. Các phiên đăng nhập trên thiết bị khác đã được đăng xuất."`).
+
+---
+
+### 2.10. Đăng xuất & Xóa HttpOnly Cookies (`POST /api/v1/auth/logout`)
+
+* **Inventory ID:** `011` | **Yêu cầu quyền:** Public / Cookie.
+* **Request Body (`LogoutRequestDto?`, tùy chọn):** `{ "refreshToken": "..." }`. Nếu Body bỏ trống, hệ thống đọc từ cookie `refreshToken`.
+* **Mô tả:** Thu hồi Refresh Token hiện tại và gọi `ClearAuthCookies()` xóa sạch cả 3 cookie (`accessToken`, `refreshToken`, `ecolink_session_active`) với `Path=/` và `SameSite=Lax`.
+* **Response (`200 OK`):** `ApiResponse<object?>` (`messageCode: "MSG-GEN-01"`, `message: "Đã đăng xuất thành công."`).
+
+---
+
+### 2.11. Các Endpoint Phụ trợ & Tương thích (`STT 002`, `004`, `013`, `014`)
+
+* **`GET /api/v1/auth/google-config` (`STT 004`, Public):** Trả về `ApiResponse<object>` chứa `{ "enabled": true|false, "clientId": "..." }` từ `GoogleAuth:ClientId` (bỏ qua các giá trị rỗng hoặc placeholder `mock`).
+* **`POST /api/v1/auth/register-recycler` (`STT 002`, Public Legacy):** Tiếp nhận `RegisterRecyclerRequestDto` (`username`, `email`, `password`, `fullName`, `phoneNumber`, `facilityName`, `representativeName`, `businessAddress`, `latitude`, `longitude`, `operatingHours`, `contactPhone`, `description`, `legalPermitUrl`, `businessPhotoUrl`), đồng thời gọi `SetAuthCookies(result)`. Luồng nâng cấp chuẩn của hệ thống vẫn đi qua Module 2 (`POST /api/v1/recycler-applications`).
+* **`GET /api/v1/auth/demo-users` (`STT 013`, Public Dev/Test):** Trả về danh sách tài khoản mẫu (`citizen / citizen123`, `recycler / recycler123`, `staff / staff123`, `admin / admin123`).
+* **`POST /api/v1/auth/vietqr-token` (`STT 014`, Basic Auth):** Kiểm tra Header `Authorization: Basic ...`; nếu thiếu trả `401`, nếu hợp lệ trả `{ "access_token", "token_type": "Bearer", "expires_in": 86400, "message" }`.
+
 

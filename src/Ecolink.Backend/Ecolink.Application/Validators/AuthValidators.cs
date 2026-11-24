@@ -21,7 +21,8 @@ public class RegisterUserRequestDtoValidator : AbstractValidator<RegisterUserReq
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Mật khẩu không được để trống.")
-            .MinimumLength(6).WithMessage("Mật khẩu tối thiểu 6 ký tự.");
+            .MinimumLength(8).WithMessage("Mật khẩu tối thiểu 8 ký tự.")
+            .MaximumLength(100).WithMessage("Mật khẩu tối đa 100 ký tự.");
 
         RuleFor(x => x.FullName)
             .NotEmpty().WithMessage("Họ và tên không được để trống.")
@@ -43,7 +44,8 @@ public class RegisterRecyclerRequestDtoValidator : AbstractValidator<RegisterRec
     {
         RuleFor(x => x.Username)
             .NotEmpty().WithMessage("Tên đăng nhập không được để trống.")
-            .Length(3, 50).WithMessage("Tên đăng nhập phải từ 3 đến 50 ký tự.");
+            .Length(3, 50).WithMessage("Tên đăng nhập phải từ 3 đến 50 ký tự.")
+            .Matches(@"^[a-zA-Z0-9._-]+$").WithMessage("Tên đăng nhập chỉ chứa chữ cái, số và các ký tự . _ -");
 
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email không được để trống.")
@@ -51,10 +53,17 @@ public class RegisterRecyclerRequestDtoValidator : AbstractValidator<RegisterRec
 
         RuleFor(x => x.Password)
             .NotEmpty().WithMessage("Mật khẩu không được để trống.")
-            .MinimumLength(6).WithMessage("Mật khẩu tối thiểu 6 ký tự.");
+            .MinimumLength(8).WithMessage("Mật khẩu tối thiểu 8 ký tự.")
+            .MaximumLength(100).WithMessage("Mật khẩu tối đa 100 ký tự.");
 
         RuleFor(x => x.FullName)
-            .NotEmpty().WithMessage("Họ và tên người đại diện không được để trống.");
+            .NotEmpty().WithMessage("Họ và tên người đại diện không được để trống.")
+            .MaximumLength(100).WithMessage("Họ và tên người đại diện tối đa 100 ký tự.");
+
+        RuleFor(x => x.PhoneNumber)
+            .Matches(@"^(0|\+84)[0-9]{9,10}$")
+            .When(x => !string.IsNullOrEmpty(x.PhoneNumber))
+            .WithMessage("Số điện thoại không hợp lệ (định dạng Việt Nam 10-11 chữ số).");
 
         RuleFor(x => x.FacilityName)
             .NotEmpty().WithMessage("Tên cơ sở thu mua không được để trống.")
@@ -132,7 +141,8 @@ public class ResetPasswordRequestDtoValidator : AbstractValidator<ResetPasswordR
 
         RuleFor(x => x.NewPassword)
             .NotEmpty().WithMessage("Mật khẩu mới không được để trống.")
-            .MinimumLength(6).WithMessage("Mật khẩu tối thiểu 6 ký tự.");
+            .MinimumLength(8).WithMessage("Mật khẩu tối thiểu 8 ký tự.")
+            .MaximumLength(100).WithMessage("Mật khẩu tối đa 100 ký tự.");
 
         RuleFor(x => x.ConfirmPassword)
             .Equal(x => x.NewPassword)
@@ -171,7 +181,8 @@ public class ChangePasswordRequestDtoValidator : AbstractValidator<ChangePasswor
 
         RuleFor(x => x.NewPassword)
             .NotEmpty().WithMessage("Vui lòng nhập mật khẩu mới.")
-            .MinimumLength(6).WithMessage("Mật khẩu mới tối thiểu 6 ký tự.")
+            .MinimumLength(8).WithMessage("Mật khẩu mới tối thiểu 8 ký tự.")
+            .MaximumLength(100).WithMessage("Mật khẩu mới tối đa 100 ký tự.")
             .NotEqual(x => x.CurrentPassword).WithMessage("Mật khẩu mới phải khác mật khẩu hiện tại.");
 
         RuleFor(x => x.ConfirmPassword)

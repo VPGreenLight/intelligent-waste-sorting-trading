@@ -1,6 +1,6 @@
-# TÀI LIỆU ĐẶC TẢ API – MODULE 5: QUẢN LÝ HỒ SƠ CƠ SỞ THU GOM, BẢNG GIÁ PHẾ LIỆU & TRẠNG THÁI HOẠT ĐỘNG (RECYCLER PROFILE, PRICING & AVAILABILITY)
-**Mã phân hệ:** `MTH` (`Use Case R-01: Manage Accepted Waste & Pricing` & `Use Case R-02: Toggle Active Status`)  
-**Controllers:** [`RecyclerController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/RecyclerController.cs), [`WasteCategoryController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/WasteCategoryController.cs)  
+# TÀI LIỆU ĐẶC TẢ API – MODULE 4: QUẢN LÝ HỒ SƠ CƠ SỞ THU GOM, BẢNG GIÁ PHẾ LIỆU & TRẠNG THÁI HOẠT ĐỘNG (RECYCLER PROFILE, PRICING & AVAILABILITY)
+**Mã phân hệ:** `M-04` / `MTH` (`Use Case R-01: Manage Accepted Waste & Pricing` & `Use Case R-02: Toggle Active Status`)  
+**Controllers:** [`RecyclerController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/RecyclerController.cs) (`9` APIs: `STT 032–040`), [`WasteCategoryController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/WasteCategoryController.cs) (`GET /api/v1/waste-categories`: `STT 025` thuộc `M-03`)  
 **Service thực thi:** [`RecyclerManagementService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/RecyclerManagementService.cs) ([`IRecyclerManagementService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Interfaces/IRecyclerManagementService.cs))  
 **Entities:** [`RecyclerProfile.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/RecyclerProfile.cs), [`RecyclerPrice.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/RecyclerPrice.cs), [`WasteEntities.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/WasteEntities.cs)  
 **DTOs:** [`RecyclerDtos.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Dtos/RecyclerDtos.cs)  
@@ -8,20 +8,22 @@
 
 ---
 
-## 1. TỔNG QUAN DANH SÁCH ENDPOINTS
+## 1. TỔNG QUAN DANH SÁCH ENDPOINTS (`M-04` – `9` APIs + `STT 025`)
 
-| STT | Phương thức | Endpoint URI | Quyền truy cập | Use Case | Chức năng nghiệp vụ | Mã thông báo / Quy tắc |
-|:---:|:---:|:---|:---:|:---:|:---|:---|
-| 1 | `GET` | `/api/v1/waste-categories` | `[Authorize]` | `R-01`, `U-05` | Lấy danh sách 5 danh mục phế liệu tái chế chuẩn có thể thu mua (loại trừ rác thông thường `"trash"`). | `200 OK` |
-| 2 | `GET` | `/api/v1/recycler/profile` | `[Authorize(Roles = "Recycler,Collector")]` | `R-01`, `R-02` | Xem thông tin hồ sơ cơ sở thu gom của chính đối tác đang đăng nhập kèm trạng thái duyệt và tổng số loại phế liệu đang mua. | `200 OK`, `MSG-NOT-FOUND` |
-| 3 | `PUT` | `/api/v1/recycler/profile` | `[Authorize(Roles = "Recycler,Collector")]` | `R-01`, `U-17` | Cập nhật thông tin cơ sở, tọa độ GPS PostGIS (`SRID 4326`). Nếu hồ sơ đang `Rejected` sẽ tự động chuyển về `Pending` để duyệt lại (`BR-MTH-02`). | `BR-MTH-02`, `BR-MTH-03`, `MSG-MTH-06` |
-| 4 | `GET` | `/api/v1/recycler/prices` | `[Authorize(Roles = "Recycler,Collector")]` | `R-01` | Xem bảng giá thu mua phế liệu của cơ sở, lọc theo từ khóa (`keyword`), trạng thái (`isActive`) và cảnh báo giá quá hạn 30 ngày (`isOutdated` – `JOB-04`). | `200 OK` |
-| 5 | `POST` | `/api/v1/recycler/prices` | `[Authorize(Roles = "Recycler,Collector")]` | `R-01` | Thêm mới một loại phế liệu nhận thu mua kèm đơn giá (`VND/kg`), khối lượng tối thiểu (`kg`) và điều kiện thu gom. | `BR-MTH-01`, `BR-MTH-03`, `MSG-GEN-01` |
-| 6 | `PUT` | `/api/v1/recycler/prices/{priceId:guid}` | `[Authorize(Roles = "Recycler,Collector")]` | `R-01` | Cập nhật đơn giá, khối lượng tối thiểu, điều kiện thu gom hoặc tạm ngưng/mở lại việc thu mua một loại phế liệu (`BR-MTH-07`). | `BR-MTH-03`, `BR-MTH-07`, `MSG-MTH-06` |
-| 7 | `PUT` | `/api/v1/recycler/prices` | `[Authorize(Roles = "Recycler,Collector")]` | `R-01` | Lưu hàng loạt toàn bộ bảng giá (*Save price sheet* trên màn hình `SCR-RCY-01`), làm mới mốc thời gian cập nhật (`JOB-04`). | `BR-MTH-01`, `BR-MTH-03`, `MSG-MTH-06` |
-| 8 | `GET` | `/api/v1/recycler/availability` | `[Authorize(Roles = "Recycler,Collector")]` | `R-02` | Xem trạng thái hoạt động (`Online` / `Offline`), lý do tạm nghỉ (`busyReason`), giờ mở cửa và lịch tuần (`weeklySchedule`). | `200 OK` |
-| 9 | `PATCH` | `/api/v1/recycler/availability` | `[Authorize(Roles = "Recycler,Collector")]` | `R-02` | Bật/tắt trạng thái nhận đơn (`Online` / `Offline`) trên bản đồ tương tác kèm kiểm tra điều kiện đủ hồ sơ (`BR-MTH-03`, `BR-MTH-06`). | `BR-MTH-01`, `BR-MTH-03`, `BR-MTH-06`, `MSG-MTH-06` |
-| 10 | `PUT` | `/api/v1/recycler/availability/schedule` | `[Authorize(Roles = "Recycler,Collector")]` | `R-02` | Cập nhật lịch hoạt động cố định theo từng ngày trong tuần và tự động tổng hợp chuỗi giờ mở cửa (`operatingHours`). | `BR-MTH-01`, `BR-MTH-03`, `MSG-GEN-01` |
+> Tham chiếu Inventory: [`00_api_inventory_and_endpoint_statistics.md`](./00_api_inventory_and_endpoint_statistics.md) (`STT 025`, `032` $\rightarrow$ `040`).
+
+| STT | Inventory ID | Phương thức | Endpoint URI | Quyền truy cập | Use Case | Chức năng nghiệp vụ | Mã thông báo / Quy tắc |
+|:---:|:---:|:---:|:---|:---:|:---:|:---|:---|
+| 1 | `025` | `GET` | `/api/v1/waste-categories` | Public (`[AllowAnonymous]`) | `R-01`, `U-05` | Lấy danh sách 5 nhóm phế liệu tái chế thương mại (`IsRecyclable=true`); Admin/Staff có thể truyền `?includeInactive=true&includeNonRecyclable=true` để xem cả 5 nhóm chỉ hỗ trợ hướng dẫn xử lý (`battery`, `biological`, `clothes`, `shoes`, `trash`). | `200 OK` |
+| 2 | `032` | `GET` | `/api/v1/recycler/profile` | `[Authorize(Roles = "Recycler,Collector")]` | `R-01`, `R-02` | Xem thông tin hồ sơ cơ sở thu gom của chính đối tác đang đăng nhập kèm trạng thái duyệt và tổng số loại phế liệu đang mua. | `200 OK`, `MSG-NOT-FOUND` |
+| 3 | `033` | `PUT` | `/api/v1/recycler/profile` | `[Authorize(Roles = "Recycler,Collector")]` | `R-01`, `U-17` | Cập nhật thông tin cơ sở, tọa độ GPS PostGIS (`SRID 4326`). Nếu hồ sơ đang `Rejected` sẽ tự động chuyển về `Pending` để duyệt lại (`BR-MTH-02`). | `BR-MTH-02`, `BR-MTH-03`, `MSG-MTH-06` |
+| 4 | `034` | `GET` | `/api/v1/recycler/prices` | `[Authorize(Roles = "Recycler,Collector")]` | `R-01` | Xem bảng giá thu mua phế liệu của cơ sở, lọc theo từ khóa (`keyword`), trạng thái (`isActive`) và cảnh báo giá quá hạn 30 ngày (`isOutdated` – `JOB-04`). | `200 OK` |
+| 5 | `035` | `POST` | `/api/v1/recycler/prices` | `[Authorize(Roles = "Recycler,Collector")]` | `R-01` | Thêm mới một loại phế liệu nhận thu mua kèm đơn giá (`VND/kg`), khối lượng tối thiểu (`kg`) và điều kiện thu gom (chặn nhóm không thu mua như `battery`, `biological`, `trash`, `clothes`, `shoes`). | `BR-MTH-01`, `BR-MTH-03`, `MSG-GEN-01` |
+| 6 | `036` | `PUT` | `/api/v1/recycler/prices/{priceId:guid}` | `[Authorize(Roles = "Recycler,Collector")]` | `R-01` | Cập nhật đơn giá, khối lượng tối thiểu, điều kiện thu gom hoặc tạm ngưng/mở lại việc thu mua một loại phế liệu (`BR-MTH-07`). | `BR-MTH-03`, `BR-MTH-07`, `MSG-MTH-06` |
+| 7 | `037` | `PUT` | `/api/v1/recycler/prices` | `[Authorize(Roles = "Recycler,Collector")]` | `R-01` | Lưu hàng loạt toàn bộ bảng giá (*Save price sheet* trên màn hình `SCR-RCY-01`), làm mới mốc thời gian cập nhật (`JOB-04`). | `BR-MTH-01`, `BR-MTH-03`, `MSG-MTH-06` |
+| 8 | `038` | `GET` | `/api/v1/recycler/availability` | `[Authorize(Roles = "Recycler,Collector")]` | `R-02` | Xem trạng thái hoạt động (`Online` / `Offline`), lý do tạm nghỉ (`busyReason`), giờ mở cửa và lịch tuần (`weeklySchedule`). | `200 OK` |
+| 9 | `039` | `PATCH` | `/api/v1/recycler/availability` | `[Authorize(Roles = "Recycler,Collector")]` | `R-02` | Bật/tắt trạng thái nhận đơn (`Online` / `Offline`) trên bản đồ tương tác kèm kiểm tra điều kiện đủ hồ sơ (`BR-MTH-03`, `BR-MTH-06`). | `BR-MTH-01`, `BR-MTH-03`, `BR-MTH-06`, `MSG-MTH-06` |
+| 10 | `040` | `PUT` | `/api/v1/recycler/availability/schedule` | `[Authorize(Roles = "Recycler,Collector")]` | `R-02` | Cập nhật lịch hoạt động cố định theo từng ngày trong tuần và tự động tổng hợp chuỗi giờ mở cửa (`operatingHours`). | `BR-MTH-01`, `BR-MTH-03`, `MSG-GEN-01` |
 
 ---
 
@@ -46,11 +48,12 @@
 
 ### 3.1. Lấy Danh mục Phế liệu Có thể Thu mua (`GET /api/v1/waste-categories`)
 
-* **Mô tả:** Trả về danh sách các danh mục phế liệu tái chế chuẩn của hệ thống để hiển thị trong dropdown *"Add Scrap Type"* (`R-01`) và bộ lọc tìm kiếm điểm thu gom gần nhất (`U-05`). Hệ thống tự động loại trừ danh mục rác thải sinh hoạt không tái chế (`code == "trash"`). Nếu bảng `waste_categories` trong CSDL chưa có dữ liệu, hệ thống tự động khởi tạo 5 danh mục chuẩn (`plastic`, `paper`, `glass`, `metal`, `cardboard`).
-* **Header bắt buộc:** `Authorization: Bearer <accessToken>`
+* **Mô tả:** Trả về danh sách các danh mục phế liệu tái chế chuẩn của hệ thống để hiển thị trong dropdown *"Add Scrap Type"* (`R-01`) và bộ lọc tìm kiếm điểm thu gom gần nhất (`U-05`). Trong 10 danh mục gốc (`DefaultCategories`), **5 nhóm thương mại** (`plastic`, `paper`, `glass`, `metal`, `cardboard`) có `isRecyclable = true`; **5 nhóm còn lại** (`battery`, `biological`, `clothes`, `shoes`, `trash`) có `isRecyclable = false` (chỉ phục vụ hướng dẫn xử lý an toàn sau quét AI, mặc định không trả về trừ khi Admin/Staff truyền `?includeNonRecyclable=true`).
+* **Phân quyền:** `[AllowAnonymous]` *(công khai danh mục `Active` & `IsRecyclable = true`; Admin/Staff có thể truyền `?includeInactive=true&includeNonRecyclable=true`)*.
 
 #### a. Request Parameters
-Không có tham số Query hay Body.
+* `[FromQuery] bool includeInactive = false`
+* `[FromQuery] bool includeNonRecyclable = false`
 
 #### b. Response Parameters (`ApiResponse<IReadOnlyList<WasteCategoryDto>>`)
 
@@ -301,7 +304,7 @@ Authorization: Bearer <recycler_jwt_token>
 
 | Tên tham số | Vị trí | Kiểu dữ liệu | Bắt buộc | Ràng buộc | Mô tả |
 |:---|:---:|:---:|:---:|:---|:---|
-| `wasteCategoryId` | Body | `Guid` | **Có** | Khác `"trash"` và chưa tồn tại trong bảng giá của cơ sở | ID loại phế liệu cần thêm vào bảng giá. |
+| `wasteCategoryId` | Body | `Guid` | **Có** | Thuộc nhóm tái chế thương mại (`isRecyclable = true` và khác `"trash"`), chưa có trong bảng giá | ID loại phế liệu cần thêm vào bảng giá (chặn `battery`, `biological`, `clothes`, `shoes`, `trash`). |
 | `pricePerKg` | Body | `decimal` | **Có** | Số nguyên dương (`1 <= price <= 1,000,000,000`) | Đơn giá thu mua tính theo `VND/kg`. |
 | `minQuantityKg` | Body | `decimal` | Không | Mặc định `1.0`, `0.001 <= minQuantityKg <= 100,000` | Khối lượng tối thiểu nhận thu gom (`kg`). |
 | `collectionConditions` | Body | `string?` | Không | Tối đa `200` ký tự | Ghi chú điều kiện chất lượng phế liệu khi bàn giao. |
@@ -322,7 +325,7 @@ Authorization: Bearer <recycler_jwt_token>
 |:---:|:---:|:---:|:---|:---|
 | **`201 Created`** | `null` | `BR-MTH-03` | Thêm dòng giá mới thành công | `"Đã thêm loại phế liệu vào bảng giá."` |
 | **`400 Bad Request`** | `MSG-GEN-01` | `BR-MTH-03` | Loại phế liệu đã có sẵn trong bảng giá của cơ sở | `"Loại phế liệu này đã có trong bảng giá. Vui lòng chỉnh sửa dòng hiện có."` |
-| **`400 Bad Request`** | `MSG-GEN-01` | `BR-MTH-03` | Chọn danh mục rác không tái chế (`code == "trash"`) | `"Rác thải thông thường không thể đưa vào danh sách phế liệu nhận mua."` |
+| **`400 Bad Request`** | `MSG-GEN-01` | `BR-MTH-03` | Chọn danh mục chỉ hỗ trợ hướng dẫn xử lý (`!IsRecyclable` như `battery`, `biological`, `clothes`, `shoes`, hoặc `code == "trash"`) | `"Danh mục rác này chỉ hỗ trợ hướng dẫn xử lý, không thuộc nhóm phế liệu nhận thu mua."` |
 | **`400 Bad Request`** | `MSG-GEN-01` | `BR-MTH-03` | `pricePerKg <= 0` hoặc có phần thập phân lẻ; `minQuantityKg <= 0`; `collectionConditions > 200` ký tự | `"Giá thu mua phải là số nguyên dương (VND/kg)."` / `"Khối lượng tối thiểu phải lớn hơn 0."` |
 | **`400 Bad Request`** | `MSG-MTH-03` | `BR-MTH-01` | Hồ sơ cơ sở đang ở trạng thái `Pending` | `"Hồ sơ cơ sở đang chờ Staff phê duyệt. Bạn chỉ có thể thao tác sau khi được duyệt."` |
 | **`400 Bad Request`** | `MSG-MTH-05` | `BR-MTH-01` | Hồ sơ cơ sở đang ở trạng thái `Rejected` | `"Hồ sơ cơ sở chưa được phê duyệt: {rejectionReason}. Vui lòng cập nhật hồ sơ và gửi lại."` |
@@ -377,7 +380,7 @@ Authorization: Bearer <recycler_jwt_token>
 | Tên tham số | Kiểu dữ liệu | Bắt buộc | Ràng buộc | Mô tả |
 |:---|:---:|:---:|:---|:---|
 | `items` | `BulkPriceItemRequest[]` | **Có** | Tối thiểu `1` phần tử, không trùng `wasteCategoryId` | Danh sách các dòng giá cần lưu đồng loạt. |
-| `items[].wasteCategoryId` | `Guid` | **Có** | Tồn tại trong `waste_categories` và khác `"trash"` | ID loại phế liệu. |
+| `items[].wasteCategoryId` | `Guid` | **Có** | Tồn tại trong `waste_categories`, `isRecyclable = true` và khác `"trash"` | ID loại phế liệu (chặn các nhóm chỉ hướng dẫn xử lý: `battery`, `biological`, `clothes`, `shoes`, `trash`). |
 | `items[].isActive` | `boolean` | Không | Mặc định `true` | Bật/tắt nhận thu mua loại phế liệu này. |
 | `items[].pricePerKg` | `decimal` | **Có** | Số nguyên dương (`VND/kg`) | Đơn giá thu mua niêm yết. |
 | `items[].minQuantityKg` | `decimal` | Không | Mặc định `1.0`, `> 0` | Khối lượng tối thiểu nhận mua (`kg`). |

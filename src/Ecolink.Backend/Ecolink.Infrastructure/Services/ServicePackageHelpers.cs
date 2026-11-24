@@ -112,7 +112,7 @@ internal static class ServicePackageHelpers
     /// Đánh giá 4 tiêu chí điều kiện đăng ký / tái đăng ký gói Tích xanh PRO cho Cơ sở thu mua (R-07):
     /// 1. KYB = Verified &amp; hồ sơ cơ sở đầy đủ (+ cập nhật lại nếu từng có cảnh cáo ở kỳ Pro trước).
     /// 2. Số lần cảnh cáo không vượt quá 5 (WarningCount &lt;= 5; bỏ qua điều kiện khiếu nại).
-    /// 3. Điểm đánh giá tích cực (>= 4.0 sao; tái đăng ký bắt buộc có >= 1 đánh giá).
+    /// 3. Điểm đánh giá tích cực: tối thiểu 50 lượt đánh giá (TotalReviews &gt;= 50) &amp; điểm trung bình &gt;= 4.0 sao ngay từ lần đăng ký đầu tiên lẫn tái đăng ký.
     /// 4. Không có gói Pro đang còn hiệu lực (không gia hạn cộng dồn trước hạn).
     /// </summary>
     public static async Task<ProEligibilityReportDto> EvaluateProEligibilityAsync(
@@ -124,13 +124,14 @@ internal static class ServicePackageHelpers
     {
         const int MaxAllowedWarnings = 5;
         const decimal MinRequiredRating = 4.0m;
-        const int MinRequiredReviewsForRenewal = 1;
+        const int MinRequiredReviews = 50;
 
         var report = new ProEligibilityReportDto
         {
             MaxAllowedWarnings = MaxAllowedWarnings,
             MinRequiredRating = MinRequiredRating,
-            MinRequiredReviewsForRenewal = MinRequiredReviewsForRenewal
+            MinRequiredReviews = MinRequiredReviews,
+            MinRequiredReviewsForRenewal = MinRequiredReviews
         };
 
         if (userId == Guid.Empty || currentRole != UserRole.Recycler)
@@ -206,16 +207,18 @@ internal static class ServicePackageHelpers
             report.BlockingReasons.Add($"Tài khoản đang có {report.CurrentWarningCount} lần cảnh cáo (vượt quá giới hạn tối đa {MaxAllowedWarnings} lần cảnh cáo cho phép để đăng ký gói Tích xanh Pro).");
         }
 
-        // 3. Mức đánh giá tích cực (>= 4.0 sao; tái đăng ký cần >= 1 đánh giá)
-        if (isReRegistration && report.TotalReviews < MinRequiredReviewsForRenewal)
+        // 3. Mức đánh giá tích cực (tối thiểu 50 lượt đánh giá & điểm trung bình >= 4.0 sao ngay từ lần đăng ký đầu tiên)
+        if (report.TotalReviews < MinRequiredReviews)
         {
             report.IsPositiveFeedbackMet = false;
-            report.BlockingReasons.Add("Để đăng ký lại gói Tích xanh Pro cho chu kỳ mới, cơ sở cần có tối thiểu 1 đánh giá tích cực (>= 4.0 sao) từ giao dịch thực tế.");
+            report.BlockingReasons.Add(
+                $"Cơ sở thu mua hiện có {report.TotalReviews}/{MinRequiredReviews} lượt đánh giá (yêu cầu tối thiểu {MinRequiredReviews} lượt đánh giá thực tế và điểm trung bình từ {MinRequiredRating:0.0}/5.0 sao trở lên để đăng ký gói Tích xanh Pro).");
         }
-        else if (report.TotalReviews > 0 && report.AverageRating < MinRequiredRating)
+        else if (report.AverageRating < MinRequiredRating)
         {
             report.IsPositiveFeedbackMet = false;
-            report.BlockingReasons.Add($"Điểm đánh giá trung bình hiện tại là {report.AverageRating:0.0}/5.0 sao (yêu cầu tối thiểu {MinRequiredRating:0.0} sao để đăng ký gói Tích xanh Pro).");
+            report.BlockingReasons.Add(
+                $"Điểm đánh giá trung bình hiện tại là {report.AverageRating:0.0}/5.0 sao ({report.TotalReviews} lượt) — yêu cầu tối thiểu {MinRequiredRating:0.0}/5.0 sao (kèm từ {MinRequiredReviews} lượt đánh giá) để đăng ký gói Tích xanh Pro.");
         }
         else
         {

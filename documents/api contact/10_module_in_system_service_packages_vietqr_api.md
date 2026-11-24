@@ -2,14 +2,14 @@
 ## PHÂN HỆ M-12 / FE-14: GÓI DỊCH VỤ NỘI BỘ & TÍCH HỢP VIETQR (`IN-SYSTEM SERVICE PACKAGES & VIETQR INTEGRATION`)
 
 * **Dự án:** EcoLink – Intelligent Waste Sorting & Trading Platform (`SEP490_G141`)
-* **Phiên bản tài liệu:** `v1.0.0` (Cập nhật đồng bộ với mã nguồn `Ecolink.WebApi` / `.NET 10`)
+* **Phiên bản tài liệu:** `v2.7.0` (Cập nhật đồng bộ với mã nguồn `Ecolink.WebApi` / `.NET 10`)
 * **Use Cases bao phủ:**
   * `U-16`: Citizen Purchase In-System Services via VietQR
   * `R-07`: Recycler Purchase In-System Services via VietQR
   * `A-10`: Configure In-System Service Fees
   * `A-11`: Manage Financial Reconciliation
 * **Controllers liên quan:** `ServicePaymentController`, `ServicePackagesController`, `AdminReconciliationController`
-* **Phạm vi Endpoint:** `15` REST APIs (`STT 115` – `STT 129` trong [00_api_inventory_and_endpoint_statistics.md](./00_api_inventory_and_endpoint_statistics.md))
+* **Phạm vi Endpoint:** `15` REST APIs (`STT 133` – `STT 147` trong [00_api_inventory_and_endpoint_statistics.md](./00_api_inventory_and_endpoint_statistics.md))
 * **Tiêu chuẩn phản hồi:** Chuẩn hóa theo `ApiResponse<T>` trong [00_api_overview_and_response_contract.md](./00_api_overview_and_response_contract.md) (`camelCase`, Enum serialize dạng chuỗi qua `JsonStringEnumConverter`).
 
 ---
@@ -47,36 +47,36 @@
 4. **Grandfathering (`BR-PAY-05`):**
    * Khi Admin chỉnh sửa giá hoặc quyền lợi (`A-10`), chỉ các lượt mua mới bị ảnh hưởng; các `ServiceOrder` và `UserSubscription` đang hiệu lực giữ nguyên `FeaturesSnapshot` và `DurationDaysSnapshot` lúc mua. Gói `BASIC` không thể bị tắt (`IsActive = false`).
 
-### 1.3. Danh mục 15 API Phân hệ `M-12` (`STT 115` – `STT 129`)
+### 1.3. Danh mục 15 API Phân hệ `M-12` (`STT 133` – `STT 147`)
 
 | STT | Phương thức | Tuyến đường Endpoint | Controller Action | RBAC Role | Use Case |
 |:---:|:---:|:---|:---|:---|:---|
-| **115** | `POST` | `/api/v1/service-payments/create` | `CreateServicePayment` | `User`, `Citizen`, `Recycler`, `Collector`, `Admin` | `U-16`, `R-07` |
-| **116** | `GET` | `/api/v1/service-payments/orders/{orderCode}` | `GetOrderStatus` | Authenticated (Chủ đơn / `Admin`) | `U-16`, `R-07` |
-| **117** | `GET` | `/api/v1/service-payments/orders` | `GetAllOrders` | Authenticated | `U-16`, `R-07` |
-| **118** | `POST` | `/api/v1/service-payments/webhook` | `ReceivePaymentWebhook` | Public (`AllowAnonymous`, Gateway Secret/HMAC) | `U-16`, `R-07` |
-| **119** | `POST` | `/api/v1/service-payments/simulate-transfer/{orderCode}` | `SimulateTransfer` | Public (`AllowAnonymous`, Dev/Test Sandbox) | `U-16`, `R-07` |
-| **120** | `GET` | `/api/v1/service-packages` | `GetAvailablePackages` | Authenticated | `U-16`, `R-07` |
-| **121** | `GET` | `/api/v1/service-packages/subscriptions/me` | `GetMySubscriptions` | Authenticated | `U-16`, `R-07` |
-| **122** | `POST` | `/api/v1/service-payments/orders/{orderCode}/cancel` | `CancelPendingOrder` | Authenticated (Chủ đơn) | `U-16`, `R-07` |
-| **123** | `GET` | `/api/v1/admin/service-packages` | `GetAllServicePackages` | `Admin` | `A-10` |
-| **124** | `POST` | `/api/v1/admin/service-packages` | `CreateServicePackage` | `Admin` | `A-10` |
-| **125** | `PUT` | `/api/v1/admin/service-packages/{packageId:guid}` | `UpdateServicePackage` | `Admin` | `A-10` |
-| **126** | `PATCH` | `/api/v1/admin/service-packages/{packageId:guid}/status` | `TogglePackageStatus` | `Admin` | `A-10` |
-| **127** | `GET` | `/api/v1/admin/reconciliations/ledger` | `GetPaymentLedger` | `Admin` | `A-11` |
-| **128** | `PATCH` | `/api/v1/admin/reconciliations/orders/{orderCode}/resolve` | `ResolvePaymentAnomaly` | `Admin` | `A-11` |
-| **129** | `GET` | `/api/v1/admin/reconciliations/export` | `ExportReconciliationReport` | `Admin` | `A-11` |
+| **133** | `POST` | `/api/v1/service-payments/create` | `CreateServicePayment` | `User`, `Citizen`, `Recycler`, `Collector`, `Admin` | `U-16`, `R-07` |
+| **134** | `GET` | `/api/v1/service-payments/orders/{orderCode}` | `GetOrderStatus` | Authenticated (Chủ đơn / `Admin`) | `U-16`, `R-07` |
+| **135** | `GET` | `/api/v1/service-payments/orders` | `GetAllOrders` | Authenticated | `U-16`, `R-07` |
+| **136** | `POST` | `/api/v1/service-payments/orders/{orderCode}/cancel` | `CancelPendingOrder` | Authenticated (Chủ đơn) | `U-16`, `R-07` |
+| **137** | `POST` | `/api/v1/service-payments/webhook` | `ReceivePaymentWebhook` | Public (`AllowAnonymous`, Gateway Secret/HMAC) | `U-16`, `R-07` |
+| **138** | `POST` | `/api/v1/service-payments/simulate-transfer/{orderCode}` | `SimulateTransfer` | Public (`AllowAnonymous`, Dev/Test Sandbox) | `U-16`, `R-07` |
+| **139** | `GET` | `/api/v1/service-packages` | `GetAvailablePackages` | Authenticated | `U-16`, `R-07` |
+| **140** | `GET` | `/api/v1/service-packages/subscriptions/me` | `GetMySubscriptions` | Authenticated | `U-16`, `R-07` |
+| **141** | `GET` | `/api/v1/admin/service-packages` | `GetAllServicePackages` | `Admin` | `A-10` |
+| **142** | `POST` | `/api/v1/admin/service-packages` | `CreateServicePackage` | `Admin` | `A-10` |
+| **143** | `PUT` | `/api/v1/admin/service-packages/{packageId:guid}` | `UpdateServicePackage` | `Admin` | `A-10` |
+| **144** | `PATCH` | `/api/v1/admin/service-packages/{packageId:guid}/status` | `TogglePackageStatus` | `Admin` | `A-10` |
+| **145** | `GET` | `/api/v1/admin/reconciliations/ledger` | `GetPaymentLedger` | `Admin` | `A-11` |
+| **146** | `PATCH` | `/api/v1/admin/reconciliations/orders/{orderCode}/resolve` | `ResolvePaymentAnomaly` | `Admin` | `A-11` |
+| **147** | `GET` | `/api/v1/admin/reconciliations/export` | `ExportReconciliationReport` | `Admin` | `A-11` |
 
 ---
 
-## 2. ĐẶC TẢ CHI TIẾT CÁC ENDPOINTS (`STT 115` – `STT 129`)
+## 2. ĐẶC TẢ CHI TIẾT CÁC ENDPOINTS (`STT 133` – `STT 147`)
 
 ### 2.1. Nhóm Thanh toán VietQR, Lịch sử Đơn hàng & Webhook (`ServicePaymentController`)
 
-#### [STT 115] Khởi tạo đơn thanh toán dịch vụ & Mã VietQR động
+#### [STT 133] Khởi tạo đơn thanh toán dịch vụ & Mã VietQR động
 * **Endpoint:** `POST /api/v1/service-payments/create`
 * **RBAC:** `Authorize(Roles = "User,Citizen,Recycler,Collector,Admin")`
-* **Use Case / Business Rules:** `U-16`, `R-07` | `BR-PAY-01`, `BR-PAY-03`
+* **Use Case / Business Rules:** `U-16`, `R-07` | `BR-PAY-01`, `BR-PAY-03`, `BR-PAY-04`
 * **Request Headers:** `Authorization: Bearer <jwt_token>`
 * **Request Body (`CreateServicePaymentRequest`):**
   ```json
@@ -87,7 +87,11 @@
     "cancelUrl": "https://ecolink.vn/payment/cancel"
   }
   ```
-  > *Ghi chú:* Nếu truyền `packageId` hoặc `packageCode`, máy chủ bỏ qua mọi giá trị `amount` từ client và lấy trực tiếp từ `service_packages`. Với luồng tương thích cũ không truyền gói, `amount <= 0` trả về `400 Bad Request` (`MSG-PAY-03`). Nếu chọn gói `PRO` mà tài khoản không phải `Recycler` hoặc chưa `VerificationStatus == Verified`, trả về `403`/`400` tương ứng (`BR-PAY-03`).
+  > *Ghi chú quy tắc kiểm tra khi khởi tạo đơn (`PaymentService.CreateOrderAsync`):*
+  > * **Tra cứu `effectiveRole` từ CSDL:** Server truy vấn `Users.Role` theo `currentUserId` trong DB để nhận diện chính xác vai trò mới nhất nếu `Citizen` vừa được duyệt KYB lên `Recycler` nhưng JWT cũ chưa refresh.
+  > * **Khớp giá & chặn `BASIC`:** Bỏ qua mọi `amount` giả mạo từ client; chặn mua gói `IsDefaultFree` / `PriceVnd <= 0` (`400 MSG-PAY-03`).
+  > * **Chặn mua gói bậc thấp hơn khi đang có gói cao hơn (`BR-PAY-04`):** So sánh `currentTierRank` (`Basic=0`, `Premium=1`, `Pro=2`) với `targetTierRank`; nếu đang kích hoạt `PRO` mà mua `PREMIUM`, trả `400 Bad Request` (`MSG-PAY-03`).
+  > * **Thẩm định 4 tiêu chí gói Tích xanh `PRO` (`EvaluateProEligibilityAsync`, `BR-PAY-03`):** Nếu `effectiveRole == User` trả `403 Forbidden` (`MSG-ADM-04`). Nếu là `Recycler` nhưng không đạt bất kỳ tiêu chí nào trong 4 tiêu chí (KYB & hồ sơ chưa đầy đủ/cần xác thực lại, `warningCount > 5`, chưa đạt tối thiểu `50` lượt đánh giá hoặc điểm trung bình `< 4.0` sao ngay từ lần đăng ký đầu tiên lẫn tái đăng ký, hoặc đang có gói `PRO` còn hạn không cho cộng dồn trước hạn), trả `400 Bad Request` (`MSG-PAY-06`).
 * **Response `200 OK` (`MSG-PAY-01`):**
   ```json
   {
@@ -132,7 +136,7 @@
 
 ---
 
-#### [STT 116] Tra cứu trạng thái đơn hàng thanh toán theo mã đơn
+#### [STT 134] Tra cứu trạng thái đơn hàng thanh toán theo mã đơn
 * **Endpoint:** `GET /api/v1/service-payments/orders/{orderCode}`
 * **RBAC:** `Authorize` (Chủ đơn hoặc `Admin` — kiểm tra IDOR theo `MSG-ADM-04`)
 * **Use Case / Business Rules:** `U-16`, `R-07` | `BR-PAY-01`
@@ -142,7 +146,7 @@
 
 ---
 
-#### [STT 117] Xem danh sách lịch sử đơn hàng thanh toán của tôi
+#### [STT 135] Xem danh sách lịch sử đơn hàng thanh toán của tôi
 * **Endpoint:** `GET /api/v1/service-payments/orders`
 * **RBAC:** `Authorize`
 * **Use Case / Business Rules:** `U-16`, `R-07`
@@ -151,7 +155,7 @@
 
 ---
 
-#### [STT 122] Hủy đơn thanh toán VietQR đang chờ (`Pending`)
+#### [STT 136] Hủy đơn thanh toán VietQR đang chờ (`Pending`)
 * **Endpoint:** `POST /api/v1/service-payments/orders/{orderCode}/cancel`
 * **RBAC:** `Authorize` (Chỉ chủ đơn)
 * **Use Case / Business Rules:** `U-16`, `R-07` | `BR-PAY-01`
@@ -171,7 +175,7 @@
 
 ---
 
-#### [STT 118] Webhook nhận biến động số dư VietQR / PayOS
+#### [STT 137] Webhook nhận biến động số dư VietQR / PayOS
 * **Endpoint:** `POST /api/v1/service-payments/webhook`
 * **RBAC:** `AllowAnonymous` (Bảo vệ bằng `X-VietQr-Webhook-Secret` hoặc HMAC-SHA256 PayOS `signature`)
 * **Use Case / Business Rules:** `U-16`, `R-07` | `BR-PAY-02`, `BR-PAY-06`
@@ -197,7 +201,7 @@
 
 ---
 
-#### [STT 119] Giả lập chuyển khoản VietQR (Môi trường Sandbox / Kiểm thử)
+#### [STT 138] Giả lập chuyển khoản VietQR (Môi trường Sandbox / Kiểm thử)
 * **Endpoint:** `POST /api/v1/service-payments/simulate-transfer/{orderCode}`
 * **RBAC:** `AllowAnonymous` (Chặn `403 Forbidden` trên môi trường Production trừ khi bật `VietQr:EnableSimulator = true`)
 * **Use Case / Business Rules:** `U-16`, `R-07`
@@ -217,18 +221,25 @@
 
 ### 2.2. Nhóm Danh mục Gói & Quyền lợi Thuê bao Người dùng (`ServicePackagesController`)
 
-#### [STT 120] Lấy bảng giá 3 gói dịch vụ khả dụng cho người dùng
+#### [STT 139] Lấy bảng giá 3 gói dịch vụ khả dụng cho người dùng
 * **Endpoint:** `GET /api/v1/service-packages`
 * **RBAC:** `Authorize`
 * **Use Case / Business Rules:** `U-16`, `R-07`
 * **Query Parameters:** `targetRole` (optional: `All`, `User`, `Recycler`)
-* **Response `200 OK` (`MSG-GEN-01`):** `ApiResponse<IReadOnlyList<ServicePackageCatalogDto>>`, tự đánh giá:
-  * `isEligible` (`bool`): `false` kèm `ineligibleReason` nếu Citizen hoặc Recycler chưa `Verified` KYB xem gói `PRO`.
-  * `isCurrentPlan` (`bool`) & `currentActiveExpiresAt` (`DateTime?`).
+* **Response `200 OK` (`MSG-GEN-01`):** `ApiResponse<IReadOnlyList<ServicePackageCatalogDto>>`, tự đánh giá theo `effectiveRole` truy vấn từ DB:
+  * **Ẩn gói `PRO` khỏi `Citizen`:** Khi `effectiveRole == UserRole.User`, hệ thống lọc chỉ trả về gói có `targetRole == All || User` (tự động ẩn `PRO` dành riêng cho `Recycler`).
+  * `isEligible` (`bool`) & `ineligibleReason` (`string?`): Đánh giá điều kiện sở hữu/nâng cấp.
+  * `isCurrentPlan` (`bool`), `isIncludedInHigherPlan` (`bool` — `true` với gói `BASIC`/`PREMIUM` khi đang dùng `PRO`), `canRenew` (`bool` — `false` khi đang `PRO`, vì `PRO` không gia hạn cộng dồn trước hạn), `currentActiveExpiresAt` (`DateTime?`).
+  * `proEligibility` (`ProEligibilityReportDto?` — trả về riêng cho gói `PRO`), gồm 4 nhóm tiêu chí kiểm định:
+    1. `isKybAndProfileValid` (`verificationStatus == "Verified"`, đủ `FacilityName` & `BusinessAddress`, và `!requiresProfileReverification` nếu phát sinh cảnh cáo sau ngày kích hoạt kỳ `PRO` cũ).
+    2. `isWarningLimitOk` (`currentWarningCount <= maxAllowedWarnings`, mặc định `<= 5`).
+    3. `isPositiveFeedbackMet` (`totalReviews >= minRequiredReviews` (`50`) và `averageRating >= minRequiredRating` (`4.0`), áp dụng ngay từ lần đăng ký đầu tiên lẫn tái đăng ký).
+    4. `isNotCurrentlyActivePro` (`activeProExpiresAt == null`, chặn cộng dồn trước khi hết hạn).
+    * Kèm mảng `blockingReasons: string[]` giải thích cụ thể từng tiêu chí chưa đạt.
 
 ---
 
-#### [STT 121] Xem bậc gói hiện tại, đặc quyền & lịch sử thuê bao của tôi
+#### [STT 140] Xem bậc gói hiện tại, đặc quyền & lịch sử thuê bao của tôi
 * **Endpoint:** `GET /api/v1/service-packages/subscriptions/me`
 * **RBAC:** `Authorize`
 * **Use Case / Business Rules:** `U-16`, `R-07` | `BR-PAY-04`
@@ -278,7 +289,7 @@
 
 ### 2.3. Nhóm Quản trị Danh mục Gói & Biểu phí Admin (`A-10` — `ServicePackagesController`)
 
-#### [STT 123] Tra cứu toàn bộ danh mục gói dịch vụ & thống kê doanh thu (Admin)
+#### [STT 141] Tra cứu toàn bộ danh mục gói dịch vụ & thống kê doanh thu (Admin)
 * **Endpoint:** `GET /api/v1/admin/service-packages`
 * **RBAC:** `Authorize(Roles = "Admin")`
 * **Use Case / Business Rules:** `A-10`
@@ -287,7 +298,7 @@
 
 ---
 
-#### [STT 124] Tạo gói dịch vụ thương mại mới (Admin)
+#### [STT 142] Tạo gói dịch vụ thương mại mới (Admin)
 * **Endpoint:** `POST /api/v1/admin/service-packages`
 * **RBAC:** `Authorize(Roles = "Admin")`
 * **Use Case / Business Rules:** `A-10` | `BR-PAY-05`, `BR-ADM-05`
@@ -322,7 +333,7 @@
 
 ---
 
-#### [STT 125] Cập nhật biểu phí, chu kỳ & đặc quyền gói dịch vụ (Admin)
+#### [STT 143] Cập nhật biểu phí, chu kỳ & đặc quyền gói dịch vụ (Admin)
 * **Endpoint:** `PUT /api/v1/admin/service-packages/{packageId:guid}`
 * **RBAC:** `Authorize(Roles = "Admin")`
 * **Use Case / Business Rules:** `A-10` | `BR-PAY-05`, `BR-ADM-05`
@@ -332,7 +343,7 @@
 
 ---
 
-#### [STT 126] Bật/tắt trạng thái mở bán gói dịch vụ (Admin)
+#### [STT 144] Bật/tắt trạng thái mở bán gói dịch vụ (Admin)
 * **Endpoint:** `PATCH /api/v1/admin/service-packages/{packageId:guid}/status`
 * **RBAC:** `Authorize(Roles = "Admin")`
 * **Use Case / Business Rules:** `A-10` | `BR-PAY-05`, `BR-ADM-05`
@@ -344,7 +355,7 @@
 
 ### 2.4. Nhóm Đối soát Tài chính VietQR & Xuất Bảng kê (`A-11` — `AdminReconciliationController`)
 
-#### [STT 127] Truy vấn sổ cái dòng tiền VietQR & Lọc giao dịch bất thường (Admin)
+#### [STT 145] Truy vấn sổ cái dòng tiền VietQR & Lọc giao dịch bất thường (Admin)
 * **Endpoint:** `GET /api/v1/admin/reconciliations/ledger`
 * **RBAC:** `Authorize(Roles = "Admin")`
 * **Use Case / Business Rules:** `A-11` | `BR-PAY-06`
@@ -359,7 +370,7 @@
 
 ---
 
-#### [STT 128] Đối soát thủ công giao dịch VietQR bất thường (Admin)
+#### [STT 146] Đối soát thủ công giao dịch VietQR bất thường (Admin)
 * **Endpoint:** `PATCH /api/v1/admin/reconciliations/orders/{orderCode}/resolve`
 * **RBAC:** `Authorize(Roles = "Admin")`
 * **Use Case / Business Rules:** `A-11` | `BR-PAY-06`, `BR-ADM-05`
@@ -383,7 +394,7 @@
 
 ---
 
-#### [STT 129] Xuất bảng kê đối soát dòng tiền VietQR ẩn danh PII (Admin)
+#### [STT 147] Xuất bảng kê đối soát dòng tiền VietQR ẩn danh PII (Admin)
 * **Endpoint:** `GET /api/v1/admin/reconciliations/export`
 * **RBAC:** `Authorize(Roles = "Admin")`
 * **Use Case / Business Rules:** `A-11` | `BR-ADM-06`, `BR-ADM-05`

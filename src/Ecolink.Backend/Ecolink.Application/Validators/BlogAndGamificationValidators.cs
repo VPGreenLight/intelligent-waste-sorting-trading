@@ -83,18 +83,28 @@ public class SaveGiftRequestValidator : AbstractValidator<SaveGiftRequest>
     public SaveGiftRequestValidator()
     {
         RuleFor(x => x.Name)
-            .Must(n => !string.IsNullOrWhiteSpace(n) && n.Trim().Length <= 150)
-            .WithMessage("Tên quà bắt buộc nhập và tối đa 150 ký tự.");
+            .Cascade(CascadeMode.Stop)
+            .Must(n => !string.IsNullOrWhiteSpace(n))
+            .WithErrorCode("MSG-AUTH-02")
+            .WithMessage("Vui lòng nhập tên quà tặng.")
+            .Must(n => n!.Trim().Length <= 150)
+            .WithErrorCode("MSG-NTF-03")
+            .WithMessage("Tên quà tối đa 150 ký tự.");
 
         RuleFor(x => x.Type)
             .Must(t => !string.IsNullOrWhiteSpace(t) && ValidTypes.Contains(t.Trim(), StringComparer.OrdinalIgnoreCase))
+            .WithErrorCode("MSG-AUTH-02")
             .WithMessage("Loại quà phải là Physical hoặc Voucher.");
 
         RuleFor(x => x.PointsRequired)
-            .GreaterThanOrEqualTo(0).WithMessage("Điểm quy đổi phải là số không âm.");
+            .GreaterThanOrEqualTo(0)
+            .WithErrorCode("MSG-AUTH-02")
+            .WithMessage("Điểm quy đổi phải là số không âm.");
 
         RuleFor(x => x.StockQuantity)
-            .InclusiveBetween(0, 1000000).WithMessage("Số lượng tồn kho phải từ 0 đến 1.000.000.");
+            .InclusiveBetween(0, 1000000)
+            .WithErrorCode("MSG-AUTH-02")
+            .WithMessage("Số lượng tồn kho phải từ 0 đến 1.000.000.");
     }
 }
 
@@ -127,15 +137,27 @@ public class SaveEcoFactRequestValidator : AbstractValidator<SaveEcoFactRequest>
     public SaveEcoFactRequestValidator()
     {
         RuleFor(x => x.Title)
-            .Must(t => !string.IsNullOrWhiteSpace(t) && t.Trim().Length <= 200)
-            .WithMessage("Tiêu đề Eco Fact bắt buộc và tối đa 200 ký tự.");
+            .Cascade(CascadeMode.Stop)
+            .Must(t => !string.IsNullOrWhiteSpace(t))
+            .WithErrorCode("MSG-AUTH-02")
+            .WithMessage("Vui lòng nhập tiêu đề Eco Fact.")
+            .Must(t => t!.Trim().Length <= 200)
+            .WithErrorCode("MSG-NTF-03")
+            .WithMessage("Tiêu đề Eco Fact tối đa 200 ký tự.");
 
         RuleFor(x => x.Content)
-            .Must(c => !string.IsNullOrWhiteSpace(c) && c.Trim().Length <= 300)
-            .WithMessage("Nội dung Eco Fact bắt buộc và tối đa 300 ký tự.");
+            .Cascade(CascadeMode.Stop)
+            .Must(c => !string.IsNullOrWhiteSpace(c))
+            .WithErrorCode("MSG-AUTH-02")
+            .WithMessage("Vui lòng nhập nội dung Eco Fact.")
+            .Must(c => c!.Trim().Length <= 300)
+            .WithErrorCode("MSG-NTF-03")
+            .WithMessage("Nội dung Eco Fact tối đa 300 ký tự.");
 
         RuleFor(x => x.UnlockTreeLevel)
-            .GreaterThanOrEqualTo(1).WithMessage("Cấp cây mở khóa phải từ 1 trở lên.");
+            .GreaterThanOrEqualTo(1)
+            .WithErrorCode("MSG-AUTH-02")
+            .WithMessage("Cấp cây mở khóa phải từ 1 trở lên.");
     }
 }
 
@@ -143,13 +165,20 @@ public class GamificationConfigDtoValidator : AbstractValidator<GamificationConf
 {
     public GamificationConfigDtoValidator()
     {
-        RuleFor(x => x.DailyNonTransactionCap).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.CheckinBasePoints).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.StreakBonusIncrement).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.StreakBonusCap).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.DefaultPointsPerKg).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.DailyTreeCareLimit).InclusiveBetween(1, 100);
-        RuleFor(x => x.VoucherValidityDays).InclusiveBetween(1, 3650);
+        RuleFor(x => x.DailyNonTransactionCap).GreaterThanOrEqualTo(0)
+            .WithMessage("Trần điểm phi giao dịch mỗi ngày phải từ 0 trở lên.");
+        RuleFor(x => x.CheckinBasePoints).GreaterThanOrEqualTo(0)
+            .WithMessage("Điểm điểm danh cơ bản phải từ 0 trở lên.");
+        RuleFor(x => x.StreakBonusIncrement).GreaterThanOrEqualTo(0)
+            .WithMessage("Điểm cộng thêm chuỗi ngày phải từ 0 trở lên.");
+        RuleFor(x => x.StreakBonusCap).GreaterThanOrEqualTo(0)
+            .WithMessage("Trần điểm thưởng chuỗi ngày phải từ 0 trở lên.");
+        RuleFor(x => x.DefaultPointsPerKg).GreaterThanOrEqualTo(0)
+            .WithMessage("Điểm mặc định mỗi kg phải từ 0 trở lên.");
+        RuleFor(x => x.DailyTreeCareLimit).InclusiveBetween(1, 100)
+            .WithMessage("Giới hạn lượt chăm cây mỗi ngày phải từ 1 đến 100.");
+        RuleFor(x => x.VoucherValidityDays).InclusiveBetween(1, 3650)
+            .WithMessage("Số ngày hiệu lực voucher phải từ 1 đến 3650 ngày.");
 
         RuleFor(x => x.TreeLevels)
             .NotEmpty().WithMessage("Bảng cấp cây không được để trống.")
@@ -189,9 +218,12 @@ public class SaveLeaderboardCycleRequestValidator : AbstractValidator<SaveLeader
             .GreaterThan(x => x.StartsAt)
             .WithMessage("Thời gian kết thúc chu kỳ phải lớn hơn thời gian bắt đầu.");
 
-        RuleFor(x => x.Top1BonusPoints).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.Top2BonusPoints).GreaterThanOrEqualTo(0);
-        RuleFor(x => x.Top3BonusPoints).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.Top1BonusPoints).GreaterThanOrEqualTo(0)
+            .WithMessage("Điểm thưởng Top 1 phải từ 0 trở lên.");
+        RuleFor(x => x.Top2BonusPoints).GreaterThanOrEqualTo(0)
+            .WithMessage("Điểm thưởng Top 2 phải từ 0 trở lên.");
+        RuleFor(x => x.Top3BonusPoints).GreaterThanOrEqualTo(0)
+            .WithMessage("Điểm thưởng Top 3 phải từ 0 trở lên.");
         RuleFor(x => x)
             .Must(x => x.Top1BonusPoints >= x.Top2BonusPoints && x.Top2BonusPoints >= x.Top3BonusPoints)
             .WithMessage("Điểm thưởng Top 1/2/3 phải không âm và giảm dần theo thứ hạng.");

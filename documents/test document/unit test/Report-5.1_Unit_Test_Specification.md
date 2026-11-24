@@ -1,25 +1,29 @@
 # REPORT 5.1 – UNIT TEST SPECIFICATION (TÀI LIỆU ĐẶC TẢ KIỂM THỬ ĐƠN VỊ)
 
 - **Dự án:** Hệ thống Phân loại Rác Thông minh & Giao dịch Phế liệu (**EcoLink**)
-- **Phiên bản:** 2.1
-- **Ngày cập nhật:** 2026-11-20
+- **Phiên bản:** 2.2
+- **Ngày cập nhật:** 2026-11-23
 - **Nhóm thực hiện:** Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức
-- **Phạm vi kiểm thử (14 Core Modules):**
-  1. **Module 1:** Authentication & Account Management (`AuthService`) — **22 TCs**
-  2. **Module 2:** AI Waste Classification & Rule Engine (`AiVisionHttpClient`, `WasteRuleEngineService`, `AiFeedbackService.GetMyScanHistoryAsync`, `RecyclerManagementService` Categories CRUD, `WasteCatalogValidators`, `classify_waste_image`) — **28 TCs**
-  3. **Module 3:** Recycler Onboarding & Verification (`RecyclerOnboardingService`, `CloudflareR2StorageService`) — **20 TCs**
-  4. **Module 4:** Recycler Profile, Pricing & Availability (`RecyclerManagementService` – `R-01` & `R-02`) — **20 TCs**
-  5. **Module 5:** Location-Based Recycler Discovery (`GeoMatchingService` & `NearbyRecyclerFilterValidator` – `U-05`) — **20 TCs**
-  6. **Module 6:** Handover Request Management (`HandoverRequestService` – `U-06`, `U-07`, `R-03`, `R-04`, `JOB-03`) — **24 TCs**
-  7. **Module 7:** Handover Completion & Transaction Receipt (`HandoverReceiptService` – `R-06`, `U-09`, `U-12`, `JOB-01`) — **24 TCs**
-  8. **Module 8:** In-App Real-Time Negotiation Chatbox (`NegotiationChatService` & `NegotiationChatValidators` – `U-08` & `R-05`) — **20 TCs**
-  9. **Module 9:** Account, Staff, Notifications & System Governance / Analytics (`AdminAnalyticsService`, `AccountGovernanceService`, `StaffManagementService`, `StaffAttendanceService`, `NotificationService`, `InMemoryChannelEventBus`, `AuditLogService` & `GovernanceValidators` – `A-01..A-04`, `S-06`, `S-07`, `S-11`, `SU-04`) — **30 TCs**
-  10. **Module 10:** In-System Service Packages & VietQR Integration (`PaymentService`, `ServicePackageService`, `SubscriptionEntitlementService`, `AdminReconciliationService` & `ServicePackageValidators` – `U-16`, `R-07`, `A-10`, `A-11`) — **22 TCs**
-  11. **Module 11:** AI Misclassification Feedback & Dataset Curation (`AiFeedbackService`, `AiDatasetCurationService`, `AiDatasetExportBuilder`, `AiCurationValidators` – `U-04`, `S-01`, `S-02`, `S-03`) — **22 TCs**
-  12. **Module 12:** Rating, Review & Complaint Resolution (`ReviewService`, `ComplaintService`, `HandoverReceiptService.DisputeAsync`, `ReviewAndComplaintValidators` – `U-10`, `U-11`, `S-05`) — **22 TCs**
-  13. **Module 13:** Gamification & Rewards (`LeaderboardService`, `CheckinService`, `PointsService`, `GiftService`, `VirtualTreeService`, `EcoFactService`, `GamificationConfigService`, `GamificationService`, `ComplaintService` clawback & `Validators` – `U-13..U-15`, `S-09..S-10`, `A-07..A-08`) — **22 TCs**
-  14. **Module 14:** Blog & Content Management (`BlogPostService` & `BlogValidators` – `G-01`, `S-08`, `A-09`) — **20 TCs**
-- **Tổng số lượng Unit Test Cases:** **316 TCs** (`147 Normal`, `111 Abnormal`, `58 Boundary`) *(Thực thi tự động `323 / 323 Passed` trên `Ecolink.UnitTests.csproj` bao gồm cả các `[Theory]` và bài test tích hợp Rule Engine/Feedback AI)*
+- **Phạm vi kiểm thử (`14` Core Service Modules + `Module 15` PureLogic & Validators — Tổng `19` tệp kiểm thử trong `Ecolink.UnitTests.csproj`):**
+  1. **Module 1:** Authentication & Account Management (`AuthService`) — **22 TCs** (`9 Normal, 10 Abnormal, 3 Boundary`)
+  2. **Module 2:** AI Waste Classification, Rule Engine & Platform Policy (`AiVisionHttpClient`, `WasteRuleEngineService`, `PlatformPolicyService`, `AiFeedbackService.GetMyScanHistoryAsync`, `RecyclerManagementService` Categories CRUD, `WasteCatalogValidators`, `classify_waste_image` YOLO26 Two-Stage & 10 Categories) — **32 TCs** (`20 Normal, 7 Abnormal, 5 Boundary`)
+  3. **Module 3:** Recycler Onboarding & Verification (`RecyclerOnboardingService`, `CloudflareR2StorageService`) — **20 TCs** (`7 Normal, 9 Abnormal, 4 Boundary`)
+  4. **Module 4:** Recycler Profile, Pricing & Availability (`RecyclerManagementService` – `R-01` & `R-02`) — **20 TCs** (`10 Normal, 7 Abnormal, 3 Boundary`)
+  5. **Module 5:** Location-Based Recycler Discovery (`GeoMatchingService` & `NearbyRecyclerFilterValidator` – `U-05`) — **20 TCs** (`10 Normal, 6 Abnormal, 4 Boundary`)
+  6. **Module 6:** Handover Request Management (`HandoverRequestService` – `U-06`, `U-07`, `R-03`, `R-04`, `JOB-03`) — **24 TCs** (`8 Normal, 11 Abnormal, 5 Boundary`)
+  7. **Module 7:** Handover Completion & Transaction Receipt (`HandoverReceiptService` – `R-06`, `U-09`, `U-12`, `JOB-01`, TradeOrder Sync) — **25 TCs** (`11 Normal, 8 Abnormal, 6 Boundary`)
+  8. **Module 8:** In-App Real-Time Negotiation Chatbox & Trade Order (`NegotiationChatService`, `TradeTransactionService` & `NegotiationChatValidators` – `U-08` & `R-05`) — **27 TCs** (`14 Normal, 8 Abnormal, 5 Boundary`)
+  9. **Module 9:** Account, Staff, Notifications & System Governance / Analytics (`AdminAnalyticsService`, `AccountGovernanceService`, `StaffManagementService`, `StaffAttendanceService`, `NotificationService`, `InMemoryChannelEventBus`, `AuditLogService` & `GovernanceValidators` – `A-01..A-04`, `S-06`, `S-07`, `S-11`, `SU-04`) — **30 TCs** (`15 Normal, 10 Abnormal, 5 Boundary`)
+  10. **Module 10:** In-System Service Packages & VietQR Integration (`PaymentService`, `ServicePackageService`, `SubscriptionEntitlementService`, `AdminReconciliationService` & `ServicePackageValidators` – `U-16`, `R-07`, `A-10`, `A-11`) — **27 TCs** (`12 Normal, 10 Abnormal, 5 Boundary`)
+  11. **Module 11:** AI Misclassification Feedback & Dataset Curation (`AiFeedbackService`, `AiDatasetCurationService`, `AiDatasetExportBuilder`, `AiCurationValidators` – `U-04`, `S-01`, `S-02`, `S-03`) — **22 TCs** (`10 Normal, 8 Abnormal, 4 Boundary`)
+  12. **Module 12:** Rating, Review & Complaint Resolution (`ReviewService`, `ComplaintService`, `HandoverReceiptService.DisputeAsync`, `ReviewAndComplaintValidators` – `U-10`, `U-11`, `S-05`) — **22 TCs** (`10 Normal, 8 Abnormal, 4 Boundary`)
+  13. **Module 13:** Gamification & Rewards (`LeaderboardService`, `CheckinService`, `PointsService`, `GiftService`, `VirtualTreeService`, `EcoFactService`, `GamificationConfigService`, `GamificationService`, `ComplaintService` clawback & `Validators` – `U-13..U-15`, `S-09..S-10`, `A-07..A-08`) — **25 TCs** (`12 Normal, 8 Abnormal, 5 Boundary`)
+  14. **Module 14:** Blog & Content Management (`BlogPostService` & `BlogValidators` – `G-01`, `S-08`, `A-09`) — **20 TCs** (`9 Normal, 7 Abnormal, 4 Boundary`)
+  15. **Module 15:** Pure Logic & FluentValidation Validators (`PureLogicTests` [7 classes], `AuthValidatorTests`, `GovernanceChatValidatorTests`, `AiBlogGamificationValidatorTests`, `RecyclerReviewPackageWasteValidatorTests` — 54 Validators) — **270 Methods / 782 Executed Cases** (`111 [Fact]` + `159 [Theory]` với `671 [InlineData]`; `184 Normal, 312 Abnormal, 286 Boundary` executed cases)
+- **Tổng hợp Quy mô Kiểm thử (`Ecolink.UnitTests.csproj` — `19` tệp kiểm thử):**
+  - **14 Module Service Files:** **`336` Test Cases (`[Fact]`)** (`157 Normal`, `117 Abnormal`, `62 Boundary`) — `336 / 336 Passed`
+  - **Module 15 (PureLogic & Validators — 5 tệp):** **`270` Test Methods (`111 [Fact]` + `159 [Theory]`, `671 [InlineData]`) = `782` Executed Cases** (`184 Normal`, `312 Abnormal`, `286 Boundary` cases / `85 Normal`, `84 Abnormal`, `101 Boundary` methods) — `782 / 782 Passed`
+  - **Tổng cộng toàn bộ Suite:** **`606` Test Methods / `1,118` Executed Test Cases (`1,118 / 1,118 Passed` — `100%` Pass Rate; `Failed: 0`, `Skipped: 0`)** (`341 Normal`, `429 Abnormal`, `348 Boundary` theo `1,118` executed cases)
 
 ---
 
@@ -74,49 +78,53 @@
 
 ---
 
-## PHẦN 2: MODULE AI WASTE CLASSIFICATION & RULE ENGINE (`AiVisionHttpClient`, `WasteRuleEngineService`, `classify_waste_image`)
+## PHẦN 2: MODULE AI WASTE CLASSIFICATION, RULE ENGINE & PLATFORM POLICY (`AiVisionHttpClient`, `WasteRuleEngineService`, `PlatformPolicyService`, `classify_waste_image`)
 
 ### 2.1. Bảng Tổng hợp Kiểm thử (Summary Table)
 
-| Code Module | `AI Waste Classification & Rule Engine` | | |
+| Code Module | `AI Waste Classification, Rule Engine & Platform Policy (YOLO26 Two-Stage, 10 Categories)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **28** | | |
+| **Number of TCs** | **32** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 28 | 0 | 0 |
-| *Round 2* | 0 | 0 | 28 |
-| *Round 3* | 0 | 0 | 28 |
+| *Round 1* | 32 | 0 | 0 |
+| *Round 2* | 0 | 0 | 32 |
+| *Round 3* | 0 | 0 | 32 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **15** | **7** | **6** |
+| **Count** | **20** | **7** | **5** |
 
 ---
 
-### 2.2. Danh sách Chi tiết Test Cases (`AI Waste Classification & Rule Engine`)
+### 2.2. Danh sách Chi tiết Test Cases (`AI Waste Classification, Rule Engine & Platform Policy`)
 
 | Test Case ID | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Round 2 | Round 3 | Defect IDs | Note |
 | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :--- |
 | **`ClassifyWasteImageAsync` (`AiVisionHttpClient`)** | | | | | | | | | | | |
-| **UTC001** | AI Vision Service (`localhost:8000`) đang hoạt động, trả về HTTP 200 OK | `imageStream=MemoryStream(valid_jpeg_bytes)`;<br>`fileName="plastic_bottle.jpg"`;<br>`model="yolov8_detect"` | `Return: AiScanResultDto { Success = true, IsOutOfDistribution = false, TopPrediction.Label = "plastic", TopPrediction.Confidence = 0.945 }`<br>`Exception: N/A`<br>`Log Message: "Gửi ảnh phân tích tới AI Vision Service với Model 'yolov8_detect' tại: http://localhost:8000/api/v1/classify"` | Normal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Luồng phân loại chuẩn qua `HttpClient` |
-| **UTC002** | AI Vision Service đang hoạt động, truyền `model = "yolov8n"` | `imageStream=MemoryStream(valid_png_bytes)`;<br>`fileName="cardboard_box.png"`;<br>`model="yolov8n"` | `Return: AiScanResultDto { Success = true, TopPrediction.Label = "cardboard" }`<br>`Exception: N/A`<br>`Log Message: "Gửi ảnh phân tích tới AI Vision Service với Model 'yolov8n' tại: http://localhost:8000/api/v1/classify"` | Normal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Phân loại với mô hình YOLOv8 Nano |
+| **UTC001** | AI Vision Service (`localhost:8000`) đang hoạt động, trả về HTTP 200 OK | `imageStream=MemoryStream(valid_jpeg_bytes)`;<br>`fileName="plastic_bottle.jpg"`;<br>`model="yolo26_detect"` | `Return: AiScanResultDto { Success = true, IsOutOfDistribution = false, TopPrediction.Label = "plastic", TopPrediction.Confidence = 0.945 }`<br>`Exception: N/A`<br>`Log Message: "Gửi ảnh phân tích tới AI Vision Service với Model 'yolo26_detect' tại: http://localhost:8000/api/v1/classify"` | Normal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Luồng phân loại chuẩn qua `HttpClient` với mô hình mặc định YOLO26 Two-Stage `yolo26_detect` |
+| **UTC002** | AI Vision Service đang hoạt động, truyền `model = "yolo26n_cls"` (tương thích alias `yolov8n`) | `imageStream=MemoryStream(valid_png_bytes)`;<br>`fileName="cardboard_box.png"`;<br>`model="yolo26n_cls"` | `Return: AiScanResultDto { Success = true, TopPrediction.Label = "cardboard" }`<br>`Exception: N/A`<br>`Log Message: "Gửi ảnh phân tích tới AI Vision Service với Model 'yolo26n_cls' tại: http://localhost:8000/api/v1/classify"` | Normal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Phân loại với mô hình YOLO26 Nano (`yolo26n_cls`, tương thích ngược alias `yolov8n`) |
 | **UTC003** | AI Vision Service trả về HTTP `400 BadRequest` kèm nội dung lỗi | `imageStream=MemoryStream(bytes)`;<br>`fileName="test.jpg"`;<br>`model="invalid_model"` | `Return: AiScanResultDto { Success = false, IsOutOfDistribution = false, InferenceTimeMs = 0, ErrorMessage = "Mô hình 'invalid_model' không tồn tại." }`<br>`Exception: N/A`<br>`Log Message: "AI Service trả về mã lỗi: BadRequest, Body: Mô hình 'invalid_model' không tồn tại."` | Abnormal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Xử lý an toàn khi AI trả về HTTP != 2xx |
-| **UTC004** | AI Vision Service bị ngắt kết nối (`HttpRequestException: Connection refused`) | `imageStream=MemoryStream(valid_jpeg_bytes)`;<br>`fileName="bottle.jpg"`;<br>`model="yolov8_detect"` | `Return: AiScanResultDto { Success = false, TopPrediction.Label = "unknown", ErrorMessage = "Lỗi kết nối tới AI Service: Connection refused" }`<br>`Exception: N/A`<br>`Log Message: "Lỗi kết nối tới AI Vision Service"` | Abnormal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Fallback an toàn không làm sập Core Backend |
-| **UTC005** | AI Vision Service trả về HTTP 200 nhưng body JSON là `"null"` | `imageStream=MemoryStream(valid_jpeg_bytes)`;<br>`fileName="empty_json.jpg"`;<br>`model="yolov8_detect"` | `Return: AiScanResultDto { Success = false, ErrorMessage = "Không thể giải mã phản hồi từ AI Service." }`<br>`Exception: N/A`<br>`Log Message: "Gửi ảnh phân tích tới AI Vision Service với Model 'yolov8_detect' tại: http://localhost:8000/api/v1/classify"` | Boundary | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kiểm tra null-coalescing khi deserialize JSON |
+| **UTC004** | AI Vision Service bị ngắt kết nối (`HttpRequestException: Connection refused`) | `imageStream=MemoryStream(valid_jpeg_bytes)`;<br>`fileName="bottle.jpg"`;<br>`model="yolo26_detect"` | `Return: AiScanResultDto { Success = false, TopPrediction.Label = "unknown", ErrorMessage = "Lỗi kết nối tới AI Service: Connection refused" }`<br>`Exception: N/A`<br>`Log Message: "Lỗi kết nối tới AI Vision Service"` | Abnormal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Fallback an toàn không làm sập Core Backend |
+| **UTC005** | AI Vision Service trả về HTTP 200 nhưng body JSON là `"null"` | `imageStream=MemoryStream(valid_jpeg_bytes)`;<br>`fileName="empty_json.jpg"`;<br>`model="yolo26_detect"` | `Return: AiScanResultDto { Success = false, ErrorMessage = "Không thể giải mã phản hồi từ AI Service." }`<br>`Exception: N/A`<br>`Log Message: "Gửi ảnh phân tích tới AI Vision Service với Model 'yolo26_detect' tại: http://localhost:8000/api/v1/classify"` | Boundary | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kiểm tra null-coalescing khi deserialize JSON |
 | **`classify_waste_image` & `submit_misclassification_feedback` (`Ecolink.AiService/app.py`)** | | | | | | | | | | | |
-| **UTC006** | Trọng số `yolov8_detect`, `yolov8n`, `mobilenet_v3`, `efficientnet_b0` đã nạp vào `ModelManager` | `file=UploadFile("bottle.jpg", "image/jpeg")`;<br>`model="yolov8_detect"`;<br>`use_detection_crop=True`;<br>`confidence_threshold=0.60` | `Return: AiScanResponse { success = True, is_out_of_distribution = False, top_prediction.label = "plastic", sorting_rule != None }` (Confidence = 0.945)<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Giang Nguyễn Đức | Pending | Pending | N/A | Suy luận Two-Stage Crop + gắn quy tắc tĩnh (`U-01`) |
+| **UTC006** | Trọng số `yolo26_detect`, `yolo26s_cls`, `yolo26n_cls`, `mobilenet_v3`, `efficientnet_b0` đã nạp vào `ModelManager` | `file=UploadFile("bottle.jpg", "image/jpeg")`;<br>`model="yolo26_detect"`;<br>`use_detection_crop=True`;<br>`confidence_threshold=0.60` | `Return: AiScanResponse { success = True, is_out_of_distribution = False, top_prediction.label = "plastic", sorting_rule != None }` (Confidence = 0.945)<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Giang Nguyễn Đức | Pending | Pending | N/A | Suy luận YOLO26 Two-Stage (`yolo26_detect` + Crop Classify) & gắn quy tắc tĩnh (`U-01`) |
 | **UTC007** | Mô hình trả về `top_prediction.confidence = 0.60` (chạm đúng biên ngưỡng OOD) | `file=UploadFile("blurry_paper.jpg", "image/jpeg")`;<br>`model="mobilenet_v3"`;<br>`confidence_threshold=0.60` | `Return: AiScanResponse { success = True, is_out_of_distribution = False, confidence_threshold = 0.60, sorting_rule != None }`<br>`Exception: N/A`<br>`Log Message: N/A` | Boundary | Passed | 2026-10-29 | Giang Nguyễn Đức | Pending | Pending | N/A | Giá trị biên `confidence == 0.60` được tính là hợp lệ (`BR-AI-01`) |
 | **UTC008** | Mô hình trả về `top_prediction.confidence = 0.599` (nhỏ hơn ngưỡng OOD 0.001) | `file=UploadFile("ood_shoe.jpg", "image/jpeg")`;<br>`model="efficientnet_b0"`;<br>`confidence_threshold=0.60` | `Return: AiScanResponse { success = True, is_out_of_distribution = True, sorting_rule = None }`<br>`Exception: N/A`<br>`Log Message: N/A` | Boundary | Passed | 2026-10-29 | Giang Nguyễn Đức | Pending | Pending | N/A | Kích hoạt cờ cảnh báo ngoại lai `is_out_of_distribution = True` (`BR-AI-01`) |
-| **UTC009** | Gửi tên `model` không có trong `model_manager.registry` | `file=UploadFile("bottle.jpg", "image/jpeg")`;<br>`model="resnet50_unknown"` | `Return: null`<br>`Exception: HTTPException (status_code=400)`<br>`Log Message: "Mô hình 'resnet50_unknown' không tồn tại. Danh sách mô hình hỗ trợ: ['yolov8_detect', 'yolov8n', 'mobilenet_v3', 'efficientnet_b0']"` | Abnormal | Passed | 2026-10-29 | Giang Nguyễn Đức | Pending | Pending | N/A | Chặn tên model sai |
-| **UTC010** | Gửi file không phải định dạng ảnh (`content_type = "application/pdf"`) | `file=UploadFile("document.pdf", "application/pdf")`;<br>`model="yolov8_detect"` | `Return: null`<br>`Exception: HTTPException (status_code=400)`<br>`Log Message: "Tập tin tải lên phải là hình ảnh hợp lệ (jpg, png, webp)."` | Abnormal | Passed | 2026-10-29 | Giang Nguyễn Đức | Pending | Pending | N/A | Kiểm tra MIME type đầu vào |
-| **UTC011** | Gửi file ảnh có kích thước 0 byte (`len(contents) == 0`) | `file=UploadFile("empty.jpg", "image/jpeg", b"")`;<br>`model="yolov8_detect"` | `Return: null`<br>`Exception: HTTPException (status_code=400)`<br>`Log Message: "Tập tin hình ảnh tải lên không có dữ liệu (rỗng)."` | Boundary | Passed | 2026-10-29 | Giang Nguyễn Đức | Pending | Pending | N/A | Biên kích thước file = 0 byte |
+| **UTC009** | Gửi tên `model` không có trong `model_manager.registry` | `file=UploadFile("bottle.jpg", "image/jpeg")`;<br>`model="resnet50_unknown"` | `Return: null`<br>`Exception: HTTPException (status_code=400)`<br>`Log Message: "Mô hình 'resnet50_unknown' không tồn tại hoặc chưa được hỗ trợ. Các mô hình khả dụng: ['yolo26_detect', 'yolo26s_cls', 'yolo26n_cls', 'efficientnet_b0', 'mobilenet_v3']"` | Abnormal | Passed | 2026-10-29 | Giang Nguyễn Đức | Pending | Pending | N/A | Chặn tên model sai |
+| **UTC010** | Gửi file không phải định dạng ảnh (`content_type = "application/pdf"`) | `file=UploadFile("document.pdf", "application/pdf")`;<br>`model="yolo26_detect"` | `Return: null`<br>`Exception: HTTPException (status_code=400)`<br>`Log Message: "Tập tin tải lên phải là hình ảnh hợp lệ (jpg, png, webp)."` | Abnormal | Passed | 2026-10-29 | Giang Nguyễn Đức | Pending | Pending | N/A | Kiểm tra MIME type đầu vào |
+| **UTC011** | Gửi file ảnh có kích thước 0 byte (`len(contents) == 0`) | `file=UploadFile("empty.jpg", "image/jpeg", b"")`;<br>`model="yolo26_detect"` | `Return: null`<br>`Exception: HTTPException (status_code=400)`<br>`Log Message: "Tập tin hình ảnh tải lên không có dữ liệu (rỗng)."` | Boundary | Passed | 2026-10-29 | Giang Nguyễn Đức | Pending | Pending | N/A | Biên kích thước file = 0 byte |
 | **UTC012** | File `data/feedback.json` sẵn sàng ghi nhận báo cáo nhận diện sai (`U-03`) | `predicted_label="plastic"`;<br>`user_reported_label="glass"`;<br>`confidence_score=0.62`;<br>`note="Chai thủy tinh trong suốt"` | `Return: { "success": True, "message": "Ghi nhận phản hồi thành công!...", "feedback": { "status": "pending_verification" } }`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Giang Nguyễn Đức | Pending | Pending | N/A | Lưu log phản hồi AI để huấn luyện lại (`U-03`) |
 | **`GetSortingGuideAsync`, `GetAllRulesAsync` & `InvalidateRuleCacheAsync` (`WasteRuleEngineService`)** | | | | | | | | | | | |
-| **UTC013** | `_ruleCache` đã nạp sẵn 6 quy tắc mặc định khi khởi tạo `WasteRuleEngineService` | `categoryCode="plastic"` | `Return: WasteSortingGuideDto { CategoryCode = "plastic", CategoryName = "Nhựa tái chế (Plastic)", StandardBinColor = "Cam" }`<br>`Exception: N/A`<br>`Log Message: "Tìm thấy quy tắc phân loại cho loại rác: plastic"` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Tra cứu quy tắc phân loại chuẩn (`U-04`) |
-| **UTC014** | `_ruleCache` đã nạp sẵn 6 quy tắc mặc định | `categoryCode="  PAPER  "` (chữ hoa kèm khoảng trắng) | `Return: WasteSortingGuideDto { CategoryCode = "paper", StandardBinColor = "Xanh Dương" }`<br>`Exception: N/A`<br>`Log Message: "Tìm thấy quy tắc phân loại cho loại rác: paper"` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Chuẩn hóa `ToLowerInvariant().Trim()` |
+| **UTC013** | `_ruleCache` đã nạp sẵn 10 quy tắc mặc định khi khởi tạo `WasteRuleEngineService` | `categoryCode="plastic"` | `Return: WasteSortingGuideDto { CategoryCode = "plastic", CategoryName = "Nhựa tái chế (Plastic)", StandardBinColor = "Cam" }`<br>`Exception: N/A`<br>`Log Message: "Tìm thấy quy tắc phân loại cho loại rác: plastic"` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Tra cứu quy tắc phân loại chuẩn (`U-04`) |
+| **UTC014** | `_ruleCache` đã nạp sẵn 10 quy tắc mặc định | `categoryCode="  PAPER  "` (chữ hoa kèm khoảng trắng) | `Return: WasteSortingGuideDto { CategoryCode = "paper", StandardBinColor = "Xanh Dương" }`<br>`Exception: N/A`<br>`Log Message: "Tìm thấy quy tắc phân loại cho loại rác: paper"` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Chuẩn hóa `ToLowerInvariant().Trim()` |
 | **UTC015** | `_ruleCache` không chứa mã `"battery_hazard"` | `categoryCode="battery_hazard"` | `Return: null`<br>`Exception: N/A`<br>`Log Message: "Không tìm thấy quy tắc cấu hình cho loại rác: battery_hazard"` | Abnormal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Trả về `null` khi không có quy tắc khớp |
-| **UTC016** | `_ruleCache` đang chứa đầy đủ 6 danh mục mặc định | *(Không có tham số)* | `Return: IEnumerable<WasteSortingGuideDto> (Count = 6: plastic, paper, glass, metal, cardboard, trash)`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Lấy toàn bộ danh mục hướng dẫn |
+| **UTC016** | `_ruleCache` đang chứa đầy đủ 10 danh mục mặc định | *(Không có tham số)* | `Return: IEnumerable<WasteSortingGuideDto> (Count = 10: battery, biological, cardboard, clothes, glass, metal, paper, plastic, shoes, trash)`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Lấy toàn bộ 10 danh mục hướng dẫn chuẩn YOLO26 |
 | **UTC017** | `_ruleCache` đang có khóa `"plastic"` | `categoryCode="plastic"` | `Return: Task.CompletedTask` (`GetSortingGuideAsync("plastic")` sau đó trả về `null`)<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Xóa cache cục bộ của 1 danh mục |
-| **UTC018** | `_ruleCache` đã bị xóa 1 phần trước đó | `categoryCode=null` | `Return: Task.CompletedTask` (`_ruleCache` được làm mới lại đủ 6 quy tắc mặc định)<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Khôi phục toàn bộ `_ruleCache` |
-| **`GetMyScanHistoryAsync`, `WasteCategory CRUD`, `RuleEngine Publish` (`v2.6.0`)** | | | | | | | | | | | |
-| **UTC019–UTC028** | *(Chi tiết đầy đủ xem tại [`02_unit_test_ai_classification.md`](./02_unit_test_ai_classification.md#L42))* | `GetMyScanHistoryAsync`, `CreateWasteCategoryAsync`, `UpdateWasteCategoryAsync`, `ToggleWasteCategoryStatusAsync`, `UpsertSortingRuleAsync`, `PublishSortingRuleAsync`, `WasteCatalogValidators` | `6 Normal`, `2 Abnormal`, `2 Boundary` đều đạt 100% (`BR-CLS-08`, `BR-SRT-01..04`) | Mixed | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Phần mở rộng `M-03` (`+10` TCs) |
+| **UTC018** | `_ruleCache` đã bị xóa 1 phần trước đó | `categoryCode=null` | `Return: Task.CompletedTask` (`_ruleCache` được làm mới lại đủ 10 quy tắc mặc định)<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Khôi phục toàn bộ `_ruleCache` (10 danh mục) |
+| **`GetMyScanHistoryAsync`, `WasteCategory CRUD`, `RuleEngine Publish` (`v2.6.0`) & `YOLO26 / PlatformPolicy` (`v2.7.0`)** | | | | | | | | | | | |
+| **UTC019–UTC028** | *(Chi tiết đầy đủ xem tại [`02_unit_test_ai_classification.md`](./02_unit_test_ai_classification.md#L42))* | `GetMyScanHistoryAsync`, `CreateWasteCategoryAsync`, `UpdateWasteCategoryAsync`, `ToggleWasteCategoryStatusAsync`, `UpsertSortingRuleAsync`, `PublishSortingRuleAsync`, `WasteCatalogValidators` | `7 Normal`, `2 Abnormal`, `1 Boundary` đều đạt 100% (`BR-CLS-08`, `BR-SRT-01..04`) | Mixed | Passed | 2026-11-20 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Phần mở rộng `M-03` (`+10` TCs) |
+| **UTC029** | Tạo danh mục `"pvc_pipe"` (có `SortingRule` `DRAFT`) & danh mục cũ `"used_oil"` chưa có `SortingRule` | `GetAllRuleDetailsAsync(includeDraft: true / false)` | `includeDraft=true` trả cả `pvc_pipe` & `used_oil` (`RuleId=Empty, Status="DRAFT"`); `includeDraft=false` loại cả 2 | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Hiển thị danh mục cũ trong Rule Engine |
+| **UTC030** | InMemory DB sạch với `PlatformPolicyService` & `AuditLogService` | Seed 5 mục, lọc `PRIVACY`, CRUD `TERM-04`, trùng mã, ẩn/xóa mục `ACTIVE` cuối, xóa `DRAFT` | Lọc `"PRIV-01"`, tự sinh `"TERM-04"`, trùng mã ném `ConflictException("BR-POL-02")`, mục cuối ném `BusinessRuleException("BR-POL-03")`, ghi `AuditLog` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | CRUD Chính sách nền tảng (`BR-POL-02/03`) |
+| **UTC031** | Mock `IAiVisionClient` trả `yolo26_detect` & `AiFeedbackService` | `ClassifyWasteImageAsync(stream, "pet.png")` & `RecordScanHistoryAsync(..., ModelUsed = null)` | `ModelUsed = "yolo26_detect"`, HTTP body chứa `"yolo26_detect"`, DB lưu `ModelUsed = "yolo26_detect"` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Mô hình mặc định YOLO26 Two-Stage |
+| **UTC032** | `AiCategoryNormalizer`, `WasteRuleEngineService` & `RecyclerManagementService` | `NormalizeCode` 3 màu thủy tinh + 4 mã mới, `GetSortingGuideAsync("battery")`, `GetWasteCategoriesAsync()`, `GetAllWasteCategoriesAsync(true, true)` | 3 màu thủy tinh $\rightarrow$ `"glass"`, `"battery"` có `HazardWarning`, `5` loại thu mua vs `10` tổng danh mục (`5` không giao dịch) | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Hợp đồng 10 danh mục YOLO26 |
 
 ---
 
@@ -273,7 +281,7 @@
 | *Round 2* | 0 | 0 | 24 |
 | *Round 3* | 0 | 0 | 24 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **11** | **8** | **5** |
+| **Count** | **8** | **11** | **5** |
 
 ---
 
@@ -318,13 +326,13 @@
 
 | Code Module | `HandoverReceiptService (R-06, U-09, U-12, JOB-01)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **24** | | |
+| **Number of TCs** | **25** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 24 | 0 | 0 |
-| *Round 2* | 0 | 0 | 24 |
-| *Round 3* | 0 | 0 | 24 |
+| *Round 1* | 25 | 0 | 0 |
+| *Round 2* | 0 | 0 | 25 |
+| *Round 3* | 0 | 0 | 25 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **12** | **7** | **5** |
+| **Count** | **11** | **8** | **6** |
 
 ---
 
@@ -360,22 +368,24 @@
 | **UTC022** | Recycler `recyclerId` có 5 giao dịch trong tháng 11/2026; lọc từ `2026-11-01` đến `2026-11-07` | `recyclerId="22222222-..."`;<br>`from=2026-11-01`;<br>`to=2026-11-07`;<br>`page=1`; `pageSize=20` | `Return: TransactionHistoryDto { Items.Count = 5, Items[0].CounterpartName = Tên người dân, Categories = ["Nhựa", "Giấy"] }`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-11-08 | Giang Nguyễn Đức | Pending | Pending | N/A | Lọc lịch sử giao dịch cơ sở thu gom theo khoảng thời gian và hiển thị danh mục phế liệu đã thu mua |
 | **UTC023** | Người dùng truyền tham số ngày kết thúc dạng không giờ (`to = 2026-11-05 00:00:00`) | `ownerId="11111111-..."`;<br>`to=2026-11-05 00:00:00` | `Return: TransactionHistoryDto (Hệ thống tự động cộng thêm 1 ngày: to < 2026-11-06 00:00:00 để lấy trọn vẹn ngày 05/11)`<br>`Exception: N/A`<br>`Log Message: N/A` | Boundary | Passed | 2026-11-08 | Giang Nguyễn Đức | Pending | Pending | N/A | Xử lý biên khoảng ngày lọc lịch sử: bao gồm cả các giao dịch trong ngày kết thúc |
 | **UTC024** | Tài khoản mới đăng ký chưa phát sinh giao dịch nào (`ConfirmedByUserAt != null`) | `ownerId=newUserId`;<br>`page=1`; `pageSize=10` | `Return: TransactionHistoryDto { Items = [], TotalCount = 0, TotalWeightKg = 0, TotalAmountCash = 0, TotalPoints = 0 }`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-11-08 | Giang Nguyễn Đức | Pending | Pending | N/A | Trả về danh sách rỗng và số liệu tổng bằng 0 khi người dùng chưa có giao dịch hoàn tất |
+| **`CreateAsync` (`TradeOrder` Sync & `WasteCategoryId` Fallback)** | | | | | | | | | | | |
+| **UTC025** | Đơn tạo qua `TradeOrder` (`Status = Accepted`, `10.0kg` `plastic`, `6,000đ/kg`) chưa có dòng `HandoverRequest` | `recyclerId=recyclerUser.Id`; `requestId=orderId`; `Items=[{ ItemId=null, WasteCategoryId=plastic.Id, ActualWeightKg=9.0m }]` | `Return: ReceiptDto { ReceiptCode.StartsWith("RCP-"), RequestStatus = "AwaitingConfirmation", TotalWeightKg = 9.0, TotalAmountCash = 54000 }`; `TradeOrder.Status = AwaitingConfirmation` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Đồng bộ tạo biên nhận từ `TradeOrder` & fallback `WasteCategoryId` |
 
 ---
 
-## PHẦN 8: MODULE IN-APP REAL-TIME NEGOTIATION CHATBOX (`NegotiationChatService` & `NegotiationChatValidators` – `U-08` & `R-05`)
+## PHẦN 8: MODULE IN-APP REAL-TIME NEGOTIATION CHATBOX (`NegotiationChatService`, `TradeTransactionService` & `NegotiationChatValidators` – `U-08` & `R-05`)
 
 ### 8.1. Bảng Tổng hợp Kiểm thử (Summary Table)
 
-| Code Module | `NegotiationChatService & NegotiationChatValidators (U-08 & R-05)` | | |
+| Code Module | `NegotiationChatService, TradeTransactionService & NegotiationChatValidators (U-08 & R-05)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **20** | | |
+| **Number of TCs** | **27** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 20 | 0 | 0 |
-| *Round 2* | 0 | 0 | 20 |
-| *Round 3* | 0 | 0 | 20 |
+| *Round 1* | 27 | 0 | 0 |
+| *Round 2* | 0 | 0 | 27 |
+| *Round 3* | 0 | 0 | 27 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **9** | **8** | **3** |
+| **Count** | **14** | **8** | **5** |
 
 ---
 
@@ -408,6 +418,14 @@
 | **UTC018** | Kiểm tra độ dài biên của nội dung tin nhắn văn bản (`2000` ký tự vs `2001` ký tự) | `MessageType="Text"`;<br>`MessageContent=new string('a', 2000)` (và `2001` ký tự) | `Return: IsValid = true` với `2000` ký tự; `IsValid = false` với `2001` ký tự (`"Nội dung tin nhắn không được vượt quá 2000 ký tự."`)<br>`Exception: N/A`<br>`Log Message: N/A` | Boundary | Passed | 2026-11-03 | Giang Nguyễn Đức | Pending | Pending | N/A | Kiểm tra biên trên độ dài tin nhắn văn bản `MaxLength = 2000` |
 | **UTC019** | Kiểm tra giá trị biên trên của đơn giá và khối lượng trong bản đề xuất | `ProposedPricePerKg=10_000_000`;<br>`ProposedWeightKg=100_000`;<br>`ProposedTimeSlot="2026-11-05 08:00 - 10:00"` | `Return: ValidationResult { IsValid = true, Errors.Count = 0 }`<br>`Exception: N/A`<br>`Log Message: N/A` | Boundary | Passed | 2026-11-03 | Giang Nguyễn Đức | Pending | Pending | N/A | Chấp nhận giá trị biên hợp lệ tối đa `10.000.000 VNĐ/kg` và `100.000 kg` |
 | **UTC020** | Gửi tin nhắn `Image` thiếu `AttachmentUrl` hoặc gửi đề xuất có `ProposedPricePerKg = 0` và bỏ trống `ProposedTimeSlot` | `ProposedPricePerKg=0`;<br>`ProposedWeightKg=-5`;<br>`ProposedTimeSlot=""` | `Return: ValidationResult { IsValid = false, Errors.Count = 3 (đơn giá > 0, khối lượng > 0, khung giờ không được để trống) }`<br>`Exception: N/A`<br>`Log Message: N/A` | Abnormal | Passed | 2026-11-03 | Giang Nguyễn Đức | Pending | Pending | N/A | Bắt lỗi đầu vào khi thiếu khung giờ đề xuất hoặc giá/khối lượng âm (`BR-NEG-04`) |
+| **`TradeTransactionService` (`Inquiry Draft`, `TimeSlot Window`, `Order Inbox`) & `SendProposalAsync` (`v2.7.0`)** | | | | | | | | | | | |
+| **UTC021** | Citizen & Recycler có `RecyclerProfile` (`Verified`, `Online`) và `CollectionPartner` | `CreateTradeOrderAsync(PartnerId = recyclerUser.Id, 10kg "plastic", 5500đ)` | `Status = "Pending"`, `RecyclerUserId = recyclerUser.Id`; xuất hiện ở cả `GetUserOrdersAsync` 2 bên | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Tạo đơn qua tra cứu `RecyclerProfile` |
+| **UTC022** | Citizen & `CollectionPartner` hợp lệ trong DB | Gọi `CreateTradeOrderAsync(..., IsInquiryDraft = true)` 2 lần liên tiếp | Lần 1: `Negotiating, IsInquiryOnly = true`, không tạo `HandoverRequests`; lần 2 tái dùng đúng `Id` (`Count = 1`) | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Tạo & tái sử dụng nháp chat hỏi giá |
+| **UTC023** | Đơn `orderId` đang ở trạng thái `Negotiating` | `SendProposalAsync` kèm `CategoryCode = "metal"`, `PickupAddress`, `24000đ`, `6.5kg` | Cập nhật `Proposal` payload & đồng bộ `TradeOrder` (`metal`, `6.5kg`, `PickupAddress`) | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Cập nhật loại rác & địa chỉ trong đề xuất |
+| **UTC024** | Citizen đã có nháp hỏi giá (`IsInquiryDraft = true`) | Nâng cấp `CreateTradeOrderAsync(..., EstimatedWeightKg=10, InitialPricePerKg=7200, IsInquiryDraft=false)` | Giữ nguyên `Id`, chuyển `IsInquiryOnly = false, Status = "Pending"`, `AgreedPricePerKg = null`, `IsProposalLocked = false` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Nâng cấp hỏi giá không khóa cứng giá sớm |
+| **UTC025** | Citizen & Recycler hợp lệ; ngày theo ICT (`UTC + 7`) | `CreateTradeOrderAsync` & `UpdateOrderTimeSlotAsync` với `-1`, `+31`, `+30`, `+15` ngày | `-1` & `+31` ném `BusinessRuleException("BR-NEG-04")`; `+30` & `+15` hợp lệ, đồng bộ `ScheduledAt` | Boundary | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên ngày đặt lịch `[Today .. +30d]` (`BR-NEG-04`) |
+| **UTC026** | Đơn `orderId` đang `Negotiating`; ngày theo ICT (`UTC + 7`) | `SendProposalAsync` với `ProposedTimeSlot` ngày `-1`, `+31` và `+30` | `-1` & `+31` ném `BusinessRuleException("BR-NEG-04")`; `+30` hợp lệ, đồng bộ `ScheduledAt` | Boundary | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên ngày hẹn trong đề xuất `[Today .. +30d]` |
+| **UTC027** | `quietOrder` (tin `Citizen`/`System` chưa đọc) & `activeOldOrder` (cũ hơn nhưng có tin `Recycler` mới `-5m` & `-10m`) | `tradeService.GetUserOrdersAsync(citizen.Id)` | `[0]` là `activeOldOrder` (`UnreadCount = 2`, `LastMessagePreview = "Hẹn bạn 14h nhé"`); `[1]` là `quietOrder` (`UnreadCount = 0`) | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Sắp xếp hộp thư & đếm tin chưa đọc đối phương |
 
 ---
 
@@ -466,25 +484,25 @@
 
 | Code Module | `PaymentService`, `ServicePackageService`, `SubscriptionEntitlementService`, `AdminReconciliationService`, `ServicePackageValidators` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **30** | | |
+| **Number of TCs** | **27** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 30 | 0 | 0 |
-| *Round 2* | 0 | 0 | 30 |
-| *Round 3* | 0 | 0 | 30 |
+| *Round 1* | 27 | 0 | 0 |
+| *Round 2* | 0 | 0 | 27 |
+| *Round 3* | 0 | 0 | 27 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **15** | **10** | **5** |
+| **Count** | **12** | **10** | **5** |
 
 ### 10.2. Chi tiết Các Ca Kiểm thử (Test Cases)
-*(Chi tiết đầy đủ 22 test cases `UTC001` $\rightarrow$ `UTC022` xem tại: [`10_unit_test_in_system_service_packages_vietqr.md`](./10_unit_test_in_system_service_packages_vietqr.md) / [`ServicePackagePaymentTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module12_ServicePackages/ServicePackagePaymentTests.cs))*
+*(Chi tiết đầy đủ 27 test cases `UTC001` $\rightarrow$ `UTC027` xem tại: [`10_unit_test_in_system_service_packages_vietqr.md`](./10_unit_test_in_system_service_packages_vietqr.md) / [`ServicePackagePaymentTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module12_ServicePackages/ServicePackagePaymentTests.cs))*
 
 | Test Case ID | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Round 2 | Round 3 | Defect IDs | Note |
 | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :--- |
 | **UTC001** | Citizen `Active`, DB có 3 gói `BASIC/PREMIUM/PRO` | `PackageCode="PREMIUM"`, `SimulateTransfer("Exact")` | `Amount=59000, Duration=30, Status="PAID"`, `CurrentTier="Premium", IsAdFree=true` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-01`, `U-16` |
 | **UTC002** | Citizen còn `10` ngày gói `PREMIUM` | Gia hạn thêm `PREMIUM` (`30d`) + `Exact` | `max(ExpiresAt) ≈ initialExpiry + 30 days` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-04` (Cộng dồn) |
 | **UTC003** | Recycler `Verified` KYB đang chạy `PREMIUM` | `CreatePayInOrderAsync("PRO")` + `Exact` | `PRO` (`1tr / 365d`) chạy ngay tại `utcNow`, `HasVerifiedBlueBadge=true, MapPriorityBoost=100` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-04`, `R-07` |
-| **UTC004** | Có Recycler `Basic` gần `1km` & `PRO` xa `3km` | `GeoMatchingService.FindNearestPartnersAsync` | Cơ sở `PRO` đứng `[0]` (`IsFeatured=true, HasVerifiedBadge=true`) | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `R-07`, `U-05` Map Boost |
+| **UTC004** | 2 cơ sở `Online` tại Đà Nẵng: `Basic` (`16.0620, 108.2022`) & `PRO` (`16.0800, 108.2022`) | `GeoMatchingService.FindNearestPartnersAsync(16.0544, 108.2022, "plastic", 10.0)` | Trả đúng `2` cơ sở; `PRO` đứng `[0]` (`IsFeatured=true, HasVerifiedBadge=true, DistanceKm > Basic`) | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-TST-12 | `R-07`, `U-05` Map Boost (Đà Nẵng) |
 | **UTC005** | Đơn `PREMIUM` đang `Pending` | Gửi 3 lần cùng `VietQrWebhookPayload` | `"PAID"` $\rightarrow$ `"ALREADY_PROCESSED"` $\rightarrow$ `"ALREADY_PROCESSED"`, `1` thuê bao | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-02` Idempotency |
-| **UTC006** | Recycler `Verified` tạo đơn `PRO` `Pending` | `GetAvailablePackages`, `CancelPendingOrder`, `GetUserOrders("Cancelled")` | Catalog trả `BASIC, PREMIUM, PRO`; hủy đơn thành `"CANCELLED"` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `STT 116, 117, 120, 122` |
+| **UTC006** | Recycler `Verified` tạo đơn `PRO` `Pending` | `GetAvailablePackages`, `CancelPendingOrder`, `GetUserOrders("Cancelled")` | Catalog trả `BASIC, PREMIUM, PRO`; hủy đơn thành `"CANCELLED"` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `STT 134, 135, 136, 139` |
 | **UTC007** | Đã mua `PREMIUM` giá `59k / 30d` | `CreatePackage("RECYCLER_VIP")`, `UpdatePackage(Premium, 79k / 45d)` | Đơn cũ giữ `59k / 30d`, đơn mới lấy `79k / 45d`, ghi `2` AuditLog | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-05` Grandfathering |
 | **UTC008** | Đơn `PREMIUM` bị `Underpaid` (`40k / 59k`) | `GetPaymentLedger(OnlyAnomalies=true)`, `Resolve("ApproveAndActivate")` | `OrderStatus="Paid", ReconciliationStatus="Resolved"`, kích hoạt `Premium` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-06`, `A-11` |
 | **UTC009** | Có đơn `PRO` `Pending` & webhook mồ côi `WH-...` | `Resolve(whCode, "ManualMatchOrder", TargetOrderCode)` | Khớp đơn `PRO` thành `"Paid"` / `"Resolved"`, kích hoạt gói `Pro` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-PAY-06` Orphan Match |
@@ -501,6 +519,11 @@
 | **UTC020** | Đơn `PRO` (`1tr`) quá hạn QR 15 phút | `SimulateTransfer("LateTransfer")` | `Status="EXPIRED", ReconciliationStatus="LateTransfer"`, ghi log không kích hoạt | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên quá hạn QR 15p |
 | **UTC021** | Citizen đọc cache lần đầu (`Basic`) | Thanh toán `PREMIUM` + `GetBatchEntitlementsAsync([])` | Cache tự làm mới thành `Premium`, tập rỗng trả về từ điển rỗng | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Vòng đời `IMemoryCache` |
 | **UTC022** | Cả 2 FluentValidators (`Upsert` & `ResolveAnomaly`) | Giá `2k/1.5k`, chu kỳ `1/730/0/731`, note `10/9` ký tự, thiếu `TargetOrderCode`/`BankRef` | Chấp nhận đúng biên hợp lệ, từ chối mọi biên dưới/trên sai | Boundary | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `ServicePackageValidators` |
+| **UTC023** | Recycler `Verified` đang dùng gói `PRO` | `GetAvailablePackages` + mua `PREMIUM` & `PRO` | `BASIC/PREMIUM` báo `IsIncludedInHigherPlan=true`; mua `PREMIUM` ném `BR-PAY-04`; mua `PRO` ném `MSG-PAY-06` | Abnormal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chặn hạ cấp & gia hạn lặp PRO |
+| **UTC024** | Recycler `rec_w5` (`WarningCount=5`) & `rec_w6` (`WarningCount=6`) | `CreatePayInOrder("PRO")` & `GetAvailablePackages` | `rec_w5` tạo đơn `PRO` thành công; `rec_w6` có `IsWarningLimitOk=false` & ném `MSG-PAY-06` | Boundary | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên cảnh cáo `<= 5` vs `6` (`R-07`) |
+| **UTC025** | Recycler `3.5★` (`3` review) & kỳ `PRO` cũ `Expired` (`0` review) | `CreatePayInOrder("PRO")` & `GetAvailablePackages` | `< 4.0★` ném `MSG-PAY-06`; tái đăng ký `0` review báo `IsPositiveFeedbackMet=false`; `>= 1` review `4.6★` hợp lệ | Abnormal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Điều kiện uy tín PRO (`R-07`) |
+| **UTC026** | Tài khoản `Role = User` (`Citizen`) `Active` | `GetAvailablePackagesAsync(citizenId, UserRole.User)` | Chỉ trả `["BASIC", "PREMIUM"]`, ẩn hoàn toàn gói `PRO` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Lọc gói theo vai trò (`U-16`) |
+| **UTC027** | DB `Role = Recycler` (`Verified`) nhưng JWT cũ còn `Role = User` | `GetAvailablePackages` & `CreatePayInOrder("PRO")` với `UserRole.User` | Đối chiếu DB role trả đủ `["BASIC", "PREMIUM", "PRO"]` & tạo đơn `PRO` `1tr` thành công | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Stale JWT claim sau duyệt KYB |
 
 ---
 
@@ -510,13 +533,13 @@
 
 | Code Module | `AiFeedbackService`, `AiDatasetCurationService`, `AiDatasetExportBuilder`, `AiCurationValidators` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **30** | | |
+| **Number of TCs** | **22** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 30 | 0 | 0 |
-| *Round 2* | 0 | 0 | 30 |
-| *Round 3* | 0 | 0 | 30 |
+| *Round 1* | 22 | 0 | 0 |
+| *Round 2* | 0 | 0 | 22 |
+| *Round 3* | 0 | 0 | 22 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **15** | **10** | **5** |
+| **Count** | **10** | **8** | **4** |
 
 ### 11.2. Chi tiết Các Ca Kiểm thử (Test Cases)
 *(Chi tiết đầy đủ 22 test cases `UTC001` $\rightarrow$ `UTC022` xem tại: [`11_unit_test_ai_misclassification_feedback_dataset_curation.md`](./11_unit_test_ai_misclassification_feedback_dataset_curation.md) / [`AiFeedbackCurationTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module13_AiFeedbackCuration/AiFeedbackCurationTests.cs))*
@@ -532,7 +555,7 @@
 | **UTC007** | Có `3` mẫu `Unlabeled` | `BatchAssignLabelsAsync(3 IDs, "cardboard")` | Cập nhật đủ `3` mẫu sang `VerifiedLabeled`, ghi `BATCH_ASSIGN_AI_LABELS` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-02` Batch |
 | **UTC008** | Có `30` mẫu `VerifiedLabeled` (10 mỗi lớp) | `CreateDatasetVersionAsync("v1.0.0", 70/20/10)` | Chia đúng `21/6/3` (`7/2/1` từng lớp), `Status="SyncedToAi"` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-03`, `BR-CLS-07` |
 | **UTC009** | Đã có `v1.0.0` (10 mẫu); thêm 10 mẫu mới | `CreateDatasetVersionAsync("v1.1.0")` | `100%` mẫu `Test`/`Val` cũ giữ nguyên phân tập, `Train(v1.1) ∩ Test(v1.0) == ∅` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Zero Data Leakage |
-| **UTC010** | Có phiên bản `v1.0.0` chứa `2` mẫu `metal` | `ExportDatasetVersionAsync("yolo")` & `("imagefolder")` | Xuất `.zip` chứa `data.yaml`, `labels/*.txt`, `manifest.json`; ghi `AuditLog` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `STT 139`, `BR-ADM-05` |
+| **UTC010** | Có phiên bản `v1.0.0` chứa `2` mẫu `metal` | `ExportDatasetVersionAsync("yolo")` & `("imagefolder")` | Xuất `.zip` chứa `data.yaml`, `labels/*.txt`, `manifest.json`; ghi `AuditLog` | Normal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `STT 157`, `BR-ADM-05` |
 | **UTC011** | Có nhãn lạ & nhãn `Status="Inactive"` | `SubmitFeedbackAsync("nuclear_waste")` & `("inactive_foam")` | Cả 2 ném `BusinessRuleException ("BR-CLS-02")` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-CLS-02` |
 | **UTC012** | `ScanId` đã gửi báo cáo trước đó | `SubmitFeedbackAsync` lặp cùng `ScanId` | Ném `ConflictException ("BR-CLS-05")` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chặn trùng `ScanId` |
 | **UTC013** | `ScanId = Guid.NewGuid()` không tồn tại | `SubmitFeedbackAsync` | Ném `NotFoundException` | Abnormal | Passed | 2026-11-17 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Toàn vẹn `ScanId` |
@@ -554,13 +577,13 @@
 
 | Code Module | `ReviewService`, `ComplaintService`, `HandoverReceiptService.DisputeAsync`, `ReviewAndComplaintValidators` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **30** | | |
+| **Number of TCs** | **22** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 30 | 0 | 0 |
-| *Round 2* | 0 | 0 | 30 |
-| *Round 3* | 0 | 0 | 30 |
+| *Round 1* | 22 | 0 | 0 |
+| *Round 2* | 0 | 0 | 22 |
+| *Round 3* | 0 | 0 | 22 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **15** | **10** | **5** |
+| **Count** | **10** | **8** | **4** |
 
 ### 12.2. Chi tiết Các Ca Kiểm thử (Test Cases)
 *(Chi tiết đầy đủ 22 test cases `UTC001` $\rightarrow$ `UTC022` xem tại: [`12_unit_test_rating_review_complaint_resolution.md`](./12_unit_test_rating_review_complaint_resolution.md) / [`ReviewComplaintTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module11_ReviewsComplaints/ReviewComplaintTests.cs))*
@@ -598,15 +621,15 @@
 
 | Code Module | `LeaderboardService`, `CheckinService`, `PointsService`, `GiftService`, `VirtualTreeService`, `EcoFactService`, `GamificationConfigService`, `GamificationService`, `ComplaintService` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **30** | | |
+| **Number of TCs** | **25** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 30 | 0 | 0 |
-| *Round 2* | 0 | 0 | 30 |
-| *Round 3* | 0 | 0 | 30 |
+| *Round 1* | 25 | 0 | 0 |
+| *Round 2* | 0 | 0 | 25 |
+| *Round 3* | 0 | 0 | 25 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **15** | **10** | **5** |
+| **Count** | **12** | **8** | **5** |
 
-### 13.2. Chi tiết Các Ca Kiểm thử (`UTC001` – `UTC022`)
+### 13.2. Chi tiết Các Ca Kiểm thử (`UTC001` – `UTC025`)
 *(Chi tiết đầy đủ xem tại: [`13_unit_test_gamification_and_rewards.md`](./13_unit_test_gamification_and_rewards.md) / [`GamificationAndBlogUnitTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module10_GamificationAndBlog/GamificationAndBlogUnitTests.cs))*
 
 | Test Case ID | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Round 2 | Round 3 | Defect IDs | Note |
@@ -618,7 +641,7 @@
 | **UTC005** | `2` Citizen & `1` Recycler có điểm | `GetLeaderboardViewAsync("Weekly")` | Loại Recycler; xếp đúng theo `PeriodPoints`, không phạt đổi quà | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-GAM-07`, `08` |
 | **UTC006** | Chu kỳ Active + 3 Citizen | `FinalizeCycleAsync(cycle.Id)` | Chốt `Finalized`, thưởng `+500/+300/+150`, ghi AuditLog | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Top 3 Bonus |
 | **UTC007** | Chu kỳ đã `Finalized` | `ActivateCycle` & `FinalizeCycle` | Đều ném `BusinessRuleException ("MSG-GEN-01")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khóa chốt/bật lặp |
-| **UTC008** | Citizen có ví, cây, AI scan & check-in | `GetUserProfileAsync(citizen.Id)` | Tổng hợp đúng `240đ`, cấp `2`, `10kg`, `CO2=18.5` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Profile thật `STT 076` |
+| **UTC008** | Citizen có ví, cây, AI scan & check-in | `GetUserProfileAsync(citizen.Id)` | Tổng hợp đúng `240đ`, cấp `2`, `10kg`, `CO2=18.5` | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Profile thật `STT 078` |
 | **UTC009** | Đơn `Completed` (+50đ) & phiếu khiếu nại | `Resolve("CancelDisputedOrder")` | Trừ cả `UserEcoProfile` & `UserPointWallet`, ghi `-50` ledger | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Clawback `M-11` |
 | **UTC010** | Ví Citizen còn `15đ` (< `50đ` thu hồi) | `Resolve("CancelDisputedOrder")` | Kẹp sàn `CurrentBalance=0` (`>= 0`), ghi `-15đ` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `BR-GAM-03` Floor 0 |
 | **UTC011** | User liên tiếp vs bỏ lỡ `3 ngày` ICT | `GetStatusAsync` & `CheckInAsync` | User A lên chuỗi `4` (`+8đ`); User B reset về chuỗi `1` (`+5đ`) | Normal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `U-13` Streak `ICT` |
@@ -633,6 +656,9 @@
 | **UTC020** | Có User cấp `2`, chưa ai cấp `4` | `DeleteAsync` Fact cấp `2` & cấp `4` | Fact cấp `2` thành `INACTIVE`; Fact cấp `4` xóa cứng | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `S-09`, `BR-GAM-06` |
 | **UTC021** | Có `EcoFact ACTIVE` cấp `4` | `Config.UpdateAsync` cắt xuống `2` cấp | Ném `BusinessRuleException ("BR-GAM-06", "MSG-AUTH-02")` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khóa cấp đang dùng |
 | **UTC022** | 4 Validators & `GamSettings` | Input sai chuẩn & Streak `20` ngày | Validators chặn input sai; CheckinReward kẹp trần `15đ` | Abnormal | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | FluentValidation `M-10` |
+| **UTC023** | Cây cấp `2`, `HydrationPercent=75`, `LastHydrationAt = -40h` (`0%` héo) | `GetAsync`, `CareAsync("fertilize")` khi héo, `CareAsync("water")` x3 + ở `100%` | Giữ nguyên cấp `2`, `IsWilted=true`; chặn bón khi héo; tưới hồi sinh `35%` (`+10 EXP`); chặn bão hòa `>= 95%` | Boundary | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Hồi sinh cây héo & ngưỡng bão hòa `U-15` |
+| **UTC024** | Cây cấp `2` (`MaxCareExp=100, HarvestReward=20`), ẩm `25%` | `fertilize` ở `25%`, chu trình `water`/`fertilize` vùng ẩm vàng `60–90%` $\rightarrow$ `HarvestAsync` | Đất khô `< 30%` bị chặn; vùng vàng `+35 EXP`; đạt `100 EXP` thu hoạch `+20đ` ví (`TotalHarvested=1`) | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Vùng ẩm vàng & thu hoạch cây ảo (`U-15`) |
+| **UTC025** | Có `HandoverReceipt` `Completed` (`2kg`) | `AwardHandoverPointsAsync` x2 + `CareAsync("fertilize")` x3 trong ngày | Idempotent `+2` túi phân; dùng hết `2` lượt miễn phí, lượt `3` tiêu thụ `1` túi phân (`FertilizerPacks=1`) | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Túi phân sau bàn giao & vượt limit ngày |
 
 ---
 
@@ -675,3 +701,53 @@
 | **UTC018** | `1` Draft, `1` tag `"nhua"`, `1` tag `"nhua-pet"` | `ListPublishedAsync(tag="nhua")` | Chỉ trả về đúng bài mang nguyên thẻ `"nhua"` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Lọc nguyên thẻ |
 | **UTC019** | `1` Draft + `1` Approved | `ListMineAsync("Published", page=-1, size=9999)` | Kẹp `Page=1, PageSize=50`, lọc đúng bài `Approved` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên phân trang |
 | **UTC020** | Nháp vs Approved + 3 Validators | `GetPublishedBySlug` & Check biên `9/10`, `6` tags, `2001` | Nháp ném `NotFoundException`; Validator chặn đúng các biên | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `G-01` & Validators |
+
+---
+
+## PHẦN 15: MODULE PURE LOGIC & FLUENTVALIDATION VALIDATORS (`PureLogicTests` & `4 Validator Suites` – `M-01`..`M-15`)
+
+### 15.1. Bảng Tổng hợp Kiểm thử (Summary Table)
+
+| Code Module | `PureLogicTests (7 Classes) & 4 FluentValidation Suites — 54 Validators (270 Methods / 782 Executed Cases)` | | |
+| :--- | :---: | :---: | :---: |
+| **Number of TCs (Executed Cases)** | **782** *(270 Methods: 111 `[Fact]` + 159 `[Theory]` với 671 `[InlineData]`)* | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** |
+| *Round 1 (Executed Cases)* | 782 | 0 | 0 |
+| *Round 1 (Test Methods)* | 270 | 0 | 0 |
+| *Round 2* | 0 | 0 | 782 |
+| *Round 3* | 0 | 0 | 782 |
+| **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
+| **Count (Executed Cases)** | **184** | **312** | **286** |
+| **Count (Test Methods)** | **85** | **84** | **101** |
+
+### 15.2. Phân rã Theo Tệp Kiểm thử & Test Class (`270` Methods / `782` Executed Cases)
+*(Danh sách chi tiết toàn bộ `270` Test Methods / `782` Executed Cases `UTC001` $\rightarrow$ `UTC270` xem tại: [`15_unit_test_validators_and_pure_logic.md`](./15_unit_test_validators_and_pure_logic.md))*
+
+| # | Tệp mã kiểm thử / Test Class | Phạm vi nghiệp vụ | Methods | `[Fact]` | `[Theory]` | `[InlineData]` | Executed Cases | Normal / Abnormal / Boundary (Cases) | Defect IDs |
+| :---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **1** | [`PureLogic/PureLogicTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/PureLogic/PureLogicTests.cs) | `M-03, M-05, M-06, M-10, M-12, M-13, M-15` | **76** | **48** | **28** | **154** | **202** | `92 / 93 / 17` | INC-2026-TST-13 |
+| — | ↳ `AiCategoryNormalizerTests` | `AiCategoryNormalizer`: chuẩn hóa 10 lớp YOLO26, chỉ mục `0..9`, feedback status, SHA-256, đuôi ảnh | 10 | 4 | 6 | 58 | 62 | `38 / 24 / 0` | INC-2026-TST-13 |
+| — | ↳ `ServicePackageHelpersTests` | `ServicePackageHelpers`: parse/serialize JSON quyền lợi, tổng hợp tier `Basic`/`Premium`/`Pro`, SHA-256 | 14 | 11 | 3 | 21 | 32 | `9 / 23 / 0` | N/A |
+| — | ↳ `HandoverTradeSyncHelperTests` | `HandoverTradeSyncHelper`: ánh xạ `HandoverStatus`/`OrderStatus`, định dạng khung giờ ICT & cửa sổ hẹn | 11 | 7 | 4 | 14 | 21 | `7 / 8 / 6` | N/A |
+| — | ↳ `GamificationCommonTests` | `GamTime`, `GamErrors`, `PointsService.ActionText`: UTC+7, escape `LIKE`, kiểm tra Image/HTTP URL | 15 | 6 | 9 | 36 | 42 | `19 / 20 / 3` | N/A |
+| — | ↳ `TabularReportExportHelperTests` | `TabularReportExportHelper`: xuất CSV UTF-8 BOM (RFC4180) & OpenXML XLSX hợp lệ | 11 | 9 | 2 | 9 | 18 | `8 / 8 / 2` | N/A |
+| — | ↳ `StaffPermissionsTests` | `StaffPermissions`: 7 mã quyền RBAC chuẩn, ánh xạ 2 chiều alias & `IsValid` | 6 | 2 | 4 | 16 | 18 | `8 / 10 / 0` | N/A |
+| — | ↳ `GeoDistanceTests` | `GeoMatchingService.CalculateDistanceKm`: công thức Haversine (`R = 6371 km`) | 9 | 9 | 0 | 0 | 9 | `3 / 0 / 6` | N/A |
+| **2** | [`Validators/AuthValidatorTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Validators/AuthValidatorTests.cs) | `M-01, M-03` (`8` Auth Validators) | **27** | **7** | **20** | **78** | **85** | `11 / 38 / 36` | N/A |
+| **3** | [`Validators/GovernanceChatValidatorTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Validators/GovernanceChatValidatorTests.cs) | `M-08, M-09` (`11` Governance & Chat Validators) | **32** | **9** | **23** | **83** | **92** | `9 / 23 / 60` | INC-2026-VAL-14 |
+| **4** | [`Validators/AiBlogGamificationValidatorTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Validators/AiBlogGamificationValidatorTests.cs) | `M-10, M-11, M-14` (`15` AI Curation, Blog & Gamification Validators) | **60** | **23** | **37** | **145** | **168** | `9 / 72 / 87` | INC-2026-VAL-14 |
+| **5** | [`Validators/RecyclerReviewPackageWasteValidatorTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Validators/RecyclerReviewPackageWasteValidatorTests.cs) | `M-02, M-03, M-04, M-05, M-10, M-12` (`20` Recycler, Review/Complaint, Package & Waste Validators) | **75** | **24** | **51** | **211** | **235** | `63 / 86 / 86` | INC-2026-VAL-14 |
+| **TỔNG** | **5 Tệp / 11 Test Classes** | **PureLogic & 54 FluentValidation Validators** | **270** | **111** | **159** | **671** | **782** | **`184 / 312 / 286`** | **TST-13, VAL-14** |
+
+### 15.3. Các Ca Kiểm thử Trọng tâm & Khóa Hồi quy Sự cố (`INC-2026-TST-13`, `INC-2026-VAL-14`)
+
+| Test Case ID | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- | :---: | :---: | :---: | :--- |
+| **UTC001** | `AiCategoryNormalizerTests.NormalizeCode_MapsAliasesToCanonical` (`[Theory × 19]`) | `"plastic"`, `"PET"`, `"battery"`, `"ewaste_disposal"`, `"huu_co"`, `"quan_ao"`, `"giay_dep"`, ... | `"battery"` & `"ewaste_disposal"` $\rightarrow$ `"battery"`; `"huu_co"` $\rightarrow$ `"biological"`; `"quan_ao"` $\rightarrow$ `"clothes"`; `"giay_dep"` $\rightarrow$ `"shoes"` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-TST-13 | Đồng bộ 10 lớp YOLO26 |
+| **UTC004** | `AiCategoryNormalizerTests.GetYoloClassIndex_Matches_YoloOrder` (`[Theory × 15]`) | `"battery"`..`"trash"`, `"pet"`, `"carton"`, `"something_else"`, `null`, `""` | Trả đúng chỉ mục `0..9` theo bảng chữ cái (`pet->7`, `carton->2`, unknown/`null`/`""->9`) | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-TST-13 | Khớp `CLASS_NAMES` AI Service |
+| **UTC005** | `AiCategoryNormalizerTests.YoloClassOrder_IsStable_ContractWithAiService` (`[Fact]`) | `AiCategoryNormalizer.YoloClassOrder` | Khớp mảng 10 phần tử `["battery", "biological", "cardboard", "clothes", "glass", "metal", "paper", "plastic", "shoes", "trash"]` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-TST-13 | Khóa hợp đồng 10 lớp YOLO26 |
+| **UTC121** | `GovernanceChatValidatorTests.UpdatePermissions_Null_ReturnsValidationError_NotException` (`[Fact]`) | `UpdateStaffPermissionsRequest { Permissions = null! }` | Không ném `ArgumentNullException`; trả `IsValid = false` nhờ `CascadeMode.Stop` & `perms != null` | Abnormal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-VAL-14 | Khóa hồi quy null-safety `UpdateStaffPermissionsValidator` |
+| **UTC124** | `GovernanceChatValidatorTests.Chat_MessageType_Matrix` (`[Theory × 11]`) | `MessageType = "Text"/"Image"/"Proposal"/""/null` | Khớp 11 tổ hợp; `MessageType = null` trả `IsValid = false` không ném `NullReferenceException` | Abnormal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-VAL-14 | Khóa hồi quy `SendChatMessageRequestValidator` |
+| **UTC153** | `AiBlogGamificationValidatorTests.BatchAssign_NullItemIds_ReturnsValidationError_NotException` (`[Fact]`) | `BatchAssignLabelsRequest { ItemIds = null!, GroundTruthLabel = "paper" }` | Không ném `NullReferenceException`; trả `IsValid = false` nhờ `CascadeMode.Stop` & `ids != null` | Abnormal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-VAL-14 | Khóa hồi quy `BatchAssignLabelsRequestValidator` |
+| **UTC224** | `RecyclerReviewPackageWasteValidatorTests.Schedule_NullDays_ReturnsValidationError_NotException` (`[Fact]`) | `UpdateScheduleRequest { Days = null! }` | Không ném `NullReferenceException`; trả `IsValid = false` nhờ `CascadeMode.Stop` & `d != null` | Abnormal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-VAL-14 | Khóa hồi quy `UpdateScheduleRequestValidator` |
+| **UTC265** | `RecyclerReviewPackageWasteValidatorTests.ToggleWasteCategory_Status` (`[Theory × 6]`) | `Status = "Active"/"inactive"/" Active "/"Deleted"/""/null` | `"Active"`/`"inactive"`/`" Active "` $\rightarrow$ `true`; `null` $\rightarrow$ `false` không ném `NullReferenceException` | Abnormal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-VAL-14 | Khóa hồi quy `ToggleWasteCategoryStatusValidator` |

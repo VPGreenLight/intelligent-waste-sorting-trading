@@ -3,6 +3,7 @@ using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Constants;
 using Ecolink.WebApi.Security;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 
@@ -20,17 +21,23 @@ public class StaffGamificationController : ControllerBase
     private readonly IGiftService _gifts;
     private readonly IEcoFactService _facts;
     private readonly ICurrentUserService _currentUser;
+    private readonly IValidator<SaveGiftRequest> _giftValidator;
+    private readonly IValidator<SaveEcoFactRequest> _ecoFactValidator;
     private readonly IFileStorageService? _fileStorage;
 
     public StaffGamificationController(
         IGiftService gifts,
         IEcoFactService facts,
         ICurrentUserService currentUser,
+        IValidator<SaveGiftRequest> giftValidator,
+        IValidator<SaveEcoFactRequest> ecoFactValidator,
         IFileStorageService? fileStorage = null)
     {
         _gifts = gifts;
         _facts = facts;
         _currentUser = currentUser;
+        _giftValidator = giftValidator;
+        _ecoFactValidator = ecoFactValidator;
         _fileStorage = fileStorage;
     }
 
@@ -79,13 +86,21 @@ public class StaffGamificationController : ControllerBase
 
     [HttpPost("api/v1/staff/gifts")]
     [ProducesResponseType(typeof(ApiResponse<GiftDto>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> CreateGift([FromBody] SaveGiftRequest request, CancellationToken ct) =>
-        StatusCode(StatusCodes.Status201Created, ApiResponse<GiftDto>.Ok(await _gifts.CreateAsync(request, ct), "Đã thêm quà vào kho."));
+    public async Task<IActionResult> CreateGift([FromBody] SaveGiftRequest request, CancellationToken ct)
+    {
+        var invalid = await ValidateWithErrorCodeAsync(_giftValidator, request, ct);
+        if (invalid != null) return invalid;
+        return StatusCode(StatusCodes.Status201Created, ApiResponse<GiftDto>.Ok(await _gifts.CreateAsync(request, ct), "Đã thêm quà vào kho."));
+    }
 
     /// <summary>Sửa thông tin quà (tên, loại, mô tả, ảnh, điểm). Tồn kho đổi bằng /restock.</summary>
     [HttpPut("api/v1/staff/gifts/{id:guid}")]
-    public async Task<IActionResult> UpdateGift(Guid id, [FromBody] SaveGiftRequest request, CancellationToken ct) =>
-        Ok(ApiResponse<GiftDto>.Ok(await _gifts.UpdateAsync(id, request, ct), "Đã cập nhật quà."));
+    public async Task<IActionResult> UpdateGift(Guid id, [FromBody] SaveGiftRequest request, CancellationToken ct)
+    {
+        var invalid = await ValidateWithErrorCodeAsync(_giftValidator, request, ct);
+        if (invalid != null) return invalid;
+        return Ok(ApiResponse<GiftDto>.Ok(await _gifts.UpdateAsync(id, request, ct), "Đã cập nhật quà."));
+    }
 
     [HttpPost("api/v1/staff/gifts/{id:guid}/restock")]
     public async Task<IActionResult> Restock(Guid id, [FromBody] RestockGiftRequest request, CancellationToken ct) =>
@@ -142,12 +157,37 @@ public class StaffGamificationController : ControllerBase
 
     [HttpPost("api/v1/staff/eco-facts")]
     [ProducesResponseType(typeof(ApiResponse<EcoFactDto>), StatusCodes.Status201Created)]
-    public async Task<IActionResult> CreateFact([FromBody] SaveEcoFactRequest request, CancellationToken ct) =>
-        StatusCode(StatusCodes.Status201Created, ApiResponse<EcoFactDto>.Ok(await _facts.CreateAsync(StaffId, request, ct), "Đã thêm Eco Fact."));
+    public async Task<IActionResult> CreateFact([FromBody] SaveEcoFactRequest request, CancellationToken ct)
+    {
+        var invalid = await ValidateWithErrorCodeAsync(_ecoFactValidator, request, ct);
+        if (invalid != null) return invalid;
+        return StatusCode(StatusCodes.Status201Created, ApiResponse<EcoFactDto>.Ok(await _facts.CreateAsync(StaffId, request, ct), "Đã thêm Eco Fact."));
+    }
 
     [HttpPut("api/v1/staff/eco-facts/{id:guid}")]
-    public async Task<IActionResult> UpdateFact(Guid id, [FromBody] SaveEcoFactRequest request, CancellationToken ct) =>
-        Ok(ApiResponse<EcoFactDto>.Ok(await _facts.UpdateAsync(id, request, ct), "Đã cập nhật Eco Fact."));
+    public async Task<IActionResult> UpdateFact(Guid id, [FromBody] SaveEcoFactRequest request, CancellationToken ct)
+    {
+        var invalid = await ValidateWithErrorCodeAsync(_ecoFactValidator, request, ct);
+        if (invalid != null) return invalid;
+        return Ok(ApiResponse<EcoFactDto>.Ok(await _facts.UpdateAsync(id, request, ct), "Đã cập nhật Eco Fact."));
+    }
+
+    private async Task<IActionResult?> ValidateWithErrorCodeAsync<T>(
+        IValidator<T> validator,
+        T request,
+        CancellationToken ct)
+    {
+        var validation = await validator.ValidateAsync(request, ct);
+        if (validation.IsValid) return null;
+
+        var code = validation.Errors
+            .FirstOrDefault(e => !string.IsNullOrEmpty(e.ErrorCode) && e.ErrorCode.StartsWith("MSG-", StringComparison.Ordinal))
+            ?.ErrorCode ?? "MSG-AUTH-02";
+        var errors = validation.Errors
+            .Select(e => string.IsNullOrWhiteSpace(e.PropertyName) ? e.ErrorMessage : $"{e.PropertyName}: {e.ErrorMessage}")
+            .ToList();
+        return BadRequest(ApiResponse<object>.Fail(validation.Errors[0].ErrorMessage, code, errors));
+    }
 
     [HttpPatch("api/v1/staff/eco-facts/{id:guid}/status")]
     [HttpPost("api/v1/staff/eco-facts/{id:guid}/status")]

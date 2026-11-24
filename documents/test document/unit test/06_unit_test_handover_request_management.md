@@ -10,7 +10,7 @@
 | *Round 2* | 0 | 0 | 24 |
 | *Round 3* | 0 | 0 | 24 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **11** | **8** | **5** |
+| **Count** | **8** | **11** | **5** |
 
 ---
 

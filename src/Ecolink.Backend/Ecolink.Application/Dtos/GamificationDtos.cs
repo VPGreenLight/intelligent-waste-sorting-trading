@@ -108,7 +108,7 @@ public class FulfillRedemptionRequest
 {
     /// <summary>"Fulfill" (mặc định) hoặc "Cancel" (hủy đơn kèm hoàn điểm + hoàn tồn kho).</summary>
     public string? Action { get; set; }
-    [MaxLength(500)]
+    [MaxLength(500, ErrorMessage = "Lý do xử lý tối đa 500 ký tự.")]
     public string? Reason { get; set; }
 }
 

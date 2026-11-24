@@ -5,15 +5,15 @@
 | Feature | `Handover Completion, Receipt & Transaction History (M-07)` | | | |
 | :--- | :--- | :---: | :---: | :---: |
 | **Test requirement** | Kiểm thử tích hợp toàn diện phân hệ Phát hành Biên nhận Điện tử, Xác nhận Hoàn tất và Lịch sử Giao dịch (`R-06`, `U-09`, `U-12`): Xem trước biên nhận và cảnh báo chênh lệch khối lượng $> 20\%$ (`POST /receipt/preview`, `MSG-RCP-03`), Phát hành biên nhận số `RCP-yyyy-NNNN` bắt buộc ảnh đồng hồ cân khi $\ge 10\text{ kg}$ (`BR-TRN-01`, `MSG-RCP-04`), thiết lập hạn tự động xác nhận 24h (`BR-TRN-03`), `Citizen` xác nhận biên nhận (`POST /receipt/confirm`) cộng `GreenPoints` & nâng cấp `TreeLevel` (**Module 1 Gamification**), Khiếu nại sai lệch (`POST /receipt/dispute`), và Tra cứu lịch sử giao dịch (`GET /transactions`, `GET /recycler/transactions`) (`EcoLink.ApiTests/ReceiptTests.cs`). | | | |
-| **Number of TCs** | **20** | | | |
+| **Number of TCs** | **21** | | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
-| *Round 1* | 20 | 0 | 0 | 0 |
-| *Round 2* | 0 | 0 | 20 | 0 |
-| *Round 3* | 0 | 0 | 20 | 0 |
+| *Round 1* | 21 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 21 | 0 |
+| *Round 3* | 0 | 0 | 21 | 0 |
 
 ---
 
-## 2. Integration Test Case Specification (`ITC-RCP-001` $\rightarrow$ `ITC-RCP-020`)
+## 2. Integration Test Case Specification (`ITC-RCP-001` $\rightarrow$ `ITC-RCP-021`)
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
 | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
@@ -42,4 +42,6 @@
 | **ITC-RCP-018** | Kiểm tra độ chính xác của khối thống kê tổng hợp (`summary.totalCompletedOrders`, `totalWeightKg`, `totalAmount`, `totalPointsEarned`) khi hoàn tất thêm giao dịch mới. | 1. Đọc `summary` hiện tại từ `GET /api/v1/transactions`.<br>2. Tạo, chấp nhận, xuất biên nhận (`4kg plastic * 8000đ = 32000đ`, `40 points`) và xác nhận hoàn tất.<br>3. Đọc lại `summary` từ `GET /api/v1/transactions`. | - `totalCompletedOrders` tăng `+1`.<br>- `totalWeightKg` tăng `+4.0`.<br>- `totalAmount` tăng `+32000`.<br>- `totalPointsEarned` tăng `+40`. | Hệ thống hoạt động bình thường. | Passed | Pending | Pending | N/A | `ReceiptTests.Transactions_Summary_IncrementsAccuratelyAfterNewCompletion` |
 | **ITC-RCP-019** | Kiểm tra bộ lọc khoảng ngày (`fromDate`, `toDate`), tìm kiếm theo từ khóa (`search` theo mã biên nhận / tên đối tác) và phân trang trên lịch sử giao dịch. | 1. Gọi `GET /api/v1/transactions?search=<receiptCode>`.<br>2. Gọi `GET /api/v1/transactions?fromDate=2026-01-01&toDate=2026-12-31`.<br>3. Gọi tiếp với `fromDate > toDate` (khoảng ngày ngược). | - Bước 1 & 2: trả về `200 OK` đúng bản ghi khớp bộ lọc.<br>- Bước 3 (`fromDate > toDate`): trả về `400 Bad Request`. | Đã có giao dịch `Completed` trong CSDL. | Passed | Pending | Pending | N/A | `ReceiptTests.Transactions_FilterByKeywordAndDateRange_WorksCorrectly` |
 | **ITC-RCP-020** | Kiểm tra tính duy nhất của mã biên nhận `RCP-yyyy-NNNN` khi phát hành nhiều biên nhận liên tiếp. | 1. Phát hành liên tiếp 2 biên nhận cho 2 đơn bàn giao khác nhau.<br>2. So sánh trường `code` của 2 biên nhận. | - Cả 2 mã đều khớp định dạng `^RCP-\d{4}-\d{4}$` và khác nhau hoàn toàn. | Đã có 2 đơn ở trạng thái `Accepted`. | Passed | Pending | Pending | N/A | `ReceiptTests.Create_MultipleReceipts_GeneratesDistinctCodes` |
+| **Function 7.6: Scale Proof Upload & TradeOrder Synchronization (`POST .../receipt/upload-proof`, `HandoverTradeSyncHelper`)** | | | | | | | | | |
+| **ITC-RCP-021** | Kiểm tra tải ảnh bằng chứng cân lên Cloudflare R2 (`POST /api/v1/recycler/handover-requests/{requestId:guid}/receipt/upload-proof`) và đồng bộ `TradeOrder` khi tạo/xác nhận biên nhận. | 1. Thử upload tệp rỗng, file `.txt`/không thuộc `.jpg/.jpeg/.png/.webp`, hoặc vượt `10 MB` lên `POST .../receipt/upload-proof` $\rightarrow$ kiểm tra `400`.<br>2. Upload ảnh PNG hợp lệ lên `POST .../receipt/upload-proof` để lấy `fileUrl` dưới prefix `receipt-proofs/{requestId:N}`.<br>3. Phát hành biên nhận (`POST /receipt`) rồi `Citizen` xác nhận (`POST /receipt/confirm`) và đối chiếu bản ghi `TradeOrder`, `TransactionReceipt`, `ChatMessage`, `UserEcoProfile`. | - Bước 1: File sai định dạng trả `400 MSG-CLS-01`; file rỗng/quá `10 MB` trả `400 MSG-GEN-01`.<br>- Bước 2: `200 OK` (`MSG-GEN-01`), trả về `fileUrl`, `objectKey` nằm trong `receipt-proofs/{requestId:N}`.<br>- Bước 3: `HandoverTradeSyncHelper.SyncHandoverToTradeOrderAsync` cập nhật `TradeOrder` sang `AwaitingConfirmation` + thêm tin nhắn hệ thống (`System` `ChatMessage`); sau `Confirm`, `SyncReceiptCompletionAsync` đồng bộ `TradeOrder.Status = Completed`, tạo `TransactionReceipt` và cộng `UserEcoProfile`. | Đơn bàn giao đang ở trạng thái `Accepted`; dịch vụ lưu trữ R2/Local hoạt động. | Passed | Pending | Pending | N/A | `RecyclerReceiptController.UploadProof` & `HandoverTradeSyncHelper` (`SyncHandoverToTradeOrderAsync` / `SyncReceiptCompletionAsync`) |
 

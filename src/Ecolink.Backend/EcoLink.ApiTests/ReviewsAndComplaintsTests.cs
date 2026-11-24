@@ -241,6 +241,16 @@ public class ReviewsAndComplaintsTests
 
         var myReviews = (await Api.GetAsync("/api/v1/reviews/me", c1Token)).ShouldBe(200).Data();
         Assert.Equal(1, myReviews.GetProperty("totalRecords").GetInt32());
+
+        // Sau khi xóa đánh giá cũ, c2 được phép gửi lại 1 đánh giá mới cho chính đơn h2
+        var recreated = (await ApiJson.PostAsync($"/api/v1/handover-requests/{h2}/reviews", new
+        {
+            ratingStars = 4,
+            comment = "Đánh giá lại sau khi xóa đánh giá trước."
+        }, c2Token)).ShouldBe(201);
+        Assert.Equal("MSG-RVW-01", recreated.MessageCode());
+        Assert.Equal(4.5m, recreated.Data().GetProperty("updatedRecyclerAverageRating").GetDecimal());
+        Assert.Equal(2, recreated.Data().GetProperty("updatedRecyclerTotalReviews").GetInt32());
     }
 
     // ITC-RVW-005
@@ -325,24 +335,32 @@ public class ReviewsAndComplaintsTests
 
     // ITC-RVW-007
     [Fact]
-    public async Task RVW07_SubmitComplaint_BilateralByRecyclerForNoShow_SucceedsWithRecyclerRole()
+    public async Task RVW07_SubmitComplaint_BilateralByRecyclerAfterCompletion_SucceedsAndBlocksIncomplete()
     {
         var recycler = await CreateFreshVerifiedRecyclerAsync();
         var (citizenId, citizenToken) = await CreateFreshCitizenAsync();
-        var requestId = await CreateAcceptedHandoverAsync(citizenToken, recycler.RecyclerId, recycler.Token);
+        var acceptedId = await CreateAcceptedHandoverAsync(citizenToken, recycler.RecyclerId, recycler.Token);
 
+        (await ApiJson.PostAsync("/api/v1/complaints", new
+        {
+            handoverRequestId = acceptedId,
+            category = "NoShow",
+            description = "Thử gửi khiếu nại khi biên nhận bàn giao chưa được xác nhận hoàn tất."
+        }, recycler.Token)).ShouldFailWith(400, "MSG-DSP-03");
+
+        var completedId = await CreateCompletedHandoverAsync(citizenToken, recycler.RecyclerId, recycler.Token);
         var cmpRes = (await ApiJson.PostAsync("/api/v1/complaints", new
         {
-            handoverRequestId = requestId,
-            category = "NoShow",
-            description = "Nhân viên thu gom đến đúng giờ hẹn tại điểm đón nhưng người bán tắt máy không giao hàng."
+            handoverRequestId = completedId,
+            category = "Misconduct",
+            description = "Người bán bàn giao sai cam kết sau khi đối chiếu biên nhận hoàn tất."
         }, recycler.Token)).ShouldBe(201);
 
         var data = cmpRes.Data();
         Assert.Equal("Recycler", data.Str("complainantRole"));
         Assert.Equal(recycler.RecyclerId, data.GetProperty("complainantId").GetGuid());
         Assert.Equal(citizenId, data.GetProperty("respondentId").GetGuid());
-        Assert.Equal("NoShow", data.Str("category"));
+        Assert.Equal("Misconduct", data.Str("category"));
         Assert.Equal("Open", data.Str("status"));
     }
 

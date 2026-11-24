@@ -223,7 +223,9 @@ public class ServicePackagePaymentTests
             RepresentativeName = "C",
             BusinessAddress = "HN",
             VerificationStatus = VerificationStatus.Verified,
-            ActiveStatus = RecyclerActiveStatus.Online
+            ActiveStatus = RecyclerActiveStatus.Online,
+            AverageRating = 4.8m,
+            TotalReviews = 55
         });
         await db.SaveChangesAsync();
 
@@ -291,7 +293,9 @@ public class ServicePackagePaymentTests
                 Latitude = 16.0800m,
                 Longitude = 108.2022m,
                 VerificationStatus = VerificationStatus.Verified,
-                ActiveStatus = RecyclerActiveStatus.Online
+                ActiveStatus = RecyclerActiveStatus.Online,
+                AverageRating = 4.8m,
+                TotalReviews = 55
             });
 
         db.RecyclerPrices.AddRange(
@@ -377,7 +381,9 @@ public class ServicePackagePaymentTests
             RepresentativeName = "Q",
             BusinessAddress = "Đà Nẵng",
             VerificationStatus = VerificationStatus.Verified,
-            ActiveStatus = RecyclerActiveStatus.Online
+            ActiveStatus = RecyclerActiveStatus.Online,
+            AverageRating = 4.8m,
+            TotalReviews = 55
         });
         await db.SaveChangesAsync();
 
@@ -508,7 +514,9 @@ public class ServicePackagePaymentTests
             RepresentativeName = "E",
             BusinessAddress = "HN",
             VerificationStatus = VerificationStatus.Verified,
-            ActiveStatus = RecyclerActiveStatus.Online
+            ActiveStatus = RecyclerActiveStatus.Online,
+            AverageRating = 4.8m,
+            TotalReviews = 55
         });
         await db.SaveChangesAsync();
 
@@ -785,7 +793,9 @@ public class ServicePackagePaymentTests
             RepresentativeName = "F",
             BusinessAddress = "HN",
             VerificationStatus = VerificationStatus.Verified,
-            ActiveStatus = RecyclerActiveStatus.Online
+            ActiveStatus = RecyclerActiveStatus.Online,
+            AverageRating = 4.8m,
+            TotalReviews = 55
         });
         await db.SaveChangesAsync();
 
@@ -862,7 +872,7 @@ public class ServicePackagePaymentTests
         using var db = TestDbContextFactory.Create();
         var recId = Guid.NewGuid();
         db.Users.Add(new User { Id = recId, Username = "wh04", Email = "wh04@rec.vn", FullName = "Vựa Trễ", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active });
-        db.RecyclerProfiles.Add(new RecyclerProfile { UserId = recId, FacilityName = "Vựa Trễ", RepresentativeName = "D", BusinessAddress = "HN", VerificationStatus = VerificationStatus.Verified, ActiveStatus = RecyclerActiveStatus.Online });
+        db.RecyclerProfiles.Add(new RecyclerProfile { UserId = recId, FacilityName = "Vựa Trễ", RepresentativeName = "D", BusinessAddress = "HN", VerificationStatus = VerificationStatus.Verified, ActiveStatus = RecyclerActiveStatus.Online, AverageRating = 4.8m, TotalReviews = 55 });
         await db.SaveChangesAsync();
 
         var (paymentSvc, _, _, _) = CreateServices(db, recId, "Recycler");
@@ -1007,7 +1017,9 @@ public class ServicePackagePaymentTests
             RepresentativeName = "K",
             BusinessAddress = "HCM",
             VerificationStatus = VerificationStatus.Verified,
-            ActiveStatus = RecyclerActiveStatus.Online
+            ActiveStatus = RecyclerActiveStatus.Online,
+            AverageRating = 4.8m,
+            TotalReviews = 55
         });
         await db.SaveChangesAsync();
 
@@ -1052,8 +1064,8 @@ public class ServicePackagePaymentTests
             new User { Id = recOkId, Username = "rec_w5", Email = "w5@rec.vn", FullName = "Vựa 5 Cảnh Cáo", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active, WarningCount = 5 },
             new User { Id = recTooManyId, Username = "rec_w6", Email = "w6@rec.vn", FullName = "Vựa 6 Cảnh Cáo", PasswordHash = "h", Role = UserRole.Recycler, Status = UserStatus.Active, WarningCount = 6 });
         db.RecyclerProfiles.AddRange(
-            new RecyclerProfile { UserId = recOkId, FacilityName = "Vựa 5 CC", BusinessAddress = "HN", VerificationStatus = VerificationStatus.Verified, ActiveStatus = RecyclerActiveStatus.Online },
-            new RecyclerProfile { UserId = recTooManyId, FacilityName = "Vựa 6 CC", BusinessAddress = "HN", VerificationStatus = VerificationStatus.Verified, ActiveStatus = RecyclerActiveStatus.Online });
+            new RecyclerProfile { UserId = recOkId, FacilityName = "Vựa 5 CC", BusinessAddress = "HN", VerificationStatus = VerificationStatus.Verified, ActiveStatus = RecyclerActiveStatus.Online, AverageRating = 4.8m, TotalReviews = 55 },
+            new RecyclerProfile { UserId = recTooManyId, FacilityName = "Vựa 6 CC", BusinessAddress = "HN", VerificationStatus = VerificationStatus.Verified, ActiveStatus = RecyclerActiveStatus.Online, AverageRating = 4.8m, TotalReviews = 55 });
         await db.SaveChangesAsync();
 
         var (payOk, _, _, _) = CreateServices(db, recOkId, "Recycler");
@@ -1072,7 +1084,7 @@ public class ServicePackagePaymentTests
             .Where(ex => ex.MessageCode == "MSG-PAY-06");
     }
 
-    // UTC025 [Abnormal] [R-07]: Yêu cầu phản hồi >= 4.0 sao & Bắt buộc có ít nhất 1 đánh giá khi đăng ký lại PRO
+    // UTC025 [Abnormal] [R-07]: Bắt buộc tối thiểu 50 lượt đánh giá & >= 4.0 sao ngay từ lần đăng ký PRO đầu tiên
     [Fact]
     public async Task UTC025_ProEligibility_BlocksLowRating_AndRequiresPositiveReviewOnReRegistration()
     {
@@ -1086,69 +1098,58 @@ public class ServicePackagePaymentTests
             BusinessAddress = "Đà Nẵng",
             VerificationStatus = VerificationStatus.Verified,
             ActiveStatus = RecyclerActiveStatus.Online,
-            AverageRating = 3.5m,
-            TotalReviews = 3
+            AverageRating = 0m,
+            TotalReviews = 0
         };
         db.RecyclerProfiles.Add(profile);
         await db.SaveChangesAsync();
 
         var (paymentSvc, packageSvc, _, _) = CreateServices(db, recId, "Recycler");
 
-        // 1. Chặn nếu có đánh giá nhưng < 4.0 sao
+        // 1. Lần đầu chưa có đánh giá (TotalReviews = 0) -> vẫn hiển thị PRO nhưng khóa đăng ký (MSG-PAY-06)
+        var zeroReviewCatalog = await packageSvc.GetAvailablePackagesAsync(recId, UserRole.Recycler);
+        var proZero = zeroReviewCatalog.First(c => c.PackageCode == "PRO");
+        proZero.IsEligible.Should().BeFalse();
+        proZero.ProEligibility!.IsPositiveFeedbackMet.Should().BeFalse();
+        proZero.ProEligibility.MinRequiredReviews.Should().Be(50);
+
+        var zeroReviewAct = () => paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+        await zeroReviewAct.Should().ThrowAsync<BusinessRuleException>()
+            .Where(ex => ex.RuleCode == "BR-PAY-03" && ex.MessageCode == "MSG-PAY-06");
+
+        // 2. Dưới ngưỡng 50 lượt (49 lượt, 4.9 sao) -> vẫn chặn
+        profile.TotalReviews = 49;
+        profile.AverageRating = 4.9m;
+        await db.SaveChangesAsync();
+
+        var underCountCatalog = await packageSvc.GetAvailablePackagesAsync(recId, UserRole.Recycler);
+        underCountCatalog.First(c => c.PackageCode == "PRO").IsEligible.Should().BeFalse();
+
+        var underCountAct = () => paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
+        await underCountAct.Should().ThrowAsync<BusinessRuleException>()
+            .Where(ex => ex.MessageCode == "MSG-PAY-06");
+
+        // 3. Đủ 50 lượt nhưng điểm trung bình 3.9 < 4.0 sao -> vẫn chặn
+        profile.TotalReviews = 50;
+        profile.AverageRating = 3.9m;
+        await db.SaveChangesAsync();
+
+        var lowRatingCatalog = await packageSvc.GetAvailablePackagesAsync(recId, UserRole.Recycler);
+        lowRatingCatalog.First(c => c.PackageCode == "PRO").IsEligible.Should().BeFalse();
+
         var lowRatingAct = () => paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
         await lowRatingAct.Should().ThrowAsync<BusinessRuleException>()
             .Where(ex => ex.MessageCode == "MSG-PAY-06");
 
-        // 2. Trường hợp tái đăng ký PRO sau khi kỳ cũ hết hạn nhưng chưa có review (TotalReviews = 0) -> chặn
-        profile.AverageRating = 0m;
-        profile.TotalReviews = 0;
-        var pastOrder = new ServiceOrder
-        {
-            Id = Guid.NewGuid(),
-            OrderCode = "ECOOLDPRO01",
-            UserId = recId,
-            PackageId = CanonicalServicePackages.ProId,
-            PackageCodeSnapshot = CanonicalServicePackages.ProCode,
-            PackageNameSnapshot = "Pro",
-            DurationDaysSnapshot = 365,
-            FeaturesSnapshot = CanonicalServicePackages.ProFeaturesJson,
-            ExpectedAmountVnd = 1_000_000m,
-            PaidAmountVnd = 1_000_000m,
-            QrCodeUrl = "https://qr.test/oldpro",
-            TransferContent = "ECOOLDPRO01",
-            BankCode = "TPB",
-            BankName = "TPBank",
-            AccountNo = "05773216801",
-            AccountName = "ECOLINK",
-            OrderStatus = ServiceOrderStatus.Paid,
-            PaymentStatus = ServicePaymentStatus.Success,
-            ReconciliationStatus = ReconciliationStatus.Matched,
-            QrExpiresAt = DateTime.UtcNow.AddDays(-400),
-            PaidAt = DateTime.UtcNow.AddDays(-400)
-        };
-        db.ServiceOrders.Add(pastOrder);
-        db.UserSubscriptions.Add(new UserSubscription
-        {
-            Id = Guid.NewGuid(),
-            UserId = recId,
-            PackageId = CanonicalServicePackages.ProId,
-            SourceOrderId = pastOrder.Id,
-            PackageCode = CanonicalServicePackages.ProCode,
-            FeaturesSnapshot = CanonicalServicePackages.ProFeaturesJson,
-            StartsAt = DateTime.UtcNow.AddDays(-400),
-            ExpiresAt = DateTime.UtcNow.AddDays(-35),
-            Status = SubscriptionStatus.Expired
-        });
+        // 4. Đạt biên chuẩn (50 lượt & 4.0 sao) -> đủ điều kiện đăng ký PRO ngay lần đầu
+        profile.TotalReviews = 50;
+        profile.AverageRating = 4.0m;
         await db.SaveChangesAsync();
 
-        var renewNoReviewCatalog = await packageSvc.GetAvailablePackagesAsync(recId, UserRole.Recycler);
-        renewNoReviewCatalog.First(c => c.PackageCode == "PRO").ProEligibility!.IsReRegistration.Should().BeTrue();
-        renewNoReviewCatalog.First(c => c.PackageCode == "PRO").ProEligibility!.IsPositiveFeedbackMet.Should().BeFalse();
-
-        // 3. Đạt >= 1 đánh giá >= 4.0 sao -> đủ điều kiện tái đăng ký PRO
-        profile.TotalReviews = 2;
-        profile.AverageRating = 4.6m;
-        await db.SaveChangesAsync();
+        var okCatalog = await packageSvc.GetAvailablePackagesAsync(recId, UserRole.Recycler);
+        var proOk = okCatalog.First(c => c.PackageCode == "PRO");
+        proOk.IsEligible.Should().BeTrue();
+        proOk.ProEligibility!.IsPositiveFeedbackMet.Should().BeTrue();
 
         var eligibleOrder = await paymentSvc.CreatePayInOrderAsync(recId, UserRole.Recycler, new CreatePayInRequest { PackageCode = "PRO" });
         eligibleOrder.PackageCode.Should().Be("PRO");
@@ -1193,7 +1194,9 @@ public class ServicePackagePaymentTests
             RepresentativeName = "Nguyen Hoang Thang",
             BusinessAddress = "Số 14 Ngõ 2 cây xăng 39",
             VerificationStatus = VerificationStatus.Verified,
-            ActiveStatus = RecyclerActiveStatus.Online
+            ActiveStatus = RecyclerActiveStatus.Online,
+            AverageRating = 4.8m,
+            TotalReviews = 55
         });
         await db.SaveChangesAsync();
 

@@ -4,13 +4,13 @@
 
 | Code Module | `HandoverReceiptService (R-06, U-09, U-12, JOB-01)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **24** | | |
+| **Number of TCs** | **25** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 24 | 0 | 0 |
-| *Round 2* | 0 | 0 | 24 |
-| *Round 3* | 0 | 0 | 24 |
+| *Round 1* | 25 | 0 | 0 |
+| *Round 2* | 0 | 0 | 25 |
+| *Round 3* | 0 | 0 | 25 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **12** | **7** | **5** |
+| **Count** | **11** | **8** | **6** |
 
 ---
 
@@ -46,4 +46,6 @@
 | **UTC022** | Recycler `recyclerId` có 5 giao dịch trong tháng 11/2026; lọc từ `2026-11-01` đến `2026-11-07` | `recyclerId="22222222-..."`;<br>`from=2026-11-01`;<br>`to=2026-11-07`;<br>`page=1`; `pageSize=20` | `Return: TransactionHistoryDto { Items.Count = 5, Items[0].CounterpartName = Tên người dân, Categories = ["Nhựa", "Giấy"] }`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-11-08 | Giang Nguyễn Đức | Pending | Pending | N/A | Lọc lịch sử giao dịch cơ sở thu gom theo khoảng thời gian và hiển thị danh mục phế liệu đã thu mua |
 | **UTC023** | Người dùng truyền tham số ngày kết thúc dạng không giờ (`to = 2026-11-05 00:00:00`) | `ownerId="11111111-..."`;<br>`to=2026-11-05 00:00:00` | `Return: TransactionHistoryDto (Hệ thống tự động cộng thêm 1 ngày: to < 2026-11-06 00:00:00 để lấy trọn vẹn ngày 05/11)`<br>`Exception: N/A`<br>`Log Message: N/A` | Boundary | Passed | 2026-11-08 | Giang Nguyễn Đức | Pending | Pending | N/A | Xử lý biên khoảng ngày lọc lịch sử: bao gồm cả các giao dịch trong ngày kết thúc |
 | **UTC024** | Tài khoản mới đăng ký chưa phát sinh giao dịch nào (`ConfirmedByUserAt != null`) | `ownerId=newUserId`;<br>`page=1`; `pageSize=10` | `Return: TransactionHistoryDto { Items = [], TotalCount = 0, TotalWeightKg = 0, TotalAmountCash = 0, TotalPoints = 0 }`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-11-08 | Giang Nguyễn Đức | Pending | Pending | N/A | Trả về danh sách rỗng và số liệu tổng bằng 0 khi người dùng chưa có giao dịch hoàn tất |
+| **`CreateAsync` (`TradeOrder` Sync & `WasteCategoryId` Fallback)** | | | | | | | | | | | |
+| **UTC025** | Đơn tạo qua `TradeOrder` (`Status = Accepted`, `EstimatedWeightKg = 10.0kg`, `CategoryCode = "plastic"`, `AgreedPricePerKg = 6,000đ`) chưa có dòng `HandoverRequest` trước đó | `recyclerId=recyclerUser.Id`;<br>`requestId=orderId`;<br>`Items=[{ ItemId = null, WasteCategoryId = plastic.Id, ActualWeightKg = 9.0m }]`;<br>`ScaleProofPhotoUrls=["https://cdn.ecolink.test/scale_trade_sync.jpg"]` | `Return: ReceiptDto { ReceiptCode.StartsWith("RCP-"), RequestStatus = "AwaitingConfirmation", TotalWeightKg = 9.0, TotalAmountCash = 54000 }`<br>`Database: TradeOrder.Status đồng bộ chuyển sang AwaitingConfirmation`<br>`Exception: N/A` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Đồng bộ tạo biên nhận trực tiếp từ `TradeOrder` & fallback khớp dòng phế liệu theo `WasteCategoryId` (`Guid`) |
 

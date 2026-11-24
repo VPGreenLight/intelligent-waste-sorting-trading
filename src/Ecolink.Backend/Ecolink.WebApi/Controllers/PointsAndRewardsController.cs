@@ -1,6 +1,7 @@
 using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -16,12 +17,21 @@ public class PointsAndRewardsController : ControllerBase
     private readonly IPointsService _points;
     private readonly IGiftService _gifts;
     private readonly ICurrentUserService _currentUser;
+    private readonly IValidator<RedeemGiftRequest> _redeemValidator;
+    private readonly IValidator<CreateRedemptionRequest> _createRedemptionValidator;
 
-    public PointsAndRewardsController(IPointsService points, IGiftService gifts, ICurrentUserService currentUser)
+    public PointsAndRewardsController(
+        IPointsService points,
+        IGiftService gifts,
+        ICurrentUserService currentUser,
+        IValidator<RedeemGiftRequest> redeemValidator,
+        IValidator<CreateRedemptionRequest> createRedemptionValidator)
     {
         _points = points;
         _gifts = gifts;
         _currentUser = currentUser;
+        _redeemValidator = redeemValidator;
+        _createRedemptionValidator = createRedemptionValidator;
     }
 
     private Guid UserId =>
@@ -64,7 +74,11 @@ public class PointsAndRewardsController : ControllerBase
         [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RedeemGiftRequest? request = null,
         CancellationToken ct = default)
     {
-        var data = await _gifts.RedeemAsync(UserId, id, request ?? new RedeemGiftRequest(), ct);
+        var effective = request ?? new RedeemGiftRequest();
+        var invalid = await ValidateAsync(_redeemValidator, effective, ct);
+        if (invalid != null) return invalid;
+
+        var data = await _gifts.RedeemAsync(UserId, id, effective, ct);
         return StatusCode(StatusCodes.Status201Created, ApiResponse<RedeemResultDto>.Ok(data, "Đổi quà thành công.", "MSG-GAM-02"));
     }
 
@@ -73,8 +87,22 @@ public class PointsAndRewardsController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<RedeemResultDto>), StatusCodes.Status201Created)]
     public async Task<IActionResult> RedeemFromBody([FromBody] CreateRedemptionRequest request, CancellationToken ct)
     {
+        var invalid = await ValidateAsync(_createRedemptionValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var data = await _gifts.RedeemAsync(UserId, request.GiftId, request, ct);
         return StatusCode(StatusCodes.Status201Created, ApiResponse<RedeemResultDto>.Ok(data, "Đổi quà thành công.", "MSG-GAM-02"));
+    }
+
+    private async Task<IActionResult?> ValidateAsync<T>(IValidator<T> validator, T request, CancellationToken ct)
+    {
+        var validation = await validator.ValidateAsync(request, ct);
+        if (validation.IsValid) return null;
+
+        var errors = validation.Errors
+            .Select(e => string.IsNullOrWhiteSpace(e.PropertyName) ? e.ErrorMessage : $"{e.PropertyName}: {e.ErrorMessage}")
+            .ToList();
+        return BadRequest(ApiResponse<object>.Fail(validation.Errors[0].ErrorMessage, "MSG-AUTH-02", errors));
     }
 
     [HttpGet("api/v1/gamification/redemptions/me")]

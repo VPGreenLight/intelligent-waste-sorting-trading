@@ -1,21 +1,24 @@
-# TÀI LIỆU ĐẶC TẢ API – MODULE 6: TÌM KIẾM CƠ SỞ THU GOM THEO VỊ TRÍ ĐỊA LÝ GPS (LOCATION-BASED RECYCLER DISCOVERY)
-**Mã phân hệ:** `MTH` (`Use Case U-05: Find Nearby Recyclers (GPS)`)  
-**Controllers:** [`RecyclersDiscoveryController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/RecyclersDiscoveryController.cs), [`TradeController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/TradeController.cs)  
+# TÀI LIỆU ĐẶC TẢ API – MODULE 5: TÌM KIẾM CƠ SỞ THU GOM THEO VỊ TRÍ ĐỊA LÝ GPS & GEOCODING (`M-05`)
+**Mã phân hệ:** `M-05` / `MTH` (`Use Case U-05: Find Nearby Recyclers (GPS)`)  
+**Controllers:** [`RecyclersDiscoveryController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/RecyclersDiscoveryController.cs), [`GeocodingController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/GeocodingController.cs), [`TradeController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/TradeController.cs)  
 **Services thực thi:** [`GeoMatchingService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/GeoMatchingService.cs) ([`IGeoMatchingService`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Interfaces/ApplicationInterfaces.cs#L18-L36)), [`WasteRuleEngineService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/WasteRuleEngineService.cs) ([`IWasteRuleEngineService`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Interfaces/ApplicationInterfaces.cs#L11-L16))  
 **Validators:** [`NearbyRecyclerFilterValidator`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Validators/RecyclerValidators.cs#L143-L169)  
 **Entities:** [`RecyclerProfile`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/AuthEntities.cs#L11-L42), [`RecyclerPrice`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/RecyclerPrice.cs), [`WasteCategory`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/WasteEntities.cs)  
 **DTOs:** [`TradeAndGamificationDtos.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Dtos/TradeAndGamificationDtos.cs#L3-L63)  
-**Base Routes:** `/api/v1/recyclers`, `/api/v1/trade/partners`
+**Base Routes:** `/api/v1/recyclers`, `/api/v1/geocoding`, `/api/v1/trade/partners`
 
 ---
 
-## 1. TỔNG QUAN DANH SÁCH ENDPOINTS
+## 1. TỔNG QUAN DANH SÁCH ENDPOINTS (`M-05` – `4` APIs, `STT 041–044`)
 
-| STT | Phương thức | Endpoint URI | Quyền truy cập | Use Case | Chức năng nghiệp vụ | Mã thông báo / Quy tắc |
-|:---:|:---:|:---|:---:|:---:|:---|:---|
-| 1 | `GET` | `/api/v1/recyclers/nearby` | Public / `[Authorize]` | `U-05` | Tìm kiếm các cơ sở thu gom đã xác minh (`Verified`) và đang mở cửa (`Online`) trong bán kính GPS, hỗ trợ lọc theo loại rác (`category`), từ khóa (`keyword`), sắp xếp khoảng cách/giá và trả về gợi ý dự phòng (`FallbackSuggestion`) khi `0` kết quả. | `BR-MTH-01`, `BR-MTH-04`, `BR-MTH-05`, `BR-MTH-06`, `BR-MTH-07`, `MSG-GEN-01`, `MSG-MTH-01`, `MSG-MTH-02` |
-| 2 | `GET` | `/api/v1/recyclers/{recyclerId:guid}` | Public / `[Authorize]` | `U-05` | Xem chi tiết hồ sơ công khai, giờ mở cửa (`operatingHours`), thông tin liên hệ và bảng giá niêm yết đang hiệu lực (`PriceStatus.Active`) của một cơ sở thu gom trên bản đồ. | `BR-MTH-01`, `BR-MTH-05`, `BR-MTH-07`, `MSG-GEN-01`, `MSG-NOT-FOUND` |
-| 3 | `GET` | `/api/v1/trade/partners/nearby` | Public / `[Authorize]` | `U-05` *(Alias)* | Endpoint tương thích ngược trả về danh sách `CollectionPartnerDto[]` trực tiếp từ bảng `recycler_profiles` và `recycler_price_list` trong PostgreSQL. | `BR-MTH-01`, `BR-MTH-04`, `BR-MTH-06`, `BR-MTH-07` |
+> Tham chiếu Inventory: [`00_api_inventory_and_endpoint_statistics.md`](./00_api_inventory_and_endpoint_statistics.md) (`STT 041` $\rightarrow$ `044`).
+
+| STT | Inventory ID | Phương thức | Endpoint URI | Quyền truy cập | Use Case | Chức năng nghiệp vụ | Mã thông báo / Quy tắc |
+|:---:|:---:|:---:|:---|:---:|:---:|:---|:---|
+| 1 | `041` | `GET` | `/api/v1/recyclers/nearby` | Public / `[Authorize]` | `U-05` | Tìm kiếm các cơ sở thu gom đã xác minh (`Verified`) và đang mở cửa (`Online`) trong bán kính GPS (ưu tiên ghim `PRO`), hỗ trợ lọc theo loại rác (`category`), từ khóa (`keyword`), sắp xếp khoảng cách/giá và trả về gợi ý dự phòng (`FallbackSuggestion`) khi `0` kết quả. | `BR-MTH-01`, `BR-MTH-04`, `BR-MTH-05`, `BR-MTH-06`, `BR-MTH-07`, `MSG-GEN-01`, `MSG-MTH-01`, `MSG-MTH-02` |
+| 2 | `042` | `GET` | `/api/v1/recyclers/{recyclerId:guid}` | Public / `[Authorize]` | `U-05` | Xem chi tiết hồ sơ công khai, giờ mở cửa (`operatingHours`), thông tin liên hệ và bảng giá niêm yết đang hiệu lực (`PriceStatus.Active`) của một cơ sở thu gom trên bản đồ. | `BR-MTH-01`, `BR-MTH-05`, `BR-MTH-07`, `MSG-GEN-01`, `MSG-NOT-FOUND` |
+| 3 | `043` | `GET` | `/api/v1/geocoding/search` | Public (`[AllowAnonymous]`) | `U-05` | Backend Geocoding Proxy tìm tọa độ khu vực/địa danh Việt Nam qua LocationIQ / Nominatim (có `IMemoryCache` và rate-limit, giấu API key). | `BR-MTH-05`, `MSG-GEN-01` |
+| 4 | `044` | `GET` | `/api/v1/trade/partners/nearby` | Public / `[Authorize]` | `U-05` *(Alias)* | Endpoint tương thích ngược trả về danh sách `CollectionPartnerDto[]` trực tiếp từ bảng `recycler_profiles` và `recycler_price_list` trong PostgreSQL. | `BR-MTH-01`, `BR-MTH-04`, `BR-MTH-06`, `BR-MTH-07` |
 
 ---
 
@@ -203,7 +206,17 @@
 
 ---
 
-### 3.3. Endpoint Tương thích Ngược (`GET /api/v1/trade/partners/nearby`)
+### 3.3. Tìm kiếm Địa danh & Tọa độ Khu vực (`GET /api/v1/geocoding/search` – `STT 043`)
 
-* **Mô tả:** Giữ nguyên hợp đồng JSON cũ cho các màn hình giao dịch hiện hữu trong [`TradeController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/TradeController.cs#L28-L38), trả về trực tiếp mảng `CollectionPartnerDto[]` được truy vấn từ bảng `recycler_profiles` và `recycler_price_list` trong PostgreSQL.
+* **Phân quyền:** Public *(không yêu cầu JWT)*.
+* **Query Parameters:** `q` (`string`, tối thiểu `2` ký tự sau `Trim()`), `limit` (`int`, mặc định `5`).
+* **Mô tả:** Backend Geocoding Proxy tra cứu tọa độ khu vực tại Việt Nam cho thanh tìm kiếm bản đồ (giấu API key nếu dùng LocationIQ, đính kèm User-Agent hợp lệ và cache `IMemoryCache`).
+* **Response (`200 OK` – `MSG-GEN-01`):** `ApiResponse<GeocodingSearchResponseDto>` kèm thông báo số lượng khu vực phù hợp (`"Tìm thấy {N} khu vực phù hợp."`).
+* **Error (`400 Bad Request` – `MSG-GEN-01`):** Khi `q` rỗng hoặc ngắn hơn `2` ký tự (`"Vui lòng nhập tối thiểu 2 ký tự tên phường, quận, chợ hoặc khu vực cần tìm."`).
+
+---
+
+### 3.4. Endpoint Tương thích Ngược (`GET /api/v1/trade/partners/nearby` – `STT 044`)
+
+* **Mô tả:** Giữ nguyên hợp đồng JSON cũ cho các màn hình giao dịch hiện hữu trong [`TradeController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/TradeController.cs#L34-L47), trả về trực tiếp mảng `CollectionPartnerDto[]` được truy vấn từ bảng `recycler_profiles` và `recycler_price_list` trong PostgreSQL.
 

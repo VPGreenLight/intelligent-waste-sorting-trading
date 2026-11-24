@@ -3,11 +3,11 @@
 
 * **Dự án:** Hệ thống Phân loại Rác Thông minh & Giao dịch Phế liệu (**EcoLink**)
 * **Phân hệ / Sheet trong Report 5.2:** `M12_ServicePackages` (`Module 10`)
-* **Phạm vi API End-to-End:** `15` REST APIs (`STT 115` – `STT 129`: `ServicePaymentController`, `ServicePackagesController`, `AdminReconciliationController`) + tích hợp bản đồ `GET /api/v1/recyclers/nearby` (**M-05**) & phê duyệt KYB (**M-03**)
+* **Phạm vi API End-to-End:** `15` REST APIs (`STT 133` – `STT 147`: `ServicePaymentController`, `ServicePackagesController`, `AdminReconciliationController`) + tích hợp bản đồ `GET /api/v1/recyclers/nearby` (**M-05**) & phê duyệt KYB (**M-03**)
 * **Use Cases bao phủ:** `U-16` (Citizen), `R-07` (Recycler), `A-10` (Admin Service Config), `A-11` (Admin Financial Reconciliation)
 * **Tệp mã kiểm thử HTTP E2E:** [`ServicePackageTests.cs`](../../../src/Ecolink.Backend/EcoLink.ApiTests/ServicePackageTests.cs) (`[Trait("Category", "ServicePackages")]`)
-* **Ngày thực thi gần nhất:** `2026-11-17`
-* **Kết quả thực thi thực tế qua Kestrel + PostgreSQL 16:** **`16 / 16 Passed` (`100%` Pass Rate)**
+* **Ngày thực thi gần nhất:** `2026-11-23`
+* **Kết quả thực thi thực tế qua Kestrel + PostgreSQL 16:** **`18 / 18 Passed` (`100%` Pass Rate)**
 
 ---
 
@@ -15,20 +15,20 @@
 
 | Feature | `In-System Service Packages & VietQR Integration (M12_ServicePackages)` | | | |
 | :--- | :--- | :---: | :---: | :---: |
-| **Test requirement** | Kiểm thử tích hợp End-to-End 15 APIs phân hệ `M-12`: RBAC `401/403`, Bảng giá 3 gói `BASIC`/`PREMIUM`/`PRO`, tạo VietQR động 15 phút & hủy đơn, Webhook Idempotent & chữ ký bảo mật (`BR-PAY-02`), 5 kịch bản bất thường, điều kiện `Verified` KYB & Tích xanh / Ghim nổi bật bản đồ `PRO` (`BR-PAY-03`, `BR-PAY-04`), cấu hình giá & Grandfathering (`BR-PAY-05`), và đối soát / xuất bảng kê ẩn danh PII (`BR-PAY-06`, `BR-ADM-06`). | | | |
-| **Number of TCs** | **16** | | | |
+| **Test requirement** | Kiểm thử tích hợp End-to-End 15 APIs phân hệ `M-12`: RBAC `401/403`, Bảng giá 3 gói `BASIC`/`PREMIUM`/`PRO`, tạo VietQR động 15 phút & hủy đơn, Webhook Idempotent & chữ ký bảo mật (`BR-PAY-02`), 5 kịch bản bất thường, thẩm định 4 tiêu chí `PRO` (`ProEligibilityReportDto` — `BR-PAY-03`, `BR-PAY-04`), đồng bộ vai trò `Recycler` từ DB bất chấp JWT `User` cũ, cấu hình giá & Grandfathering (`BR-PAY-05`), và đối soát / xuất bảng kê ẩn danh PII (`BR-PAY-06`, `BR-ADM-06`). | | | |
+| **Number of TCs** | **18** | | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
-| *Round 1* | 16 | 0 | 0 | 0 |
-| *Round 2* | 0 | 0 | 16 | 0 |
-| *Round 3* | 0 | 0 | 16 | 0 |
+| *Round 1* | 18 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 18 | 0 |
+| *Round 3* | 0 | 0 | 18 | 0 |
 
 ---
 
-## 2. CHI TIẾT 16 INTEGRATION TEST CASES (`ITC-PAY-001` – `ITC-PAY-016`)
+## 2. CHI TIẾT 18 INTEGRATION TEST CASES (`ITC-PAY-001` – `ITC-PAY-018`)
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
 | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
-| **Function 10.1: Catalog, Order Lifecycle, IDOR & Webhook Security (`STT 115–122`)** | | | | | | | | | |
+| **Function 10.1: Catalog, Order Lifecycle, IDOR & Webhook Security (`STT 133–140`)** | | | | | | | | | |
 | **ITC-PAY-001** | Chặn truy cập ẩn danh (`401`) và phân quyền `Admin` (`403` với `Citizen`/`Staff`) trên API quản trị gói & đối soát. | 1. Gọi `GET /service-packages`, `/subscriptions/me`, `/service-payments/orders` không token.<br>2. Dùng token `Citizen` và `Staff` gọi `/admin/service-packages` & `/admin/reconciliations/ledger`. | Bước 1: `401 Unauthorized`. Bước 2: `403 Forbidden` trên cả `Citizen` và `Staff`. | Đã seed tài khoản `citizen`, `staff`, `admin`. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY01` |
 | **ITC-PAY-002** | Tài khoản `Citizen` mới nhận đủ bảng giá 3 gói chuẩn (`BASIC`, `PREMIUM`, `PRO`) & mặc định tier `Basic`. | 1. Đăng ký `Citizen` mới.<br>2. Gọi `GET /api/v1/service-packages` và `GET /api/v1/service-packages/subscriptions/me`. | `200 OK`, có đủ 3 gói (`PRO.isEligible = false` với Citizen), `currentTier = "Basic"`, `isAdFree = false`. | Tài khoản mới đăng ký hợp lệ. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY02` |
 | **ITC-PAY-003** | Chặn tạo QR cho `BASIC` (`0đ`), sửa `amount` giả mạo từ client, `amount <= 0` (`MSG-PAY-03`) & Citizen mua `PRO`. | 1. Gửi `POST /create` lần lượt với `BASIC`, `{PREMIUM, amount=1000}`, `{amount=0}` và `PRO`. | `BASIC` (`400`), `amount=1000` (`400`), `amount=0` (`400 MSG-PAY-03`), `PRO` (`403 Forbidden`). | Citizen đã đăng nhập. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY03` |
@@ -42,9 +42,12 @@
 | **Function 10.2: Recycler KYB Eligibility & Map Priority Boost (`R-07` & `M-03` / `M-05`)** | | | | | | | | | |
 | **ITC-PAY-011** | Recycler chưa duyệt KYB (`Pending`) không đủ điều kiện `PRO` & bị từ chối với `MSG-PAY-06`. | 1. Lấy JWT Recycler đang `Pending`.<br>2. Gọi `GET /service-packages` và `POST /service-payments/create` (`PRO`). | `PRO.isEligible = false`; tạo đơn trả `400 Bad Request` (`MSG-PAY-06`). | Tài khoản `Recycler` ở trạng thái `Pending`. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY11` |
 | **ITC-PAY-012** | Luồng liên module (`M-03` $\rightarrow$ `M-12` $\rightarrow$ `M-05`): Duyệt KYB, nâng `PREMIUM` $\rightarrow$ `PRO` (`365d`) & ghim nổi bật trên bản đồ. | 1. Đăng ký `Citizen`, nộp hồ sơ `ValidApplicationPayload`, `Admin` duyệt (`PUT /verification`).<br>2. Đăng nhập lại lấy JWT `Recycler`, bật `Online`.<br>3. Mua `PREMIUM` rồi mua tiếp `PRO` (`1,000,000đ`).<br>4. Gọi `GET /api/v1/recyclers/nearby`. | Nâng `PRO` kích hoạt ngay `currentTier = "Pro"`, `hasVerifiedBlueBadge = true`, `isFeaturedMapMarker = true`; API bản đồ trả về pin cơ sở với `isFeatured = true` & `hasVerifiedBadge = true`. | Hồ sơ mới nộp đủ tọa độ Hòa Lạc (`21.0135, 105.5265`). | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY12` |
-| **Function 10.3: Admin Package Catalog & Fee Configuration (`A-10` — `STT 123–126`)** | | | | | | | | | |
+| **Function 10.3: Admin Package Catalog & Fee Configuration (`A-10` — `STT 141–144`)** | | | | | | | | | |
 | **ITC-PAY-013** | Admin tạo gói mới (`201 MSG-PAY-07`), chặn giá dưới `2,000đ`, bật/tắt gói tạm & bảo vệ gói mặc định `BASIC`. | 1. Gọi `GET /admin/service-packages`.<br>2. Tạo `QA_BOOST_*` (`50,000đ`) & thử tạo giá `1,500đ`.<br>3. Tắt gói tạm (`200`) & thử tắt gói `BASIC`. | Tạo hợp lệ `201 MSG-PAY-07`; giá `1,500đ` -> `400`; tắt `QA_BOOST` -> `200`; tắt `BASIC` -> `400` (`BR-PAY-05`). | Đã đăng nhập `Admin`. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY13` |
 | **ITC-PAY-014** | Admin sửa giá gói bằng `PUT /admin/service-packages/{id}` áp dụng Grandfathering cho đơn đã mua (`BR-PAY-05`). | 1. Tạo gói tạm `QA_GF_*` giá `50,000đ / 30d`, Citizen mua & thanh toán.<br>2. Admin sửa giá lên `80,000đ / 45d`.<br>3. Kiểm tra đơn cũ & tạo đơn mới. | Đơn cũ giữ `amount = 50000, durationDays = 30`; đơn mới lấy `amount = 80000, durationDays = 45`. | Đã đăng nhập `Admin` & `Citizen`. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY14` |
-| **Function 10.4: Admin Financial Reconciliation & Anonymized Export (`A-11` — `STT 127–129`)** | | | | | | | | | |
+| **Function 10.4: Admin Financial Reconciliation & Anonymized Export (`A-11` — `STT 145–147`)** | | | | | | | | | |
 | **ITC-PAY-015** | Sổ cái lọc sai lệch, `ApproveAndActivate` đơn `Underpaid`, khớp thủ công `ManualMatchOrder` webhook mồ côi `WH-...` & chặn đối soát lặp (`409`). | 1. Tạo đơn `Underpaid`, lọc `/ledger?onlyAnomalies=true`, đối soát `ApproveAndActivate`, gọi lại lần 2.<br>2. Bắn webhook mồ côi không mã đơn, khớp `ManualMatchOrder` với 1 đơn `Pending`. | Lọc đúng đơn `Underpaid`; đối soát lần 1 -> `200 MSG-PAY-08` (`Resolved`), lần 2 -> `409 Conflict`; khớp `WH-...` chuyển đơn đích sang `Paid / Resolved`. | Đã đăng nhập `Admin` & có đơn lỗi + webhook mồ côi. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY15` |
 | **ITC-PAY-016** | Xuất bảng kê đối soát CSV/XLSX kèm header `X-EcoLink-Message-Code: MSG-ADM-02`, che mờ PII Email/SĐT (`BR-ADM-06`) & ghi `AuditLog`. | 1. Citizen có email & SĐT riêng hoàn tất thanh toán `PREMIUM`.<br>2. Admin gọi `/export?format=csv` & `xlsx`.<br>3. Tra cứu `/admin/audit-logs?action=EXPORT_RECONCILIATION`. | CSV trả `200`, header chứa `MSG-ADM-02`, xuất hiện `***@gmail.com` & không lộ email/SĐT thô; XLSX bắt đầu bằng `PK`; AuditLog ghi nhận sự kiện xuất. | Có đơn thanh toán gắn email/SĐT cụ thể. | Passed | Pending | Pending | N/A | `ServicePackageTests.PAY16` |
+| **Function 10.5: PRO 4-Criteria Eligibility Report & Live DB Role Sync (`BR-PAY-03`, `ProEligibilityReportDto`)** | | | | | | | | | |
+| **ITC-PAY-017** | Kiểm tra thẩm định đủ 4 tiêu chí đăng ký / đăng ký lại gói `PRO` (`ProEligibilityReportDto`): KYB `Verified` + hồ sơ hoàn chỉnh (`RequiresProfileReverification`), cảnh báo `<= 5`, rating `>= 4.0` & yêu cầu tối thiểu `1` đánh giá tích cực khi đăng ký lại (`BR-PAY-03`). | 1. Gọi `GET /api/v1/service-packages` với cơ sở thiếu KYB/đang chờ tái thẩm định hồ sơ (`RequiresProfileReverification = true`).<br>2. Gọi lại với cơ sở vượt ngưỡng cảnh cáo (`CurrentWarningCount > 5` — `MaxAllowedWarnings = 5`) hoặc đang còn gói `PRO` hoạt động.<br>3. Gọi lại với cơ sở từng dùng `PRO` (`IsReRegistration = true`) nhưng `TotalReviews = 0` hoặc `AverageRating < 4.0m`, sau đó bổ sung đánh giá đạt `>= 4.0`. | - `proEligibility` phản ánh chính xác 4 cờ: `isKybAndProfileValid`, `isWarningLimitOk`, `isPositiveFeedbackMet`, `isNotCurrentlyActivePro` và điền `blockingReasons`.<br>- Thiếu điều kiện tái đăng ký (`IsReRegistration = true` nhưng chưa đạt `MinRequiredRating = 4.0`, `MinRequiredReviewsForRenewal = 1`) trả `isEligible = false` và chặn `POST /service-payments/create` (`PRO`) theo `BR-PAY-03`; khi đủ cả 4 tiêu chí trả `isEligible = true`. | Có cơ sở `Recycler` với các trạng thái KYB, `WarningCount` và `Review` tương ứng. | Passed | Pending | Pending | N/A | `ProEligibilityReportDto` & `ServicePackagePaymentTests` (`BR-PAY-03`) |
+| **ITC-PAY-018** | Kiểm tra cơ sở `Recycler` vừa được Admin phê duyệt nâng cấp từ `User`/`Citizen` nhưng vẫn gửi JWT claim `role = "User"` cũ vẫn đọc được quyền `PRO` và tạo đơn VietQR `PRO` thành công nhờ tra cứu vai trò trực tiếp từ CSDL. | 1. Tài khoản `Citizen` đăng nhập lấy `staleUserJwt` (claim `role = "User"`), sau đó nộp hồ sơ KYB và được `Admin` duyệt lên `Recycler` (`Verified`).<br>2. Dùng chính `staleUserJwt` (chưa đăng nhập lại) gọi `GET /api/v1/service-packages` kiểm tra gói `PRO`.<br>3. Dùng `staleUserJwt` gọi `POST /api/v1/service-payments/create` với `packageCode = "PRO"` và kích hoạt thanh toán. | - Bước 2: `ServicePackageService.GetAvailablePackagesAsync` đọc trực tiếp `Users.Role` (`Recycler`) từ CSDL thay vì tin cậy claim JWT cũ, trả gói `PRO` với `isEligible = true`.<br>- Bước 3: `PaymentService.CreatePayInOrderAsync` đối chiếu DB `UserRole.Recycler`, cho phép tạo đơn VietQR `PRO` (`200/201`) và kích hoạt gói `Pro` thành công không cần bắt người dùng đăng xuất đăng nhập lại. | Tài khoản vừa hoàn tất phê duyệt KYB chuyển vai trò `User -> Recycler` trong DB. | Passed | Pending | Pending | N/A | `ServicePackageService.GetAvailablePackagesAsync` & `PaymentService.CreatePayInOrderAsync` (DB Role Sync) |

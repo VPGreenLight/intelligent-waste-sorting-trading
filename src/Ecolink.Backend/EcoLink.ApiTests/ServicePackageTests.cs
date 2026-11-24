@@ -347,35 +347,86 @@ public class ServicePackageTests
         using var onlineBody = JsonBody(new { isOnline = true });
         (await Api.SendAsync(HttpMethod.Patch, RecyclerRoutes.Availability, onlineBody, recyclerToken)).ShouldBe(200);
 
-        // 3. Mua PREMIUM trước rồi nâng bậc tức thì lên PRO (1,000,000đ / 365 ngày)
+        // 3. Cơ sở mới duyệt KYB (0 đánh giá < 50): thẻ PRO vẫn hiển thị trên danh mục nhưng bị khóa đăng ký (MSG-PAY-06)
+        var catRes = (await Api.GetAsync("/api/v1/service-packages", recyclerToken)).ShouldBe(200);
+        var catalogItems = catRes.Data().EnumerateArray().ToList();
+        var codes = catalogItems.Select(i => i.GetProperty("packageCode").GetString()).ToHashSet();
+        Assert.Contains("BASIC", codes);
+        Assert.Contains("PREMIUM", codes);
+        Assert.Contains("PRO", codes);
+
+        var proPkg = catalogItems.First(i => i.GetProperty("packageCode").GetString() == "PRO");
+        Assert.False(proPkg.GetProperty("isEligible").GetBoolean());
+        var proEval = proPkg.GetProperty("proEligibility");
+        Assert.False(proEval.GetProperty("isPositiveFeedbackMet").GetBoolean());
+        Assert.Equal(50, proEval.GetProperty("minRequiredReviews").GetInt32());
+
+        var blockedProRes = (await Api.PostJsonAsync("/api/v1/service-payments/create", new { packageCode = "PRO" }, recyclerToken))
+            .ShouldBe(400);
+        Assert.Equal("MSG-PAY-06", blockedProRes.Body.GetProperty("messageCode").GetString());
+
+        // 4. Mua gói PREMIUM (59,000đ) -> xác minh quyền lợi Ad-Free
         var premCode = Api.Unwrap((await Api.PostJsonAsync("/api/v1/service-payments/create", new { packageCode = "PREMIUM" }, recyclerToken)).ShouldBe(200).Body)
             .GetProperty("orderCode").GetString()!;
         (await Api.PostJsonAsync($"/api/v1/service-payments/simulate-transfer/{premCode}", new { scenario = "Exact" })).ShouldBe(200);
 
-        var proCreate = Api.Unwrap((await Api.PostJsonAsync("/api/v1/service-payments/create", new { packageCode = "PRO" }, recyclerToken)).ShouldBe(200).Body);
-        Assert.Equal(1_000_000m, proCreate.GetProperty("amount").GetDecimal());
-        Assert.Equal(365, proCreate.GetProperty("durationDays").GetInt32());
-        var proCode = proCreate.GetProperty("orderCode").GetString()!;
+        var premSubsData = Api.Unwrap((await Api.GetAsync("/api/v1/service-packages/subscriptions/me", recyclerToken)).ShouldBe(200).Body);
+        Assert.Equal("Premium", premSubsData.GetProperty("currentTier").GetString());
+        Assert.True(premSubsData.GetProperty("entitlements").GetProperty("isAdFree").GetBoolean());
 
-        (await Api.PostJsonAsync($"/api/v1/service-payments/simulate-transfer/{proCode}", new { scenario = "Exact" })).ShouldBe(200);
-
-        // 4. Kiểm tra quyền lợi PRO & trạng thái Tích xanh / Ghim nổi bật trên bản đồ GeoMatching
-        var subsData = Api.Unwrap((await Api.GetAsync("/api/v1/service-packages/subscriptions/me", recyclerToken)).ShouldBe(200).Body);
-        Assert.Equal("Pro", subsData.GetProperty("currentTier").GetString());
-        Assert.True(subsData.GetProperty("entitlements").GetProperty("hasVerifiedBlueBadge").GetBoolean());
-        Assert.True(subsData.GetProperty("entitlements").GetProperty("isFeaturedMapMarker").GetBoolean());
-
-        var mapRes = (await Api.GetAsync("/api/v1/recyclers/nearby", query: new Dictionary<string, string>
+        // 5. Admin tạo gói thương mại đẩy ghim không yêu cầu kiểm duyệt >= 50 đánh giá để xác minh luồng Tích xanh & GeoMatching
+        var pinCode = UniqueUpperCode("QA_PIN");
+        var createPinPkgRes = (await Api.PostJsonAsync("/api/v1/admin/service-packages", new
         {
-            ["lat"] = "21.0135",
-            ["lng"] = "105.5265",
-            ["radiusKm"] = "10"
-        })).ShouldBe(200);
+            packageCode = pinCode,
+            packageName = "Gói QA Ghim Nổi Bật",
+            targetRole = "Recycler",
+            description = "Gói phục vụ kiểm thử Tích xanh & Ghim nổi bật",
+            requiresVerifiedKyb = false,
+            priceVnd = 50_000m,
+            durationDays = 30,
+            displayOrder = 98,
+            isActive = true,
+            features = new
+            {
+                tierName = "Pro",
+                adFree = true,
+                ecoPlusBadge = true,
+                verifiedBlueBadge = true,
+                featuredMapMarker = true,
+                mapPriorityBoost = 100,
+                dailyPointMultiplier = 1.2m
+            }
+        }, adminToken)).ShouldBe(201);
+        var pinPkgId = Api.Unwrap(createPinPkgRes.Body).GetProperty("id").GetGuid();
 
-        var targetPin = Api.Unwrap(mapRes.Body).GetProperty("items").EnumerateArray()
-            .First(x => x.GetProperty("id").GetGuid() == recUserId);
-        Assert.True(targetPin.GetProperty("isFeatured").GetBoolean());
-        Assert.True(targetPin.GetProperty("hasVerifiedBadge").GetBoolean());
+        try
+        {
+            var pinOrderCode = Api.Unwrap((await Api.PostJsonAsync("/api/v1/service-payments/create", new { packageCode = pinCode }, recyclerToken)).ShouldBe(200).Body)
+                .GetProperty("orderCode").GetString()!;
+            (await Api.PostJsonAsync($"/api/v1/service-payments/simulate-transfer/{pinOrderCode}", new { scenario = "Exact" })).ShouldBe(200);
+
+            var subsData = Api.Unwrap((await Api.GetAsync("/api/v1/service-packages/subscriptions/me", recyclerToken)).ShouldBe(200).Body);
+            Assert.True(subsData.GetProperty("entitlements").GetProperty("hasVerifiedBlueBadge").GetBoolean());
+            Assert.True(subsData.GetProperty("entitlements").GetProperty("isFeaturedMapMarker").GetBoolean());
+
+            var mapRes = (await Api.GetAsync("/api/v1/recyclers/nearby", query: new Dictionary<string, string>
+            {
+                ["lat"] = "21.0135",
+                ["lng"] = "105.5265",
+                ["radiusKm"] = "10"
+            })).ShouldBe(200);
+
+            var targetPin = Api.Unwrap(mapRes.Body).GetProperty("items").EnumerateArray()
+                .First(x => x.GetProperty("id").GetGuid() == recUserId);
+            Assert.True(targetPin.GetProperty("isFeatured").GetBoolean());
+            Assert.True(targetPin.GetProperty("hasVerifiedBadge").GetBoolean());
+        }
+        finally
+        {
+            using var cleanupBody = JsonBody(new { isActive = false, reason = "Dọn gói kiểm thử PAY12" });
+            await Api.SendAsync(HttpMethod.Patch, $"/api/v1/admin/service-packages/{pinPkgId}/status", cleanupBody, adminToken);
+        }
     }
 
     // ITC-PAY-013

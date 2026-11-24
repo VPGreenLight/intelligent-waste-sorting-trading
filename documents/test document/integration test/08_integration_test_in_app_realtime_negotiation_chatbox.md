@@ -5,15 +5,15 @@
 | Feature | `In-App Real-Time Negotiation Chatbox (M-08)` | | | |
 | :--- | :--- | :---: | :---: | :---: |
 | **Test requirement** | Kiểm thử tích hợp toàn diện phân hệ Chat Thương lượng Thời gian thực trong Ứng dụng (`U-08`, `R-05`): Kiểm soát quyền truy cập phòng chat theo thành viên đơn bàn giao (`BR-NEG-01`), Tải ảnh đính kèm lên R2/Local (`POST /attachments`), Gửi tin nhắn văn bản & hình ảnh (`POST /messages`), Gửi Đề xuất giá/khối lượng/giờ hẹn (`POST /proposals`, `BR-NEG-03`, `BR-NEG-05`), Cơ chế Phản đề xuất tự động ghi đè đề xuất cũ sang `Superseded` (`BR-NEG-04`), Chặn người gửi tự duyệt đề xuất của chính mình, Chấp nhận Đề xuất khóa cứng `AgreedPricePerKg` & `ConfirmedTimeSlot` vào đơn bàn giao Module 6 (`BR-NEG-06`), Chấp nhận nhanh điều khoản ban đầu (`POST /accept-terms`), và Đánh dấu đã đọc (`PUT /messages/read`) (`EcoLink.ApiTests/NegotiationChatTests.cs`). | | | |
-| **Number of TCs** | **15** | | | |
+| **Number of TCs** | **17** | | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
-| *Round 1* | 15 | 0 | 0 | 0 |
-| *Round 2* | 0 | 0 | 15 | 0 |
-| *Round 3* | 0 | 0 | 15 | 0 |
+| *Round 1* | 17 | 0 | 0 | 0 |
+| *Round 2* | 0 | 0 | 17 | 0 |
+| *Round 3* | 0 | 0 | 17 | 0 |
 
 ---
 
-## 2. Integration Test Case Specification (`ITC-NEG-001` $\rightarrow$ `ITC-NEG-015`)
+## 2. Integration Test Case Specification (`ITC-NEG-001` $\rightarrow$ `ITC-NEG-017`)
 
 | Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
 | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
@@ -36,4 +36,7 @@
 | **ITC-NEG-013** | Kiểm tra khóa gửi thêm Đề xuất mới sau khi hai bên đã chốt thỏa thuận (`negotiationStatus = Accepted` – `BR-NEG-02`). | 1. Trên đơn đã chấp nhận Đề xuất ở `ITC-NEG-012` (`negotiationStatus = "Accepted"`), `Citizen` thử gửi thêm `POST /proposals` mới. | - Bị chặn với HTTP Status `400 Bad Request`, `messageCode = "BR-NEG-02"`. | Đơn đã ở trạng thái `negotiationStatus = "Accepted"`. | Passed | Pending | Pending | N/A | `NegotiationChatTests.NEG08_RespondToProposal_CounterpartyAccepts_LocksAgreedPriceAndTimeSlotIntoOrder_BrNeg06` |
 | **ITC-NEG-014** | Kiểm tra `Recycler` chấp nhận trực tiếp điều khoản ban đầu của đơn (`POST /api/v1/trade/orders/{orderId}/accept-terms`) mà không cần tạo Proposal trung gian. | 1. Tạo đơn bàn giao mới (`Pending`).<br>2. `Collector` gọi `POST /api/v1/trade/orders/{orderId}/accept-terms`. | - HTTP Status: `200 OK`, `messageCode = "MSG-NEG-03"`.<br>- `negotiationStatus = "Accepted"`, `orderStatus = "Accepted"`, `agreedPricePerKg > 0`. | Đơn bàn giao mới đang ở trạng thái `Pending`. | Passed | Pending | Pending | N/A | `NegotiationChatTests.NEG09_AcceptOrderTerms_DirectAcceptByRecyclerWithoutProposal_LocksNegotiationStatusAccepted` |
 | **ITC-NEG-015** | Kiểm tra đánh dấu toàn bộ tin nhắn chưa đọc của đối phương là đã đọc (`PUT /api/v1/trade/orders/{orderId}/messages/read`) đưa `unreadCount` về `0`. | 1. `Citizen` gửi 2 tin nhắn cho `Collector`.<br>2. `Collector` gọi `PUT /api/v1/trade/orders/{orderId}/messages/read`.<br>3. `Collector` gọi lại `GET /api/v1/trade/orders/{orderId}/messages`. | - Bước 2: trả về `200 OK`, `messageCode = "MSG-NEG-READ-OK"`, số tin nhắn được đánh dấu $\ge 2$.<br>- Bước 3: `data.unreadCount = 0`. | Có tin nhắn chưa đọc gửi cho `collector`. | Passed | Pending | Pending | N/A | `NegotiationChatTests.NEG10_MarkMessagesAsRead_UpdatesUnreadCountToZeroForRecipient` |
+| **Function 8.5: Inquiry Draft Order Lifecycle, Thread List Enrichment & 30-Day Slot Guard (`POST/GET /api/v1/trade/orders`)** | | | | | | | | | |
+| **ITC-NEG-016** | Kiểm tra khởi tạo đơn nháp hỏi thăm (`IsInquiryDraft = true` $\rightarrow$ `IsInquiryOnly = true`), khử trùng lặp luồng mở và nâng cấp thành đơn bàn giao chính thức `Pending`. | 1. `Citizen` gửi `POST /api/v1/trade/orders` với `isInquiryDraft = true` tới `Collector`.<br>2. Gửi lại yêu cầu hỏi thăm thứ 2 khi đơn nháp còn mở.<br>3. Nâng cấp từ hội thoại/đơn nháp thành đơn chính thức (`isInquiryDraft = false` kèm địa chỉ & thời gian thu gom). | - Bước 1: tạo đơn `Status = "Negotiating"`, `IsInquiryOnly = true`, `Note` chứa thẻ `[INQUIRY]`.<br>- Bước 2: tái sử dụng/khử trùng lặp đơn mở hiện có giữa hai bên.<br>- Bước 3: nâng cấp sang đơn `Pending` chính thức (bỏ tag `[INQUIRY]`, `IsInquiryOnly = false`) mà không khóa trước `AgreedPricePerKg`. | `Citizen` và `Collector` hợp lệ. | Passed | Pending | Pending | N/A | `TradeController` & `NegotiationChatUnitTests.UTC022/UTC024` |
+| **ITC-NEG-017** | Kiểm tra danh sách hội thoại `GET /api/v1/trade/orders` (tự động bao gồm các luồng hỏi giá `isInquiryOnly = true` và đơn bàn giao chính thức) làm giàu `lastMessagePreview`, `unreadCount`, sắp xếp `lastMessageAt` giảm dần & kiểm tra ngưỡng lịch hẹn 30 ngày (`BR-NEG-04`). | 1. Tạo nhiều hội thoại (gồm tin nhắn văn bản, ảnh `Image`, đề xuất `Proposal`, tin `System`).<br>2. Gọi `GET /api/v1/trade/orders` với token của thành viên.<br>3. Thử gửi đề xuất có `proposedTimeSlot > UtcNow + 30 ngày`. | - Bước 2: trả `200 OK`, mỗi phần tử có plain-text `lastMessagePreview` (`"Đã gửi ảnh phế liệu"`, `"Đề xuất: ... đ/kg · ... kg"`, văn bản cắt gọn tối đa 90 ký tự), `unreadCount` loại trừ tin nhắn của chính mình và `SenderRole == "System"`, sắp xếp giảm dần theo `lastMessageAt`.<br>- Bước 3: bị chặn `400 Bad Request` (`BR-NEG-04`, `HandoverTradeSyncHelper.ValidateAppointmentWindowUtc`, tối đa 30 ngày). | Có hội thoại chứa đa dạng loại tin nhắn & tin chưa đọc. | Passed | Pending | Pending | N/A | `TradeController.GetOrders`, `HandoverTradeSyncHelper.ValidateAppointmentWindowUtc` & `NegotiationChatUnitTests.UTC025..027` |
 

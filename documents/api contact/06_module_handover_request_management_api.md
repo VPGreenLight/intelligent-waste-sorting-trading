@@ -1,5 +1,5 @@
-# TÀI LIỆU ĐẶC TẢ API – MODULE 7: QUẢN LÝ YÊU CẦU BÀN GIAO PHẾ LIỆU & LỊCH HẸN THU GOM (HANDOVER REQUEST MANAGEMENT)
-**Mã phân hệ:** `HND` (`Use Cases U-06: Create Handover Request`, `U-07: Update / Cancel Handover Request`, `R-03: Accept / Reject Handover Request`, `R-04: Cancel Collection Appointment`, `JOB-03: Auto-Expire Pending Requests`)  
+# TÀI LIỆU ĐẶC TẢ API – MODULE 6: QUẢN LÝ YÊU CẦU BÀN GIAO PHẾ LIỆU & LỊCH HẸN THU GOM (HANDOVER REQUEST MANAGEMENT)
+**Mã phân hệ:** `M-06` / `HND` (`Use Cases U-06: Create Handover Request`, `U-07: Update / Cancel Handover Request`, `R-03: Accept / Reject Handover Request`, `R-04: Cancel Collection Appointment`, `JOB-03: Auto-Expire Pending Requests`)  
 **Controllers:** [`HandoverRequestController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/HandoverRequestController.cs), [`RecyclerHandoverController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/RecyclerHandoverController.cs)  
 **Service thực thi & Background Job:** [`HandoverRequestService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/HandoverRequestService.cs) ([`IHandoverRequestService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Interfaces/IHandoverRequestService.cs)), [`HandoverExpirationJob.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Services/HandoverExpirationJob.cs)  
 **Entities & Enums:** [`HandoverRequest.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/HandoverRequest.cs) (`HandoverRequest`, `HandoverRequestItem`), [`HandoverStatus.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Enums/HandoverStatus.cs)  
@@ -10,20 +10,22 @@
 
 ## 1. TỔNG QUAN DANH SÁCH ENDPOINTS & TIẾN TRÌNH NỀN
 
-### 1.1. Danh mục RESTful API Endpoints
+### 1.1. Danh mục RESTful API Endpoints (`M-06` – `10` APIs, `STT 045–054`)
 
-| STT | Phương thức | Endpoint URI | Quyền truy cập (`[Authorize]`) | Use Case | Chức năng nghiệp vụ | Mã thông báo / Quy tắc |
-|:---:|:---:|:---|:---:|:---:|:---|:---|
-| 1 | `POST` | `/api/v1/handover-requests` | `User`, `Citizen` | `U-06` | Người dân tạo yêu cầu bàn giao phế liệu gửi tới một cơ sở thu gom (`Recycler`), sinh mã định danh `HND-yyyyMMdd-NNNN`. | `BR-HND-01`, `BR-HND-LIMIT`, `BR-NEG-04`, `MSG-HND-01` |
-| 2 | `GET` | `/api/v1/handover-requests` | `User`, `Citizen` | `U-06`, `U-07` | Lấy danh sách yêu cầu bàn giao của người dân đang đăng nhập, hỗ trợ lọc theo trạng thái (`status`) và phân trang. | `200 OK`, `BR-HND-02`, `BR-HND-08` |
-| 3 | `GET` | `/api/v1/handover-requests/{id:guid}` | `User`, `Citizen` (Chủ đơn) | `U-06`, `U-07` | Xem chi tiết một yêu cầu bàn giao của người dân. Số điện thoại cơ sở thu gom chỉ hiển thị sau khi đơn được `Accepted` (`BR-HND-08`). | `200 OK`, `BR-HND-08`, `MSG-NOT-FOUND` |
-| 4 | `PUT` | `/api/v1/handover-requests/{id:guid}` | `User`, `Citizen` (Chủ đơn) | `U-07` | Chỉnh sửa danh sách phế liệu, ảnh chụp, khung giờ hẹn hoặc địa chỉ thu gom khi yêu cầu còn ở trạng thái `Pending`. | `BR-HND-01`, `BR-HND-02`, `BR-NEG-04`, `MSG-GEN-01` |
-| 5 | `POST` | `/api/v1/handover-requests/{id:guid}/cancel` | `User`, `Citizen` (Chủ đơn) | `U-07` | Người dân hủy yêu cầu bàn giao kèm lý do bắt buộc. Nếu hủy trong vòng `4 giờ` trước lịch hẹn đã xác nhận sẽ bị ghi nhận hủy muộn (`isLateCancellation = true`). | `BR-HND-02`, `BR-HND-06`, `MSG-HND-05`, `MSG-HND-06` |
-| 6 | `GET` | `/api/v1/recycler/handover-requests` | `Recycler`, `Collector` | `R-03`, `R-04` | Lấy danh sách yêu cầu bàn giao gửi đến chính cơ sở thu gom đang đăng nhập (`BR-HND-03`), lọc theo `status` và phân trang. | `200 OK`, `BR-HND-03`, `BR-HND-08` |
-| 7 | `GET` | `/api/v1/recycler/handover-requests/{id:guid}` | `Recycler`, `Collector` (Nhận đơn) | `R-03`, `R-04` | Xem chi tiết yêu cầu bàn giao phía cơ sở thu gom. Địa chỉ chi tiết và SĐT người dân được ẩn khi đơn chưa `Accepted` (`BR-HND-08`); tuyệt đối không trả tọa độ GPS (`BR-MTH-05`). | `200 OK`, `BR-HND-03`, `BR-HND-08`, `BR-MTH-05` |
-| 8 | `POST` | `/api/v1/recycler/handover-requests/{id:guid}/accept` | `Recycler`, `Collector` (Nhận đơn) | `R-03` | Cơ sở thu gom chấp nhận yêu cầu bàn giao, khóa khung giờ hẹn chính thức (`confirmedTimeSlot = proposedTimeSlot`) và mở quyền xem thông tin liên hệ hai bên. | `BR-HND-02`, `BR-HND-03`, `BR-NEG-04`, `BR-NEG-05`, `BR-HND-08`, `MSG-HND-02` |
-| 9 | `POST` | `/api/v1/recycler/handover-requests/{id:guid}/reject` | `Recycler`, `Collector` (Nhận đơn) | `R-03` | Cơ sở thu gom từ chối yêu cầu bàn giao đang `Pending` / `Negotiating` kèm lý do bắt buộc (`1..500` ký tự). | `BR-HND-02`, `BR-HND-03`, `BR-HND-06`, `MSG-GEN-01` |
-| 10 | `POST` | `/api/v1/recycler/handover-requests/{id:guid}/cancel` | `Recycler`, `Collector` (Nhận đơn) | `R-04` | Cơ sở thu gom hủy lịch hẹn đã xác nhận (`Accepted` / `Scheduled`) trước khi thu gom kèm lý do bắt buộc. | `BR-HND-02`, `BR-HND-03`, `BR-HND-06`, `MSG-HND-05`, `MSG-HND-06` |
+> Tham chiếu Inventory: [`00_api_inventory_and_endpoint_statistics.md`](./00_api_inventory_and_endpoint_statistics.md) (`STT 045` $\rightarrow$ `054`).
+
+| STT | Inventory ID | Phương thức | Endpoint URI | Quyền truy cập (`[Authorize]`) | Use Case | Chức năng nghiệp vụ | Mã thông báo / Quy tắc |
+|:---:|:---:|:---:|:---|:---:|:---:|:---|:---|
+| 1 | `045` | `POST` | `/api/v1/handover-requests` | `User`, `Citizen` | `U-06` | Người dân tạo yêu cầu bàn giao phế liệu gửi tới một cơ sở thu gom (`Recycler`), sinh mã định danh `HND-yyyyMMdd-NNNN`. | `BR-HND-01`, `BR-HND-LIMIT`, `BR-NEG-04`, `MSG-HND-01` |
+| 2 | `046` | `GET` | `/api/v1/handover-requests` | `User`, `Citizen` | `U-06`, `U-07` | Lấy danh sách yêu cầu bàn giao của người dân đang đăng nhập, hỗ trợ lọc theo trạng thái (`status`) và phân trang. | `200 OK`, `BR-HND-02`, `BR-HND-08` |
+| 3 | `047` | `GET` | `/api/v1/handover-requests/{id:guid}` | `User`, `Citizen` (Chủ đơn) | `U-06`, `U-07` | Xem chi tiết một yêu cầu bàn giao của người dân. Số điện thoại cơ sở thu gom chỉ hiển thị sau khi đơn được `Accepted` (`BR-HND-08`). | `200 OK`, `BR-HND-08`, `MSG-NOT-FOUND` |
+| 4 | `048` | `PUT` | `/api/v1/handover-requests/{id:guid}` | `User`, `Citizen` (Chủ đơn) | `U-07` | Chỉnh sửa danh sách phế liệu, ảnh chụp, khung giờ hẹn hoặc địa chỉ thu gom khi yêu cầu còn ở trạng thái `Pending`. | `BR-HND-01`, `BR-HND-02`, `BR-NEG-04`, `MSG-GEN-01` |
+| 5 | `049` | `POST` | `/api/v1/handover-requests/{id:guid}/cancel` | `User`, `Citizen` (Chủ đơn) | `U-07` | Người dân hủy yêu cầu bàn giao kèm lý do bắt buộc. Nếu hủy trong vòng `4 giờ` trước lịch hẹn đã xác nhận sẽ bị ghi nhận hủy muộn (`isLateCancellation = true`). | `BR-HND-02`, `BR-HND-06`, `MSG-HND-05`, `MSG-HND-06` |
+| 6 | `050` | `GET` | `/api/v1/recycler/handover-requests` | `Recycler`, `Collector` | `R-03`, `R-04` | Lấy danh sách yêu cầu bàn giao gửi đến chính cơ sở thu gom đang đăng nhập (`BR-HND-03`), lọc theo `status` và phân trang. | `200 OK`, `BR-HND-03`, `BR-HND-08` |
+| 7 | `051` | `GET` | `/api/v1/recycler/handover-requests/{id:guid}` | `Recycler`, `Collector` (Nhận đơn) | `R-03`, `R-04` | Xem chi tiết yêu cầu bàn giao phía cơ sở thu gom. Địa chỉ chi tiết và SĐT người dân được ẩn khi đơn chưa `Accepted` (`BR-HND-08`); tuyệt đối không trả tọa độ GPS (`BR-MTH-05`). | `200 OK`, `BR-HND-03`, `BR-HND-08`, `BR-MTH-05` |
+| 8 | `052` | `POST` | `/api/v1/recycler/handover-requests/{id:guid}/accept` | `Recycler`, `Collector` (Nhận đơn) | `R-03` | Cơ sở thu gom chấp nhận yêu cầu bàn giao, khóa khung giờ hẹn chính thức (`confirmedTimeSlot = proposedTimeSlot`) và mở quyền xem thông tin liên hệ hai bên. | `BR-HND-02`, `BR-HND-03`, `BR-NEG-04`, `BR-NEG-05`, `BR-HND-08`, `MSG-HND-02` |
+| 9 | `053` | `POST` | `/api/v1/recycler/handover-requests/{id:guid}/reject` | `Recycler`, `Collector` (Nhận đơn) | `R-03` | Cơ sở thu gom từ chối yêu cầu bàn giao đang `Pending` / `Negotiating` kèm lý do bắt buộc (`1..500` ký tự). | `BR-HND-02`, `BR-HND-03`, `BR-HND-06`, `MSG-GEN-01` |
+| 10 | `054` | `POST` | `/api/v1/recycler/handover-requests/{id:guid}/cancel` | `Recycler`, `Collector` (Nhận đơn) | `R-04` | Cơ sở thu gom hủy lịch hẹn đã xác nhận (`Accepted` / `Scheduled`) trước khi thu gom kèm lý do bắt buộc. | `BR-HND-02`, `BR-HND-03`, `BR-HND-06`, `MSG-HND-05`, `MSG-HND-06` |
 
 ---
 
@@ -466,7 +468,7 @@ Cấu trúc Body giống hệt `CreateHandoverRequest` (ngoại trừ việc kh�
 | **`200 OK`** | `MSG-HND-06` | `BR-HND-06` | `"Đã hủy. Việc hủy trong vòng 4 giờ trước lịch hẹn được ghi nhận là hủy muộn."` |
 | **`400 Bad Request`** | `MSG-GEN-01` | `BR-HND-LIMIT` | `"Bạn chỉ có thể có tối đa 3 yêu cầu đang xử lý cùng lúc."` |
 | **`400 Bad Request`** | `MSG-GEN-01` | `BR-HND-01` | `"Bạn không thể gửi yêu cầu bàn giao cho chính cơ sở của mình."`<br>`"Cơ sở thu gom hiện không nhận yêu cầu bàn giao."`<br>`"Cơ sở thu gom không nhận một trong các loại phế liệu đã chọn."`<br>`"Khối lượng tối thiểu cơ sở thu gom nhận là {Min} kg cho mỗi loại."`<br>`"Vui lòng đính kèm từ 1 đến 5 ảnh."` |
-| **`400 Bad Request`** | `MSG-GEN-01` | `BR-NEG-04` | `"Khung giờ thu gom phải cách hiện tại tối thiểu 2 giờ."`<br>`"Chỉ được hẹn trong vòng 7 ngày tới."`<br>`"Cơ sở thu gom nghỉ vào ngày đã chọn."`<br>`"Khung giờ nằm ngoài giờ hoạt động của cơ sở ({Open} - {Close})."`<br>`"Khung giờ đề xuất đã qua, không thể chấp nhận. Vui lòng từ chối hoặc trao đổi lại với người dân."` |
+| **`400 Bad Request`** | `MSG-GEN-01` | `BR-NEG-04` | `"Khung giờ thu gom phải cách hiện tại tối thiểu 2 giờ."`<br>`"Chỉ được chọn ngày hẹn từ hôm nay đến tối đa 30 ngày tới."`<br>`"Cơ sở thu gom nghỉ vào ngày đã chọn."`<br>`"Khung giờ nằm ngoài giờ hoạt động của cơ sở ({Open} - {Close})."`<br>`"Khung giờ đề xuất đã qua, không thể chấp nhận. Vui lòng từ chối hoặc trao đổi lại với người dân."` |
 | **`400 Bad Request`** | `MSG-GEN-01` | `BR-HND-02` | `"Chỉ có thể chỉnh sửa yêu cầu đang ở trạng thái Pending."`<br>`"Không thể chấp nhận / từ chối / hủy yêu cầu đang ở trạng thái {Status}."` |
 | **`400 Bad Request`** | `MSG-GEN-01` | `BR-HND-06` | `"Vui lòng nhập lý do."` / `"Lý do tối đa 500 ký tự."` |
 | **`404 Not Found`** | `MSG-NOT-FOUND` | `BR-HND-03` | `"Không tìm thấy yêu cầu bàn giao."` / `"Không tìm thấy cơ sở thu gom."` |

@@ -1,12 +1,12 @@
-# TÀI LIỆU ĐẶC TẢ API – MODULE 8: HOÀN TẤT BÀN GIAO, BIÊN NHẬN ĐIỆN TỬ & LỊCH SỬ GIAO DỊCH (HANDOVER COMPLETION & TRANSACTION RECEIPT)
-**Mã phân hệ:** `HND` & `GAM` (`Use Cases R-06: Issue Digital Receipt`, `U-09: Confirm Receipt & Complete Handover`, `U-12: View Transaction History`, `JOB-01: Auto-Complete Unconfirmed Receipts`)  
+# TÀI LIỆU ĐẶC TẢ API – MODULE 7: HOÀN TẤT BÀN GIAO, BIÊN NHẬN ĐIỆN TỬ & LỊCH SỬ GIAO DỊCH (HANDOVER COMPLETION & TRANSACTION RECEIPT)
+**Mã phân hệ:** `M-07` (`HND` & `GAM` – `Use Cases R-06: Issue Digital Receipt`, `U-09: Confirm Receipt & Complete Handover`, `U-12: View Transaction History`, `JOB-01: Auto-Complete Unconfirmed Receipts`)  
 **Controllers:** [`RecyclerReceiptController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/RecyclerReceiptController.cs) (`RecyclerReceiptController`, `RecyclerTransactionController`), [`HandoverReceiptController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/HandoverReceiptController.cs) (`HandoverReceiptController`, `TransactionHistoryController`)  
-**Services thực thi & Background Job:** [`HandoverReceiptService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/HandoverReceiptService.cs) ([`IHandoverReceiptService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Interfaces/IHandoverReceiptService.cs)), [`GamificationService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/TradeAndGamificationServices.cs#L156-L246) ([`IGamificationService`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Interfaces/ApplicationInterfaces.cs#L49-L55)), [`ReceiptAutoCompleteJob.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Services/ReceiptAutoCompleteJob.cs)  
+**Services thực thi & Background Job:** [`HandoverReceiptService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/HandoverReceiptService.cs) ([`IHandoverReceiptService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Interfaces/IHandoverReceiptService.cs)), [`HandoverTradeSyncHelper.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/HandoverTradeSyncHelper.cs), [`ReceiptAutoCompleteJob.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Services/ReceiptAutoCompleteJob.cs)  
 **Entities & Enums:** [`HandoverReceipt.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/HandoverReceipt.cs), [`HandoverRequest.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/HandoverRequest.cs), [`HandoverStatus.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Enums/HandoverStatus.cs)  
 **DTOs:** [`HandoverReceiptDtos.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Dtos/HandoverReceiptDtos.cs)  
 **Base Routes:**
-- `/api/v1/recycler/handover-requests/{requestId:guid}/receipt` (Recycler lập & xem biên nhận – `R-06`)
-- `/api/v1/handover-requests/{requestId:guid}/receipt` (Người dân xem & xác nhận biên nhận – `U-09`)
+- `/api/v1/recycler/handover-requests/{requestId:guid}/receipt` (Recycler tải ảnh cân, lập & xem biên nhận – `R-06`)
+- `/api/v1/handover-requests/{requestId:guid}/receipt` (Người dân xem, xác nhận & khiếu nại biên nhận – `U-09`)
 - `/api/v1/transactions` (Lịch sử giao dịch Người dân – `U-12`)
 - `/api/v1/recycler/transactions` (Lịch sử giao dịch Cơ sở thu gom – `U-12`)
 
@@ -14,17 +14,21 @@
 
 ## 1. TỔNG QUAN DANH SÁCH ENDPOINTS & TIẾN TRÌNH NỀN
 
-### 1.1. Danh mục RESTful API Endpoints
+### 1.1. Danh mục RESTful API Endpoints (`M-07` – `9` APIs, `STT 055–063`)
 
-| STT | Phương thức | Endpoint URI | Quyền truy cập (`[Authorize]`) | Use Case | Chức năng nghiệp vụ | Mã thông báo / Quy tắc |
-|:---:|:---:|:---|:---:|:---:|:---|:---|
-| 1 | `POST` | `/api/v1/recycler/handover-requests/{requestId:guid}/receipt/preview` | `Recycler`, `Collector` (Nhận đơn) | `R-06` | Xem trước biên nhận số (không lưu CSDL): tính thành tiền từng dòng, tổng khối lượng, tổng tiền, điểm thưởng dự kiến và kiểm tra độ lệch khối lượng $> 20\%$ (`MSG-HND-04`). | `BR-HND-02`, `BR-HND-03`, `BR-HND-04`, `BR-HND-05`, `MSG-HND-04` |
-| 2 | `POST` | `/api/v1/recycler/handover-requests/{requestId:guid}/receipt` | `Recycler`, `Collector` (Nhận đơn) | `R-06` | Phát hành biên nhận số chính thức (`RCP-yyyy-NNNN`), khóa cứng đơn giá giao dịch (`AgreedPricePerKg`), lưu 1–5 ảnh đồng hồ cân (`BR-HND-04`) và chuyển đơn sang `AwaitingConfirmation`. | `201 Created`, `BR-HND-04`, `BR-HND-05`, `AF-01`, `EF-02`, `MSG-HND-04` |
-| 3 | `GET` | `/api/v1/recycler/handover-requests/{requestId:guid}/receipt` | `Recycler`, `Collector` (Nhận đơn) | `R-06` | Cơ sở thu gom xem lại chi tiết biên nhận điện tử đã phát hành cho đơn bàn giao. | `200 OK`, `BR-HND-03`, `MSG-NOT-FOUND` |
-| 4 | `GET` | `/api/v1/handover-requests/{requestId:guid}/receipt` | `User`, `Citizen` (Chủ đơn) | `U-09` | Người dân tra cứu chi tiết biên nhận, ảnh minh chứng đồng hồ cân, cảnh báo lệch khối lượng (`MSG-HND-04`) và điểm xanh sẽ nhận trước khi xác nhận. | `200 OK`, `BR-HND-04`, `MSG-HND-04`, `MSG-NOT-FOUND` |
-| 5 | `POST` | `/api/v1/handover-requests/{requestId:guid}/receipt/confirm` | `User`, `Citizen` (Chủ đơn) | `U-09` | Người dân xác nhận đã nhận đủ tiền và hoàn tất giao dịch (`Completed`). Khóa biên nhận vĩnh viễn (`BR-HND-07`) và cộng điểm xanh cho cả hai bên (`BR-GAM-01`). | `200 OK`, `BR-HND-04`, `BR-HND-07`, `BR-GAM-01`, `MSG-HND-03` |
-| 6 | `GET` | `/api/v1/transactions` | `User`, `Citizen` | `U-12` | Xem lịch sử các giao dịch đã hoàn tất của người dân, hỗ trợ lọc theo khoảng ngày (`from`, `to`), phân trang và thống kê tổng lũy kế toàn thời gian. | `200 OK` |
-| 7 | `GET` | `/api/v1/recycler/transactions` | `Recycler`, `Collector` | `U-12` | Xem lịch sử các giao dịch thu mua đã hoàn tất của cơ sở thu gom, hỗ trợ lọc theo khoảng ngày (`from`, `to`), phân trang và thống kê tổng lũy kế. | `200 OK` |
+> Tham chiếu Inventory: [`00_api_inventory_and_endpoint_statistics.md`](./00_api_inventory_and_endpoint_statistics.md) (`STT 055` $\rightarrow$ `063`).
+
+| STT | Inventory ID | Phương thức | Endpoint URI | Quyền truy cập (`[Authorize]`) | Use Case | Chức năng nghiệp vụ | Mã thông báo / Quy tắc |
+|:---:|:---:|:---:|:---|:---:|:---:|:---|:---|
+| 1 | `055` | `POST` | `/api/v1/recycler/handover-requests/{requestId:guid}/receipt/upload-proof` | `Recycler`, `Collector` | `R-06` | Tải ảnh chụp đồng hồ cân phế liệu (`jpg`, `png`, `webp`, tối đa `10 MB`) lên Cloudflare R2 trước khi lập biên nhận (`BR-HND-04`). | `200 OK`, `BR-HND-04`, `MSG-CLS-01` |
+| 2 | `056` | `POST` | `/api/v1/recycler/handover-requests/{requestId:guid}/receipt/preview` | `Recycler`, `Collector` (Nhận đơn) | `R-06` | Xem trước biên nhận số (không lưu CSDL): tính thành tiền từng dòng, tổng khối lượng, tổng tiền, điểm thưởng dự kiến và kiểm tra độ lệch khối lượng $> 20\%$ (`MSG-HND-04`). | `BR-HND-02`, `BR-HND-03`, `BR-HND-04`, `BR-HND-05`, `MSG-HND-04` |
+| 3 | `057` | `POST` | `/api/v1/recycler/handover-requests/{requestId:guid}/receipt` | `Recycler`, `Collector` (Nhận đơn) | `R-06` | Phát hành biên nhận số chính thức (`RCP-yyyy-NNNN`), khóa cứng đơn giá giao dịch (`AgreedPricePerKg`), lưu 1–5 ảnh đồng hồ cân (`BR-HND-04`) và chuyển đơn sang `AwaitingConfirmation`. | `201 Created`, `BR-HND-04`, `BR-HND-05`, `AF-01`, `EF-02`, `MSG-HND-04` |
+| 4 | `058` | `GET` | `/api/v1/recycler/handover-requests/{requestId:guid}/receipt` | `Recycler`, `Collector` (Nhận đơn) | `R-06` | Cơ sở thu gom xem lại chi tiết biên nhận điện tử đã phát hành cho đơn bàn giao. | `200 OK`, `BR-HND-03`, `MSG-NOT-FOUND` |
+| 5 | `059` | `GET` | `/api/v1/recycler/transactions` | `Recycler`, `Collector` | `U-12` | Xem lịch sử các giao dịch thu mua đã hoàn tất của cơ sở thu gom, hỗ trợ lọc theo khoảng ngày (`from`, `to`), `search` và phân trang. | `200 OK` |
+| 6 | `060` | `GET` | `/api/v1/handover-requests/{requestId:guid}/receipt` | `User`, `Citizen` (Chủ đơn) | `U-09` | Người dân tra cứu chi tiết biên nhận, ảnh minh chứng đồng hồ cân, cảnh báo lệch khối lượng (`MSG-HND-04`) và điểm xanh sẽ nhận trước khi xác nhận. | `200 OK`, `BR-HND-04`, `MSG-HND-04`, `MSG-NOT-FOUND` |
+| 7 | `061` | `POST` | `/api/v1/handover-requests/{requestId:guid}/receipt/confirm` | `User`, `Citizen` (Chủ đơn) | `U-09` | Người dân xác nhận đã nhận đủ tiền và hoàn tất giao dịch (`Completed`). Khóa biên nhận (`BR-HND-07`), cộng điểm xanh (`BR-GAM-01`) và đồng bộ `TradeOrder` + `ChatMessage` System. | `200 OK`, `BR-HND-04`, `BR-HND-07`, `BR-GAM-01`, `MSG-HND-03` |
+| 8 | `062` | `POST` | `/api/v1/handover-requests/{requestId:guid}/receipt/dispute` | `User`, `Citizen` (Chủ đơn) | `U-09`, `U-11` | Người dân báo cáo sai lệch biên nhận/số cân sang `Disputed` kèm `reason` và tối đa `5` `evidencePhotoUrls` để Staff thẩm định (`MSG-DSP-01`). | `200 OK`, `MSG-DSP-01` |
+| 9 | `063` | `GET` | `/api/v1/transactions` | `User`, `Citizen` | `U-12` | Xem lịch sử các giao dịch đã hoàn tất của người dân, hỗ trợ lọc theo khoảng ngày (`from`, `to`), `search`, phân trang và thống kê tổng lũy kế. | `200 OK` |
 
 ---
 
@@ -398,20 +402,49 @@
 
 * **Mô tả:** Trả về danh sách các giao dịch thu mua đã hoàn tất của cơ sở thu gom đang đăng nhập (`Use Case U-12` phía `Recycler`). Trường `counterpartName` trong từng phần tử sẽ hiển thị họ tên của người dân (`FullName`) đã bán phế liệu.
 * **Phân quyền:** `[Authorize(Roles = "Recycler,Collector")]`
-* **Query Parameters & Response Schema:** Giống hệt mục 3.6 (`from`, `to`, `page`, `pageSize` $\rightarrow$ `ApiResponse<TransactionHistoryDto>`).
+* **Query Parameters & Response Schema:** Giống hệt mục 3.6 (`from`, `to`, `page`, `pageSize`, `search` $\rightarrow$ `ApiResponse<TransactionHistoryDto>`).
 
 ---
 
-## 4. BẢNG MÃ LỖI & MÃ THÔNG BÁO TRONG MODULE 8
+### 3.8. Tải ảnh Bằng chứng Cân lên Cloudflare R2 (`POST /api/v1/recycler/handover-requests/{requestId:guid}/receipt/upload-proof` – `STT 055`)
+
+* **Phân quyền:** `[Authorize(Roles = "Recycler,Collector")]`
+* **Request (`multipart/form-data`, `[RequestSizeLimit(12 MB)]`):** Tham số `file` (`IFormFile`), định dạng `.jpg`, `.jpeg`, `.png`, `.webp`, dung lượng tối đa `10 MB`. Tệp được tải lên thư mục R2 `receipt-proofs/{requestId:N}`.
+* **Response (`200 OK`):** `ApiResponse<RecyclerDocumentUploadResponseDto>` trả về URL ảnh để truyền vào `scaleProofPhotoUrls` khi gọi `POST .../receipt`.
+* **Validation `400 Bad Request`:**
+  * Thiếu hoặc file rỗng (`MSG-GEN-01`): `"Vui lòng chọn tệp ảnh bằng chứng cân hợp lệ."`
+  * Quá 10 MB (`MSG-GEN-01`): `"Dung lượng ảnh bằng chứng cân tối đa 10 MB."`
+  * Sai định dạng (`MSG-CLS-01`): `"Chỉ hỗ trợ ảnh định dạng JPG, PNG hoặc WEBP."`
+
+---
+
+### 3.9. Khiếu nại Biên nhận Điện tử (`POST /api/v1/handover-requests/{requestId:guid}/receipt/dispute` – `STT 062`) & Đồng bộ `TradeOrder`
+
+* **Phân quyền:** `[Authorize(Roles = "User,Citizen")]`
+* **Request Body (`DisputeReceiptRequest`):**
+  * `reason` (`string`, bắt buộc, tối đa `500` ký tự): Lý do sai lệch khối lượng, đơn giá hoặc tiền mặt.
+  * `evidencePhotoUrls` (`string[]?`, tối đa `5` URL ảnh minh chứng).
+* **Response (`200 OK` – `MSG-DSP-01`):** `ApiResponse<ReceiptDto>` (`"Khiếu nại biên nhận đã được ghi nhận và chuyển tới bộ phận vận hành thẩm định."`).
+* **Đồng bộ Liên phân hệ (`HandoverTradeSyncHelper.SyncReceiptCompletionAsync`):**
+  Khi người dân bấm `Confirm` (`STT 061`) hoặc `JOB-01` tự động hoàn tất biên nhận:
+  1. Cập nhật `TradeOrder.Status = Completed` và `UpdatedAt = now` (nếu có `TradeOrder` gắn cùng `requestId`).
+  2. Tự động khởi tạo bản ghi `TransactionReceipt` (nếu chưa tồn tại) khớp `ActualWeightKg`, `UnitPrice`, `TotalAmountCash`, `PointsAwarded`, `QrSecurityCode = ReceiptCode`.
+  3. Ghi thêm 1 tin nhắn `ChatMessageType.System` vào phòng chat thương lượng tổng kết khối lượng, thành tiền và Điểm Xanh thưởng (`MSG-HND-03`).
+  4. Cộng dồn `TotalRecycledKg`, `CurrentGreenPoints`, `TotalLifetimePoints`, `TreeLevel` xuống bảng `user_eco_profiles` cho cả người dân lẫn cơ sở thu gom (`BR-GAM-01`).
+
+---
+
+## 4. BẢNG MÃ LỖI & MÃ THÔNG BÁO TRONG MODULE 7
 
 | HTTP Status | `messageCode` | Quy tắc (`BR`) | Trường hợp xảy ra & Nội dung thông báo |
 |:---:|:---|:---:|:---|
 | **`200 OK`** | `MSG-HND-03` | `U-09`, `BR-HND-07`, `BR-GAM-01` | `"Giao dịch #{ReceiptCode} đã được đánh dấu hoàn tất."` |
+| **`200 OK`** | `MSG-DSP-01` | `U-09`, `U-11` | `"Khiếu nại biên nhận đã được ghi nhận và chuyển tới bộ phận vận hành thẩm định."` |
 | **`200` / `201`** | `MSG-HND-04` | `R-06`, `U-09` | `"Khối lượng xác nhận chênh lệch so với thỏa thuận hơn 20%. Vui lòng kiểm tra trước khi xác nhận."` |
 | **`400 Bad Request`** | `MSG-GEN-01` | `BR-HND-02` | `"Chỉ lập biên nhận cho yêu cầu đã được chấp nhận (hiện tại: {Status})."`<br>`"Yêu cầu đã có biên nhận đang chờ người dân xác nhận."` |
-| **`400 Bad Request`** | `MSG-GEN-01` | `BR-HND-04`, `BR-HND-07` | `"Yêu cầu này đã có biên nhận."`<br>`"Giao dịch đã hoàn tất và không thể thay đổi."`<br>`"Yêu cầu chưa có biên nhận chờ xác nhận."`<br>`"Tối đa 5 ảnh cân."` |
+| **`400 Bad Request`** | `MSG-GEN-01` | `BR-HND-04`, `BR-HND-07` | `"Yêu cầu này đã có biên nhận."`<br>`"Giao dịch đã hoàn tất và không thể thay đổi."`<br>`"Yêu cầu chưa có biên nhận chờ xác nhận."`<br>`"Tối đa 5 ảnh cân."`<br>`"Dung lượng ảnh bằng chứng cân tối đa 10 MB."` |
 | **`400 Bad Request`** | `MSG-AUTH-02` | `BR-HND-04`, `BR-HND-05`, `EF-02` | `"Vui lòng tải lên ít nhất 1 ảnh cân (BR-HND-04)."`<br>`"Khối lượng thực tế phải lớn hơn 0 và tối đa 2 chữ số thập phân."`<br>`"Vui lòng nhập khối lượng thực tế cho tất cả loại phế liệu trong yêu cầu."`<br>`"Dòng phát sinh cần chọn loại phế liệu."` |
 | **`400 Bad Request`** | `MSG-GEN-01` | `BR-HND-05`, `AF-01` | `"Có dòng phế liệu không thuộc yêu cầu này."`<br>`"Mỗi dòng phế liệu chỉ được nhập một lần."`<br>`"Loại phế liệu này đã có trong yêu cầu, hãy nhập theo dòng có sẵn."`<br>`"Loại \"{Name}\" không nằm trong danh mục đang thu mua của cơ sở."` |
-| **`400 Bad Request`** | `MSG-CLS-01` | `BR-HND-04` | `"URL ảnh không hợp lệ."` |
+| **`400 Bad Request`** | `MSG-CLS-01` | `BR-HND-04` | `"URL ảnh không hợp lệ."` / `"Chỉ hỗ trợ ảnh định dạng JPG, PNG hoặc WEBP."` |
 | **`404 Not Found`** | `MSG-NOT-FOUND` | `BR-HND-03` | `"Không tìm thấy yêu cầu bàn giao."` / `"Không tìm thấy biên nhận."` |
 

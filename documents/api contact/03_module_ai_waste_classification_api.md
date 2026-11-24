@@ -10,29 +10,47 @@
 ## 1. TỔNG QUAN KIẾN TRÚC & DANH SÁCH ENDPOINTS
 
 Phân hệ Phân loại rác thông minh của EcoLink bao gồm 2 tầng API phối hợp chặt chẽ:
-1. **Tầng Core Business Web API (`.NET 10` – Cổng `5000`):** Tiếp nhận yêu cầu từ Mobile/Web App, kiểm tra tính hợp lệ của tệp ảnh và mô hình, gọi sang AI Microservice, kiểm tra ngưỡng an toàn **Out-of-Distribution (OOD = 60%)** và ánh xạ nhãn rác sang quy tắc xử lý trong **Rule Engine**.
-2. **Tầng Dedicated AI Vision Microservice (`Python FastAPI` – Cổng `8000`):** Thực thi suy luận học sâu đa mô hình (`yolov8_detect`, `yolov8n`, `mobilenet_v3`, `efficientnet_b0`), khoanh vùng Bounding Box, phân loại theo lô (Batch) và thu thập dữ liệu phản hồi để huấn luyện lại (Retrain Loop).
+1. **Tầng Core Business Web API (`.NET 10` – Cổng `5000`):** Tiếp nhận yêu cầu từ Mobile/Web App, kiểm tra tính hợp lệ của tệp ảnh và mô hình, lưu vết lịch sử quét (SHA-256), gọi sang AI Microservice, kiểm tra ngưỡng an toàn **Out-of-Distribution (OOD = 60%)** và ánh xạ 10 nhãn rác sang quy tắc xử lý trong **Rule Engine**.
+2. **Tầng Dedicated AI Vision Microservice (`Python FastAPI` – Cổng `8000`):** Thực thi suy luận học sâu đa mô hình chuẩn **YOLO26** (`yolo26_detect` Two-Stage End-to-End NMS-Free, `yolo26s_cls`, `yolo26n_cls`, kèm fallback `efficientnet_b0`, `mobilenet_v3` và các alias tương thích `yolov8_detect`, `yolov8n`, `yolo26`, `yolo26s`, `yolo26n`), nhận diện 10 lớp rác chuẩn EcoLink (5 nhóm phế liệu thương mại `plastic`, `paper`, `glass`, `metal`, `cardboard` + 5 nhóm hướng dẫn xử lý/an toàn `battery`, `biological`, `clothes`, `shoes`, `trash`).
 
-### 1.1. Danh sách Endpoints tại Core Business Web API (`/api/v1/waste-scan`)
+### 1.1. Danh sách Endpoints tại Core Business Web API (`M-03` – `11` APIs, `STT 021–031`)
 
-| STT | Phương thức | Endpoint URI | Quyền truy cập | Chức năng nghiệp vụ | Mã thông báo chính |
-|:---:|:---:|:---|:---:|:---|:---|
-| 1 | `POST` | `/api/v1/waste-scan/classify` | Public / `Citizen` | Nhận diện rác thải qua ảnh, kiểm tra ngưỡng tin cậy OOD (`60%`) và trả về hướng dẫn xử lý từ Rule Engine. | `MSG-CLS-01`, `MSG-CLS-02`, `MSG-CLS-03`, `MSG-CLS-04`, `MSG-CLS-05`, `MSG-CLS-06` |
-| 2 | `GET` | `/api/v1/waste-scan/models` | Public | Lấy danh sách các mô hình AI đang sẵn sàng phục vụ suy luận. | `200 OK` |
-| 3 | `GET` | `/api/v1/waste-scan/rules` | Public | Tra cứu toàn bộ danh mục quy tắc phân loại rác tĩnh, màu thùng rác và các bước xử lý (`BR-SRT-01`). | `200 OK` |
-| 4 | `POST` | `/api/v1/waste-scan/feedback` | Public / `Citizen` | Người dùng gửi báo cáo phản hồi khi AI nhận diện sai nhãn rác (`BR-CLS-05`). | `200 OK` (`MSG-CLS-06`) |
+> Tham chiếu Inventory: [`00_api_inventory_and_endpoint_statistics.md`](./00_api_inventory_and_endpoint_statistics.md) (`STT 021` $\rightarrow$ `031`).
 
-### 1.2. Danh sách Endpoints tại Dedicated AI Vision Microservice (`FastAPI - Port 8000`)
+| STT | Inventory ID | Phương thức | Endpoint URI | Quyền truy cập | Chức năng nghiệp vụ | Mã thông báo chính |
+|:---:|:---:|:---:|:---|:---:|:---|:---|
+| 1 | `021` | `POST` | `/api/v1/waste-scan/classify` | `[Authorize]` | Nhận diện đa vật thể qua ảnh (`yolo26_detect`), kiểm tra ngưỡng OOD (`60%`), lưu `WasteScanHistory` (`SHA-256`) và trả `sortingGuide`. | `MSG-CLS-01`..`06` |
+| 2 | `022` | `GET` | `/api/v1/waste-scan/models` | Public | Lấy danh sách 5 mô hình AI sẵn sàng và 10 lớp rác hỗ trợ từ FastAPI Service. | `200 OK` |
+| 3 | `023` | `GET` | `/api/v1/waste-scan/rules` | Public *(Admin/Staff xem Draft)* | Tra cứu quy tắc phân loại rác (`BR-SRT-01`); hỗ trợ `?detailed=true&includeDraft=true`. | `200 OK` |
+| 4 | `024` | `POST` | `/api/v1/waste-scan/feedback` | `[Authorize]` | Người dùng gửi báo cáo phản hồi khi AI nhận diện sai nhãn rác (`BR-CLS-05`). | `200 OK` (`MSG-CLS-06`) |
+| 5 | `025` | `GET` | `/api/v1/waste-categories` | Public (`[AllowAnonymous]`) | Lấy danh sách danh mục rác chuẩn (mặc định trả nhóm tái chế `Active`; Admin có thể kèm `?includeInactive=true&includeNonRecyclable=true`). | `200 OK` |
+| 6 | `026` | `GET` | `/api/v1/waste-scan/history` | `[Authorize]` | Lịch sử quét AI cá nhân phân trang theo tài khoản đang đăng nhập (`U-01`, `U-03`). | `200 OK` |
+| 7 | `027` | `POST` | `/api/v1/waste-categories` | `Admin` | Thêm mới danh mục phế liệu chuẩn (`A-05`, kiểm tra trùng `code` trả `409 Conflict`). | `201 Created` |
+| 8 | `028` | `PUT` | `/api/v1/waste-categories/{categoryId:guid}` | `Admin` | Cập nhật thông tin danh mục (`code` bất biến theo `BR-SRT-02`). | `200 OK` |
+| 9 | `029` | `PATCH` | `/api/v1/waste-categories/{categoryId:guid}/status` | `Admin` | Bật/tắt trạng thái `Active` $\leftrightarrow$ `Inactive` (xóa mềm `BR-SRT-04`). | `200 OK` |
+| 10 | `030` | `PUT` | `/api/v1/waste-scan/rules/{categoryId:guid}` | `Admin` | Tạo/cập nhật quy tắc phân loại `DRAFT` gắn `1-1` với `categoryId` (`A-06`). | `200 OK` |
+| 11 | `031` | `PATCH` | `/api/v1/waste-scan/rules/{ruleId:guid}/publish` | `Admin` | Phát hành chính thức `DRAFT -> ACTIVE` và đồng bộ sang AI Service (`A-06`, `BR-SRT-03`). | `200 OK` |
 
-| STT | Phương thức | Endpoint URI | Chức năng chuyên sâu |
-|:---:|:---:|:---|:---|
-| 5 | `POST` | `/api/v1/classify` | Suy luận phân loại ảnh đơn (hỗ trợ Two-Stage Object Detection Crop + Classifier). |
-| 6 | `POST` | `/api/v1/detect` | Khoanh vùng Bounding Box từng món rác bằng YOLOv8 Object Detection, đếm số lượng và trả về ảnh Base64 đã vẽ khung. |
-| 7 | `POST` | `/api/v1/classify/batch` | Phân loại hàng loạt nhiều file ảnh cùng lúc để kiểm thử hiệu năng (Benchmarking). |
-| 8 | `GET` | `/api/v1/models` & `/api/v1/models/{model_id}` | Xem thông số kỹ thuật, kiến trúc mạng và độ chính xác Validation của từng mô hình. |
-| 9 | `GET` / `PUT` | `/api/v1/rules` | Đọc hoặc cập nhật ngưỡng `confidence_threshold` và hướng dẫn xử lý trong Knowledge Base. |
-| 10 | `GET` / `POST` | `/api/v1/feedback` | Lưu trữ và truy xuất nhật ký báo sai phục vụ vòng lặp huấn luyện lại (Retrain Loop). |
-| 11 | `GET` | `/api/v1/stats` | Thống kê tổng lượt quét, tỷ lệ OOD (`ood_rate_percent`), độ trễ trung bình (`avg_latency_ms`) và 25 lượt quét gần nhất. |
+### 1.2. Danh sách Endpoints tại Dedicated AI Vision Microservice (`AIS` – `16` APIs, `STT 203–218`, `Port 8000`)
+
+| Inventory ID | Phương thức | Endpoint URI | Quyền / Nguồn gọi | Chức năng chuyên sâu |
+|:---:|:---:|:---|:---:|:---|
+| `203` | `GET` | `/` | Internal / Docs | Chuyển hướng về OpenAPI Swagger UI (`/docs`) của AI Vision Service. |
+| `204` | `GET` | `/health` | Internal / Infra | Kiểm tra trạng thái sức khỏe, phần cứng `CUDA/CPU`, danh sách model sẵn sàng và ngưỡng OOD. |
+| `205` | `GET` | `/api/v1/models` | Public (Internal) | Danh sách 5 mô hình AI (`yolo26_detect`, `yolo26s_cls`, `yolo26n_cls`, `efficientnet_b0`, `mobilenet_v3`) và 10 lớp rác chuẩn (`CLASS_NAMES`). |
+| `206` | `GET` | `/api/v1/models/{model_id}` | Public (Internal) | Thông số kỹ thuật, kiến trúc mạng và benchmark của mô hình (hỗ trợ alias `yolov8_detect`, `yolov8n`). |
+| `207` | `POST` | `/api/v1/classify` | Core Backend / Test | Suy luận phân loại đa vật thể Two-Stage (`yolo26_detect` + `yolo26s_cls`), kiểm tra ngưỡng OOD `0.60`, trả `detected_objects` & `sorting_rule`. |
+| `208` | `POST` | `/api/v1/detect` | Core Backend / Test | Khoanh vùng Bounding Box từng món rác bằng `yolo26_detect` (ngưỡng mặc định `0.20`), đếm số lượng và trả ảnh Base64 đã vẽ khung. |
+| `209` | `POST` | `/api/v1/classify/batch` | Benchmark / Staff | Phân loại hàng loạt nhiều file ảnh cùng lúc (mặc định `yolo26n_cls`) để đo hiệu năng (`avg_inference_time_ms`). |
+| `210` | `GET` | `/api/v1/samples` | Dev / QA | Liệt kê ảnh mẫu validation theo từng danh mục kèm `download_url`. |
+| `211` | `GET` | `/api/v1/samples/{category}/{filename}` | Dev / QA | Tải về file ảnh mẫu cụ thể phục vụ kiểm thử Swagger/Postman. |
+| `212` | `GET` | `/api/v1/rules` | Public (Internal) | Đọc toàn bộ quy tắc phân loại tĩnh (`rules.json`) và `confidence_threshold`. |
+| `213` | `PUT` | `/api/v1/rules` | Core Backend (`A-06`) | Đồng bộ/Upsert ngưỡng `confidence_threshold` và quy tắc hướng dẫn (`title`, `bin_color_name`, `instructions`, `handling_action`, `hazard_warning`). |
+| `214` | `POST` | `/api/v1/feedback` | Core Backend (`U-04`) | Tiếp nhận mẫu phản hồi nhận diện sai lưu vào `feedback.json`. |
+| `215` | `GET` | `/api/v1/feedback` | Internal / Staff | Truy xuất danh sách log phản hồi sai trên AI Service. |
+| `216` | `POST` | `/api/v1/datasets/curate` | Core Backend (`S-03`) | Đóng gói tập dữ liệu `Train/Val/Test` kèm kiểm tra chống rò rỉ `SHA-256` (`BR-CLS-07`) và xuất `manifest.json`. |
+| `217` | `POST` | `/api/v1/models/reload` | Core Backend (`S-03`) | Nạp nóng (`Hot-reload`) trọng số mới trong `models/` không cần khởi động lại dịch vụ. |
+| `218` | `GET` | `/api/v1/stats` | Admin / Monitoring | Thống kê tổng lượt quét, tỷ lệ OOD (`ood_rate_percent`), phân bổ danh mục, độ trễ trung bình và 25 lượt gần nhất. |
 
 ---
 
@@ -42,25 +60,28 @@ Phân hệ Phân loại rác thông minh của EcoLink bao gồm 2 tầng API ph
 
 ### 2.1. Nhận diện rác qua ảnh & Tra cứu Hướng dẫn Phân loại (`POST /api/v1/waste-scan/classify`)
 
+* **Phân quyền:** `[Authorize]` *(yêu cầu JWT Bearer Token hoặc HttpOnly Cookie `accessToken` để ghi nhận `UserId` vào `WasteScanHistory` và bảng xếp hạng).*
 * **Mô tả:** Endpoint trung tâm của chức năng Quét rác AI:
   1. Kiểm tra file ảnh đính kèm và định dạng đuôi file (`.jpg`, `.jpeg`, `.png`, `.webp`, `.bmp` – `BR-CLS-01`).
-  2. Kiểm tra mã mô hình yêu cầu (`yolov8_detect`, `mobilenet_v3`, `efficientnet_b0`, `yolov8n`).
-  3. Gửi luồng ảnh (`Stream`) sang AI Vision Service để suy luận.
+  2. Kiểm tra mã mô hình yêu cầu (`yolo26_detect`, `yolo26s_cls`, `yolo26n_cls`, `yolo26s`, `yolo26n`, `yolo26`, `yolov8_detect`, `mobilenet_v3`, `efficientnet_b0`, `yolov8n`).
+  3. Gửi luồng ảnh (`Stream`) sang AI Vision Service để suy luận Two-Stage YOLO26.
   4. Kiểm tra cờ `isOutOfDistribution` hoặc `topPrediction.confidence < confidenceThreshold` (`0.60`):
-     * Nếu độ tin cậy `< 60%` (`BR-CLS-03`): Trả về cảnh báo không chắc chắn (`MSG-CLS-02`) và không đính kèm hướng dẫn cứng nhắc để yêu cầu người dùng chụp lại hoặc chọn thủ công.
-     * Nếu độ tin cậy $\ge 60\%$ (`BR-CLS-02`, `BR-SRT-01`): Tự động tra cứu `WasteRuleEngineService` theo `categoryCode` (`plastic`, `paper`, `cardboard`, `metal`, `glass`, `trash`) để trả về màu thùng rác tiêu chuẩn, các bước sơ chế làm sạch và hành động gợi ý.
+     * Nếu độ tin cậy `< 60%` (`BR-CLS-03`): Trả về cảnh báo không chắc chắn (`MSG-CLS-02`) và đặt `sortingGuide = null` để yêu cầu người dùng chụp lại hoặc chọn thủ công.
+     * Nếu độ tin cậy $\ge 60\%$ (`BR-CLS-02`, `BR-SRT-01`): Tự động tra cứu `WasteRuleEngineService` theo 10 `categoryCode` chuẩn (`battery`, `biological`, `cardboard`, `clothes`, `glass`, `metal`, `paper`, `plastic`, `shoes`, `trash`) để trả về màu thùng rác tiêu chuẩn, các bước sơ chế làm sạch, hành động gợi ý và cảnh báo an toàn (đặc biệt với nhóm không nhận thu mua thương mại như `battery`, `biological`, `trash`).
 
 #### a. Request Parameters (`multipart/form-data`)
 
 | Tên tham số | Vị trí | Kiểu dữ liệu | Bắt buộc | Giá trị hợp lệ / Mặc định | Mô tả |
 |:---|:---:|:---:|:---:|:---|:---|
 | `file` | Form-Data | `IFormFile` | **Có** | `.jpg`, `.jpeg`, `.png`, `.webp`, `.bmp` | Tệp hình ảnh vật phẩm rác cần nhận diện. |
-| `model` | Form-Data | `string?` | Không | Mặc định: `"yolov8_detect"`<br>Hỗ trợ: `"yolov8_detect"`, `"mobilenet_v3"`, `"efficientnet_b0"`, `"yolov8n"` | Mã mô hình AI muốn sử dụng để phân tích. |
+| `model` | Form-Data | `string?` | Không | Mặc định: `"yolo26_detect"`<br>Hỗ trợ: `"yolo26_detect"`, `"yolo26s_cls"`, `"yolo26n_cls"`, `"efficientnet_b0"`, `"mobilenet_v3"` *(cùng alias `yolo26s`, `yolo26n`, `yolo26`, `yolov8_detect`, `yolov8n`)* | Mã mô hình AI muốn sử dụng để phân tích. |
 
 #### b. Response Parameters (`ApiResponse<WasteScanResponseDto>`)
 
 | Trường trong `data` | Kiểu dữ liệu | Mô tả |
 |:---|:---:|:---|
+| `scanId` | `Guid?` | ID bản ghi lịch sử quét (`WasteScanHistory`) vừa lưu. |
+| `imageUrl` | `string?` | Đường dẫn ảnh đã lưu trữ phục vụ xem lại lịch sử hoặc gửi báo sai. |
 | `aiResult` | `AiScanResultDto` | Kết quả suy luận chi tiết từ mô hình AI (xem bảng dưới). |
 | `sortingGuide` | `WasteSortingGuideDto?` | Hướng dẫn phân loại và sơ chế từ Rule Engine (`null` nếu rơi vào ngưỡng OOD `< 60%`). |
 | `message` | `string` | Thông báo tổng hợp kết quả nhận diện kèm phần trăm độ tin cậy. |
@@ -71,20 +92,28 @@ Phân hệ Phân loại rác thông minh của EcoLink bao gồm 2 tầng API ph
 | `success` | `boolean` | `true` nếu AI suy luận thành công. |
 | `isOutOfDistribution` | `boolean` | `true` nếu vật thể lạ hoặc độ tin cậy thấp hơn ngưỡng `confidenceThreshold` (`0.60`). |
 | `confidenceThreshold` | `double` | Ngưỡng độ tin cậy tối thiểu áp dụng (mặc định `0.60`). |
+| `modelUsed` / `modelName` / `modelFamily` | `string?` | Mã, tên hiển thị và kiến trúc mô hình thực tế đã thực thi suy luận (VD: `"yolo26_detect"`). |
+| `imageWidth` / `imageHeight` | `int` | Kích thước pixel ảnh gốc để đối chiếu hệ tọa độ Bounding Box. |
 | `topPrediction` | `WastePredictionDto?` | Nhãn dự đoán có xác suất cao nhất (`label`, `confidence`, `displayName`). |
 | `predictions` | `WastePredictionDto[]` | Danh sách Top-3 nhãn dự đoán có điểm tin cậy cao nhất. |
+| `allProbabilities` | `WastePredictionDto[]` | Phân phối xác suất toàn bộ 10 lớp rác. |
+| `detectedCount` | `int` | Tổng số vật thể được khoanh khung trong ảnh (khi dùng pipeline Two-Stage). |
+| `categorySummary` | `Record<string, int>` | Thống kê số lượng vật thể theo từng `categoryCode`. |
+| `detectedObjects` | `DetectedWasteObjectDto[]` | Danh sách chi tiết từng vật thể (`id`, `rawClass`, `label`, `displayName`, `confidence`, `centerScore`, `isPrimary`, `source`, `bbox`, `sortingGuide`). |
+| `pipeline` | `string?` | Tên pipeline thực thi (VD: `"yolo26_unified_two_stage"`). |
+| `croppedBbox` | `double[]?` | Tọa độ hộp bao `[x1, y1, x2, y2]` của vật thể chính gần tâm khung hình. |
 | `inferenceTimeMs` | `double` | Thời gian suy luận của mô hình AI tính bằng mili-giây (`ms`). |
 | `errorMessage` | `string?` | Thông báo lỗi từ AI Service (nếu `success == false`). |
 
 ##### Cấu trúc `WasteSortingGuideDto`:
 | Trường | Kiểu dữ liệu | Mô tả |
 |:---|:---:|:---|
-| `categoryCode` | `string` | Mã nhóm rác: `"plastic"`, `"paper"`, `"cardboard"`, `"metal"`, `"glass"`, `"trash"`. |
+| `categoryCode` | `string` | 1 trong 10 mã nhóm rác: `"battery"`, `"biological"`, `"cardboard"`, `"clothes"`, `"glass"`, `"metal"`, `"paper"`, `"plastic"`, `"shoes"`, `"trash"`. |
 | `categoryName` | `string` | Tên tiếng Việt của nhóm rác (VD: `"Nhựa tái chế (Plastic)"`). |
 | `standardBinColor` | `string` | Màu thùng rác tiêu chuẩn theo quy định phân loại tại nguồn. |
 | `preparationSteps` | `string` | Các bước sơ chế trước khi bàn giao (VD: đổ hết nước, tráng sạch, bóp dẹp). |
-| `handlingAction` | `string` | Hành động gợi ý trên EcoLink (VD: kết nối điểm thu mua để bán và tích Điểm Xanh). |
-| `hazardWarning` | `string?` | Cảnh báo an toàn lao động (VD: bọc kín mảnh thủy tinh vỡ hoặc cạnh lon sắc nhọn). |
+| `handlingAction` | `string` | Hành động gợi ý trên EcoLink (VD: bán phế liệu tái chế hoặc xử lý theo quy định an toàn). |
+| `hazardWarning` | `string?` | Cảnh báo an toàn lao động (VD: pin rò rỉ/cháy nổ, mảnh thủy tinh vỡ hoặc cạnh lon sắc nhọn). |
 
 ##### Ví dụ 1 – Response Nhận diện Thành công (`200 OK` – Độ tin cậy $\ge 60\%$):
 ```json
@@ -179,14 +208,14 @@ Phân hệ Phân loại rác thông minh của EcoLink bao gồm 2 tầng API ph
 | **`200 OK`** | `MSG-CLS-02` | `MSG-CLS-04` (`BR-CLS-03`) | Ảnh thuộc diện OOD hoặc độ tin cậy `< 60%` | `"Hệ thống không nhận diện chắc chắn (> 60%) hoặc vật thể không thuộc nhóm rác hỗ trợ. Vui lòng chụp lại hình ảnh ở góc rõ hơn."` |
 | **`400 Bad Request`** | `MSG-CLS-04` | `BR-CLS-01` | Không đính kèm `file` hoặc `file.Length == 0` | `"Vui lòng tải lên file ảnh hợp lệ."` |
 | **`400 Bad Request`** | `MSG-CLS-05` | `MSG-CLS-01` (`BR-CLS-01`) | Đuôi file không thuộc `.jpg`, `.jpeg`, `.png`, `.webp`, `.bmp` | `"Tập tin tải lên phải là hình ảnh hợp lệ (.jpg, .jpeg, .png, .webp)."` |
-| **`400 Bad Request`** | `MSG-CLS-06` | — | Tham số `model` không nằm trong 4 mô hình hỗ trợ | `"Mô hình '{model}' không tồn tại. Danh sách mô hình hỗ trợ: yolov8_detect, mobilenet_v3, efficientnet_b0, yolov8n."` |
+| **`400 Bad Request`** | `MSG-CLS-06` | — | Tham số `model` không nằm trong danh sách mô hình hỗ trợ | `"Mô hình '{model}' không tồn tại. Danh sách mô hình hỗ trợ: yolo26_detect, yolo26s_cls, yolo26n_cls, yolo26s, yolo26n, yolo26, yolov8_detect, mobilenet_v3, efficientnet_b0, yolov8n."` |
 | **`400 Bad Request`** | `MSG-CLS-03` | `MSG-CLS-05` | AI Vision Service không phản hồi hoặc ảnh bị hỏng byte | `"Không thể phân tích hình ảnh từ AI Vision Service."` |
 
 ---
 
 ### 2.2. Lấy Danh sách Mô hình AI (`GET /api/v1/waste-scan/models`)
 
-* **Mô tả:** Trả về danh sách các mô hình học sâu có sẵn kèm trạng thái sẵn sàng (`is_ready`) và danh sách 6 nhãn rác hỗ trợ (`cardboard`, `glass`, `metal`, `paper`, `plastic`, `trash`).
+* **Mô tả:** Trả về danh sách 5 mô hình học sâu có sẵn kèm trạng thái sẵn sàng (`is_ready`) và danh sách 10 nhãn rác hỗ trợ (`battery`, `biological`, `cardboard`, `clothes`, `glass`, `metal`, `paper`, `plastic`, `shoes`, `trash`).
 
 #### a. Request Parameters
 Không có tham số đầu vào.
@@ -198,38 +227,47 @@ Không có tham số đầu vào.
   "messageCode": null,
   "message": null,
   "data": {
-    "default_model": "yolov8_detect",
-    "supported_classes": ["cardboard", "glass", "metal", "paper", "plastic", "trash"],
-    "classes_count": 6,
+    "default_model": "yolo26_detect",
+    "supported_classes": [
+      "battery", "biological", "cardboard", "clothes", "glass",
+      "metal", "paper", "plastic", "shoes", "trash"
+    ],
+    "classes_count": 10,
     "models": [
       {
-        "id": "yolov8_detect",
-        "name": "YOLOv8 Detection (Khuyên dùng - Định vị & Cắt nền)",
-        "family": "Object Detection (Ultralytics)",
+        "id": "yolo26_detect",
+        "name": "YOLO26 Waste Object Detection (End-to-End NMS-Free)",
+        "family": "YOLO26 End-to-End NMS-Free (Two-Stage)",
         "is_ready": true
       },
       {
-        "id": "mobilenet_v3",
-        "name": "MobileNetV3-Small (Siêu nhẹ, tối ưu di động)",
-        "family": "CNN (Torchvision)",
+        "id": "yolo26s_cls",
+        "name": "YOLO26 Small Classification (12-Class Fine-Tuned)",
+        "family": "YOLO26-cls (Ultralytics)",
+        "is_ready": true
+      },
+      {
+        "id": "yolo26n_cls",
+        "name": "YOLO26 Nano Classification",
+        "family": "YOLO26-cls (Ultralytics)",
         "is_ready": true
       },
       {
         "id": "efficientnet_b0",
-        "name": "EfficientNet-B0 (Độ chính xác cao)",
+        "name": "EfficientNet-B0",
         "family": "CNN (Torchvision)",
         "is_ready": true
       },
       {
-        "id": "yolov8n",
-        "name": "YOLOv8 Nano Classifier",
-        "family": "CNN (Ultralytics)",
+        "id": "mobilenet_v3",
+        "name": "MobileNetV3-Small",
+        "family": "CNN (Torchvision)",
         "is_ready": true
       }
     ]
   },
   "errors": null,
-  "timestamp": "2026-10-30T09:12:00Z"
+  "timestamp": "2026-11-23T09:12:00Z"
 }
 ```
 
@@ -237,7 +275,7 @@ Không có tham số đầu vào.
 
 ### 2.3. Tra cứu Toàn bộ Quy tắc Phân loại Tĩnh (`GET /api/v1/waste-scan/rules`)
 
-* **Mô tả:** Trả về danh sách toàn bộ 6 nhóm danh mục rác trong Rule Engine (`plastic`, `paper`, `cardboard`, `metal`, `glass`, `trash`) kèm màu thùng rác, các bước sơ chế, hành động gợi ý và cảnh báo an toàn (`BR-SRT-01`).
+* **Mô tả:** Trả về danh sách quy tắc phân loại của cả 10 nhóm rác trong Rule Engine (gồm 5 nhóm phế liệu tái chế thương mại: `plastic`, `paper`, `cardboard`, `metal`, `glass` và 5 nhóm hướng dẫn phân loại/an toàn không nhận thu mua qua sàn: `battery`, `biological`, `clothes`, `shoes`, `trash`) kèm màu thùng rác, các bước sơ chế, hành động gợi ý và cảnh báo an toàn (`BR-SRT-01`).
 
 #### a. Request Parameters
 * `[FromQuery] bool detailed = false` *(Admin/Staff có thể đặt `true` để nhận `SortingRuleDetailDto[]` gồm `ruleId`, `wasteCategoryId`, `status`)*
@@ -313,14 +351,14 @@ Không có tham số đầu vào.
 
 ### 3.1. Khoanh vùng Vật thể Rác bằng Object Detection (`POST /api/v1/detect`)
 
-* **Mô tả:** Sử dụng mô hình YOLOv8 Object Detection để tự động định vị tọa độ khung chữ nhật (`bbox: [x1, y1, x2, y2]`) của từng món rác trong một bức ảnh có nhiều vật thể, loại bỏ hoàn toàn phông nền gây nhiễu, thống kê số lượng từng loại và trả về ảnh đã vẽ khung Bounding Box dưới dạng chuỗi `Base64 Data URL`.
+* **Mô tả:** Sử dụng mô hình **YOLO26 Object Detection (`yolo26_detect`)** để tự động định vị tọa độ khung chữ nhật (`bbox: [x1, y1, x2, y2]`) của từng món rác trong một bức ảnh có nhiều vật thể, chấm điểm ưu tiên tâm khung ngắm (`center_score` / `is_primary`), thống kê số lượng từng loại theo 10 danh mục chuẩn và trả về ảnh đã vẽ khung Bounding Box dưới dạng chuỗi `Base64 Data URL`.
 
 #### a. Request Parameters (`multipart/form-data`)
 
 | Tên tham số | Vị trí | Kiểu dữ liệu | Bắt buộc | Mặc định | Mô tả |
 |:---|:---:|:---:|:---:|:---:|:---|
 | `file` | Form-Data | `UploadFile` | **Có** | — | Tệp ảnh chứa một hoặc nhiều món rác (`.jpg`, `.png`, `.webp`). |
-| `confidence_threshold` | Form-Data | `float` | Không | `0.25` | Ngưỡng độ tự tin tối thiểu để vẽ khung phát hiện vật thể (`0.0 - 1.0`). |
+| `confidence_threshold` | Form-Data | `float` | Không | `0.20` | Ngưỡng độ tự tin tối thiểu để vẽ khung phát hiện vật thể (`0.0 - 1.0`). |
 
 #### b. Response Parameters (`WasteDetectionResponse`)
 
@@ -374,7 +412,7 @@ Không có tham số đầu vào.
 | Tên tham số | Kiểu dữ liệu | Bắt buộc | Mặc định | Mô tả |
 |:---|:---:|:---:|:---:|:---|
 | `files` | `List<UploadFile>` | **Có** | — | Danh sách các tệp ảnh cần phân loại. |
-| `model` | `string` | Không | `"yolov8n"` | Mã mô hình AI sử dụng. |
+| `model` | `string` | Không | `"yolo26n_cls"` | Mã mô hình AI sử dụng. |
 | `confidence_threshold` | `float?` | Không | `0.60` | Ngưỡng tin cậy OOD. |
 
 #### b. Ví dụ Response (`200 OK` – `BatchScanResponse`):
@@ -382,7 +420,7 @@ Không có tham số đầu vào.
 {
   "success": true,
   "total_files": 2,
-  "model_used": "yolov8n",
+  "model_used": "yolo26n_cls",
   "total_inference_time_ms": 24.6,
   "avg_inference_time_ms": 12.3,
   "results": [
@@ -422,10 +460,13 @@ Không có tham số đầu vào.
 
 | Tên tham số | Kiểu dữ liệu | Bắt buộc | Mô tả |
 |:---|:---:|:---:|:---|
-| `category` | `string?` | Không | Mã danh mục rác cần sửa (VD: `"plastic"`, `"paper"`). |
+| `category` | `string?` | Không | Mã danh mục rác cần sửa (VD: `"plastic"`, `"battery"`). |
 | `bin_color_name` | `string?` | Không | Tên màu thùng rác mới. |
 | `instructions` | `string[]?` | Không | Danh sách các bước hướng dẫn sơ chế mới. |
 | `confidence_threshold` | `float?` | Không | Ngưỡng OOD mới (VD: `0.65`). |
+| `title` | `string?` | Không | Tiêu đề quy tắc phân loại (đồng bộ từ Core Backend `PATCH .../publish`). |
+| `handling_action` | `string?` | Không | Hành động gợi ý xử lý / tái chế. |
+| `hazard_warning` | `string?` | Không | Cảnh báo an toàn lao động hoặc xử lý chất thải nguy hại. |
 
 #### b. Ví dụ Response (`200 OK`):
 ```json

@@ -38,10 +38,10 @@ public class CreateStaffAccountValidator : AbstractValidator<CreateStaffAccountR
         RuleFor(x => x.Email)
             .NotEmpty().WithMessage("Email công việc không được để trống.")
             .EmailAddress().WithMessage("Email công việc không đúng định dạng.")
-            .MaximumLength(255);
+            .MaximumLength(255).WithMessage("Email công việc không được vượt quá 255 ký tự.");
 
         RuleFor(x => x.Username)
-            .MaximumLength(50)
+            .MaximumLength(50).WithMessage("Tên đăng nhập nhân viên không được vượt quá 50 ký tự.")
             .When(x => !string.IsNullOrWhiteSpace(x.Username));
 
         RuleFor(x => x.InitialPassword)
@@ -61,7 +61,7 @@ public class UpdateStaffAccountValidator : AbstractValidator<UpdateStaffAccountR
         RuleFor(x => x.FullName)
             .NotEmpty().WithMessage("Họ và tên nhân viên không được để trống.")
             .MinimumLength(3).WithMessage("Họ và tên nhân viên tối thiểu 3 ký tự.")
-            .MaximumLength(100);
+            .MaximumLength(100).WithMessage("Họ và tên nhân viên tối đa 100 ký tự.");
 
         RuleFor(x => x.ResetTemporaryPassword)
             .MinimumLength(8).WithMessage("Mật khẩu tạm cấp lại phải có tối thiểu 8 ký tự.")
@@ -83,7 +83,7 @@ public class UpdateStaffStatusValidator : AbstractValidator<UpdateStaffStatusReq
         RuleFor(x => x.Reason)
             .NotEmpty().WithMessage("Bắt buộc ghi rõ lý do thay đổi trạng thái nhân sự (BR-ADM-03).")
             .MinimumLength(10).WithMessage("Lý do phải rõ ràng, tối thiểu 10 ký tự.")
-            .MaximumLength(500);
+            .MaximumLength(500).WithMessage("Lý do thay đổi trạng thái không được vượt quá 500 ký tự.");
     }
 }
 
@@ -98,7 +98,7 @@ public class UpdateStaffPermissionsValidator : AbstractValidator<UpdateStaffPerm
             .WithMessage("Tồn tại mã quyền không nằm trong danh mục chuẩn RBAC của hệ thống (BR-ADM-02).");
 
         RuleFor(x => x.Reason)
-            .MaximumLength(500)
+            .MaximumLength(500).WithMessage("Lý do cập nhật phân quyền không được vượt quá 500 ký tự.")
             .When(x => !string.IsNullOrWhiteSpace(x.Reason));
     }
 }

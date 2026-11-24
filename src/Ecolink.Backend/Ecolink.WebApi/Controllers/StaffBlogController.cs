@@ -4,6 +4,7 @@ using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Constants;
 using Ecolink.Domain.Exceptions;
 using Ecolink.WebApi.Security;
+using FluentValidation;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Ecolink.WebApi.Controllers;
@@ -20,15 +21,18 @@ public class StaffBlogController : ControllerBase
     private readonly IBlogPostService _service;
     private readonly ICurrentUserService _currentUser;
     private readonly IFileStorageService _fileStorage;
+    private readonly IValidator<SaveBlogPostRequest> _saveValidator;
 
     public StaffBlogController(
         IBlogPostService service,
         ICurrentUserService currentUser,
-        IFileStorageService fileStorage)
+        IFileStorageService fileStorage,
+        IValidator<SaveBlogPostRequest> saveValidator)
     {
         _service = service;
         _currentUser = currentUser;
         _fileStorage = fileStorage;
+        _saveValidator = saveValidator;
     }
 
     private Guid StaffId =>
@@ -99,6 +103,9 @@ public class StaffBlogController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<BlogPostDto>), StatusCodes.Status201Created)]
     public async Task<IActionResult> Create([FromBody] SaveBlogPostRequest request, CancellationToken ct)
     {
+        var invalid = await ValidateSaveAsync(request, ct);
+        if (invalid != null) return invalid;
+
         var data = await _service.CreateAsync(StaffId, request, ct);
         var submitted = request.SubmitForApproval;
         var body = submitted
@@ -113,10 +120,24 @@ public class StaffBlogController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<BlogPostDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Update(Guid id, [FromBody] SaveBlogPostRequest request, CancellationToken ct)
     {
+        var invalid = await ValidateSaveAsync(request, ct);
+        if (invalid != null) return invalid;
+
         var data = await _service.UpdateAsync(StaffId, id, request, ct);
         return request.SubmitForApproval
             ? Ok(ApiResponse<BlogPostDto>.Ok(data, "Bài viết đã được gửi Admin xét duyệt.", "MSG-ADM-06"))
             : Ok(ApiResponse<BlogPostDto>.Ok(data, "Đã lưu bản nháp."));
+    }
+
+    private async Task<IActionResult?> ValidateSaveAsync(SaveBlogPostRequest request, CancellationToken ct)
+    {
+        var validation = await _saveValidator.ValidateAsync(request, ct);
+        if (validation.IsValid) return null;
+
+        var errors = validation.Errors
+            .Select(e => string.IsNullOrWhiteSpace(e.PropertyName) ? e.ErrorMessage : $"{e.PropertyName}: {e.ErrorMessage}")
+            .ToList();
+        return BadRequest(ApiResponse<object>.Fail(validation.Errors[0].ErrorMessage, "MSG-AUTH-02", errors));
     }
 
     /// <summary>Nộp bài nháp đã lưu để Admin duyệt (NF-05/06).</summary>

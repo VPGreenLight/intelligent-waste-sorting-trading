@@ -17,14 +17,13 @@ public class RegisterUserRequestDto
     public string Email { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Mật khẩu không được để trống")]
-    [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu tối thiểu 6 ký tự")]
+    [StringLength(100, MinimumLength = 8, ErrorMessage = "Mật khẩu tối thiểu 8 ký tự")]
     public string Password { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Họ và tên không được để trống")]
     [StringLength(100, ErrorMessage = "Họ và tên tối đa 100 ký tự")]
     public string FullName { get; set; } = string.Empty;
 
-    [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
     public string? PhoneNumber { get; set; }
 }
 
@@ -42,33 +41,33 @@ public class RegisterRequestDto : RegisterUserRequestDto
 public class RegisterRecyclerRequestDto
 {
     [Required(ErrorMessage = "Tên đăng nhập không được để trống")]
-    [StringLength(50, MinimumLength = 3)]
+    [StringLength(50, MinimumLength = 3, ErrorMessage = "Tên đăng nhập phải từ 3 đến 50 ký tự")]
     public string Username { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Email không được để trống")]
-    [EmailAddress]
+    [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
     public string Email { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Mật khẩu không được để trống")]
-    [StringLength(100, MinimumLength = 6)]
+    [StringLength(100, MinimumLength = 8, ErrorMessage = "Mật khẩu tối thiểu 8 ký tự")]
     public string Password { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Họ và tên người đại diện không được để trống")]
+    [StringLength(100, ErrorMessage = "Họ và tên người đại diện tối đa 100 ký tự")]
     public string FullName { get; set; } = string.Empty;
 
-    [Phone]
     public string? PhoneNumber { get; set; }
 
     [Required(ErrorMessage = "Tên cơ sở thu mua không được để trống")]
-    [StringLength(150)]
+    [StringLength(150, ErrorMessage = "Tên cơ sở thu mua tối đa 150 ký tự")]
     public string FacilityName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Người đại diện pháp luật không được để trống")]
-    [StringLength(100)]
+    [StringLength(100, ErrorMessage = "Tên người đại diện tối đa 100 ký tự")]
     public string RepresentativeName { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Địa chỉ kinh doanh không được để trống")]
-    [StringLength(255)]
+    [StringLength(255, ErrorMessage = "Địa chỉ kinh doanh tối đa 255 ký tự")]
     public string BusinessAddress { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Vĩ độ (Latitude) không được để trống")]
@@ -131,14 +130,14 @@ public class ForgotPasswordRequestDto
 public class ResetPasswordRequestDto
 {
     [Required(ErrorMessage = "Email không được để trống")]
-    [EmailAddress]
+    [EmailAddress(ErrorMessage = "Email không đúng định dạng")]
     public string Email { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Token không được để trống")]
     public string Token { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Mật khẩu mới không được để trống")]
-    [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu tối thiểu 6 ký tự")]
+    [StringLength(100, MinimumLength = 8, ErrorMessage = "Mật khẩu tối thiểu 8 ký tự")]
     public string NewPassword { get; set; } = string.Empty;
 
     public string? ConfirmPassword { get; set; }
@@ -153,10 +152,9 @@ public class UpdateUserProfileRequestDto
     [StringLength(100, MinimumLength = 2, ErrorMessage = "Tên hiển thị phải từ 2 đến 100 ký tự")]
     public string FullName { get; set; } = string.Empty;
 
-    [Phone(ErrorMessage = "Số điện thoại không hợp lệ")]
     public string? PhoneNumber { get; set; }
 
-    [StringLength(500)]
+    [StringLength(500, ErrorMessage = "URL ảnh đại diện tối đa 500 ký tự")]
     public string? AvatarUrl { get; set; }
 }
 
@@ -169,7 +167,7 @@ public class ChangePasswordRequestDto
     public string CurrentPassword { get; set; } = string.Empty;
 
     [Required(ErrorMessage = "Mật khẩu mới không được để trống")]
-    [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu mới tối thiểu 6 ký tự")]
+    [StringLength(100, MinimumLength = 8, ErrorMessage = "Mật khẩu mới tối thiểu 8 ký tự")]
     public string NewPassword { get; set; } = string.Empty;
 
     public string? ConfirmPassword { get; set; }

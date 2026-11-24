@@ -29,7 +29,7 @@ public sealed class YoloBoundingBoxDtoValidator : AbstractValidator<YoloBounding
     {
         RuleFor(b => b.CategoryCode)
             .NotEmpty().WithMessage("Mã danh mục trong hộp bao YOLO không được để trống.")
-            .MaximumLength(50);
+            .MaximumLength(50).WithMessage("Mã danh mục trong hộp bao YOLO không được vượt quá 50 ký tự.");
 
         RuleFor(b => b.XCenter)
             .InclusiveBetween(0d, 1d).WithMessage("Tọa độ xCenter phải nằm trong [0.0, 1.0].");
@@ -82,7 +82,8 @@ public sealed class AssignGroundTruthLabelRequestValidator : AbstractValidator<A
             .WithMessage("Phải chọn nhãn chuẩn groundTruthLabel khi xác nhận mẫu hợp lệ.");
 
         RuleFor(x => x.QualityNote)
-            .MaximumLength(500).When(x => !string.IsNullOrEmpty(x.QualityNote));
+            .MaximumLength(500).When(x => !string.IsNullOrEmpty(x.QualityNote))
+            .WithMessage("Ghi chú chất lượng không được vượt quá 500 ký tự.");
 
         RuleForEach(x => x.YoloAnnotations!)
             .SetValidator(new YoloBoundingBoxDtoValidator())

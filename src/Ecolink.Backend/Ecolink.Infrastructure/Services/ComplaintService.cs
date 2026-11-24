@@ -100,19 +100,12 @@ public class ComplaintService : IComplaintService
                 "Chỉ người dân hoặc cơ sở thu mua trực tiếp tham gia đơn bàn giao mới có quyền gửi khiếu nại.");
         }
 
-        var isAllowedStatus = handover.Status is HandoverStatus.AwaitingConfirmation
-            or HandoverStatus.Disputed
-            or HandoverStatus.Completed
-            or HandoverStatus.Accepted
-            or HandoverStatus.Scheduled
-            || (handover.Status == HandoverStatus.Cancelled && category is ComplaintCategory.NoShow or ComplaintCategory.Misconduct);
-
-        if (!isAllowedStatus)
+        if (handover.Status != HandoverStatus.Completed)
         {
             throw new BusinessRuleException(
                 "BR-DSP-01",
                 "MSG-DSP-03",
-                "Bạn không thể khiếu nại giao dịch này nữa (quá thời hạn 7 ngày hoặc trạng thái không hợp lệ).");
+                "Người dân và cơ sở thu mua chỉ được gửi khiếu nại sau khi biên nhận bàn giao đã được xác nhận hoàn tất.");
         }
 
         var receipt = await _db.HandoverReceipts
@@ -164,12 +157,6 @@ public class ComplaintService : IComplaintService
             CreatedAt = now,
             CreatedBy = callerUserId.ToString()
         };
-
-        if (handover.Status == HandoverStatus.AwaitingConfirmation)
-        {
-            handover.Status = HandoverStatus.Disputed;
-            handover.UpdatedAt = now;
-        }
 
         _db.TransactionComplaints.Add(complaint);
 

@@ -40,7 +40,8 @@ public class ProEligibilityReportDto
     public decimal AverageRating { get; set; }
     public int TotalReviews { get; set; }
     public decimal MinRequiredRating { get; set; } = 4.0m;
-    public int MinRequiredReviewsForRenewal { get; set; } = 1;
+    public int MinRequiredReviews { get; set; } = 50;
+    public int MinRequiredReviewsForRenewal { get; set; } = 50;
     public bool IsNotCurrentlyActivePro { get; set; }
     public DateTime? ActiveProExpiresAt { get; set; }
     public List<string> BlockingReasons { get; set; } = new();

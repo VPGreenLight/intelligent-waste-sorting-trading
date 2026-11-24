@@ -69,31 +69,52 @@ public class ReviewService : IReviewService
                 "Bạn chỉ có thể đánh giá mỗi đơn giao dịch hoàn tất một lần trong thời hạn 14 ngày (MSG-RVW-02).");
         }
 
-        var alreadyExists = await _db.TransactionReviews
+        var existingReview = await _db.TransactionReviews
             .IgnoreQueryFilters()
-            .AnyAsync(r => r.RequestId == requestId && r.ReviewerId == callerUserId, ct);
+            .FirstOrDefaultAsync(r => r.RequestId == requestId && r.ReviewerId == callerUserId, ct);
 
-        if (alreadyExists)
+        if (existingReview != null && !existingReview.IsDeleted && existingReview.Status != ReviewStatus.Deleted)
         {
             throw new ConflictException(
                 "BR-RVW-01",
                 "MSG-RVW-02",
-                "Bạn chỉ có thể đánh giá mỗi đơn giao dịch hoàn tất một lần trong thời hạn quy định.");
+                "Mỗi đơn giao dịch hoàn tất chỉ được có tối đa 1 đánh giá. Nếu muốn gửi đánh giá khác, vui lòng xóa đánh giá cũ trước.");
         }
 
-        var review = new TransactionReview
+        TransactionReview review;
+        if (existingReview != null)
         {
-            Id = Guid.NewGuid(),
-            RequestId = requestId,
-            ReviewerId = callerUserId,
-            RecyclerId = handover.RecyclerId,
-            RatingStars = request.RatingStars,
-            Comment = string.IsNullOrWhiteSpace(request.Comment) ? null : request.Comment.Trim(),
-            Status = ReviewStatus.Visible,
-            ReportCount = 0
-        };
+            existingReview.RatingStars = request.RatingStars;
+            existingReview.Comment = string.IsNullOrWhiteSpace(request.Comment) ? null : request.Comment.Trim();
+            existingReview.Status = ReviewStatus.Visible;
+            existingReview.IsDeleted = false;
+            existingReview.DeletedAt = null;
+            existingReview.ReportCount = 0;
+            existingReview.LastReportReason = null;
+            existingReview.ReportedByUserId = null;
+            existingReview.ModeratedByStaffId = null;
+            existingReview.ModeratedAt = null;
+            existingReview.ModerationReason = null;
+            existingReview.CreatedAt = DateTime.UtcNow;
+            existingReview.UpdatedAt = DateTime.UtcNow;
+            review = existingReview;
+        }
+        else
+        {
+            review = new TransactionReview
+            {
+                Id = Guid.NewGuid(),
+                RequestId = requestId,
+                ReviewerId = callerUserId,
+                RecyclerId = handover.RecyclerId,
+                RatingStars = request.RatingStars,
+                Comment = string.IsNullOrWhiteSpace(request.Comment) ? null : request.Comment.Trim(),
+                Status = ReviewStatus.Visible,
+                ReportCount = 0
+            };
 
-        _db.TransactionReviews.Add(review);
+            _db.TransactionReviews.Add(review);
+        }
         await _db.SaveChangesAsync(ct);
 
         var (avg, total) = await RecalculateRecyclerRatingAsync(handover.RecyclerId, ct);

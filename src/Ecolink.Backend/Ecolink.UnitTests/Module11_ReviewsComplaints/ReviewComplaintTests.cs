@@ -303,6 +303,23 @@ public class ReviewComplaintTests
 
         var mine = await reviewSvc.GetMyReviewsAsync(ctx.Citizen.Id);
         mine.TotalRecords.Should().Be(0);
+
+        // Xóa xong được phép gửi lại 1 đánh giá mới cho chính đơn đó (tối đa 1 đánh giá đang hiệu lực)
+        var recreated = await reviewSvc.CreateReviewAsync(ctx.Citizen.Id, ctx.Handover.Id, new CreateReviewRequest
+        {
+            RatingStars = 5,
+            Comment = "Đánh giá lại sau khi xóa đánh giá cũ."
+        });
+        recreated.Status.Should().Be("Visible");
+        recreated.RatingStars.Should().Be(5);
+        recreated.UpdatedRecyclerTotalReviews.Should().Be(1);
+        recreated.UpdatedRecyclerAverageRating.Should().Be(5.00m);
+
+        var duplicateAct = () => reviewSvc.CreateReviewAsync(ctx.Citizen.Id, ctx.Handover.Id, new CreateReviewRequest
+        {
+            RatingStars = 4
+        });
+        await duplicateAct.Should().ThrowAsync<ConflictException>();
     }
 
     [Fact]
@@ -370,7 +387,7 @@ public class ReviewComplaintTests
     public async Task UTC006_SubmitComplaintAsync_CitizenSubmitsScaleDiscrepancy_CreatesTicketAndMarksDisputed_Normal()
     {
         using var db = TestDbContextFactory.Create();
-        var ctx = await SeedHandoverAsync(db, HandoverStatus.AwaitingConfirmation, receiptPoints: 0);
+        var ctx = await SeedHandoverAsync(db, HandoverStatus.Completed, receiptPoints: 0);
         var (_, complaintSvc, _) = CreateServices(db, ctx.Citizen.Id, "Citizen");
 
         var complaint = await complaintSvc.SubmitComplaintAsync(ctx.Citizen.Id, new SubmitComplaintRequest
@@ -389,14 +406,14 @@ public class ReviewComplaintTests
         complaint.EvidencePhotoUrls.Should().ContainSingle();
 
         var refreshedHandover = await db.HandoverRequests.FirstAsync(h => h.Id == ctx.Handover.Id);
-        refreshedHandover.Status.Should().Be(HandoverStatus.Disputed);
+        refreshedHandover.Status.Should().Be(HandoverStatus.Completed);
     }
 
     [Fact]
     public async Task UTC007_SubmitComplaintAsync_BilateralRecyclerSubmitsNoShow_SetsComplainantRoleRecycler_Normal()
     {
         using var db = TestDbContextFactory.Create();
-        var ctx = await SeedHandoverAsync(db, HandoverStatus.Accepted, receiptPoints: 0, withReceipt: false);
+        var ctx = await SeedHandoverAsync(db, HandoverStatus.Completed);
         var (_, complaintSvc, _) = CreateServices(db, ctx.RecyclerUser.Id, "Recycler");
 
         var complaint = await complaintSvc.SubmitComplaintAsync(ctx.RecyclerUser.Id, new SubmitComplaintRequest
@@ -443,7 +460,7 @@ public class ReviewComplaintTests
     public async Task UTC009_GetStaffComplaintDossierAsync_ClaimsTicketAndAggregatesReceiptAndChatHistory_Normal()
     {
         using var db = TestDbContextFactory.Create();
-        var ctx = await SeedHandoverAsync(db, HandoverStatus.AwaitingConfirmation, receiptPoints: 0);
+        var ctx = await SeedHandoverAsync(db, HandoverStatus.Completed, receiptPoints: 50);
 
         db.TradeOrders.Add(new TradeOrder
         {
@@ -773,16 +790,18 @@ public class ReviewComplaintTests
 
         // Trường hợp biên ConfirmReceiptAsIs trên đơn đang Disputed chưa từng cộng điểm -> hoàn tất & cộng 50 điểm
         var ctx2 = await SeedHandoverAsync(db, HandoverStatus.AwaitingConfirmation, citizenPoints: 0, receiptPoints: 0);
-        var (_, cmpSvc2, _) = CreateServices(db, ctx2.Citizen.Id, "Citizen");
-        var c2 = await cmpSvc2.SubmitComplaintAsync(ctx2.Citizen.Id, new SubmitComplaintRequest
+        var receiptSvc2 = new HandoverReceiptService(
+            db,
+            new GamificationService(NullLogger<GamificationService>.Instance),
+            NullLogger<HandoverReceiptService>.Instance);
+        await receiptSvc2.DisputeAsync(ctx2.Citizen.Id, ctx2.Handover.Id, new DisputeReceiptRequest
         {
-            HandoverRequestId = ctx2.Handover.Id,
-            Category = "ScaleDiscrepancy",
-            Description = "Yêu cầu đối chiếu lại ảnh đồng hồ cân biên nhận 5kg nhựa."
+            Reason = "Yêu cầu đối chiếu lại ảnh đồng hồ cân biên nhận 5kg nhựa."
         });
+        var c2 = await db.TransactionComplaints.FirstAsync(c => c.RequestId == ctx2.Handover.Id);
 
         var (_, staffSvc2, _) = CreateServices(db, ctx2.Staff.Id, "Staff");
-        var confirmed = await staffSvc2.ResolveComplaintAsync(ctx2.Staff.Id, c2.ComplaintId, new ResolveComplaintRequest
+        var confirmed = await staffSvc2.ResolveComplaintAsync(ctx2.Staff.Id, c2.Id, new ResolveComplaintRequest
         {
             ResolutionOutcome = "ConfirmReceiptAsIs",
             ResolutionNote = "Ảnh đồng hồ cân xác nhận đúng 5.0kg, chốt hoàn tất đơn."

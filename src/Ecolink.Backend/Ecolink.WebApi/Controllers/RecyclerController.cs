@@ -1,6 +1,7 @@
 using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -18,11 +19,31 @@ public class RecyclerController : ControllerBase
 {
     private readonly IRecyclerManagementService _service;
     private readonly ICurrentUserService _currentUser;
+    private readonly IValidator<UpdateRecyclerProfileRequest> _updateProfileValidator;
+    private readonly IValidator<CreateRecyclerPriceRequest> _createPriceValidator;
+    private readonly IValidator<UpdateRecyclerPriceRequest> _updatePriceValidator;
+    private readonly IValidator<BulkSavePricesRequest> _bulkSavePricesValidator;
+    private readonly IValidator<UpdateAvailabilityRequest> _availabilityValidator;
+    private readonly IValidator<UpdateScheduleRequest> _scheduleValidator;
 
-    public RecyclerController(IRecyclerManagementService service, ICurrentUserService currentUser)
+    public RecyclerController(
+        IRecyclerManagementService service,
+        ICurrentUserService currentUser,
+        IValidator<UpdateRecyclerProfileRequest> updateProfileValidator,
+        IValidator<CreateRecyclerPriceRequest> createPriceValidator,
+        IValidator<UpdateRecyclerPriceRequest> updatePriceValidator,
+        IValidator<BulkSavePricesRequest> bulkSavePricesValidator,
+        IValidator<UpdateAvailabilityRequest> availabilityValidator,
+        IValidator<UpdateScheduleRequest> scheduleValidator)
     {
         _service = service;
         _currentUser = currentUser;
+        _updateProfileValidator = updateProfileValidator;
+        _createPriceValidator = createPriceValidator;
+        _updatePriceValidator = updatePriceValidator;
+        _bulkSavePricesValidator = bulkSavePricesValidator;
+        _availabilityValidator = availabilityValidator;
+        _scheduleValidator = scheduleValidator;
     }
 
     private Guid RecyclerId =>
@@ -49,6 +70,9 @@ public class RecyclerController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<RecyclerProfileDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateProfile([FromBody] UpdateRecyclerProfileRequest request, CancellationToken ct)
     {
+        var invalid = await ValidateAsync(_updateProfileValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var data = await _service.UpdateProfileAsync(RecyclerId, request, ct);
         return Ok(ApiResponse<RecyclerProfileDto>.Ok(data, "Cập nhật hồ sơ cơ sở thành công."));
     }
@@ -73,6 +97,9 @@ public class RecyclerController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<RecyclerPriceDto>), StatusCodes.Status201Created)]
     public async Task<IActionResult> AddPrice([FromBody] CreateRecyclerPriceRequest request, CancellationToken ct)
     {
+        var invalid = await ValidateAsync(_createPriceValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var data = await _service.AddPriceAsync(RecyclerId, request, ct);
         return StatusCode(StatusCodes.Status201Created,
             ApiResponse<RecyclerPriceDto>.Ok(data, "Đã thêm loại phế liệu vào bảng giá."));
@@ -83,6 +110,9 @@ public class RecyclerController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<RecyclerPriceDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdatePrice(Guid priceId, [FromBody] UpdateRecyclerPriceRequest request, CancellationToken ct)
     {
+        var invalid = await ValidateAsync(_updatePriceValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var data = await _service.UpdatePriceAsync(RecyclerId, priceId, request, ct);
         return Ok(ApiResponse<RecyclerPriceDto>.Ok(data, "Cập nhật bảng giá thành công."));
     }
@@ -95,6 +125,9 @@ public class RecyclerController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<RecyclerPriceDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> BulkSavePrices([FromBody] BulkSavePricesRequest request, CancellationToken ct)
     {
+        var invalid = await ValidateAsync(_bulkSavePricesValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var data = await _service.BulkSavePricesAsync(RecyclerId, request, ct);
         return Ok(ApiResponse<IReadOnlyList<RecyclerPriceDto>>.Ok(data, "Đã lưu và công bố bảng giá."));
     }
@@ -120,6 +153,9 @@ public class RecyclerController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<AvailabilityDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateAvailability([FromBody] UpdateAvailabilityRequest request, CancellationToken ct)
     {
+        var invalid = await ValidateAsync(_availabilityValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var data = await _service.UpdateAvailabilityAsync(RecyclerId, request, ct);
         var message = data.IsOnline ? "Cơ sở đã chuyển sang trạng thái hoạt động." : "Cơ sở đã chuyển sang trạng thái tạm nghỉ.";
         return Ok(ApiResponse<AvailabilityDto>.Ok(data, message));
@@ -130,7 +166,21 @@ public class RecyclerController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<AvailabilityDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateSchedule([FromBody] UpdateScheduleRequest request, CancellationToken ct)
     {
+        var invalid = await ValidateAsync(_scheduleValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var data = await _service.UpdateScheduleAsync(RecyclerId, request, ct);
         return Ok(ApiResponse<AvailabilityDto>.Ok(data, "Đã cập nhật lịch hoạt động."));
+    }
+
+    private async Task<IActionResult?> ValidateAsync<T>(IValidator<T> validator, T request, CancellationToken ct)
+    {
+        var validation = await validator.ValidateAsync(request, ct);
+        if (validation.IsValid) return null;
+
+        var errors = validation.Errors
+            .Select(e => string.IsNullOrWhiteSpace(e.PropertyName) ? e.ErrorMessage : $"{e.PropertyName}: {e.ErrorMessage}")
+            .ToList();
+        return BadRequest(ApiResponse<object>.Fail("Dữ liệu đầu vào không hợp lệ.", "MSG-GEN-01", errors));
     }
 }

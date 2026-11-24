@@ -62,7 +62,7 @@ public class AuthTests
     public async Task Register_WithMinLengthPassword_Succeeds()
     {
         var payload = TestData.ValidRegister();
-        payload["password"] = "abc123";
+        payload["password"] = "abc12345";
         (await Api.PostJsonAsync(Routes.Register, payload)).ShouldBeIn(200, 201);
     }
 
@@ -93,7 +93,7 @@ public class AuthTests
     [InlineData("username-too-long-51")]
     [InlineData("email-invalid-format")]
     [InlineData("email-empty")]
-    [InlineData("password-too-short-5")]
+    [InlineData("password-too-short-7")]
     [InlineData("password-too-long-101")]
     [InlineData("fullname-too-long-101")]
     [InlineData("missing-username")]
@@ -109,7 +109,7 @@ public class AuthTests
             case "username-too-long-51": p["username"] = new string('a', 51); break;
             case "email-invalid-format": p["email"] = "not-an-email"; break;
             case "email-empty": p["email"] = ""; break;
-            case "password-too-short-5": p["password"] = "12345"; break;
+            case "password-too-short-7": p["password"] = "1234567"; break;
             case "password-too-long-101": p["password"] = new string('p', 101); break;
             case "fullname-too-long-101": p["fullName"] = new string('x', 101); break;
             case "missing-username": p.Remove("username"); break;

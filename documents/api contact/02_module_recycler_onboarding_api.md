@@ -8,16 +8,18 @@
 
 ---
 
-## 1. TỔNG QUAN DANH SÁCH ENDPOINTS
+## 1. TỔNG QUAN DANH SÁCH ENDPOINTS (`M-02` – `6` APIs, `STT 015–020`)
 
-| STT | Phương thức | Endpoint URI | Quyền truy cập | Use Case | Chức năng nghiệp vụ | Mã thông báo chính |
-|:---:|:---:|:---|:---:|:---:|:---|:---|
-| 1 | `POST` | `/api/v1/recycler-applications/upload-document` | `[Authorize]` (`Citizen`) | `U-17` | Tải tệp Giấy phép kinh doanh hoặc Ảnh mặt tiền kho bãi lên **Cloudflare R2 Object Storage** (AWS SigV4). | `MSG-GEN-01` |
-| 2 | `POST` | `/api/v1/recycler-applications` | `[Authorize]` (`Citizen`) | `U-17` | Nộp mới hoặc nộp lại hồ sơ đăng ký nâng cấp từ `Citizen` lên `Recycler` kèm tọa độ GPS PostGIS (`SRID 4326`). | `MSG-MTH-03`, `MSG-MTH-04`, `MSG-GEN-01`, `MSG-AUTH-04` |
-| 3 | `GET` | `/api/v1/recycler-applications/me` | `[Authorize]` (`Citizen`/`Recycler`) | `U-17` | Xem trạng thái hồ sơ đăng ký nâng cấp của chính mình (`Pending`, `Verified`, `Rejected` kèm lý do). | `MSG-GEN-01`, `MSG-NOT-FOUND` |
-| 4 | `GET` | `/api/v1/recycler-applications` | `[Authorize(Roles = "Staff,Admin")]` | `S-04` | Lấy danh sách phân trang các hồ sơ đăng ký `Recycler` (lọc theo `status`, `keyword`, sắp xếp ưu tiên đơn nộp trước FIFO). | `200 OK` |
-| 5 | `GET` | `/api/v1/recycler-applications/{userId:guid}` | `[Authorize(Roles = "Staff,Admin")]` | `S-04` | Xem chi tiết hồ sơ, giấy phép pháp lý, ảnh cơ sở và tọa độ GPS của một ứng viên cụ thể. | `200 OK`, `MSG-NOT-FOUND` |
-| 6 | `PUT` | `/api/v1/recycler-applications/{userId:guid}/verification` | `[Authorize(Roles = "Staff,Admin")]` | `S-04` | Phê duyệt (`Approve` $\rightarrow$ nâng `User.Role = Recycler`) hoặc Từ chối (`Reject` bắt buộc kèm lý do `BR-MTH-02`). | `MSG-MTH-04`, `MSG-MTH-05`, `MSG-GEN-01` |
+> Tham chiếu Inventory: [`00_api_inventory_and_endpoint_statistics.md`](./00_api_inventory_and_endpoint_statistics.md) (`STT 015` $\rightarrow$ `020`).
+
+| STT | Inventory ID | Phương thức | Endpoint URI | Quyền truy cập | Use Case | Chức năng nghiệp vụ | Mã thông báo chính |
+|:---:|:---:|:---:|:---|:---:|:---:|:---|:---|
+| 1 | `015` | `POST` | `/api/v1/recycler-applications/upload-document` | Public (`[AllowAnonymous]`) | `U-17` | Tải tệp Giấy phép kinh doanh hoặc Ảnh mặt tiền kho bãi lên **Cloudflare R2 Object Storage** (hỗ trợ cả form đăng ký công khai `/join-recycler` lẫn người dân nâng cấp). | `MSG-GEN-01` |
+| 2 | `016` | `POST` | `/api/v1/recycler-applications` | `[Authorize]` (`Citizen`) | `U-17` | Nộp mới hoặc nộp lại hồ sơ đăng ký nâng cấp từ `Citizen` lên `Recycler` kèm tọa độ GPS PostGIS (`SRID 4326`). | `MSG-MTH-03`, `MSG-MTH-04`, `MSG-GEN-01`, `MSG-AUTH-04` |
+| 3 | `017` | `GET` | `/api/v1/recycler-applications/me` | `[Authorize]` (`Citizen`/`Recycler`) | `U-17` | Xem trạng thái hồ sơ đăng ký nâng cấp của chính mình (`Pending`, `Verified`, `Rejected` kèm lý do). | `MSG-GEN-01`, `MSG-NOT-FOUND` |
+| 4 | `018` | `GET` | `/api/v1/recycler-applications` | `[Authorize(Roles = "Staff,Admin")]` | `S-04` | Lấy danh sách phân trang các hồ sơ đăng ký `Recycler` (lọc theo `status`, `keyword`, sắp xếp ưu tiên đơn nộp trước FIFO). | `200 OK` |
+| 5 | `019` | `GET` | `/api/v1/recycler-applications/{userId:guid}` | `[Authorize(Roles = "Staff,Admin")]` | `S-04` | Xem chi tiết hồ sơ, giấy phép pháp lý, ảnh cơ sở và tọa độ GPS của một ứng viên cụ thể. | `200 OK`, `MSG-NOT-FOUND` |
+| 6 | `020` | `PUT` | `/api/v1/recycler-applications/{userId:guid}/verification` | `[Authorize(Roles = "Staff,Admin")]` | `S-04` | Phê duyệt (`Approve` $\rightarrow$ nâng `User.Role = Recycler`) hoặc Từ chối (`Reject` bắt buộc kèm lý do `BR-MTH-02`). | `MSG-MTH-04`, `MSG-MTH-05`, `MSG-GEN-01` |
 
 ---
 
@@ -40,7 +42,7 @@
 ### 3.1. Tải chứng từ / Ảnh cơ sở lên Cloudflare R2 (`POST /api/v1/recycler-applications/upload-document`)
 
 * **Mô tả:** Nhận tệp tin qua `multipart/form-data`, kiểm tra định dạng và dung lượng, ký xác thực chuẩn **AWS Signature Version 4 (`HMAC-SHA256`)** và tải trực tiếp lên bucket `ecolink` trên Cloudflare R2 Object Storage.
-* **Header bắt buộc:** `Authorization: Bearer <accessToken>`
+* **Phân quyền:** `[AllowAnonymous]` *(cho phép cả đối tác đang điền form đăng ký công khai `/join-recycler` lẫn người dân đang đăng nhập thực hiện nâng cấp tài khoản)*.
 
 #### a. Request Parameters (`multipart/form-data`)
 
@@ -85,7 +87,6 @@
 | **`400 Bad Request`** | `MSG-GEN-01` | Không đính kèm `file` hoặc `file.Length == 0` | `"Vui lòng chọn tệp chứng từ hoặc ảnh cơ sở để tải lên."` |
 | **`400 Bad Request`** | `MSG-GEN-01` | Tệp vượt quá dung lượng tối đa 5 MB | `"Dung lượng tệp vượt quá giới hạn cho phép (Tối đa 5 MB)."` |
 | **`400 Bad Request`** | `MSG-GEN-01` | Đuôi file không thuộc `.jpg`, `.jpeg`, `.png`, `.webp`, `.pdf` | `"Định dạng tệp không được hỗ trợ. Chỉ chấp nhận .jpg, .jpeg, .png, .webp hoặc .pdf."` |
-| **`401 Unauthorized`** | `MSG-UNAUTHORIZED` | Chưa đăng nhập hoặc thiếu Bearer Token | — |
 
 ---
 

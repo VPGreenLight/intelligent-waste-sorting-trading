@@ -1,6 +1,7 @@
 using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,15 +17,21 @@ public class AdminGamificationController : ControllerBase
     private readonly IGamificationConfigService _config;
     private readonly ILeaderboardService _leaderboard;
     private readonly ICurrentUserService _currentUser;
+    private readonly IValidator<GamificationConfigDto> _configValidator;
+    private readonly IValidator<SaveLeaderboardCycleRequest> _cycleValidator;
 
     public AdminGamificationController(
         IGamificationConfigService config,
         ILeaderboardService leaderboard,
-        ICurrentUserService currentUser)
+        ICurrentUserService currentUser,
+        IValidator<GamificationConfigDto> configValidator,
+        IValidator<SaveLeaderboardCycleRequest> cycleValidator)
     {
         _config = config;
         _leaderboard = leaderboard;
         _currentUser = currentUser;
+        _configValidator = configValidator;
+        _cycleValidator = cycleValidator;
     }
 
     private Guid AdminId =>
@@ -38,8 +45,12 @@ public class AdminGamificationController : ControllerBase
     /// <summary>Lưu toàn bộ cấu hình (thay thế). Điểm không âm; cấp cây liên tục từ 1, ngưỡng tăng dần nghiêm ngặt.</summary>
     [HttpPut("config")]
     [ProducesResponseType(typeof(ApiResponse<GamificationConfigDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> Update([FromBody] GamificationConfigDto request, CancellationToken ct) =>
-        Ok(ApiResponse<GamificationConfigDto>.Ok(await _config.UpdateAsync(AdminId, request, ct), "Đã lưu cấu hình gamification."));
+    public async Task<IActionResult> Update([FromBody] GamificationConfigDto request, CancellationToken ct)
+    {
+        var invalid = await ValidateAsync(_configValidator, request, ct);
+        if (invalid != null) return invalid;
+        return Ok(ApiResponse<GamificationConfigDto>.Ok(await _config.UpdateAsync(AdminId, request, ct), "Đã lưu cấu hình gamification."));
+    }
 
     /// <summary>Khôi phục tham số mặc định.</summary>
     [HttpPost("config/reset")]
@@ -62,6 +73,9 @@ public class AdminGamificationController : ControllerBase
     [ProducesResponseType(typeof(ApiResponse<LeaderboardCycleDto>), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateCycle([FromBody] SaveLeaderboardCycleRequest request, CancellationToken ct)
     {
+        var invalid = await ValidateAsync(_cycleValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var created = await _leaderboard.CreateCycleAsync(AdminId, request, ct);
         return StatusCode(StatusCodes.Status201Created,
             ApiResponse<LeaderboardCycleDto>.Ok(created, "Đã tạo chu kỳ bảng xếp hạng mới."));
@@ -70,10 +84,26 @@ public class AdminGamificationController : ControllerBase
     /// <summary>Cập nhật thông tin chu kỳ bảng xếp hạng chưa chốt.</summary>
     [HttpPut("leaderboard-cycles/{cycleId:guid}")]
     [ProducesResponseType(typeof(ApiResponse<LeaderboardCycleDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> UpdateCycle(Guid cycleId, [FromBody] SaveLeaderboardCycleRequest request, CancellationToken ct) =>
-        Ok(ApiResponse<LeaderboardCycleDto>.Ok(
+    public async Task<IActionResult> UpdateCycle(Guid cycleId, [FromBody] SaveLeaderboardCycleRequest request, CancellationToken ct)
+    {
+        var invalid = await ValidateAsync(_cycleValidator, request, ct);
+        if (invalid != null) return invalid;
+
+        return Ok(ApiResponse<LeaderboardCycleDto>.Ok(
             await _leaderboard.UpdateCycleAsync(AdminId, cycleId, request, ct),
             "Đã cập nhật chu kỳ bảng xếp hạng."));
+    }
+
+    private async Task<IActionResult?> ValidateAsync<T>(IValidator<T> validator, T request, CancellationToken ct)
+    {
+        var validation = await validator.ValidateAsync(request, ct);
+        if (validation.IsValid) return null;
+
+        var errors = validation.Errors
+            .Select(e => string.IsNullOrWhiteSpace(e.PropertyName) ? e.ErrorMessage : $"{e.PropertyName}: {e.ErrorMessage}")
+            .ToList();
+        return BadRequest(ApiResponse<object>.Fail(validation.Errors[0].ErrorMessage, "MSG-AUTH-02", errors));
+    }
 
     /// <summary>Chuyển chu kỳ đang bật (chỉ một chu kỳ được bật tại một thời điểm).</summary>
     [HttpPatch("leaderboard-cycles/{cycleId:guid}/activate")]

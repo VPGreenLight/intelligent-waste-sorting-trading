@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -21,15 +22,39 @@ public class AuthController : ControllerBase
     private readonly IAuthService _authService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthController> _logger;
+    private readonly IValidator<RegisterUserRequestDto> _registerUserValidator;
+    private readonly IValidator<RegisterRecyclerRequestDto> _registerRecyclerValidator;
+    private readonly IValidator<LoginRequestDto> _loginValidator;
+    private readonly IValidator<GoogleAuthRequestDto> _googleAuthValidator;
+    private readonly IValidator<ForgotPasswordRequestDto> _forgotPasswordValidator;
+    private readonly IValidator<ResetPasswordRequestDto> _resetPasswordValidator;
+    private readonly IValidator<UpdateUserProfileRequestDto> _updateProfileValidator;
+    private readonly IValidator<ChangePasswordRequestDto> _changePasswordValidator;
 
     public AuthController(
         IAuthService authService,
         IConfiguration configuration,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IValidator<RegisterUserRequestDto> registerUserValidator,
+        IValidator<RegisterRecyclerRequestDto> registerRecyclerValidator,
+        IValidator<LoginRequestDto> loginValidator,
+        IValidator<GoogleAuthRequestDto> googleAuthValidator,
+        IValidator<ForgotPasswordRequestDto> forgotPasswordValidator,
+        IValidator<ResetPasswordRequestDto> resetPasswordValidator,
+        IValidator<UpdateUserProfileRequestDto> updateProfileValidator,
+        IValidator<ChangePasswordRequestDto> changePasswordValidator)
     {
         _authService = authService;
         _configuration = configuration;
         _logger = logger;
+        _registerUserValidator = registerUserValidator;
+        _registerRecyclerValidator = registerRecyclerValidator;
+        _loginValidator = loginValidator;
+        _googleAuthValidator = googleAuthValidator;
+        _forgotPasswordValidator = forgotPasswordValidator;
+        _resetPasswordValidator = resetPasswordValidator;
+        _updateProfileValidator = updateProfileValidator;
+        _changePasswordValidator = changePasswordValidator;
     }
 
     /// <summary>
@@ -41,6 +66,9 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Register(
         [FromBody] RegisterUserRequestDto request, CancellationToken ct)
     {
+        var invalid = await ValidateRequestAsync(_registerUserValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var result = await _authService.RegisterUserAsync(request, ct);
         SetAuthCookies(result);
 
@@ -59,6 +87,9 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiResponse<AuthResponseDto>>> RegisterRecycler(
         [FromBody] RegisterRecyclerRequestDto request, CancellationToken ct)
     {
+        var invalid = await ValidateRequestAsync(_registerRecyclerValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var result = await _authService.RegisterRecyclerAsync(request, ct);
         SetAuthCookies(result);
 
@@ -77,6 +108,9 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiResponse<AuthResponseDto>>> Login(
         [FromBody] LoginRequestDto request, CancellationToken ct)
     {
+        var invalid = await ValidateRequestAsync(_loginValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var result = await _authService.LoginAsync(request, GetClientIp(), ct);
         SetAuthCookies(result);
 
@@ -112,6 +146,9 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiResponse<AuthResponseDto>>> GoogleLogin(
         [FromBody] GoogleAuthRequestDto request, CancellationToken ct)
     {
+        var invalid = await ValidateRequestAsync(_googleAuthValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var result = await _authService.AuthenticateGoogleAsync(request.IdToken, ct);
         SetAuthCookies(result);
 
@@ -158,6 +195,9 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiResponse<object?>>> ForgotPassword(
         [FromBody] ForgotPasswordRequestDto request, CancellationToken ct)
     {
+        var invalid = await ValidateRequestAsync<ForgotPasswordRequestDto, object?>(_forgotPasswordValidator, request, ct);
+        if (invalid != null) return invalid;
+
         await _authService.ForgotPasswordAsync(request.Email, GetClientIp(), ct);
 
         // BR-AUTH-06: Phản hồi đồng nhất dù email có tồn tại trong hệ thống hay không để chống enumeration
@@ -176,6 +216,9 @@ public class AuthController : ControllerBase
     public async Task<ActionResult<ApiResponse<object?>>> ResetPassword(
         [FromBody] ResetPasswordRequestDto request, CancellationToken ct)
     {
+        var invalid = await ValidateRequestAsync<ResetPasswordRequestDto, object?>(_resetPasswordValidator, request, ct);
+        if (invalid != null) return invalid;
+
         await _authService.ResetPasswordAsync(request, ct);
 
         return Ok(ApiResponse<object?>.Ok(
@@ -202,6 +245,9 @@ public class AuthController : ControllerBase
                 messageCode: "MSG-NTF-01"));
         }
 
+        var invalid = await ValidateRequestAsync<UpdateUserProfileRequestDto, UserInfoDto>(_updateProfileValidator, request, ct);
+        if (invalid != null) return invalid;
+
         var updated = await _authService.UpdateProfileAsync(userId.Value, request, ct);
         return Ok(ApiResponse<UserInfoDto>.Ok(
             updated,
@@ -226,6 +272,9 @@ public class AuthController : ControllerBase
                 message: "Phiên đăng nhập không hợp lệ. Vui lòng đăng nhập lại.",
                 messageCode: "MSG-NTF-01"));
         }
+
+        var invalid = await ValidateRequestAsync<ChangePasswordRequestDto, object?>(_changePasswordValidator, request, ct);
+        if (invalid != null) return invalid;
 
         var currentRefreshToken = Request.Cookies["refreshToken"];
         await _authService.ChangePasswordAsync(userId.Value, request, currentRefreshToken, ct);
@@ -342,6 +391,30 @@ public class AuthController : ControllerBase
     }
 
     // ================= HELPER METHODS =================
+    private Task<ActionResult<ApiResponse<AuthResponseDto>>?> ValidateRequestAsync<TRequest>(
+        IValidator<TRequest> validator,
+        TRequest request,
+        CancellationToken ct) =>
+        ValidateRequestAsync<TRequest, AuthResponseDto>(validator, request, ct);
+
+    private async Task<ActionResult<ApiResponse<TResponse>>?> ValidateRequestAsync<TRequest, TResponse>(
+        IValidator<TRequest> validator,
+        TRequest request,
+        CancellationToken ct)
+    {
+        var validation = await validator.ValidateAsync(request, ct);
+        if (validation.IsValid) return null;
+
+        var errors = validation.Errors
+            .Select(e => string.IsNullOrWhiteSpace(e.PropertyName) ? e.ErrorMessage : $"{e.PropertyName}: {e.ErrorMessage}")
+            .ToList();
+
+        return BadRequest(ApiResponse<TResponse>.Fail(
+            message: "Dữ liệu đầu vào không hợp lệ.",
+            messageCode: "MSG-GEN-01",
+            errors: errors));
+    }
+
     private Guid? GetCurrentUserId()
     {
         var rawId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.FindFirstValue("sub");

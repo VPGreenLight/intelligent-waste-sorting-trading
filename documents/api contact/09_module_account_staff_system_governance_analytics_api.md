@@ -1,39 +1,50 @@
-# TÀI LIỆU ĐẶC TẢ API – MODULE 9: QUẢN TRỊ TÀI KHOẢN, NHÂN SỰ, PHÂN QUYỀN & GIÁM SÁT HỆ THỐNG (ACCOUNT, STAFF & SYSTEM GOVERNANCE / ANALYTICS)
+# TÀI LIỆU ĐẶC TẢ API – MODULE 9: QUẢN TRỊ TÀI KHOẢN, NHÂN SỰ, PHÂN QUYỀN, CHÍNH SÁCH NỀN TẢNG & GIÁM SÁT HỆ THỐNG (`M-15`)
 
-**Mã phân hệ:** `ADM` / `AUTH` / `GAM` (`Use Cases A-01`, `A-02`, `A-03`, `A-04`, `S-06`, `S-07`, `S-11` — Module API `M-15` / Feature `FE-17`, `FE-18`)  
-**Controllers:** [`AdminAnalyticsController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/AdminAnalyticsController.cs), [`StaffAccountsController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/StaffAccountsController.cs), [`AdminStaffController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/AdminStaffController.cs), [`StaffAttendanceController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/StaffAttendanceController.cs)  
+**Mã phân hệ:** `M-15` (`ADM` / `AUTH` / `GAM` / `NTF` / `POL` – `Use Cases A-01..A-04`, `S-06`, `S-07`, `S-11`, `SU-04`, `EI-07`)  
+**Controllers & Hubs:** [`AdminAnalyticsController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/AdminAnalyticsController.cs), [`StaffAccountsController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/StaffAccountsController.cs), [`AdminStaffController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/AdminStaffController.cs), [`StaffAttendanceController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/StaffAttendanceController.cs), [`NotificationsController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/NotificationsController.cs), [`NotificationHub.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Hubs/NotificationHub.cs), [`PlatformPoliciesController.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Controllers/PlatformPoliciesController.cs)  
 **Security & Interceptors:** [`PermissionAuthorization.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.WebApi/Security/PermissionAuthorization.cs) (`HasPermissionAttribute`, `PermissionAuthorizationHandler`, `AccountStatusGuardMiddleware`), [`AuditLogImmutabilityInterceptor.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Data/Interceptors/AuditLogImmutabilityInterceptor.cs)  
-**Services thực thi:** [`AdminAnalyticsService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/AdminAnalyticsService.cs), [`AccountGovernanceService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/AccountGovernanceService.cs), [`StaffManagementService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/StaffManagementService.cs), [`StaffAttendanceService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/StaffAttendanceService.cs), [`AuditLogService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/AuditLogService.cs)  
+**Services thực thi:** [`AdminAnalyticsService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/AdminAnalyticsService.cs), [`AccountGovernanceService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/AccountGovernanceService.cs), [`StaffManagementService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/StaffManagementService.cs), [`StaffAttendanceService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/StaffAttendanceService.cs), [`PlatformPolicyService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/PlatformPolicyService.cs), [`AuditLogService.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Infrastructure/Services/AuditLogService.cs)  
 **Validators & Constants:** [`GovernanceValidators.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Validators/GovernanceValidators.cs), [`StaffPermissions.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Constants/StaffPermissions.cs)  
-**Entities:** [`GovernanceEntities.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/GovernanceEntities.cs) (`AuditLog`, `AccountModerationLog`, `StaffAttendance`), [`User.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/User.cs), [`AuthEntities.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Domain/Entities/AuthEntities.cs) (`StaffProfile`, `StaffPermissionAssignment`)  
-**DTOs:** [`GovernanceDtos.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Dtos/GovernanceDtos.cs)  
-**Base Routes:** `/api/v1/admin/*`, `/api/v1/staff/accounts/*`, `/api/v1/staff/attendance/*`
+**DTOs:** [`GovernanceDtos.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Dtos/GovernanceDtos.cs), [`PlatformPolicyDtos.cs`](file:///c:/Projects/EcoLink/intelligent-waste-sorting-trading/src/Ecolink.Backend/Ecolink.Application/Dtos/PlatformPolicyDtos.cs)  
+**Base Routes:** `/api/v1/admin/*`, `/api/v1/staff/accounts/*`, `/api/v1/staff/attendance/*`, `/api/v1/notifications/*`, `/hubs/notifications`, `/api/v1/policies`, `/api/v1/admin/policies/*`
 
 ---
 
-## 1. TỔNG QUAN DANH SÁCH ENDPOINTS (19 REST APIS — `STT 150–168`)
+## 1. TỔNG QUAN DANH SÁCH ENDPOINTS (`29` APIs: `28` REST + `1` WS — `STT 173–201`)
+
+> Tham chiếu Inventory: [`00_api_inventory_and_endpoint_statistics.md`](./00_api_inventory_and_endpoint_statistics.md) (`STT 173` $\rightarrow$ `201`).
 
 | STT | Inventory ID | Phương thức | Endpoint URI | Quyền truy cập (`[Authorize]` / `[HasPermission]`) | Use Case | Chức năng nghiệp vụ | Quy tắc / Mã thông báo |
 |:---:|:---:|:---:|:---|:---|:---:|:---|:---|
-| 1 | `STT 150` | `GET` | `/api/v1/admin/analytics/kpi-summary` | `Admin` | `A-01` | Tổng hợp KPI điều hành (Citizen tích cực, Recycler xác minh, sản lượng kg/tấn, doanh thu VietQR, chất lượng AI, tồn đọng). | `BR-ADM-07`, `MSG-GEN-01` |
-| 2 | `STT 151` | `GET` | `/api/v1/admin/analytics/charts` | `Admin` | `A-01` | Dữ liệu biểu đồ xu hướng theo tháng, cơ cấu nhóm phế liệu và hiệu năng AI theo nhóm. | `BR-ADM-07`, `MSG-GEN-01` |
-| 3 | `STT 152` | `GET` | `/api/v1/admin/reports/export` | `Admin` | `A-02` | Trích xuất báo cáo `csv` (UTF-8 BOM) hoặc `xlsx` che PII và tự động ghi nhật ký `EXPORT_REPORT`. | `BR-ADM-05`, `BR-ADM-06`, `MSG-ADM-02` |
-| 4 | `STT 153` | `GET` | `/api/v1/admin/audit-logs` | `Admin` | `A-02` | Tra cứu nhật ký kiểm toán bất biến (Append-Only Audit Trail, chỉ đọc). | `BR-ADM-05`, `MSG-GEN-01` |
-| 5 | `STT 154` | `GET` | `/api/v1/staff/accounts` | `Staff` (`MANAGE_ACCOUNTS`) hoặc `Admin` | `S-06` | Danh sách tài khoản Người dân & Cơ sở thu gom (lọc vai trò, trạng thái, cảnh cáo, từ khóa). | `BR-ADM-02`, `BR-ADM-03`, `MSG-GEN-01` |
-| 6 | `STT 155` | `GET` | `/api/v1/staff/accounts/{userId:guid}` | `Staff` (`MANAGE_ACCOUNTS`) hoặc `Admin` | `S-06` | Xem chi tiết hồ sơ tài khoản, thống kê giao dịch và lịch sử kiểm duyệt vi phạm. | `BR-ADM-02`, `MSG-GEN-01` |
-| 7 | `STT 156` | `PATCH` | `/api/v1/staff/accounts/{userId:guid}/lock` | `Staff` (`MANAGE_ACCOUNTS`) hoặc `Admin` | `S-07` | Tạm khóa (`Suspended`) hoặc mở khóa (`Active`), bắt buộc lý do $\ge 10$ ký tự, thu hồi Refresh Token, xóa cache JWT, đẩy Recycler về `Offline`. | `BR-ADM-03`, `BR-ADM-05`, `MSG-ADM-03` |
-| 8 | `STT 157` | `DELETE` | `/api/v1/staff/accounts/{userId:guid}` | `Staff` (`MANAGE_ACCOUNTS`) hoặc `Admin` | `S-07` | Vô hiệu hóa mềm (`Deactivated`) kèm biên bản lý do $\ge 10$ ký tự, bảo toàn 100% biên nhận lịch sử. | `BR-ADM-03`, `BR-ADM-04`, `MSG-ADM-03` |
-| 9 | `STT 158` | `GET` | `/api/v1/admin/staff` | `Admin` | `A-03` | Tra cứu danh sách nhân viên vận hành nội bộ, phòng ban, trạng thái công tác và tập quyền. | `BR-ADM-01`, `MSG-GEN-01` |
-| 10 | `STT 159` | `POST` | `/api/v1/admin/staff` | `Admin` | `A-03` | Khởi tạo tài khoản Nhân viên vận hành (`201 Created`), mặc định `0` quyền nếu không truyền `initialPermissions`, cấp mã `NV-xxx`. | `BR-ADM-01`, `BR-ADM-05`, `MSG-GEN-01` |
-| 11 | `STT 160` | `PUT` | `/api/v1/admin/staff/{staffId:guid}` | `Admin` | `A-03` | Cập nhật họ tên, SĐT, phòng ban, chức danh và tùy chọn cấp lại mật khẩu tạm (thu hồi token & xóa cache). | `BR-ADM-01`, `BR-ADM-05`, `MSG-GEN-01` |
-| 12 | `STT 161` | `PATCH` | `/api/v1/admin/staff/{staffId:guid}/status` | `Admin` | `A-03` | Đình chỉ (`Suspended`), ngừng kích hoạt (`Deactivated`) hoặc mở lại (`Active`) nhân viên kèm lý do $\ge 10$ ký tự; chặn tự khóa mình. | `BR-ADM-03`, `BR-ADM-05`, `MSG-ADM-03` |
-| 13 | `STT 162` | `GET` | `/api/v1/admin/permissions/catalog` | `Admin` | `A-04` | Trả về danh mục chuẩn 7 mã quyền RBAC (`REVIEW_AI`..`MANAGE_INVENTORY`) và legacy alias Frontend. | `BR-ADM-02`, `MSG-GEN-01` |
-| 14 | `STT 163` | `GET` | `/api/v1/admin/staff/{staffId:guid}/permissions` | `Admin` | `A-04` | Xem chi tiết tập quyền RBAC đang gán cho một nhân viên cụ thể kèm người cấp & thời điểm. | `BR-ADM-02`, `MSG-GEN-01` |
-| 15 | `STT 164` | `PUT` | `/api/v1/admin/staff/{staffId:guid}/permissions` | `Admin` | `A-04` | Cập nhật ma trận quyền RBAC, chuẩn hóa 2 chiều mã quyền, xóa `IMemoryCache` tức thời và ghi Audit Log diff. | `BR-ADM-02`, `BR-ADM-05`, `MSG-ADM-01` |
-| 16 | `STT 165` | `POST` | `/api/v1/staff/attendance/check-in` | `Staff`, `Admin` | `S-11` | Điểm danh bắt đầu ca trực (`201 Created`), giới hạn 1 lần/ngày (UTC+7), chuỗi 7 ngày (`+10`/`+15` điểm nhận việc), tách biệt khỏi `GreenPoints`. | `BR-GAM-08`, `BR-GAM-09`, `MSG-GEN-01` |
-| 17 | `STT 166` | `POST` | `/api/v1/staff/attendance/check-out` | `Staff`, `Admin` | `S-11` | Kết thúc ca trực, tính `workedMinutes`, thống kê tác vụ vận hành từ `audit_logs` trong ca và lưu ghi chú bàn giao. | `BR-GAM-09`, `MSG-GEN-01` |
-| 18 | `STT 167` | `GET` | `/api/v1/staff/attendance/me` | `Staff`, `Admin` | `S-11` | Tra cứu trạng thái chấm công hôm nay, chuỗi chuyên cần và lịch sử ca trực theo tháng/năm của bản thân. | `BR-GAM-09`, `MSG-GEN-01` |
-| 19 | `STT 168` | `GET` | `/api/v1/admin/staff/attendance` | `Admin` | `S-11`, `A-03` | Báo cáo chuyên cần và nhật ký ca trực hàng ngày của toàn bộ nhân viên vận hành (có phân trang & lọc). | `BR-GAM-09`, `MSG-GEN-01` |
+| 1 | `STT 173` | `GET` | `/api/v1/admin/analytics/kpi-summary` | `Admin` | `A-01` | Tổng hợp KPI điều hành (Citizen tích cực, Recycler xác minh, sản lượng kg/tấn, doanh thu VietQR, chất lượng AI, tồn đọng). | `BR-ADM-07`, `MSG-GEN-01` |
+| 2 | `STT 174` | `GET` | `/api/v1/admin/analytics/charts` | `Admin` | `A-01` | Dữ liệu biểu đồ xu hướng theo tháng, cơ cấu nhóm phế liệu và hiệu năng AI theo nhóm. | `BR-ADM-07`, `MSG-GEN-01` |
+| 3 | `STT 175` | `GET` | `/api/v1/admin/reports/export` | `Admin` | `A-02` | Trích xuất báo cáo `csv` (UTF-8 BOM) hoặc `xlsx` che PII và tự động ghi nhật ký `EXPORT_REPORT`. | `BR-ADM-05`, `BR-ADM-06`, `MSG-ADM-02` |
+| 4 | `STT 176` | `GET` | `/api/v1/admin/audit-logs` | `Admin` | `A-02` | Tra cứu nhật ký kiểm toán bất biến (Append-Only Audit Trail, chỉ đọc). | `BR-ADM-05`, `MSG-GEN-01` |
+| 5 | `STT 177` | `GET` | `/api/v1/staff/accounts` | `Staff` (`MANAGE_ACCOUNTS`) hoặc `Admin` | `S-06` | Danh sách tài khoản Người dân & Cơ sở thu gom (lọc vai trò, trạng thái, cảnh cáo, từ khóa). | `BR-ADM-02`, `BR-ADM-03`, `MSG-GEN-01` |
+| 6 | `STT 178` | `GET` | `/api/v1/staff/accounts/{userId:guid}` | `Staff` (`MANAGE_ACCOUNTS`) hoặc `Admin` | `S-06` | Xem chi tiết hồ sơ tài khoản, thống kê giao dịch và lịch sử kiểm duyệt vi phạm. | `BR-ADM-02`, `MSG-GEN-01` |
+| 7 | `STT 179` | `PATCH` | `/api/v1/staff/accounts/{userId:guid}/lock` | `Staff` (`MANAGE_ACCOUNTS`) hoặc `Admin` | `S-07` | Tạm khóa (`Suspended`) hoặc mở khóa (`Active`), bắt buộc lý do $\ge 10$ ký tự, thu hồi Refresh Token, xóa cache JWT, đẩy Recycler về `Offline`. | `BR-ADM-03`, `BR-ADM-05`, `MSG-ADM-03` |
+| 8 | `STT 180` | `DELETE` | `/api/v1/staff/accounts/{userId:guid}` | `Staff` (`MANAGE_ACCOUNTS`) hoặc `Admin` | `S-07` | Vô hiệu hóa mềm (`Deactivated`) kèm biên bản lý do $\ge 10$ ký tự, bảo toàn 100% biên nhận lịch sử. | `BR-ADM-03`, `BR-ADM-04`, `MSG-ADM-03` |
+| 9 | `STT 181` | `GET` | `/api/v1/admin/staff` | `Admin` | `A-03` | Tra cứu danh sách nhân viên vận hành nội bộ, phòng ban, trạng thái công tác và tập quyền. | `BR-ADM-01`, `MSG-GEN-01` |
+| 10 | `STT 182` | `POST` | `/api/v1/admin/staff` | `Admin` | `A-03` | Khởi tạo tài khoản Nhân viên vận hành (`201 Created`), mặc định `0` quyền nếu không truyền `initialPermissions`, cấp mã `NV-xxx`. | `BR-ADM-01`, `BR-ADM-05`, `MSG-GEN-01` |
+| 11 | `STT 183` | `PUT` | `/api/v1/admin/staff/{staffId:guid}` | `Admin` | `A-03` | Cập nhật họ tên, SĐT, phòng ban, chức danh và tùy chọn cấp lại mật khẩu tạm (thu hồi token & xóa cache). | `BR-ADM-01`, `BR-ADM-05`, `MSG-GEN-01` |
+| 12 | `STT 184` | `PATCH` | `/api/v1/admin/staff/{staffId:guid}/status` | `Admin` | `A-03` | Đình chỉ (`Suspended`), ngừng kích hoạt (`Deactivated`) hoặc mở lại (`Active`) nhân viên kèm lý do $\ge 10$ ký tự; chặn tự khóa mình. | `BR-ADM-03`, `BR-ADM-05`, `MSG-ADM-03` |
+| 13 | `STT 185` | `GET` | `/api/v1/admin/permissions/catalog` | `Admin` | `A-04` | Trả về danh mục chuẩn 7 mã quyền RBAC (`REVIEW_AI`..`MANAGE_INVENTORY`) và legacy alias Frontend. | `BR-ADM-02`, `MSG-GEN-01` |
+| 14 | `STT 186` | `GET` | `/api/v1/admin/staff/{staffId:guid}/permissions` | `Admin` | `A-04` | Xem chi tiết tập quyền RBAC đang gán cho một nhân viên cụ thể kèm người cấp & thời điểm. | `BR-ADM-02`, `MSG-GEN-01` |
+| 15 | `STT 187` | `PUT` | `/api/v1/admin/staff/{staffId:guid}/permissions` | `Admin` | `A-04` | Cập nhật ma trận quyền RBAC, chuẩn hóa 2 chiều mã quyền, xóa `IMemoryCache` tức thời và ghi Audit Log diff. | `BR-ADM-02`, `BR-ADM-05`, `MSG-ADM-01` |
+| 16 | `STT 188` | `POST` | `/api/v1/staff/attendance/check-in` | `Staff`, `Admin` | `S-11` | Điểm danh bắt đầu ca trực (`201 Created`), giới hạn 1 lần/ngày (UTC+7), chuỗi 7 ngày (`+10`/`+15` điểm nhận việc), tách biệt khỏi `GreenPoints`. | `BR-GAM-08`, `BR-GAM-09`, `MSG-GEN-01` |
+| 17 | `STT 189` | `POST` | `/api/v1/staff/attendance/check-out` | `Staff`, `Admin` | `S-11` | Kết thúc ca trực, tính `workedMinutes`, thống kê tác vụ vận hành từ `audit_logs` trong ca và lưu ghi chú bàn giao. | `BR-GAM-09`, `MSG-GEN-01` |
+| 18 | `STT 190` | `GET` | `/api/v1/staff/attendance/me` | `Staff`, `Admin` | `S-11` | Tra cứu trạng thái chấm công hôm nay, chuỗi chuyên cần và lịch sử ca trực theo tháng/năm của bản thân. | `BR-GAM-09`, `MSG-GEN-01` |
+| 19 | `STT 191` | `GET` | `/api/v1/admin/staff/attendance` | `Admin` | `S-11`, `A-03` | Báo cáo chuyên cần và nhật ký ca trực hàng ngày của toàn bộ nhân viên vận hành (có phân trang & lọc). | `BR-GAM-09`, `MSG-GEN-01` |
+| 20 | `STT 192` | `GET` | `/api/v1/notifications` | `[Authorize]` | `SU-04` | Danh sách thông báo cá nhân có phân trang, lọc `isRead`/`notificationType` kèm tổng `unreadCount`. | `MSG-NTF-LIST-OK` |
+| 21 | `STT 193` | `PATCH` | `/api/v1/notifications/{notificationId:guid}/read` | `[Authorize]` | `SU-04` | Đánh dấu 1 thông báo thuộc sở hữu của mình là đã đọc và phát SignalR `UnreadCountUpdated`. | `BR-NTF-01`, `MSG-NTF-READ-OK` |
+| 22 | `STT 194` | `PUT` | `/api/v1/notifications/read-all` | `[Authorize]` | `SU-04` | Đánh dấu toàn bộ thông báo chưa đọc của tài khoản là đã xem (`unreadCount = 0`). | `MSG-NTF-READ-ALL-OK` |
+| 23 | `STT 195` | `WS` | `/hubs/notifications` | `[Authorize]` (Header/Query `?access_token`) | `SU-04`, `EI-07` | Kênh WebSocket SignalR đẩy `ReceiveNotification` và `UnreadCountUpdated` tới `user:{userId}`. | `BR-NTF-05` |
+| 24 | `STT 196` | `GET` | `/api/v1/policies` | Public (`[AllowAnonymous]`) | `G-01` | Danh sách điều khoản dịch vụ, chính sách môi trường & quyền riêng tư đang `ACTIVE` hiển thị công khai trên `/terms`. | `MSG-POL-LIST-OK` |
+| 25 | `STT 197` | `GET` | `/api/v1/admin/policies` | `Admin`, `Staff` | `A-09` | Xem toàn bộ điều khoản/chính sách gồm cả `DRAFT` và `INACTIVE` (lọc `category`, `status`, `search`). | `MSG-POL-LIST-OK` |
+| 26 | `STT 198` | `POST` | `/api/v1/admin/policies` | `Admin` | `A-09` | Tạo mới mục điều khoản hoặc chính sách nền tảng (`201 Created`), kiểm tra trùng `code` và ghi `AuditLog`. | `BR-POL-01`, `BR-POL-02`, `MSG-POL-CREATED` |
+| 27 | `STT 199` | `PUT` | `/api/v1/admin/policies/{id:guid}` | `Admin` | `A-09` | Cập nhật nội dung, nhóm `category`, `displayOrder`, `status` cho mục điều khoản (giữ ít nhất 1 mục `ACTIVE`). | `BR-POL-01..03`, `MSG-POL-UPDATED` |
+| 28 | `STT 200` | `PATCH` | `/api/v1/admin/policies/{id:guid}/status` | `Admin` | `A-09` | Bật/tắt nhanh trạng thái `ACTIVE` / `DRAFT` / `INACTIVE` (chặn hạ trạng thái mục `ACTIVE` cuối cùng). | `BR-POL-03`, `MSG-POL-STATUS-UPDATED` |
+| 29 | `STT 201` | `DELETE` | `/api/v1/admin/policies/{id:guid}` | `Admin` | `A-09` | Xóa mục điều khoản (chặn xóa mục `ACTIVE` cuối cùng còn lại) và ghi `AuditLog`. | `BR-POL-03`, `MSG-POL-DELETED` |
 
 ---
 
@@ -193,23 +204,42 @@
 
 ---
 
-### Nhóm 5: Thông báo Hệ thống & Kênh Realtime SignalR (`NotificationsController` & `NotificationHub` – `SU-04`, `EI-07`, `STT 169–172`)
+### Nhóm 5: Thông báo Hệ thống & Kênh Realtime SignalR (`NotificationsController` & `NotificationHub` – `SU-04`, `EI-07`, `STT 192–195`)
 
-#### 2.14. Danh sách Thông báo Hệ thống (`GET /api/v1/notifications` – `STT 169`)
+#### 2.14. Danh sách Thông báo Hệ thống (`GET /api/v1/notifications` – `STT 192`)
 * **Phân quyền:** `[Authorize]` (mọi tài khoản đã đăng nhập; cô lập dữ liệu theo `UserId`).
 * **Query Parameters (`NotificationFilterRequest`):** `isRead?` (`true`/`false`), `notificationType?` (VD: `KYB_VERIFICATION`, `HANDOVER_ACCEPTED`, `RECEIPT_ISSUED`, `COMPLAINT_RESOLVED`, `PAYMENT_SUCCESS`, `AI_FEEDBACK_REVIEWED`), `pageNumber` (mặc định `1`), `pageSize` (mặc định `20`, tối đa `50`).
 * **Response (`200 OK` – `MSG-NTF-LIST-OK`):** Trả về `NotificationListResponseDto` kế thừa `PagedResult<NotificationDto>` kèm trường `unreadCount` toàn cục của người dùng hiện tại.
 
-#### 2.15. Đánh dấu Đã đọc (`PATCH /api/v1/notifications/{notificationId:guid}/read` & `PUT /api/v1/notifications/read-all` – `STT 170, 171`)
+#### 2.15. Đánh dấu Đã đọc (`PATCH /api/v1/notifications/{notificationId:guid}/read` & `PUT /api/v1/notifications/read-all` – `STT 193, 194`)
 * **`PATCH /api/v1/notifications/{notificationId:guid}/read`:** Kiểm tra quyền sở hữu (`403 Forbidden` – `MSG-NTF-02` nếu không phải chủ thông báo; `404 Not Found` nếu không tồn tại), cập nhật `isRead = true`, `readAt = UtcNow`, và phát sự kiện SignalR `UnreadCountUpdated`. Trả về `MarkNotificationReadResultDto` (`MSG-NTF-READ-OK`).
 * **`PUT /api/v1/notifications/read-all`:** Đánh dấu toàn bộ thông báo chưa đọc của tài khoản hiện tại là đã xem (`unreadCount = 0`), phát `UnreadCountUpdated` và trả về `MarkAllNotificationsReadResultDto` (`MSG-NTF-READ-ALL-OK`).
 
-#### 2.16. Kênh WebSocket SignalR (`/hubs/notifications` – `STT 172`) & Event Bus Nội bộ
+#### 2.16. Kênh WebSocket SignalR (`/hubs/notifications` – `STT 195`) & Event Bus Nội bộ
 * **Kiến trúc Event-Driven (`System.Threading.Channels`):** Các luồng nghiệp vụ chính (Duyệt KYB, Đơn bàn giao, Biên nhận cân đo, Giải quyết Khiếu nại, Thanh toán VietQR, Đối soát tài chính, Thẩm định AI Feedback) phát `SystemNotificationDispatchedEvent` qua `IEventBus` (`< 1ms` non-blocking). `EventBackgroundWorker` tiêu thụ bất đồng bộ, khử trùng lặp theo `EventId` (`Idempotency`), che PII nhạy cảm (`BR-NTF-05`), lưu bảng `notifications` và đẩy realtime qua `SignalRNotificationNotifier`.
 * **Sự kiện SignalR Server → Client:**
   * `ReceiveNotification`: payload `NotificationDto` đẩy tới group `user:{userId}` ngay khi phát sinh thông báo mới.
   * `UnreadCountUpdated`: payload `{ unreadCount: number }` đồng bộ bộ đếm badge trên header/trang thông báo.
 * **Bảo mật Kết nối:** Hub gắn `[Authorize]`, hỗ trợ truyền JWT Bearer qua query string `?access_token=<jwt>` hoặc Header.
+
+---
+
+### Nhóm 6: Quản trị Điều khoản & Chính sách Nền tảng (`PlatformPoliciesController` – `G-01`, `A-09`, `STT 196–201`)
+
+* **Dữ liệu mặc định (`DefaultSeeds`):** Khi bảng `platform_policy_sections` trống, hệ thống tự động khởi tạo 5 mục tiêu chuẩn ở trạng thái `ACTIVE`: `TERM-01` (`ENVIRONMENT`), `TERM-02` (`TERMS`), `TERM-03` (`TERMS`), `ENV-01` (`ENVIRONMENT`), `PRIV-01` (`PRIVACY`).
+* **Các phân loại hợp lệ (`AllowedCategories`):** `TERMS`, `ENVIRONMENT`, `PRIVACY`.
+* **Các trạng thái hợp lệ (`AllowedStatuses`):** `ACTIVE`, `DRAFT`, `INACTIVE`.
+* **DTOs (`PlatformPolicyDtos.cs`):**
+  * `PlatformPolicySectionDto`: `{ id, code, category, title, content, displayOrder, status, updatedByAdminId, createdAt, updatedAt }`
+  * `SavePlatformPolicyRequest`: `{ code?, category, title (<= 200 ký tự), content, displayOrder (mặc định 1), status? }`
+  * `SetPlatformPolicyStatusRequest`: `{ status }`
+* **Endpoints chi tiết (`STT 196–201`):**
+  * **`GET /api/v1/policies` (`[AllowAnonymous]` – `STT 196`):** Hỗ trợ `?category=TERMS|ENVIRONMENT|PRIVACY`; trả về các mục đang `ACTIVE` sắp xếp theo `displayOrder ASC` (`MSG-POL-LIST-OK`).
+  * **`GET /api/v1/admin/policies` (`[Authorize(Roles = "Admin,Staff")]` – `STT 197`):** Hỗ trợ lọc `?category=`, `?status=`, `?search=`; trả về đầy đủ cả `DRAFT` và `INACTIVE` (`MSG-POL-LIST-OK`).
+  * **`POST /api/v1/admin/policies` (`[Authorize(Roles = "Admin")]` – `STT 198`):** Tạo mới mục điều khoản (`201 Created`, `MSG-POL-CREATED`), chặn trùng `code` (`BR-POL-02` – `409 Conflict` nếu trùng) và ghi `AuditLog`.
+  * **`PUT /api/v1/admin/policies/{id:guid}` (`[Authorize(Roles = "Admin")]` – `STT 199`):** Cập nhật toàn phần mục điều khoản (`MSG-POL-UPDATED`); nếu chuyển mục `ACTIVE` cuối cùng sang `DRAFT`/`INACTIVE` sẽ bị chặn (`BR-POL-03`).
+  * **`PATCH /api/v1/admin/policies/{id:guid}/status` (`[Authorize(Roles = "Admin")]` – `STT 200`):** Bật/tắt nhanh `ACTIVE` / `DRAFT` / `INACTIVE` (`MSG-POL-STATUS-UPDATED`), bảo vệ điều khoản `ACTIVE` cuối cùng (`BR-POL-03`).
+  * **`DELETE /api/v1/admin/policies/{id:guid}` (`[Authorize(Roles = "Admin")]` – `STT 201`):** Xóa vĩnh viễn mục điều khoản và ghi `AuditLog` `DELETE_PLATFORM_POLICY` (`MSG-POL-DELETED`), chặn nếu là mục `ACTIVE` duy nhất còn lại (`BR-POL-03`).
 
 ---
 
@@ -221,12 +251,14 @@
 | `200` | `MSG-NTF-LIST-OK` | `SU-04` | Lấy danh sách thông báo hệ thống & tổng số chưa đọc thành công. |
 | `200` | `MSG-NTF-READ-OK` | `SU-04` | Đánh dấu một thông báo cụ thể là đã đọc thành công. |
 | `200` | `MSG-NTF-READ-ALL-OK` | `SU-04` | Đánh dấu toàn bộ thông báo chưa đọc của tài khoản là đã đọc thành công. |
+| `200` / `201` | `MSG-POL-LIST-OK` / `CREATED` / `UPDATED` / `STATUS-UPDATED` / `DELETED` | `A-09` | Quản lý và công bố danh mục điều khoản / chính sách nền tảng trên `/terms`. |
 | `200` | `MSG-ADM-01` | `BR-ADM-02` | Admin cập nhật ma trận quyền RBAC cho Staff thành công (*"Cập nhật quyền nhân viên thành công."*). |
 | `200` | `MSG-ADM-02` | `BR-ADM-05`, `BR-ADM-06` | Header `X-EcoLink-Message-Code` xác nhận trích xuất báo cáo hệ thống che PII thành công. |
 | `200` | `MSG-ADM-03` | `BR-ADM-03`, `BR-ADM-04` | Khóa, mở khóa, vô hiệu hóa tài khoản hoặc đổi trạng thái Staff thành công. |
-| `400` | `MSG-GEN-01` | `BR-ADM-03`, `BR-ADM-06`, `BR-GAM-09` | Thiếu/ngắn lý do (`< 10` ký tự), sai mã quyền RBAC, sai định dạng export, hoặc điểm danh trùng trong ngày. |
+| `400` | `MSG-GEN-01` / `MSG-POL-02` | `BR-ADM-03`, `BR-ADM-06`, `BR-GAM-09`, `BR-POL-01..03` | Thiếu/ngắn lý do (`< 10` ký tự), sai mã quyền RBAC, sai định dạng export, điểm danh trùng trong ngày, hoặc hạ/xóa mục điều khoản `ACTIVE` duy nhất còn lại (`BR-POL-03`). |
 | `401` | `MSG-AUTH-03` | — | Chưa đăng nhập hoặc JWT Bearer token không hợp lệ. |
 | `403` | `MSG-NTF-02` | `BR-NTF-01` | Thao tác đánh dấu đã đọc thông báo thuộc quyền sở hữu của người dùng khác. |
 | `403` | `MSG-ADM-04` | `BR-ADM-02`, `BR-ADM-03` | `Staff` thiếu quyền tương ứng trong `staff_permission_assignments`, tự khóa mình, hoặc tác động tài khoản `Staff`/`Admin` qua endpoint kiểm duyệt bên ngoài. |
 | `403` | `MSG-AUTH-04` | `BR-AUTH-05`, `BR-ADM-03` | JWT còn hạn nhưng tài khoản vừa bị chuyển sang `Suspended`/`Deactivated` và bị `AccountStatusGuardMiddleware` chặn tức thời. |
-| `404` | `MSG-GEN-01` | — | Không tìm thấy tài khoản `User`, `StaffProfile` hoặc bản ghi `Notification` mục tiêu. |
+| `404` | `MSG-GEN-01` | — | Không tìm thấy tài khoản `User`, `StaffProfile`, `Notification` hoặc `PlatformPolicySection` mục tiêu. |
+| `409` | `MSG-POL-02` | `BR-POL-02` | Trùng mã điều khoản (`code`) khi tạo mới hoặc cập nhật chính sách nền tảng. |
