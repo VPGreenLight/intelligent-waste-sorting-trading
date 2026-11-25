@@ -115,42 +115,27 @@ public class GamificationService : IGamificationService
 
     public async Task<EcoProfileDto> AwardPointsForRecyclingAsync(Guid userId, decimal weightKg, CancellationToken cancellationToken = default)
     {
-        var pointsToAdd = (int)Math.Round(weightKg * 10);
+        if (weightKg <= 0)
+            return await GetUserProfileAsync(userId, cancellationToken);
 
         if (_db == null)
         {
             var profile = _profiles.GetOrAdd(userId, id => new EcoProfileDto { UserId = id });
-
-            profile.CurrentGreenPoints += pointsToAdd;
-            profile.TotalLifetimePoints += pointsToAdd;
             profile.TotalRecycledKg += weightKg;
-            profile.TreeExperience += pointsToAdd;
-
-            while (profile.TreeExperience >= 100)
-            {
-                profile.TreeLevel += 1;
-                profile.TreeExperience -= 100;
-                _logger.LogInformation("Người dùng {UserId} đã nâng cấp Cây ảo lên Level {Level}!", userId, profile.TreeLevel);
-            }
-
-            profile.ExperienceToNextLevel = 100 - profile.TreeExperience;
-            _logger.LogInformation("Cộng {Points} Điểm Xanh cho User {UserId} từ {Weight}kg rác tái chế", pointsToAdd, userId, weightKg);
-
+            _logger.LogInformation("Ghi nhận +{Weight}kg rác tái chế cho User {UserId} (không cộng Điểm Xanh từ giao dịch).", weightKg, userId);
             return profile;
         }
 
-        // Chỉ đồng bộ bộ đếm legacy UserEcoProfile; cộng ví điểm chính thức do PointsService.AwardHandoverPointsAsync đảm nhiệm
+        // Chỉ đồng bộ khối lượng tái chế sang UserEcoProfile; không cộng Điểm Xanh khi hoàn tất giao dịch bàn giao.
         var eco = await _db.UserEcoProfiles.FirstOrDefaultAsync(e => e.UserId == userId, cancellationToken);
         if (eco != null)
         {
-            eco.CurrentGreenPoints += pointsToAdd;
-            eco.TotalLifetimePoints += pointsToAdd;
             eco.TotalRecycledKg += weightKg;
             eco.UpdatedAt = DateTime.UtcNow;
             await _db.SaveChangesAsync(cancellationToken);
         }
 
-        _logger.LogInformation("Đồng bộ thống kê tái chế +{Weight}kg ({Points}đ ước tính) cho User {UserId}", weightKg, pointsToAdd, userId);
+        _logger.LogInformation("Đồng bộ thống kê tái chế +{Weight}kg cho User {UserId} (0 Điểm Xanh từ giao dịch).", weightKg, userId);
         return await GetUserProfileAsync(userId, cancellationToken);
     }
 
@@ -541,7 +526,7 @@ public class TradeTransactionService : ITradeTransactionService
                         ActualWeightKg = request.ActualWeightKg,
                         UnitPrice = unitPrice,
                         TotalAmountCash = request.ActualWeightKg * unitPrice,
-                        PointsAwarded = (int)Math.Round(request.ActualWeightKg * 10),
+                        PointsAwarded = 0,
                         QrSecurityCode = string.IsNullOrWhiteSpace(request.QrSecurityCode)
                             ? Guid.NewGuid().ToString("N")
                             : request.QrSecurityCode,
@@ -568,7 +553,7 @@ public class TradeTransactionService : ITradeTransactionService
 
         order.Status = OrderStatus.Completed.ToString();
         var totalCash = request.ActualWeightKg * request.UnitPrice;
-        var pointsAwarded = (int)Math.Round(request.ActualWeightKg * 10);
+        const int pointsAwarded = 0;
 
         await _gamificationService.AwardPointsForRecyclingAsync(order.UserId, request.ActualWeightKg, cancellationToken);
 
@@ -582,8 +567,8 @@ public class TradeTransactionService : ITradeTransactionService
             CompletedAt = DateTime.UtcNow
         };
 
-        _logger.LogInformation("Xác nhận biên nhận QR hoàn tất. Đơn {OrderId}: {Weight}kg, {Cash}đ, +{Points} điểm",
-            order.Id, request.ActualWeightKg, totalCash, pointsAwarded);
+        _logger.LogInformation("Xác nhận biên nhận QR hoàn tất. Đơn {OrderId}: {Weight}kg, {Cash}đ",
+            order.Id, request.ActualWeightKg, totalCash);
 
         return receipt;
     }

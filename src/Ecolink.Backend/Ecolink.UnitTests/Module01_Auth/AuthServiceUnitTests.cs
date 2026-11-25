@@ -1,5 +1,6 @@
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using Ecolink.Domain.Constants;
 using Ecolink.Domain.Entities;
 using Ecolink.Domain.Enums;
 using Ecolink.Domain.Exceptions;
@@ -696,6 +697,110 @@ public class AuthServiceUnitTests
         updatedUser.FailedLoginAttempts.Should().Be(0);
         BCrypt.Net.BCrypt.Verify("NewStrongPass@123", updatedUser.PasswordHash).Should().BeTrue();
         (await db.RefreshTokens.FirstAsync(r => r.Id == activeRefreshToken.Id)).IsRevoked.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task UTC023_LoginAndGetUserById_PopulatesStaffAndAdminPermissionsAccurately()
+    {
+        var (sut, db, _, _) = CreateSut();
+
+        var adminLogin = await sut.LoginAsync(new LoginRequestDto
+        {
+            UsernameOrEmail = "admin",
+            Password = "admin123"
+        });
+        adminLogin.User!.Permissions.Should().BeEquivalentTo(StaffPermissions.AllCodes);
+
+        var demoStaffLogin = await sut.LoginAsync(new LoginRequestDto
+        {
+            UsernameOrEmail = "staff",
+            Password = "staff123"
+        });
+        demoStaffLogin.User!.Permissions.Should().BeEquivalentTo(StaffPermissions.AllCodes);
+
+        var scopedStaffId = Guid.NewGuid();
+        db.Users.Add(new User
+        {
+            Id = scopedStaffId,
+            Username = "scoped_staff_23",
+            Email = "scoped23@ecolink.vn",
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("StaffPass@123"),
+            FullName = "Scoped Staff 23",
+            Role = UserRole.Staff,
+            Status = UserStatus.Active
+        });
+        var staffProfile = new StaffProfile
+        {
+            UserId = scopedStaffId,
+            StaffCode = "NV-023",
+            Status = "ACTIVE",
+            Permissions =
+            [
+                new StaffPermissionAssignment
+                {
+                    Id = Guid.NewGuid(),
+                    StaffId = scopedStaffId,
+                    PermissionCode = "ai.review",
+                    GrantedBy = adminLogin.User.Id,
+                    GrantedAt = DateTime.UtcNow
+                },
+                new StaffPermissionAssignment
+                {
+                    Id = Guid.NewGuid(),
+                    StaffId = scopedStaffId,
+                    PermissionCode = StaffPermissions.VerifyRecycler,
+                    GrantedBy = adminLogin.User.Id,
+                    GrantedAt = DateTime.UtcNow
+                }
+            ]
+        };
+        db.StaffProfiles.Add(staffProfile);
+        await db.SaveChangesAsync();
+
+        var scopedLogin = await sut.LoginAsync(new LoginRequestDto
+        {
+            UsernameOrEmail = "scoped23@ecolink.vn",
+            Password = "StaffPass@123"
+        });
+        scopedLogin.User!.Permissions.Should().BeEquivalentTo([StaffPermissions.ReviewAi, StaffPermissions.VerifyRecycler]);
+
+        var scopedMe = await sut.GetUserByIdAsync(scopedStaffId);
+        scopedMe!.Permissions.Should().BeEquivalentTo([StaffPermissions.ReviewAi, StaffPermissions.VerifyRecycler]);
+
+        staffProfile.Status = "SUSPENDED";
+        await db.SaveChangesAsync();
+
+        var suspendedMe = await sut.GetUserByIdAsync(scopedStaffId);
+        suspendedMe!.Permissions.Should().BeEmpty();
+
+        var citizenLogin = await sut.LoginAsync(new LoginRequestDto
+        {
+            UsernameOrEmail = "citizen",
+            Password = "citizen123"
+        });
+        citizenLogin.User!.Permissions.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task UTC024_EnsureDemoUsersAsync_SeedsDemoRecyclerAtHoaLacCoordinates()
+    {
+        var (sut, db, _, _) = CreateSut();
+
+        var recyclerLogin = await sut.LoginAsync(new LoginRequestDto
+        {
+            UsernameOrEmail = "recycler",
+            Password = "recycler123"
+        });
+
+        recyclerLogin.Success.Should().BeTrue();
+        var recyclerProfile = await db.RecyclerProfiles
+            .FirstAsync(r => r.UserId == Guid.Parse("22222222-2222-2222-2222-222222222222"));
+        recyclerProfile.FacilityName.Should().Be("Vựa phế liệu EcoGreen Hòa Lạc");
+        recyclerProfile.BusinessAddress.Should().Contain("Hòa Lạc");
+        recyclerProfile.Latitude.Should().Be(21.0138m);
+        recyclerProfile.Longitude.Should().Be(105.5256m);
+        recyclerProfile.VerificationStatus.Should().Be(VerificationStatus.Verified);
+        recyclerProfile.ActiveStatus.Should().Be(RecyclerActiveStatus.Online);
     }
 }
 

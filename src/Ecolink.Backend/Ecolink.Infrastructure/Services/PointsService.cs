@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
 using Ecolink.Domain.Entities;
@@ -15,6 +16,8 @@ namespace Ecolink.Infrastructure.Services;
 /// </summary>
 public class PointsService : IPointsService
 {
+    private static readonly ConcurrentDictionary<Guid, byte> AwardedFertilizerReceipts = new();
+
     private readonly ApplicationDbContext _db;
     private readonly IGamificationConfigService _config;
     private readonly ILogger<PointsService> _logger;
@@ -150,49 +153,37 @@ public class PointsService : IPointsService
         var receipt = await _db.HandoverReceipts.AsNoTracking().FirstOrDefaultAsync(r => r.Id == receiptId, ct);
         if (receipt == null) return 0;
 
-        // BR-GAM-01: chỉ cộng cho giao dịch đã Completed (không cộng cho bị hủy / tranh chấp)
+        // Chỉ xử lý cho giao dịch đã Completed (không xử lý cho đơn bị hủy / tranh chấp)
         var status = await _db.HandoverRequests.AsNoTracking().Where(h => h.Id == receipt.RequestId)
             .Select(h => h.Status).FirstOrDefaultAsync(ct);
         if (status != HandoverStatus.Completed) return 0;
 
-        var settings = await _config.GetSettingsAsync(ct);
-        var lines = await _db.HandoverRequestItems.AsNoTracking()
-            .Where(i => i.RequestId == receipt.RequestId && i.ActualWeightKg != null)
-            .Select(i => new { Code = i.WasteCategory!.Code, Kg = i.ActualWeightKg!.Value })
-            .ToListAsync(ct);
-
-        var raw = lines.Sum(l => l.Kg * settings.RateFor(l.Code));
-        var points = (long)Math.Round(raw, 0, MidpointRounding.AwayFromZero);
-        if (points <= 0) return 0;
-
-        var desc = $"Hoàn tất bàn giao {receipt.ReceiptCode}";
-        var userCredited = await CreditAsync(receipt.UserId, points, PointActionType.HandoverReward, "HandoverReceipt", receipt.Id.ToString(),
-            $"HANDOVER:{receipt.Id}:USER", desc, ct);
-        if (userCredited > 0)
+        // Không cộng Điểm Xanh khi hoàn tất giao dịch bàn giao; chỉ tặng +2 túi phân bón Cây ảo (idempotent theo receipt.Id).
+        if (AwardedFertilizerReceipts.TryAdd(receipt.Id, 1))
+        {
             await TreeCareShared.AwardHandoverFertilizerAsync(_db, receipt.UserId, 2, ct);
-        await CreditAsync(receipt.RecyclerId, points, PointActionType.HandoverReward, "HandoverReceipt", receipt.Id.ToString(),
-            $"HANDOVER:{receipt.Id}:RECYCLER", desc, ct);
+        }
 
-        if (receipt.PointsAwarded != points)
+        if (receipt.PointsAwarded != 0)
         {
             if (_db.Database.IsRelational())
             {
                 await _db.HandoverReceipts.Where(r => r.Id == receiptId)
-                    .ExecuteUpdateAsync(s => s.SetProperty(r => r.PointsAwarded, points), ct);
+                    .ExecuteUpdateAsync(s => s.SetProperty(r => r.PointsAwarded, 0L), ct);
             }
             else
             {
                 var tracked = await _db.HandoverReceipts.FirstOrDefaultAsync(r => r.Id == receiptId, ct);
                 if (tracked != null)
                 {
-                    tracked.PointsAwarded = points;
+                    tracked.PointsAwarded = 0;
                     await _db.SaveChangesAsync(ct);
                 }
             }
         }
 
-        _logger.LogInformation("Cộng {Points} điểm cho biên nhận {Receipt} (người dân + Recycler).", points, receipt.ReceiptCode);
-        return points;
+        _logger.LogInformation("Hoàn tất bàn giao biên nhận {Receipt}: không cộng Điểm Xanh, đã ghi nhận phân bón Cây ảo.", receipt.ReceiptCode);
+        return 0L;
     }
 
     // ------------------------------------------------------------------

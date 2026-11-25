@@ -788,7 +788,7 @@ public class ReviewComplaintTests
         var ecoAfterClawback = await db.UserEcoProfiles.FirstAsync(p => p.UserId == ctx1.Citizen.Id);
         ecoAfterClawback.CurrentGreenPoints.Should().Be(0);
 
-        // Trường hợp biên ConfirmReceiptAsIs trên đơn đang Disputed chưa từng cộng điểm -> hoàn tất & cộng 50 điểm
+        // Trường hợp biên ConfirmReceiptAsIs trên đơn đang Disputed -> hoàn tất giao dịch, không cộng Điểm Xanh
         var ctx2 = await SeedHandoverAsync(db, HandoverStatus.AwaitingConfirmation, citizenPoints: 0, receiptPoints: 0);
         var receiptSvc2 = new HandoverReceiptService(
             db,
@@ -810,8 +810,8 @@ public class ReviewComplaintTests
         confirmed.Status.Should().Be("Resolved");
         confirmed.HandoverStatus.Should().Be("Completed");
         var receipt2 = await db.HandoverReceipts.FirstAsync(r => r.RequestId == ctx2.Handover.Id);
-        receipt2.PointsAwarded.Should().Be(50);
+        receipt2.PointsAwarded.Should().Be(0);
         var ecoAfterConfirm = await db.UserEcoProfiles.FirstAsync(p => p.UserId == ctx2.Citizen.Id);
-        ecoAfterConfirm.CurrentGreenPoints.Should().Be(50);
+        ecoAfterConfirm.CurrentGreenPoints.Should().Be(0);
     }
 }

@@ -376,14 +376,14 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
         }
     }
 
-    private async Task EnsureSamplePendingApplicationsAsync(CancellationToken ct)
+    internal async Task EnsureSamplePendingApplicationsAsync(CancellationToken ct, bool force = false)
     {
-        if (_sampleApplicationsChecked) return;
+        if (!force && _sampleApplicationsChecked) return;
 
         await SampleSeedLock.WaitAsync(ct);
         try
         {
-            if (_sampleApplicationsChecked) return;
+            if (!force && _sampleApplicationsChecked) return;
 
             var sampleApplicants = new (
                 Guid UserId,
@@ -418,11 +418,11 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                     Guid.Parse("99999999-1111-4444-8888-111111111111"),
                     "applicant_minhkhai",
                     "minhkhai@thugom.vn",
-                    "Vựa Minh Khai",
+                    "Vựa Minh Khai Hòa Lạc",
                     "Trần Minh Khai",
-                    "215 Nguyễn Trãi, Phường Nguyễn Cư Trinh, Quận 5, TP.HCM",
-                    10.7578m,
-                    106.6785m,
+                    "Thôn 4, Xã Thạch Hòa, Huyện Thạch Thất, Hà Nội",
+                    21.0215m,
+                    105.5331m,
                     "0908112233",
                     "Thu mua: Kim loại, Nhựa, Giấy và bìa carton",
                     "https://mock-r2.ecolink.vn/recycler-kyb/legal-permits/giay-dkdn-minh-khai.pdf",
@@ -432,11 +432,11 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                     Guid.Parse("99999999-2222-4444-8888-222222222222"),
                     "applicant_anhtuan",
                     "tuan.thugom@ecolink.vn",
-                    "Anh Tuấn - Thu gom tận nhà",
+                    "Anh Tuấn - Thu gom Quốc Oai",
                     "Đỗ Anh Tuấn",
-                    "78 Nguyễn Thái Bình, Phường Nguyễn Thái Bình, Quận 1, TP.HCM",
-                    10.7692m,
-                    106.6986m,
+                    "Khu Tân Phú, Xã Phú Cát, Huyện Quốc Oai, Hà Nội",
+                    20.9964m,
+                    105.5418m,
                     "0903445566",
                     "Thu mua: Nhựa, Giấy và bìa carton, Thủy tinh",
                     "https://mock-r2.ecolink.vn/recycler-kyb/legal-permits/giay-dkkd-anh-tuan.pdf",
@@ -455,7 +455,7 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
 
                 if (exists) continue;
 
-                hash ??= BCrypt.Net.BCrypt.HashPassword("collector123");
+                hash ??= BCrypt.Net.BCrypt.HashPassword("citizen123");
                 var user = new User
                 {
                     Id = s.UserId,

@@ -356,7 +356,7 @@ public class PlatformPolicyService : IPlatformPolicyService
         }
     }
 
-    private async Task EnsureInitializedAsync(CancellationToken ct)
+    internal async Task EnsureInitializedAsync(CancellationToken ct)
     {
         if (_initializedForContext) return;
 

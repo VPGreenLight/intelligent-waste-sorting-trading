@@ -908,6 +908,8 @@ public class GamificationAndBlogUnitTests
 
         var afterHandover = await suite.Tree.GetAsync(citizen.Id);
         afterHandover.FertilizerPacks.Should().Be(2);
+        (await suite.Points.GetWalletAsync(citizen.Id)).Balance.Should().Be(0);
+        (await suite.Points.GetWalletAsync(recycler.Id)).Balance.Should().Be(0);
 
         // Dùng hết 2 lượt bón phân miễn phí trong ngày, lượt thứ 3 tự động dùng 1 túi phân dự trữ
         await suite.Tree.CareAsync(citizen.Id, "fertilize");

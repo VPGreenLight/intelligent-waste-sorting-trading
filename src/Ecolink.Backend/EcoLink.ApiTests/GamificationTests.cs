@@ -19,6 +19,7 @@ public static class GamRoutes
     public const string StaffFacts = "/api/v1/staff/eco-facts";
     public const string Config = "/api/v1/admin/gamification/config";
     public const string ConfigReset = "/api/v1/admin/gamification/config/reset";
+    public const string PointsGrant = "/api/v1/admin/gamification/points/grant";
 
     public static string Gift(Guid id) => $"{Gifts}/{id}";
     public static string Redeem(Guid id) => $"{Gifts}/{id}/redeem";
@@ -90,23 +91,24 @@ public static class GamHelper
     public static async Task<long> BalanceAsync(string token) =>
         (await Api.GetAsync(GamRoutes.Wallet, token)).ShouldBe(200).Data().GetProperty("balance").GetInt64();
 
-    /// <summary>Hoàn tất một bàn giao do <paramref name="userToken"/> gửi, đủ để nhận khoảng <paramref name="points"/> điểm (10 điểm/kg).</summary>
+    /// <summary>Nạp <paramref name="points"/> điểm test cho ví của <paramref name="userToken"/> qua endpoint Admin (không thông qua giao dịch bàn giao và không ảnh hưởng check-in).</summary>
     public static async Task<long> EarnAsync(string userToken, long points)
     {
+        if (points <= 0) return 0;
         var before = await BalanceAsync(userToken);
-        var kg = (decimal)Math.Ceiling(points / 10.0);
-        await HandoverHelper.EnsureRecyclerReadyAsync();
+        var meRes = (await Api.GetAsync(Routes.Me, userToken)).ShouldBe(200);
+        var userId = Api.Unwrap(meRes.Body).GetProperty("id").GetGuid();
 
-        var created = (await ApiJson.PostAsync(HandoverRoutes.Base, await HandoverHelper.PayloadAsync(weight: kg), userToken)).ShouldBe(201);
-        var id = created.Data().GetProperty("id").GetGuid();
-        (await ApiJson.PostAsync(HandoverRoutes.Accept(id), new { }, await Collector())).ShouldBe(200);
-        var items = await ReceiptHelper.ItemsAsync(id);
-        (await ApiJson.PostAsync(HandoverRoutes.RcReceipt(id), ReceiptHelper.Body(items, new[] { kg }), await Collector())).ShouldBe(201);
-        (await ApiJson.PostAsync(HandoverRoutes.Confirm(id), null, userToken)).ShouldBe(200);
+        (await ApiJson.PostAsync(GamRoutes.PointsGrant, new
+        {
+            userId,
+            points,
+            description = "Nạp điểm kiểm thử tự động"
+        }, await Admin())).ShouldBe(200);
 
         var gained = await BalanceAsync(userToken) - before;
-        if (gained <= 0)
-            throw new XunitException("Hoàn tất bàn giao nhưng ví điểm không tăng. Hãy nối AwardHandoverPointsAsync vào HandoverReceiptService (xem GAMIFICATION_README.md).");
+        if (gained != points)
+            throw new XunitException($"Cấp điểm Admin cho user {userId} kỳ vọng +{points} nhưng thực tế +{gained}.");
         return gained;
     }
 
@@ -269,7 +271,7 @@ public class GamWalletTests
         Assert.Equal("Daily_Checkin", d.GetProperty("items")[0].GS("actionType"));
 
         var d2 = (await Api.GetAsync(GamRoutes.Transactions, token,
-            new Dictionary<string, string> { ["actionType"] = "HandoverReward" })).ShouldBe(200).Data();
+            new Dictionary<string, string> { ["actionType"] = "Adjustment" })).ShouldBe(200).Data();
         Assert.Equal(1, d2.GetProperty("totalCount").GetInt32());
     }
 
@@ -314,26 +316,33 @@ public class GamWalletTests
 public class GamHandoverPointsTests
 {
     [Fact]
-    public async Task CompletedHandover_CreditsBothParties_OncePerRole()
+    public async Task CompletedHandover_AwardsZeroPointsToBothParties_AndGrantsFertilizerPacks()
     {
         await GamHelper.ResetConfigAsync();
         var user = await GamHelper.FreshUserAsync();
         var collector = await GamHelper.Collector();
         var collectorBefore = await GamHelper.BalanceAsync(collector);
 
-        var gained = await GamHelper.EarnAsync(user, 100);       // 10 kg x 10 điểm/kg
-        Assert.Equal(100, gained);
-        Assert.Equal(collectorBefore + 100, await GamHelper.BalanceAsync(collector));
+        await HandoverHelper.EnsureRecyclerReadyAsync();
+        var id = (await ApiJson.PostAsync(HandoverRoutes.Base, await HandoverHelper.PayloadAsync(weight: 10m), user)).ShouldBe(201)
+            .Data().GetProperty("id").GetGuid();
+        (await ApiJson.PostAsync(HandoverRoutes.Accept(id), new { }, collector)).ShouldBe(200);
+        var items = await ReceiptHelper.ItemsAsync(id);
+        (await ApiJson.PostAsync(HandoverRoutes.RcReceipt(id), ReceiptHelper.Body(items, new[] { 10m }), collector)).ShouldBe(201);
+        (await ApiJson.PostAsync(HandoverRoutes.Confirm(id), null, user)).ShouldBe(200);
+
+        Assert.Equal(0, await GamHelper.BalanceAsync(user));
+        Assert.Equal(collectorBefore, await GamHelper.BalanceAsync(collector));
 
         var tx = await GamHelper.AllTransactionsAsync(user);
-        var rewards = tx.Where(t => t.GS("actionType") == "Handover_Reward").ToList();
-        Assert.Single(rewards);
-        Assert.Equal("HandoverReceipt", rewards[0].GS("sourceType"));
-        Assert.Equal(100, rewards[0].GL("points"));
+        Assert.DoesNotContain(tx, t => t.GS("actionType") == "Handover_Reward");
+
+        var tree = (await Api.GetAsync(GamRoutes.Tree, user)).ShouldBe(200).Data();
+        Assert.Equal(2, tree.GetProperty("fertilizerPacks").GetInt32());
     }
 
     [Fact]
-    public async Task ReceiptPointsAwarded_MatchesCreditedPoints()
+    public async Task ReceiptPointsAwarded_IsAlwaysZeroAfterConfirm()
     {
         await GamHelper.ResetConfigAsync();
         var user = await GamHelper.FreshUserAsync();
@@ -346,12 +355,13 @@ public class GamHandoverPointsTests
         (await ApiJson.PostAsync(HandoverRoutes.Confirm(id), null, user)).ShouldBe(200);
 
         var receipt = (await Api.GetAsync(HandoverRoutes.Receipt(id), user)).ShouldBe(200).Data();
-        Assert.Equal(120, receipt.GL("points"));
-        Assert.Equal(120, await GamHelper.BalanceAsync(user));
+        Assert.Equal(0, receipt.GL("points"));
+        Assert.False(receipt.GetProperty("pointsCredited").GetBoolean());
+        Assert.Equal(0, await GamHelper.BalanceAsync(user));
     }
 
     [Fact]
-    public async Task ConfirmTwice_DoesNotCreditTwice()
+    public async Task ConfirmTwice_GrantsFertilizerOnce_AndZeroPoints()
     {
         await GamHelper.ResetConfigAsync();
         var user = await GamHelper.FreshUserAsync();
@@ -364,7 +374,10 @@ public class GamHandoverPointsTests
 
         var results = await Task.WhenAll(Enumerable.Range(0, 4).Select(_ => ApiJson.PostAsync(HandoverRoutes.Confirm(id), null, user)));
         Assert.Contains(results, r => r.Status == 200);
-        Assert.Equal(50, await GamHelper.BalanceAsync(user));
+        Assert.Equal(0, await GamHelper.BalanceAsync(user));
+
+        var tree = (await Api.GetAsync(GamRoutes.Tree, user)).ShouldBe(200).Data();
+        Assert.Equal(2, tree.GetProperty("fertilizerPacks").GetInt32());
     }
 
     [Fact]
@@ -380,7 +393,7 @@ public class GamHandoverPointsTests
     }
 
     [Fact]
-    public async Task CustomPointRate_ChangesPointsPerKg_ThenResets()
+    public async Task CustomPointRate_StillAwardsZeroHandoverPoints_ThenResets()
     {
         await GamHelper.ResetConfigAsync();
         try
@@ -394,7 +407,7 @@ public class GamHandoverPointsTests
             var items = await ReceiptHelper.ItemsAsync(id);
             (await ApiJson.PostAsync(HandoverRoutes.RcReceipt(id), ReceiptHelper.Body(items, new[] { 4m }), await GamHelper.Collector())).ShouldBe(201);
             (await ApiJson.PostAsync(HandoverRoutes.Confirm(id), null, user)).ShouldBe(200);
-            Assert.Equal(100, await GamHelper.BalanceAsync(user));     // 4 kg nhựa x 25
+            Assert.Equal(0, await GamHelper.BalanceAsync(user));
         }
         finally { await GamHelper.ResetConfigAsync(); }
     }
@@ -934,6 +947,14 @@ public class GamTreeTests
             var token = await GamHelper.FreshUserAsync();
             await GamHelper.EarnAsync(token, 600);
 
+            // Hoàn tất 1 giao dịch bàn giao để nhận +2 túi phân hữu cơ (Điểm Xanh vẫn giữ nguyên từ EarnAsync)
+            await HandoverHelper.EnsureRecyclerReadyAsync();
+            var hId = (await ApiJson.PostAsync(HandoverRoutes.Base, await HandoverHelper.PayloadAsync(weight: 2m), token)).ShouldBe(201).Data().GetProperty("id").GetGuid();
+            (await ApiJson.PostAsync(HandoverRoutes.Accept(hId), new { }, await GamHelper.Collector())).ShouldBe(200);
+            var hItems = await ReceiptHelper.ItemsAsync(hId);
+            (await ApiJson.PostAsync(HandoverRoutes.RcReceipt(hId), ReceiptHelper.Body(hItems, new[] { 2m }), await GamHelper.Collector())).ShouldBe(201);
+            (await ApiJson.PostAsync(HandoverRoutes.Confirm(hId), null, token)).ShouldBe(200);
+
             // Tưới lần 1 thành công (75% -> 100%, dailyWater = 1/1); tưới lần 2 bị chặn
             (await ApiJson.PostAsync(GamRoutes.Care, new { actionType = "water" }, token)).ShouldBe(200);
             (await ApiJson.PostAsync(GamRoutes.Care, new { actionType = "water" }, token)).ShouldBe(400);
@@ -982,7 +1003,7 @@ public class GamTreeTests
     {
         try
         {
-            (await GamHelper.PutConfigAsync(c => c["treeLevels"] = GamHelper.Levels((1, "A", 0), (2, "B", 30), (3, "C", 90)))).ShouldBe(200);
+            (await GamHelper.PutConfigAsync(c => c["treeLevels"] = GamHelper.Levels((1, "A", 0), (2, "B", 30), (3, "C", 90), (4, "D", 200)))).ShouldBe(200);
             var token = await GamHelper.FreshUserAsync();
             await GamHelper.EarnAsync(token, 100);
             var d = (await ApiJson.PostAsync(GamRoutes.Water, null, token)).ShouldBe(200).Data();
@@ -1309,7 +1330,7 @@ public class GamRedeemTests
     {
         var collector = await GamHelper.Collector();
         var before = await GamHelper.BalanceAsync(collector);
-        if (before < 10) await GamHelper.EarnAsync(await GamHelper.FreshUserAsync(), 100);   // Recycler cũng nhận điểm khi bàn giao hoàn tất
+        if (before < 10) await GamHelper.EarnAsync(collector, 100);   // Nạp điểm test cho Recycler qua Admin Grant
         var gift = await GamHelper.CreateGiftAsync("Voucher", points: 10, stock: 2);
         var balance = await GamHelper.BalanceAsync(collector);
         (await ApiJson.PostAsync(GamRoutes.Redeem(gift), new { }, collector)).ShouldBe(201);

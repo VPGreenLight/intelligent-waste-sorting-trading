@@ -110,6 +110,7 @@ public class HandoverRequestService : IHandoverRequestService
 
     public async Task<HandoverRequestDto> UpdateAsync(Guid userId, Guid requestId, UpdateHandoverRequest request, CancellationToken ct = default)
     {
+        await SyncSingleTradeOrderForViewerAsync(requestId, userId, isRecycler: false, ct);
         var entity = await _db.HandoverRequests.Include(h => h.Items).Include(h => h.Recycler)
                          .FirstOrDefaultAsync(h => h.Id == requestId && h.UserId == userId, ct)
                      ?? throw new NotFoundException("Không tìm thấy yêu cầu bàn giao.");

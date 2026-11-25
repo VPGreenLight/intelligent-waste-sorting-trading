@@ -573,11 +573,11 @@ public class ReviewsAndComplaintsTests
         var (_, staffToken) = await CreateStaffWithPermissionsAsync("HANDLE_COMPLAINT");
         var adminToken = await Tokens.GetAsync("admin");
 
-        // Hoàn tất đơn 5kg => +50 GreenPoints trên DB
+        // Hoàn tất đơn 5kg => không cộng Điểm Xanh (0 GreenPoints)
         var requestId = await CreateCompletedHandoverAsync(citizenToken, recycler.RecyclerId, recycler.Token, weight: 5m);
         var meBefore = (await Api.GetAsync(Routes.Me, citizenToken)).ShouldBe(200);
         var pointsBefore = Api.Unwrap(meBefore.Body).GetProperty("currentGreenPoints").GetInt32();
-        Assert.True(pointsBefore >= 50, $"Expected >= 50 points after completing 5kg order, got {pointsBefore}");
+        Assert.Equal(0, pointsBefore);
 
         var complaintId = (await ApiJson.PostAsync("/api/v1/complaints", new
         {
@@ -589,19 +589,19 @@ public class ReviewsAndComplaintsTests
         var resolveRes = (await ApiJson.PatchAsync($"/api/v1/staff/complaints/{complaintId}/resolve", new
         {
             resolutionOutcome = "CancelDisputedOrder",
-            resolutionNote = "Xác nhận sai phạm cân đo, hủy giao dịch, thu hồi điểm và cảnh cáo đối tác.",
+            resolutionNote = "Xác nhận sai phạm cân đo, hủy giao dịch và cảnh cáo đối tác.",
             issueWarningToRespondent = true,
             warningReason = "Cân thiếu khối lượng phế liệu thực tế của người dân."
         }, staffToken)).ShouldBe(200).Data();
 
         Assert.Equal("Resolved", resolveRes.Str("status"));
         Assert.Equal("Cancelled", resolveRes.Str("handoverStatus"));
-        Assert.True(resolveRes.GetProperty("pointsRevoked").GetBoolean());
+        Assert.False(resolveRes.GetProperty("pointsRevoked").GetBoolean());
         Assert.True(resolveRes.GetProperty("warningLogged").GetBoolean());
 
         var meAfter = (await Api.GetAsync(Routes.Me, citizenToken)).ShouldBe(200);
         var pointsAfter = Api.Unwrap(meAfter.Body).GetProperty("currentGreenPoints").GetInt32();
-        Assert.Equal(Math.Max(0, pointsBefore - 50), pointsAfter);
+        Assert.Equal(0, pointsAfter);
 
         // Kiểm tra Governance Account Detail thấy WarningCount == 1 và AccountModerationLog gắn RelatedComplaintId
         var respondentDetail = (await Api.GetAsync($"/api/v1/staff/accounts/{recycler.RecyclerId}", adminToken)).ShouldBe(200).Data();
@@ -640,7 +640,7 @@ public class ReviewsAndComplaintsTests
         Assert.Equal("Completed", resolved.Str("handoverStatus"));
 
         var meAfter = (await Api.GetAsync(Routes.Me, citizenToken)).ShouldBe(200);
-        Assert.True(Api.Unwrap(meAfter.Body).GetProperty("currentGreenPoints").GetInt32() >= 50);
+        Assert.Equal(0, Api.Unwrap(meAfter.Body).GetProperty("currentGreenPoints").GetInt32());
     }
 
     // ITC-RVW-016

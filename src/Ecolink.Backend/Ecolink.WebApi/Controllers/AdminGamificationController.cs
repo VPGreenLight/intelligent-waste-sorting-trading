@@ -1,6 +1,7 @@
 using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using Ecolink.Domain.Enums;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -19,19 +20,25 @@ public class AdminGamificationController : ControllerBase
     private readonly ICurrentUserService _currentUser;
     private readonly IValidator<GamificationConfigDto> _configValidator;
     private readonly IValidator<SaveLeaderboardCycleRequest> _cycleValidator;
+    private readonly IPointsService? _points;
+    private readonly IAuditLogService? _auditLog;
 
     public AdminGamificationController(
         IGamificationConfigService config,
         ILeaderboardService leaderboard,
         ICurrentUserService currentUser,
         IValidator<GamificationConfigDto> configValidator,
-        IValidator<SaveLeaderboardCycleRequest> cycleValidator)
+        IValidator<SaveLeaderboardCycleRequest> cycleValidator,
+        IPointsService? points = null,
+        IAuditLogService? auditLog = null)
     {
         _config = config;
         _leaderboard = leaderboard;
         _currentUser = currentUser;
         _configValidator = configValidator;
         _cycleValidator = cycleValidator;
+        _points = points;
+        _auditLog = auditLog;
     }
 
     private Guid AdminId =>
@@ -121,4 +128,49 @@ public class AdminGamificationController : ControllerBase
         Ok(ApiResponse<LeaderboardCycleDto>.Ok(
             await _leaderboard.FinalizeCycleAsync(AdminId, cycleId, ct),
             "Đã chốt chu kỳ bảng xếp hạng và trao thưởng Top dẫn đầu."));
+
+    /// <summary>Admin cấp điểm điều chỉnh thủ công cho một tài khoản (không thông qua giao dịch bàn giao).</summary>
+    [HttpPost("points/grant")]
+    [ProducesResponseType(typeof(ApiResponse<WalletDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GrantPoints([FromBody] AdminGrantPointsRequest request, CancellationToken ct)
+    {
+        if (request == null || request.UserId == Guid.Empty || request.Points <= 0)
+        {
+            return BadRequest(ApiResponse<object>.Fail("UserId và số điểm cấp phát phải lớn hơn 0.", "MSG-AUTH-02"));
+        }
+        if (_points == null)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable,
+                ApiResponse<object>.Fail("Dịch vụ điểm thưởng chưa khả dụng.", "MSG-GEN-01"));
+        }
+
+        var desc = string.IsNullOrWhiteSpace(request.Description)
+            ? "Cấp điểm điều chỉnh hệ thống"
+            : request.Description.Trim();
+
+        await _points.CreditAsync(
+            request.UserId,
+            request.Points,
+            PointActionType.Adjustment,
+            "AdminGrant",
+            request.UserId.ToString(),
+            $"ADMIN_GRANT:{Guid.NewGuid():N}",
+            desc,
+            ct);
+
+        if (_auditLog != null)
+        {
+            await _auditLog.LogAsync(
+                action: "ADMIN_POINTS_GRANT",
+                entityType: "UserPointWallet",
+                entityId: request.UserId.ToString(),
+                oldValues: null,
+                newValues: new { request.UserId, request.Points, Description = desc },
+                explicitActorId: AdminId,
+                ct: ct);
+        }
+
+        var wallet = await _points.GetWalletAsync(request.UserId, ct);
+        return Ok(ApiResponse<WalletDto>.Ok(wallet, "MSG-GAM-01", "Đã cấp điểm điều chỉnh thành công."));
+    }
 }

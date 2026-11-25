@@ -485,13 +485,7 @@ public class ComplaintService : IComplaintService
                         if (receipt != null && receipt.ConfirmedByUserAt == null)
                         {
                             receipt.ConfirmedByUserAt = now;
-                            if (receipt.PointsAwarded == 0)
-                            {
-                                receipt.PointsAwarded = (long)Math.Round(
-                                    receipt.TotalWeightKg * HandoverReceiptService.PointsPerKg,
-                                    0,
-                                    MidpointRounding.AwayFromZero);
-                            }
+                            receipt.PointsAwarded = 0;
                             await _db.SaveChangesAsync(ct);
                             if (_pointsService != null)
                             {

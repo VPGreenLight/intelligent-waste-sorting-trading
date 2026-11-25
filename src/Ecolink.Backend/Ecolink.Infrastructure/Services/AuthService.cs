@@ -552,7 +552,9 @@ public class AuthService : IAuthService
         await _dbContext.SaveChangesAsync(ct);
         _logger.LogInformation("Người dùng {Username} ({UserId}) đã cập nhật hồ sơ cá nhân", user.Username, user.Id);
 
-        return MapToUserInfoDto(user);
+        var userDto = MapToUserInfoDto(user);
+        await PopulateUserEntitlementsAsync(userDto, ct);
+        return userDto;
     }
 
     /// <summary>
@@ -761,6 +763,39 @@ public class AuthService : IAuthService
         dto.IsAdFree = summary.IsAdFree;
         dto.HasVerifiedBadge = summary.HasVerifiedBlueBadge;
         dto.IsFeaturedMapMarker = summary.IsFeaturedMapMarker;
+
+        if (string.Equals(dto.Role, UserRole.Admin.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            dto.Permissions = StaffPermissions.AllCodes.ToList();
+            return;
+        }
+
+        if (string.Equals(dto.Role, UserRole.Staff.ToString(), StringComparison.OrdinalIgnoreCase))
+        {
+            var staffSnapshot = await _dbContext.StaffProfiles
+                .AsNoTracking()
+                .Where(s => s.UserId == dto.Id)
+                .Select(s => new
+                {
+                    s.Status,
+                    Permissions = s.Permissions.Select(p => p.PermissionCode).ToList()
+                })
+                .FirstOrDefaultAsync(ct);
+
+            if (staffSnapshot != null &&
+                string.Equals(staffSnapshot.Status, "ACTIVE", StringComparison.OrdinalIgnoreCase))
+            {
+                dto.Permissions = staffSnapshot.Permissions
+                    .Select(StaffPermissions.Normalize)
+                    .Where(StaffPermissions.IsValid)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .OrderBy(p => p, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+                return;
+            }
+        }
+
+        dto.Permissions = new List<string>();
     }
 
     private static UserInfoDto MapToUserInfoDto(User user)
@@ -852,7 +887,7 @@ public class AuthService : IAuthService
     /// Đảm bảo luôn có các tài khoản Demo cho cả 4 vai trò (citizen, recycler, staff, admin),
     /// Danh mục phế liệu chuẩn và Bảng giá mẫu (BR-MTH-03) sẵn sàng trong PostgreSQL.
     /// </summary>
-    private async Task EnsureDemoUsersAsync(CancellationToken ct)
+    internal async Task EnsureDemoUsersAsync(CancellationToken ct, bool includeExtendedAccounts = false)
     {
         var demoCitizenId = Guid.Parse("11111111-1111-1111-1111-111111111111");
         var demoRecyclerId = Guid.Parse("22222222-2222-2222-2222-222222222222");
@@ -869,17 +904,31 @@ public class AuthService : IAuthService
         var hasStaff = await _dbContext.Users.IgnoreQueryFilters()
             .AnyAsync(u => u.Id == demoStaffId || u.Username == "staff", ct);
 
-        if (existingDemoRecycler != null &&
-            existingDemoRecycler.Id == demoRecyclerId &&
-            !string.Equals(existingDemoRecycler.Username, "recycler", StringComparison.OrdinalIgnoreCase))
+        if (existingDemoRecycler != null)
         {
-            var conflict = await _dbContext.Users.IgnoreQueryFilters()
-                .AnyAsync(u => u.Id != existingDemoRecycler.Id && (u.Username == "recycler" || u.Email == "recycler@ecolink.vn"), ct);
-            if (!conflict)
+            if (existingDemoRecycler.Id == demoRecyclerId &&
+                !string.Equals(existingDemoRecycler.Username, "recycler", StringComparison.OrdinalIgnoreCase))
             {
-                existingDemoRecycler.Username = "recycler";
-                existingDemoRecycler.Email = "recycler@ecolink.vn";
-                existingDemoRecycler.PasswordHash = BCrypt.Net.BCrypt.HashPassword("recycler123");
+                var conflict = await _dbContext.Users.IgnoreQueryFilters()
+                    .AnyAsync(u => u.Id != existingDemoRecycler.Id && (u.Username == "recycler" || u.Email == "recycler@ecolink.vn"), ct);
+                if (!conflict)
+                {
+                    existingDemoRecycler.Username = "recycler";
+                    existingDemoRecycler.Email = "recycler@ecolink.vn";
+                    existingDemoRecycler.PasswordHash = BCrypt.Net.BCrypt.HashPassword("recycler123");
+                    await _dbContext.SaveChangesAsync(ct);
+                }
+            }
+
+            var existingProfile = await _dbContext.RecyclerProfiles
+                .FirstOrDefaultAsync(r => r.UserId == existingDemoRecycler.Id, ct);
+            if (existingProfile != null && existingProfile.BusinessAddress.Contains("Bình Thạnh", StringComparison.OrdinalIgnoreCase))
+            {
+                existingProfile.FacilityName = "Vựa phế liệu EcoGreen Hòa Lạc";
+                existingProfile.BusinessAddress = "Số 18 Đại lộ Thăng Long, Khu CNC Hòa Lạc, Thạch Thất, Hà Nội";
+                existingProfile.Latitude = 21.0138m;
+                existingProfile.Longitude = 105.5256m;
+                existingProfile.Location = new Point(105.5256, 21.0138) { SRID = 4326 };
                 await _dbContext.SaveChangesAsync(ct);
             }
         }
@@ -900,8 +949,8 @@ public class AuthService : IAuthService
                     Status = UserStatus.Active,
                     EcoProfile = new UserEcoProfile
                     {
-                        CurrentGreenPoints = 150,
-                        TotalLifetimePoints = 300,
+                        CurrentGreenPoints = 250,
+                        TotalLifetimePoints = 400,
                         TreeLevel = 2,
                         TreeExperience = 45,
                         TotalRecycledKg = 12.5m,
@@ -918,19 +967,19 @@ public class AuthService : IAuthService
                     Username = "recycler",
                     Email = "recycler@ecolink.vn",
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword("recycler123"),
-                    FullName = "Trần Thu Gom (Vựa phế liệu EcoGreen)",
+                    FullName = "Trần Thu Gom (Vựa phế liệu EcoGreen Hòa Lạc)",
                     PhoneNumber = "0988776655",
                     Role = UserRole.Recycler,
                     Status = UserStatus.Active,
                     RecyclerProfile = new RecyclerProfile
                     {
                         UserId = demoRecyclerId,
-                        FacilityName = "Vựa phế liệu EcoGreen",
+                        FacilityName = "Vựa phế liệu EcoGreen Hòa Lạc",
                         RepresentativeName = "Trần Thu Gom",
-                        BusinessAddress = "123 Đường Nguyễn Hữu Cảnh, P. 22, Bình Thạnh, TP.HCM",
-                        Latitude = 10.7938m,
-                        Longitude = 106.7182m,
-                        Location = new Point(106.7182, 10.7938) { SRID = 4326 },
+                        BusinessAddress = "Số 18 Đại lộ Thăng Long, Khu CNC Hòa Lạc, Thạch Thất, Hà Nội",
+                        Latitude = 21.0138m,
+                        Longitude = 105.5256m,
+                        Location = new Point(105.5256, 21.0138) { SRID = 4326 },
                         OperatingHours = "07:30 - 18:30",
                         ContactPhone = "0988776655",
                         VerificationStatus = VerificationStatus.Verified,
@@ -1059,7 +1108,120 @@ public class AuthService : IAuthService
             }
 
             await _dbContext.SaveChangesAsync(ct);
-            _logger.LogInformation("Đã khởi tạo bảng giá mẫu (recycler_price_list) cho Vựa phế liệu EcoGreen (BR-MTH-03).");
+            _logger.LogInformation("Đã khởi tạo bảng giá mẫu (recycler_price_list) cho Vựa phế liệu EcoGreen Hòa Lạc (BR-MTH-03).");
+        }
+
+        // Bổ sung 3 tài khoản Demo mở rộng trên DB thật (citizen_vip, recycler_pro, staff_support) nếu chưa có
+        if (_dbContext.Database.IsRelational() || includeExtendedAccounts)
+        {
+            var citizenVipId = Guid.Parse("11111112-1111-1111-1111-111111111112");
+            var recyclerProId = Guid.Parse("22222223-2222-2222-2222-222222222223");
+            var staffSupportId = Guid.Parse("88888889-8888-8888-8888-888888888889");
+            var addedRelational = false;
+
+            if (!await _dbContext.Users.IgnoreQueryFilters().AnyAsync(u => u.Id == citizenVipId || u.Username == "citizen_vip", ct))
+            {
+                _dbContext.Users.Add(new User
+                {
+                    Id = citizenVipId,
+                    Username = "citizen_vip",
+                    Email = "citizen_vip@ecolink.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("citizen123"),
+                    FullName = "Trần Minh Anh (VIP)",
+                    PhoneNumber = "0905556677",
+                    Role = UserRole.Citizen,
+                    Status = UserStatus.Active,
+                    EcoProfile = new UserEcoProfile
+                    {
+                        CurrentGreenPoints = 680,
+                        TotalLifetimePoints = 980,
+                        TreeLevel = 3,
+                        TreeExperience = 85,
+                        TotalRecycledKg = 48.0m,
+                        TotalWasteScanned = 36
+                    }
+                });
+                addedRelational = true;
+            }
+
+            if (!await _dbContext.Users.IgnoreQueryFilters().AnyAsync(u => u.Id == recyclerProId || u.Username == "recycler_pro", ct))
+            {
+                _dbContext.Users.Add(new User
+                {
+                    Id = recyclerProId,
+                    Username = "recycler_pro",
+                    Email = "recycler_pro@ecolink.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("recycler123"),
+                    FullName = "Lê Minh Hoàng (Tái chế Xanh Hòa Lạc Pro)",
+                    PhoneNumber = "0977889900",
+                    Role = UserRole.Recycler,
+                    Status = UserStatus.Active,
+                    RecyclerProfile = new RecyclerProfile
+                    {
+                        UserId = recyclerProId,
+                        FacilityName = "Cơ sở Tái chế Xanh Hòa Lạc Pro",
+                        RepresentativeName = "Lê Minh Hoàng",
+                        BusinessAddress = "Lô E2, Đường Bắc Nam, Khu CNC Hòa Lạc, Thạch Thất, Hà Nội",
+                        Latitude = 21.0165m,
+                        Longitude = 105.5282m,
+                        Location = new Point(105.5282, 21.0165) { SRID = 4326 },
+                        OperatingHours = "07:00 - 19:30",
+                        ContactPhone = "0977889900",
+                        Description = "Trung tâm thu mua chuẩn mực khu CNC Hòa Lạc, cân điện tử và hỗ trợ xe tải nhỏ.",
+                        VerificationStatus = VerificationStatus.Verified,
+                        ActiveStatus = RecyclerActiveStatus.Online
+                    }
+                });
+                addedRelational = true;
+            }
+
+            if (!await _dbContext.Users.IgnoreQueryFilters().AnyAsync(u => u.Id == staffSupportId || u.Username == "staff_support", ct))
+            {
+                _dbContext.Users.Add(new User
+                {
+                    Id = staffSupportId,
+                    Username = "staff_support",
+                    Email = "staff_support@ecolink.vn",
+                    PasswordHash = BCrypt.Net.BCrypt.HashPassword("staff123"),
+                    FullName = "Phạm Quốc Bảo",
+                    PhoneNumber = "0908112244",
+                    Role = UserRole.Staff,
+                    Status = UserStatus.Active,
+                    StaffProfile = new StaffProfile
+                    {
+                        UserId = staffSupportId,
+                        StaffCode = "NV-002",
+                        Department = "Chăm sóc khách hàng & Khiếu nại",
+                        Position = "Chuyên viên hỗ trợ",
+                        Status = "ACTIVE",
+                        Permissions = new List<StaffPermissionAssignment>
+                        {
+                            new()
+                            {
+                                Id = Guid.NewGuid(),
+                                StaffId = staffSupportId,
+                                PermissionCode = StaffPermissions.HandleComplaint,
+                                GrantedBy = demoAdminId,
+                                GrantedAt = DateTime.UtcNow
+                            },
+                            new()
+                            {
+                                Id = Guid.NewGuid(),
+                                StaffId = staffSupportId,
+                                PermissionCode = StaffPermissions.ManageAccounts,
+                                GrantedBy = demoAdminId,
+                                GrantedAt = DateTime.UtcNow
+                            }
+                        }
+                    }
+                });
+                addedRelational = true;
+            }
+
+            if (addedRelational)
+            {
+                await _dbContext.SaveChangesAsync(ct);
+            }
         }
     }
 }

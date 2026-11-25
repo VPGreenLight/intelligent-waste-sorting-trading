@@ -122,6 +122,7 @@ public static class DependencyInjection
         services.AddScoped<IVirtualTreeService, VirtualTreeService>();
         services.AddScoped<IEcoFactService, EcoFactService>();
         services.AddScoped<ILeaderboardService, LeaderboardService>();
+        services.AddScoped<Persistence.Seed.DemoDataSeeder>();
 
         return services;
     }

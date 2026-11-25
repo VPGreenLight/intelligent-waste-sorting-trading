@@ -72,14 +72,23 @@ public class ServicePackageTests
 
         var catRes = (await Api.GetAsync("/api/v1/service-packages", citizenToken)).ShouldBe(200);
         var items = catRes.Data().EnumerateArray().ToList();
-        Assert.True(items.Count >= 3);
+        Assert.Equal(2, items.Count);
 
         var codes = items.Select(i => i.GetProperty("packageCode").GetString()).ToHashSet();
         Assert.Contains("BASIC", codes);
         Assert.Contains("PREMIUM", codes);
-        Assert.Contains("PRO", codes);
+        Assert.DoesNotContain("PRO", codes);
 
-        var pro = items.First(i => i.GetProperty("packageCode").GetString() == "PRO");
+        var recyclerToken = await Tokens.GetAsync("recycler");
+        var recCatRes = (await Api.GetAsync("/api/v1/service-packages", recyclerToken)).ShouldBe(200);
+        var recItems = recCatRes.Data().EnumerateArray().ToList();
+        Assert.True(recItems.Count >= 3);
+        var recCodes = recItems.Select(i => i.GetProperty("packageCode").GetString()).ToHashSet();
+        Assert.Contains("BASIC", recCodes);
+        Assert.Contains("PREMIUM", recCodes);
+        Assert.Contains("PRO", recCodes);
+
+        var pro = recItems.First(i => i.GetProperty("packageCode").GetString() == "PRO");
         Assert.False(pro.GetProperty("isEligible").GetBoolean());
 
         var subRes = (await Api.GetAsync("/api/v1/service-packages/subscriptions/me", citizenToken)).ShouldBe(200);
@@ -424,6 +433,8 @@ public class ServicePackageTests
         }
         finally
         {
+            using var offlineBody = JsonBody(new { isOnline = false });
+            await Api.SendAsync(HttpMethod.Patch, RecyclerRoutes.Availability, offlineBody, recyclerToken);
             using var cleanupBody = JsonBody(new { isActive = false, reason = "Dọn gói kiểm thử PAY12" });
             await Api.SendAsync(HttpMethod.Patch, $"/api/v1/admin/service-packages/{pinPkgId}/status", cleanupBody, adminToken);
         }

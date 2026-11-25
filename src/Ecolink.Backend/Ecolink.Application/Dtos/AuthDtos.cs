@@ -225,4 +225,5 @@ public class UserInfoDto
     public bool IsAdFree { get; set; }
     public bool HasVerifiedBadge { get; set; }
     public bool IsFeaturedMapMarker { get; set; }
+    public List<string> Permissions { get; set; } = new();
 }

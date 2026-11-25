@@ -2,6 +2,8 @@ using System.Security.Claims;
 using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Interfaces;
+using Ecolink.Domain.Constants;
+using Ecolink.WebApi.Security;
 using FluentValidation;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -121,7 +123,9 @@ public class RecyclerApplicationsController : ControllerBase
     /// </summary>
     [HttpGet]
     [Authorize(Roles = "Staff,Admin")]
+    [HasPermission(StaffPermissions.VerifyRecycler)]
     [ProducesResponseType(typeof(ApiResponse<PagedResult<RecyclerApplicationDetailDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<PagedResult<RecyclerApplicationDetailDto>>>> GetApplications(
         [FromQuery] RecyclerApplicationFilterRequest filter,
         CancellationToken ct)
@@ -135,7 +139,9 @@ public class RecyclerApplicationsController : ControllerBase
     /// </summary>
     [HttpGet("{userId:guid}")]
     [Authorize(Roles = "Staff,Admin")]
+    [HasPermission(StaffPermissions.VerifyRecycler)]
     [ProducesResponseType(typeof(ApiResponse<RecyclerApplicationDetailDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status404NotFound)]
     public async Task<ActionResult<ApiResponse<RecyclerApplicationDetailDto>>> GetApplicationDetail(
         Guid userId,
@@ -150,8 +156,10 @@ public class RecyclerApplicationsController : ControllerBase
     /// </summary>
     [HttpPut("{userId:guid}/verification")]
     [Authorize(Roles = "Staff,Admin")]
+    [HasPermission(StaffPermissions.VerifyRecycler)]
     [ProducesResponseType(typeof(ApiResponse<RecyclerApplicationDetailDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<ApiResponse<RecyclerApplicationDetailDto>>> VerifyApplication(
         Guid userId,
         [FromBody] VerifyRecyclerApplicationRequest request,

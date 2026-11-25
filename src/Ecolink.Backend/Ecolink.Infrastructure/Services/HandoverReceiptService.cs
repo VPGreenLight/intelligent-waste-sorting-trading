@@ -17,13 +17,12 @@ namespace Ecolink.Infrastructure.Services;
 /// Hiện thực Handover Completion &amp; Transaction Receipt (UC R-06, U-09, U-12, JOB-01).
 /// Quy tắc: BR-HND-04 (Completed khi Recycler lập biên nhận có ảnh cân và người dân xác nhận),
 /// BR-HND-05 (quyết toán theo khối lượng thực tế x đơn giá đã chốt; hệ thống chỉ ghi nhận, không xử lý tiền),
-/// BR-HND-07 (sau Completed không sửa/xóa), BR-GAM-01 (cộng điểm cho cả hai bên, mỗi sự kiện một lần).
+/// BR-HND-07 (sau Completed không sửa/xóa), BR-GAM-01 (ghi nhận hoàn tất &amp; tặng túi phân bón Cây ảo mỗi sự kiện một lần, không cộng Điểm Xanh từ giao dịch).
 /// </summary>
 public class HandoverReceiptService : IHandoverReceiptService
 {
-    // Các tham số {X}/ma trận quy đổi chưa chốt trong báo cáo -> hằng số tạm
     public const int DeviationThresholdPercent = 20;   // MSG-HND-04
-    public const int PointsPerKg = 10;                 // khớp quy tắc 1 kg = 10 điểm của GamificationService hiện có
+    public const int PointsPerKg = 0;                  // Không cộng Điểm Xanh khi hoàn tất giao dịch bàn giao
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -339,13 +338,13 @@ public class HandoverReceiptService : IHandoverReceiptService
         if (receipt == null) return null;
 
         var now = DateTime.UtcNow;
-        var points = CalculatePoints(receipt.TotalWeightKg);
+        var points = 0L;
 
         if (_db.Database.IsRelational())
         {
             await using var tx = await _db.Database.BeginTransactionAsync(ct);
 
-            // Cập nhật nguyên tử có điều kiện: nếu người dân và job cùng chạy, chỉ một bên thắng -> điểm chỉ cộng một lần
+            // Cập nhật nguyên tử có điều kiện: nếu người dân và job cùng chạy, chỉ một bên thắng -> chỉ xử lý một lần
             var changed = await _db.HandoverRequests
                 .Where(h => h.Id == requestId && h.Status == HandoverStatus.AwaitingConfirmation)
                 .ExecuteUpdateAsync(s => s
@@ -371,7 +370,7 @@ public class HandoverReceiptService : IHandoverReceiptService
             await _db.SaveChangesAsync(ct);
         }
 
-        // BR-GAM-01: cộng điểm cho cả người dân và Recycler.
+        // Đồng bộ khối lượng tái chế và tặng +2 túi phân bón Cây ảo (không cộng Điểm Xanh từ giao dịch).
         try
         {
             await _gamification.AwardPointsForRecyclingAsync(receipt.UserId, receipt.TotalWeightKg, ct);
@@ -383,7 +382,7 @@ public class HandoverReceiptService : IHandoverReceiptService
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Không cộng được điểm vào hồ sơ xanh cho giao dịch {Code}.", receipt.ReceiptCode);
+            _logger.LogWarning(ex, "Không đồng bộ được hồ sơ xanh hoặc túi phân bón cho giao dịch {Code}.", receipt.ReceiptCode);
         }
 
         await HandoverTradeSyncHelper.SyncReceiptCompletionAsync(_db, receipt, ct);
@@ -391,7 +390,7 @@ public class HandoverReceiptService : IHandoverReceiptService
         await PublishNotificationSafeAsync(
             receipt.UserId,
             "Giao dịch thu gom hoàn tất",
-            $"Giao dịch #{receipt.ReceiptCode} ({receipt.TotalWeightKg:0.##} kg) đã hoàn tất và cộng {receipt.PointsAwarded} điểm xanh.",
+            $"Giao dịch #{receipt.ReceiptCode} ({receipt.TotalWeightKg:0.##} kg) đã xác nhận hoàn tất.",
             "RECEIPT_COMPLETED",
             receipt.Id,
             ct);
@@ -428,8 +427,7 @@ public class HandoverReceiptService : IHandoverReceiptService
             ct);
     }
 
-    private static long CalculatePoints(decimal weightKg) =>
-        (long)Math.Round(weightKg * PointsPerKg, 0, MidpointRounding.AwayFromZero);
+    private static long CalculatePoints(decimal weightKg) => 0L;
 
     // ============================================================
     // Dựng kế hoạch biên nhận + kiểm tra hợp lệ
@@ -642,8 +640,8 @@ public class HandoverReceiptService : IHandoverReceiptService
             DeviationMessage = warn
                 ? $"Khối lượng xác nhận chênh lệch so với thỏa thuận hơn {DeviationThresholdPercent}%. Vui lòng kiểm tra trước khi xác nhận."
                 : null,
-            Points = confirmed ? receipt!.PointsAwarded : CalculatePoints(totalWeight),
-            PointsCredited = confirmed,
+            Points = 0,
+            PointsCredited = false,
             ScaleProofPhotoUrls = photos,
             ReceiptImageUrl = receiptImageUrl,
             CreatedAt = receipt == null ? null : DateTime.SpecifyKind(receipt.CreatedAt, DateTimeKind.Utc),

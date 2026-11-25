@@ -369,3 +369,10 @@ public class LeaderboardViewDto
     public LeaderboardEntryDto? MyEntry { get; set; }
     public List<LeaderboardCycleDto> RecentFinalizedCycles { get; set; } = new();
 }
+
+public sealed class AdminGrantPointsRequest
+{
+    public Guid UserId { get; set; }
+    public long Points { get; set; }
+    public string? Description { get; set; }
+}

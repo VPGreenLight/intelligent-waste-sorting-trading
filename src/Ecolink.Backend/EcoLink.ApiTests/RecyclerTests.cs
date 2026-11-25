@@ -76,8 +76,13 @@ public class RecyclerTests
     // 2. Danh mục phế liệu chuẩn  GET /api/v1/waste-categories
     // ========================================================================
     [Fact]
-    public async Task Categories_WithoutToken_Returns401() =>
-        (await Api.GetAsync(RecyclerRoutes.WasteCategories)).ShouldBe(401);
+    public async Task Categories_WithoutToken_ReturnsPublicActiveCategories200()
+    {
+        var r = (await Api.GetAsync(RecyclerRoutes.WasteCategories)).ShouldBe(200);
+        Assert.True(r.Body.GetProperty("success").GetBoolean());
+        Assert.Equal(JsonValueKind.Array, r.Data().ValueKind);
+        Assert.True(r.Data().GetArrayLength() > 0);
+    }
 
     [Theory]
     [InlineData("citizen")]

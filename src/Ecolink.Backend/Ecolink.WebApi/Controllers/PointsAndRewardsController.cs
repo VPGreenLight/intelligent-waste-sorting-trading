@@ -53,8 +53,14 @@ public class PointsAndRewardsController : ControllerBase
         Ok(ApiResponse<GamPagedResult<PointTransactionDto>>.Ok(
             await _points.GetTransactionsAsync(UserId, from, to, actionType, page, pageSize, ct)));
 
-    /// <summary>[STT 081] Danh mục quà đang mở bán. type = Physical | Voucher; sort = points_asc | points_desc | newest.</summary>
+    /// <summary>[STT 081] Danh mục quà đang mở bán cho công chúng &amp; người dùng. type = Physical | Voucher; sort = points_asc | points_desc | newest.</summary>
     [HttpGet("api/v1/gamification/gifts")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(ApiResponse<List<GiftDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> PublicGifts([FromQuery] string? type, [FromQuery] string? sort, [FromQuery] string? search, CancellationToken ct) =>
+        Ok(ApiResponse<List<GiftDto>>.Ok(await _gifts.ListStoreAsync(type, sort, search, ct)));
+
+    /// <summary>[STT 081] Danh mục quà đang mở bán (phiên bản yêu cầu đăng nhập Citizen/Recycler). type = Physical | Voucher; sort = points_asc | points_desc | newest.</summary>
     [HttpGet("api/v1/gifts")]
     [ProducesResponseType(typeof(ApiResponse<List<GiftDto>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Gifts([FromQuery] string? type, [FromQuery] string? sort, [FromQuery] string? search, CancellationToken ct) =>

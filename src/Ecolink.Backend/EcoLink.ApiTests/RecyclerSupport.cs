@@ -127,12 +127,21 @@ public static class RecyclerHelper
     {
         var token = await CollectorToken();
         var categories = await GetCategoriesAsync();
+        var existingRows = await GetPricesAsync(token);
 
         var items = new List<object>();
         foreach (var c in categories)
         {
             if (!Baseline.TryGetValue(c.Code, out var b)) continue;
             items.Add(BulkItem(c.Id, b.Price, b.MinQty, true, b.Conditions));
+        }
+
+        foreach (var row in existingRows)
+        {
+            if (!Baseline.ContainsKey(row.Code))
+            {
+                items.Add(BulkItem(row.CategoryId, row.PricePerKg, row.MinQuantityKg, false, row.Conditions));
+            }
         }
 
         (await ApiJson.PutAsync(RecyclerRoutes.Prices, new { items }, token)).ShouldBe(200);

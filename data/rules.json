@@ -231,6 +231,86 @@
       "handling_action": "Bàn giao cho đối tác thu mua EcoLink.",
       "hazard_warning": "",
       "is_active": false
+    },
+    "qa_cat_ec5c0a": {
+      "display_name": "qa_cat_ec5c0a",
+      "bin_color_name": "Cam",
+      "instructions": [
+        "Phân loại đúng quy chuẩn EcoLink."
+      ],
+      "handling_action": "Bàn giao cho đối tác thu mua EcoLink.",
+      "hazard_warning": "",
+      "is_active": false
+    },
+    "qa_cat_f815be": {
+      "display_name": "qa_cat_f815be",
+      "bin_color_name": "Cam",
+      "instructions": [
+        "Phân loại đúng quy chuẩn EcoLink."
+      ],
+      "handling_action": "Bàn giao cho đối tác thu mua EcoLink.",
+      "hazard_warning": "",
+      "is_active": false
+    },
+    "qa_cat_174996": {
+      "display_name": "qa_cat_174996",
+      "bin_color_name": "Cam",
+      "instructions": [
+        "Phân loại đúng quy chuẩn EcoLink."
+      ],
+      "handling_action": "Bàn giao cho đối tác thu mua EcoLink.",
+      "hazard_warning": "",
+      "is_active": false
+    },
+    "qa_cat_7f2a4b": {
+      "display_name": "qa_cat_7f2a4b",
+      "bin_color_name": "Cam",
+      "instructions": [
+        "Phân loại đúng quy chuẩn EcoLink."
+      ],
+      "handling_action": "Bàn giao cho đối tác thu mua EcoLink.",
+      "hazard_warning": "",
+      "is_active": false
+    },
+    "qa_cat_18bc37": {
+      "display_name": "qa_cat_18bc37",
+      "bin_color_name": "Cam",
+      "instructions": [
+        "Phân loại đúng quy chuẩn EcoLink."
+      ],
+      "handling_action": "Bàn giao cho đối tác thu mua EcoLink.",
+      "hazard_warning": "",
+      "is_active": false
+    },
+    "qa_cat_23a745": {
+      "display_name": "qa_cat_23a745",
+      "bin_color_name": "Cam",
+      "instructions": [
+        "Phân loại đúng quy chuẩn EcoLink."
+      ],
+      "handling_action": "Bàn giao cho đối tác thu mua EcoLink.",
+      "hazard_warning": "",
+      "is_active": false
+    },
+    "qa_cat_d8f588": {
+      "display_name": "qa_cat_d8f588",
+      "bin_color_name": "Cam",
+      "instructions": [
+        "Phân loại đúng quy chuẩn EcoLink."
+      ],
+      "handling_action": "Bàn giao cho đối tác thu mua EcoLink.",
+      "hazard_warning": "",
+      "is_active": false
+    },
+    "qa_cat_618a17": {
+      "display_name": "qa_cat_618a17",
+      "bin_color_name": "Cam",
+      "instructions": [
+        "Phân loại đúng quy chuẩn EcoLink."
+      ],
+      "handling_action": "Bàn giao cho đối tác thu mua EcoLink.",
+      "hazard_warning": "",
+      "is_active": false
     }
   },
   "confidence_threshold": 0.6

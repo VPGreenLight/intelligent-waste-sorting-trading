@@ -144,7 +144,7 @@ public class HandoverReceiptUnitTests
         preview.TotalAmountCash.Should().Be(77000m);
         preview.DeviationPercent.Should().Be(10.0m);
         preview.HasDeviationWarning.Should().BeFalse();
-        preview.Points.Should().Be(110);
+        preview.Points.Should().Be(0);
         preview.PointsCredited.Should().BeFalse();
     }
 
@@ -365,8 +365,8 @@ public class HandoverReceiptUnitTests
         var confirmed = await sut.ConfirmAsync(citizen.Id, req.Id);
 
         confirmed.RequestStatus.Should().Be(HandoverStatus.Completed.ToString());
-        confirmed.Points.Should().Be(100);
-        confirmed.PointsCredited.Should().BeTrue();
+        confirmed.Points.Should().Be(0);
+        confirmed.PointsCredited.Should().BeFalse();
         confirmed.IsLocked.Should().BeTrue();
         confirmed.CanConfirm.Should().BeFalse();
         confirmed.ConfirmedByUserAt.Should().NotBeNull();
@@ -403,8 +403,8 @@ public class HandoverReceiptUnitTests
         var confirmed = await sut.ConfirmAsync(citizen.Id, req.Id);
 
         confirmed.RequestStatus.Should().Be(HandoverStatus.Completed.ToString());
-        confirmed.Points.Should().Be(50);
-        confirmed.PointsCredited.Should().BeTrue();
+        confirmed.Points.Should().Be(0);
+        confirmed.PointsCredited.Should().BeFalse();
     }
 
     [Fact]
@@ -476,8 +476,8 @@ public class HandoverReceiptUnitTests
         completedCount.Should().Be(1);
         var dto = await sut.GetForUserAsync(citizen.Id, req.Id);
         dto.RequestStatus.Should().Be(HandoverStatus.Completed.ToString());
-        dto.PointsCredited.Should().BeTrue();
-        dto.Points.Should().Be(80);
+        dto.PointsCredited.Should().BeFalse();
+        dto.Points.Should().Be(0);
         await gamification.Received(1).AwardPointsForRecyclingAsync(citizen.Id, 8.0m, Arg.Any<CancellationToken>());
         await gamification.Received(1).AwardPointsForRecyclingAsync(recyclerUser.Id, 8.0m, Arg.Any<CancellationToken>());
     }
@@ -512,7 +512,7 @@ public class HandoverReceiptUnitTests
         userHist.TotalCount.Should().Be(1);
         userHist.TotalWeightKg.Should().Be(10.0m);
         userHist.TotalAmountCash.Should().Be(70000m);
-        userHist.TotalPoints.Should().Be(100);
+        userHist.TotalPoints.Should().Be(0);
 
         var rcyHist = await sut.GetRecyclerHistoryAsync(recyclerUser.Id, null, null, 1, 10);
         rcyHist.TotalCount.Should().Be(1);
@@ -542,9 +542,9 @@ public class HandoverReceiptUnitTests
         await sut.CreateAsync(recyclerUser.Id, req.Id, ValidReceiptRequest(item.Id, 1.25m));
         var confirmed = await sut.ConfirmAsync(citizen.Id, req.Id);
 
-        // 1.25 * 7001 = 8751.25 -> 8751; Points: 1.25 * 10 = 12.5 -> 13 (AwayFromZero)
+        // 1.25 * 7001 = 8751.25 -> 8751 (AwayFromZero); giao dịch bàn giao không cộng Điểm Xanh -> 0
         confirmed.TotalAmountCash.Should().Be(8751m);
-        confirmed.Points.Should().Be(13);
+        confirmed.Points.Should().Be(0);
     }
 
     [Fact]

@@ -652,7 +652,7 @@ internal static class HandoverTradeSyncHelper
                         ActualWeightKg = receipt.TotalWeightKg,
                         UnitPrice = unitPrice,
                         TotalAmountCash = receipt.TotalAmountCash,
-                        PointsAwarded = (int)receipt.PointsAwarded,
+                        PointsAwarded = 0,
                         QrSecurityCode = receipt.ReceiptCode,
                         CompletedAt = now,
                         CreatedAt = now
@@ -669,7 +669,7 @@ internal static class HandoverTradeSyncHelper
                         SenderUserId = receipt.UserId,
                         SenderRole = "System",
                         MessageType = ChatMessageType.System,
-                        MessageContent = $"Giao dịch #{receipt.ReceiptCode} đã hoàn tất. Tổng khối lượng thực tế: {receipt.TotalWeightKg:0.##} kg • Tổng thành tiền: {receipt.TotalAmountCash:N0} VNĐ • Điểm Xanh thưởng: +{receipt.PointsAwarded} điểm.",
+                        MessageContent = $"Giao dịch #{receipt.ReceiptCode} đã hoàn tất. Tổng khối lượng thực tế: {receipt.TotalWeightKg:0.##} kg • Tổng thành tiền: {receipt.TotalAmountCash:N0} VNĐ.",
                         IsRead = false,
                         SentAt = now,
                         CreatedAt = now
@@ -677,9 +677,9 @@ internal static class HandoverTradeSyncHelper
                 }
             }
 
-            // Đồng bộ điểm xanh xuống bảng user_eco_profiles trong PostgreSQL (BR-GAM-01)
-            await UpsertUserEcoProfilePointsAsync(db, receipt.UserId, receipt.TotalWeightKg, (int)receipt.PointsAwarded, ct);
-            await UpsertUserEcoProfilePointsAsync(db, receipt.RecyclerId, receipt.TotalWeightKg, (int)receipt.PointsAwarded, ct);
+            // Chỉ đồng bộ khối lượng tái chế xuống user_eco_profiles (không cộng Điểm Xanh từ giao dịch)
+            await UpsertUserEcoProfilePointsAsync(db, receipt.UserId, receipt.TotalWeightKg, 0, ct);
+            await UpsertUserEcoProfilePointsAsync(db, receipt.RecyclerId, receipt.TotalWeightKg, 0, ct);
 
             await db.SaveChangesAsync(ct);
         }
@@ -702,14 +702,15 @@ internal static class HandoverTradeSyncHelper
         var profile = await db.UserEcoProfiles.FirstOrDefaultAsync(p => p.UserId == userId, ct);
         if (profile == null)
         {
+            var safePoints = Math.Max(0, pointsToAdd);
             profile = new UserEcoProfile
             {
                 Id = Guid.NewGuid(),
                 UserId = userId,
-                CurrentGreenPoints = pointsToAdd,
-                TotalLifetimePoints = pointsToAdd,
-                TreeLevel = 1 + (pointsToAdd / 100),
-                TreeExperience = pointsToAdd % 100,
+                CurrentGreenPoints = safePoints,
+                TotalLifetimePoints = safePoints,
+                TreeLevel = 1 + (safePoints / 100),
+                TreeExperience = safePoints % 100,
                 TotalWasteScanned = 1,
                 TotalRecycledKg = weightKg,
                 CreatedAt = DateTime.UtcNow
@@ -718,14 +719,17 @@ internal static class HandoverTradeSyncHelper
         }
         else
         {
-            profile.CurrentGreenPoints += pointsToAdd;
-            profile.TotalLifetimePoints += pointsToAdd;
             profile.TotalRecycledKg += weightKg;
-            profile.TreeExperience += pointsToAdd;
-            while (profile.TreeExperience >= 100)
+            if (pointsToAdd > 0)
             {
-                profile.TreeLevel += 1;
-                profile.TreeExperience -= 100;
+                profile.CurrentGreenPoints += pointsToAdd;
+                profile.TotalLifetimePoints += pointsToAdd;
+                profile.TreeExperience += pointsToAdd;
+                while (profile.TreeExperience >= 100)
+                {
+                    profile.TreeLevel += 1;
+                    profile.TreeExperience -= 100;
+                }
             }
             profile.UpdatedAt = DateTime.UtcNow;
         }

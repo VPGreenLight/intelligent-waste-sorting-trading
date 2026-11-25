@@ -370,6 +370,10 @@ public class RecyclerManagementService : IRecyclerManagementService
         profile.ContactPhone = request.ContactPhone.Trim();
         profile.Description = Normalize(request.Description);
         profile.BusinessPhotoUrl = Normalize(request.BusinessPhotoUrl);
+        if (!string.IsNullOrWhiteSpace(request.OperatingHours))
+        {
+            profile.OperatingHours = request.OperatingHours.Trim();
+        }
         profile.Latitude = (decimal)request.Latitude;
         profile.Longitude = (decimal)request.Longitude;
         profile.Location = new Point(request.Longitude, request.Latitude) { SRID = 4326 };

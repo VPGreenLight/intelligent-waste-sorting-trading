@@ -163,7 +163,7 @@ public class WasteRuleEngineService : IWasteRuleEngineService
         }
     }
 
-    private async Task EnsureDatabaseDefaultsSeededAsync(CancellationToken ct)
+    internal async Task EnsureDatabaseDefaultsSeededAsync(CancellationToken ct)
     {
         if (_db == null) return;
 

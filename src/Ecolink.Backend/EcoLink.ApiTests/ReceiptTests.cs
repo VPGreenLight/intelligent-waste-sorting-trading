@@ -139,7 +139,7 @@ public class ReceiptTests
             var d = r.Data();
             Assert.Equal(12.5m, d.GetProperty("totalWeightKg").GetDecimal());
             Assert.Equal(100000m, d.GetProperty("totalAmountCash").GetDecimal());   
-            Assert.Equal(125, d.GetProperty("points").GetInt64());                   
+            Assert.Equal(0, d.GetProperty("points").GetInt64());                   
             Assert.False(d.GetProperty("pointsCredited").GetBoolean());
             Assert.Equal(JsonValueKind.Null, d.GetProperty("receiptId").ValueKind);
 
@@ -556,7 +556,7 @@ public class ReceiptTests
             var d = (await Api.GetAsync(HandoverRoutes.Receipt(id), await Citizen())).ShouldBe(200).Data();
             Assert.True(d.GetProperty("canConfirm").GetBoolean());
             Assert.Equal(100000m, d.GetProperty("totalAmountCash").GetDecimal());
-            Assert.Equal(125, d.GetProperty("points").GetInt64());
+            Assert.Equal(0, d.GetProperty("points").GetInt64());
             Assert.False(d.GetProperty("pointsCredited").GetBoolean());
             Assert.False(string.IsNullOrEmpty(d.GetProperty("recycler").Str("name")));
         }
@@ -609,8 +609,8 @@ public class ReceiptTests
         var d = r.Data();
         Assert.Equal("Completed", d.Str("requestStatus"));
         Assert.True(d.GetProperty("isLocked").GetBoolean());
-        Assert.True(d.GetProperty("pointsCredited").GetBoolean());
-        Assert.Equal(125, d.GetProperty("points").GetInt64());
+        Assert.False(d.GetProperty("pointsCredited").GetBoolean());
+        Assert.Equal(0, d.GetProperty("points").GetInt64());
         Assert.NotEqual(JsonValueKind.Null, d.GetProperty("confirmedByUserAt").ValueKind);
         Assert.False(d.GetProperty("canConfirm").GetBoolean());
 
@@ -668,7 +668,7 @@ public class ReceiptTests
             var row = rows.Single(i => i.GetProperty("requestId").GetGuid() == done);
             Assert.Equal(12.5m, row.GetProperty("totalWeightKg").GetDecimal());
             Assert.Equal(100000m, row.GetProperty("totalAmountCash").GetDecimal());
-            Assert.Equal(125, row.GetProperty("pointsAwarded").GetInt64());
+            Assert.Equal(0, row.GetProperty("pointsAwarded").GetInt64());
             Assert.False(string.IsNullOrEmpty(row.Str("counterpartName")));
             Assert.Contains(row.GetProperty("categories").EnumerateArray(), c => c.GetString()!.Length > 0);
 
@@ -677,7 +677,7 @@ public class ReceiptTests
 
             Assert.True(d.GetProperty("totalCount").GetInt32() >= 1);
             Assert.True(d.GetProperty("totalAmountCash").GetDecimal() >= 100000m);
-            Assert.True(d.GetProperty("totalPoints").GetInt64() >= 125);
+            Assert.Equal(0, d.GetProperty("totalPoints").GetInt64());
         }
         finally { await ReceiptHelper.CompleteQuietlyAsync(awaiting); }
     }

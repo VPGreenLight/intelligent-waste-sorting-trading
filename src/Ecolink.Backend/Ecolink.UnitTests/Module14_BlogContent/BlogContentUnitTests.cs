@@ -483,4 +483,42 @@ public class BlogContentUnitTests
         rejectVal.Validate(new RejectBlogPostRequest { Feedback = "" }).IsValid.Should().BeFalse();
         rejectVal.Validate(new RejectBlogPostRequest { Feedback = new string('x', 2001) }).IsValid.Should().BeFalse();
     }
+
+    [Fact]
+    public async Task UTC021_SeedDefaultBlogPostsCoreAsync_ShouldSeedIdempotentlyWithValidSlugsCoversAndWorkflowStates()
+    {
+        using var db = TestDbContextFactory.Create();
+        var (svc, _) = CreateService(db, Guid.NewGuid());
+
+        // Chắc chắn ListPublishedAsync trên InMemory DB không tự ý seed làm nhiễu các test rỗng
+        var beforeSeed = await svc.ListPublishedAsync(null, null, 1, 20);
+        beforeSeed.TotalCount.Should().Be(0);
+
+        await svc.SeedDefaultBlogPostsCoreAsync();
+        await svc.SeedDefaultBlogPostsCoreAsync(); // Gọi lại không tạo trùng
+
+        (await db.BlogPosts.CountAsync()).Should().Be(6);
+        (await db.Users.CountAsync(u => u.Username == "staff")).Should().Be(1);
+        (await db.Users.CountAsync(u => u.Username == "admin")).Should().Be(1);
+
+        var published = await svc.ListPublishedAsync(null, null, 1, 20);
+        published.TotalCount.Should().Be(4);
+        published.Items[0].Title.Should().Contain("Khủng hoảng rác thải nhựa đại dương");
+        published.Items.Should().OnlyContain(p =>
+            !string.IsNullOrWhiteSpace(p.Slug) &&
+            !string.IsNullOrWhiteSpace(p.CoverImageUrl) &&
+            p.CoverImageUrl!.StartsWith("/assets/insights/", StringComparison.Ordinal) &&
+            p.Author.FullName == "Lê Thu Hà");
+
+        var featuredDetail = await svc.GetPublishedBySlugAsync(published.Items[0].Slug);
+        featuredDetail.Content.Should().Contain("EPR");
+
+        var staffUser = await db.Users.FirstAsync(u => u.Username == "staff");
+        var mine = await svc.ListMineAsync(staffUser.Id, null, null, 1, 20);
+        mine.TotalCount.Should().Be(6);
+
+        var queue = await svc.ListQueueAsync(null, "oldest", 1, 20);
+        queue.TotalCount.Should().Be(1);
+        queue.Items[0].Status.Should().Be("Pending_Approval");
+    }
 }

@@ -122,11 +122,11 @@ public class GeoMatchingService : IGeoMatchingService
         new()
         {
             Id = Guid.Parse("22222222-2222-2222-2222-222222222222"),
-            FacilityName = "Vựa phế liệu EcoGreen",
+            FacilityName = "Vựa phế liệu EcoGreen Hòa Lạc",
             RepresentativeName = "Trần Thu Gom",
-            Address = "123 Đường Nguyễn Hữu Cảnh, P. 22, Bình Thạnh, TP.HCM",
-            Latitude = 10.7938,
-            Longitude = 106.7182,
+            Address = "Số 18 Đại lộ Thăng Long, Khu CNC Hòa Lạc, Thạch Thất, Hà Nội",
+            Latitude = 21.0138,
+            Longitude = 105.5256,
             ContactPhone = "0988776655",
             OperatingHours = "07:30 - 18:30",
             Materials = new List<AcceptedMaterialDto>
@@ -518,14 +518,14 @@ public class GeoMatchingService : IGeoMatchingService
         }
     }
 
-    private async Task EnsureDemoRecyclerPricesSeededAsync(CancellationToken ct)
+    internal async Task EnsureDemoRecyclerPricesSeededAsync(CancellationToken ct, bool force = false)
     {
-        if (_db == null || _demoSeedChecked) return;
+        if (_db == null || (!force && _demoSeedChecked)) return;
 
         await SeedLock.WaitAsync(ct);
         try
         {
-            if (_demoSeedChecked) return;
+            if (!force && _demoSeedChecked) return;
 
             // 1. Đảm bảo 6 danh mục phế liệu chuẩn luôn tồn tại
             var defaultCategories = new (string Code, string Name, string BinColor, bool IsRecyclable)[]
@@ -582,14 +582,14 @@ public class GeoMatchingService : IGeoMatchingService
                     Guid.Parse("22222222-2222-2222-2222-222222222222"),
                     "recycler",
                     "recycler@ecolink.vn",
-                    "Vựa phế liệu EcoGreen",
+                    "Vựa phế liệu EcoGreen Hòa Lạc",
                     "Trần Thu Gom",
-                    "123 Đường Nguyễn Hữu Cảnh, P. 22, Bình Thạnh, TP.HCM",
-                    10.7938m,
-                    106.7182m,
+                    "Số 18 Đại lộ Thăng Long, Khu CNC Hòa Lạc, Thạch Thất, Hà Nội",
+                    21.0138m,
+                    105.5256m,
                     "0988776655",
                     "07:30 - 18:30",
-                    "Chuyên thu mua nhựa sạch, bìa carton và vỏ lon nhôm tận nơi khu vực Bình Thạnh - Quận 1.",
+                    "Chuyên thu mua nhựa sạch, bìa carton và vỏ lon nhôm tận nơi khu vực Khu CNC Hòa Lạc - Thạch Thất.",
                     new[]
                     {
                         ("plastic", 7000m, 1.0m, "Chai nhựa PET/HDPE đã tráng sạch, bẹp chai"),

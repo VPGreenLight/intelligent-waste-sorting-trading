@@ -308,4 +308,55 @@ public class OnboardingTests
         var prices = await RecyclerHelper.GetPricesAsync(newRecyclerToken);
         Assert.NotEmpty(prices);
     }
+
+    // ======================= ONB-09: Phân quyền Staff VERIFY_RECYCLER (BR-ADM-02) =======================
+
+    [Fact]
+    public async Task ONB09_StaffReview_EnforcesVerifyRecyclerPermission_BrAdm02()
+    {
+        var (userId, _, _, citizenToken) = await OnboardingHelper.RegisterFreshCitizenAsync();
+        var payload = OnboardingHelper.ValidApplicationPayload();
+        (await ApiJson.PostAsync(OnboardingRoutes.Base, payload, citizenToken)).ShouldBe(201);
+
+        var adminToken = await Tokens.GetAsync("admin");
+        var suffix = TestData.Unique(8);
+        var staffEmail = $"onb_staff_{suffix}@ecolink.vn";
+        const string staffPassword = "StaffPass@123";
+
+        var createStaff = (await Api.PostJsonAsync("/api/v1/admin/staff", new
+        {
+            fullName = $"Onboarding Limited Staff {suffix}",
+            email = staffEmail,
+            initialPassword = staffPassword,
+            department = "Complaint Support",
+            position = "QA Tester"
+        }, adminToken)).ShouldBe(201);
+
+        var staffId = Api.Unwrap(createStaff.Body).GetProperty("staffId").GetGuid();
+
+        (await ApiJson.PutAsync($"/api/v1/admin/staff/{staffId}/permissions", new
+        {
+            permissions = new[] { "HANDLE_COMPLAINT" }
+        }, adminToken)).ShouldBe(200);
+
+        var loginStaff = (await Api.PostJsonAsync(Routes.Login, new
+        {
+            usernameOrEmail = staffEmail,
+            password = staffPassword
+        })).ShouldBe(200);
+        var limitedStaffToken = Api.ExtractToken(loginStaff.Body)!;
+
+        // Staff chỉ có quyền HANDLE_COMPLAINT -> bị chặn 403 trên tất cả endpoint thẩm định KYB
+        (await Api.GetAsync(OnboardingRoutes.Base, limitedStaffToken)).ShouldBe(403);
+        (await Api.GetAsync(OnboardingRoutes.Detail(userId), limitedStaffToken)).ShouldBe(403);
+        (await ApiJson.PutAsync(OnboardingRoutes.Verification(userId), new
+        {
+            isApproved = true,
+            rejectionReason = (string?)null
+        }, limitedStaffToken)).ShouldBe(403);
+
+        // Staff đầy đủ quyền (NV-001) -> truy cập danh sách thành công 200 OK
+        var privilegedStaffToken = await Tokens.GetAsync("staff");
+        (await Api.GetAsync(OnboardingRoutes.Base, privilegedStaffToken)).ShouldBe(200);
+    }
 }

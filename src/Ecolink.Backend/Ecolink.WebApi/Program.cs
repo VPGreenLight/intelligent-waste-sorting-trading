@@ -43,21 +43,31 @@ builder.Services.AddApplicationServices();
 // Thêm dịch vụ tầng Infrastructure (AI Client, Rule Engine, Geo Matching, Gamification, Auth, Negotiation Chat)
 builder.Services.AddInfrastructureServices(builder.Configuration);
 
+// Kiểm tra chế độ CLI seed dữ liệu Demo Hội đồng (không chạy background jobs khi seed một lần)
+var isSeedCli = args.Any(a =>
+    string.Equals(a, "--seed-demo", StringComparison.OrdinalIgnoreCase) ||
+    string.Equals(a, "--reset-and-seed-demo", StringComparison.OrdinalIgnoreCase));
+
 // Đăng ký SignalR Real-Time Hub & Notifier cho Module Chatbox + System Notifications (STT 172)
 builder.Services.AddSignalR();
 builder.Services.AddScoped<INegotiationChatNotifier, SignalRNegotiationChatNotifier>();
 builder.Services.AddScoped<INotificationRealtimeNotifier, SignalRNotificationNotifier>();
-builder.Services.AddHostedService<Ecolink.WebApi.Services.EventBackgroundWorker>();
+if (!isSeedCli)
+{
+    builder.Services.AddHostedService<Ecolink.WebApi.Services.EventBackgroundWorker>();
+}
 
 // Lấy thông tin người dùng hiện tại (UserId/Role) từ JWT cho Controller và Audit Interceptor
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
-builder.Services.AddHostedService<Ecolink.WebApi.Services.HandoverExpirationJob>(); // JOB-03
-builder.Services.AddHostedService<Ecolink.WebApi.Services.ReceiptAutoCompleteJob>(); // JOB-01
+if (!isSeedCli)
+{
+    builder.Services.AddHostedService<Ecolink.WebApi.Services.HandoverExpirationJob>(); // JOB-03
+    builder.Services.AddHostedService<Ecolink.WebApi.Services.ReceiptAutoCompleteJob>(); // JOB-01
 
-
-//  Xử lý Voucher hết hạn .
-builder.Services.AddHostedService<Ecolink.WebApi.Services.VoucherExpirationJob>();
+    // Xử lý Voucher hết hạn.
+    builder.Services.AddHostedService<Ecolink.WebApi.Services.VoucherExpirationJob>();
+}
 
 // Cấu hình JWT Bearer Authentication & Authorization (Hỗ trợ cả REST Header và SignalR WebSocket access_token)
 var jwtSecret = builder.Configuration["JwtSettings:SecretKey"]
@@ -174,6 +184,16 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+if (isSeedCli)
+{
+    using var scope = app.Services.CreateScope();
+    var seeder = scope.ServiceProvider.GetRequiredService<Ecolink.Infrastructure.Persistence.Seed.DemoDataSeeder>();
+    var resetExisting = args.Any(a => string.Equals(a, "--reset-and-seed-demo", StringComparison.OrdinalIgnoreCase));
+    var report = await seeder.SeedAsync(resetExisting: resetExisting);
+    Console.WriteLine(report.ToSummaryString());
+    return;
+}
 
 // Cấu hình HTTP request pipeline
 app.UseMiddleware<GlobalExceptionMiddleware>();
