@@ -8,7 +8,7 @@
     <mxCell id="u0" parent="l1" style="ellipse;whiteSpace=wrap;html=1;aspect=fixed;fillColor=#000000;strokeColor=#000000;strokeWidth=2;fontSize=16;" value="" vertex="1">
       <mxGeometry height="30" width="30" x="160" y="55" as="geometry" />
     </mxCell>
-    <mxCell id="u1" parent="l1" style="rounded=0;whiteSpace=wrap;html=1;arcSize=14;fontSize=16;fontFamily=Helvetica;strokeWidth=1.5;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" value="Nhập thông tin cơ sở, giấy phép &amp;amp; vị trí GPS" vertex="1">
+    <mxCell id="u1" parent="l1" style="rounded=0;whiteSpace=wrap;html=1;arcSize=14;fontSize=16;fontFamily=Helvetica;strokeWidth=1.5;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" value="Chọn loại hình (Cơ sở: GPKD + 5 ảnh kho / Nhỏ lẻ: CCCD 2 mặt) &amp;amp; vị trí GPS" vertex="1">
       <mxGeometry height="55" width="260" x="45" y="120" as="geometry" />
     </mxCell>
     <mxCell id="e_u0_u1" edge="1" parent="l1" source="u0" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=16;fontColor=#000000;strokeColor=#000000;strokeWidth=1.5;" target="u1" value="">
@@ -113,7 +113,7 @@
     <mxCell id="st1" parent="l3" style="rounded=0;whiteSpace=wrap;html=1;arcSize=14;fontSize=16;fontFamily=Helvetica;strokeWidth=1.5;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" value="Xem danh sách hồ sơ chờ duyệt" vertex="1">
       <mxGeometry height="55" width="260" x="55" y="340" as="geometry" />
     </mxCell>
-    <mxCell id="st2" parent="l3" style="rounded=0;whiteSpace=wrap;html=1;arcSize=14;fontSize=16;fontFamily=Helvetica;strokeWidth=1.5;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" value="Kiểm tra giấy phép, ảnh cơ sở &amp;amp; tọa độ GPS" vertex="1">
+    <mxCell id="st2" parent="l3" style="rounded=0;whiteSpace=wrap;html=1;arcSize=14;fontSize=16;fontFamily=Helvetica;strokeWidth=1.5;fillColor=#ffffff;strokeColor=#000000;fontColor=#000000;" value="Kiểm tra chứng từ (GPKD + 5 ảnh kho hoặc CCCD 2 mặt) &amp;amp; tọa độ GPS" vertex="1">
       <mxGeometry height="55" width="260" x="55" y="435" as="geometry" />
     </mxCell>
     <mxCell id="e_st1_st2" edge="1" parent="l3" source="st1" style="edgeStyle=orthogonalEdgeStyle;rounded=1;orthogonalLoop=1;jettySize=auto;html=1;fontSize=16;fontColor=#000000;strokeColor=#000000;strokeWidth=1.5;" target="st2" value="">

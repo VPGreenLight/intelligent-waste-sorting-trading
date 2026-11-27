@@ -15,7 +15,7 @@ $env:ASPNETCORE_ENVIRONMENT = "Development"
 dotnet run --no-build -- --reset-and-seed-demo
 ```
 
-**Dấu hiệu thành công:** Console in ra `=== EcoLink Council Demo Seeder Report (Reset=True) ===` với `WasteCategories=10`, `SortingRules=10`, `Users=28`, `RecyclerProfiles=15`, `HandoverRequests=70`, `TransactionReviews=61`, `BlogPosts=6`, `EcoFacts=10`, `Gifts=6`, `ServiceOrders=5`.
+**Dấu hiệu thành công:** Console in ra `=== EcoLink Council Demo Seeder Report (Reset=True) ===` với `WasteCategories=10`, `SortingRules=10`, `Users=28`, `RecyclerProfiles=15`, `HandoverRequests=164`, `HandoverReceipts=159`, `TradeOrders=164`, `TransactionReviews=155`, `BlogPosts=6`, `EcoFacts=10`, `Gifts=6`, `ServiceOrders=5` (CSDL đồng bộ đầy đủ **`16` EF Core Migrations**).
 
 ### 1.2. Khởi chạy đồng bộ toàn bộ Dịch vụ
 ```powershell
@@ -24,7 +24,7 @@ Set-Location "c:\Projects\EcoLink\intelligent-waste-sorting-trading"
 ```
 - **Frontend Web (Vite):** `http://localhost:5173`
 - **Backend Core API + SignalR:** `http://localhost:5000` (`/swagger`, `/health`)
-- **AI Vision Service (FastAPI + YOLOv8):** `http://localhost:8000` (`/docs`, `/health`)
+- **AI Vision Service (FastAPI + YOLO26 Two-Stage):** `http://localhost:8000` (`/docs`, `/health`)
 
 ---
 
@@ -58,7 +58,7 @@ Set-Location "c:\Projects\EcoLink\intelligent-waste-sorting-trading"
 ### Chặng 2 (Phút 3–6): `Citizen` — Bản đồ PostGIS Hòa Lạc, Chat Thương lượng SignalR & Đặt lịch Thu gom
 - **Màn hình:** `/map` $\rightarrow$ `/user/handover` $\rightarrow$ `/chat`
 - **Thao tác trực tiếp:**
-  1. Mở `/map` quanh **Khu CNC Hòa Lạc (`21.0124, 105.5253`)**: Chọn lọc vật liệu `plastic` / `metal` $\rightarrow$ Thấy **Vựa phế liệu EcoGreen Hòa Lạc** (`22222222-...`), **EcoPro Thạch Thất** (`22222223-...`) và các vựa `recycler_hl1..4` sắp xếp chuẩn theo khoảng cách GPS (`PostGIS ST_DWithin`). (Mở rộng bán kính `> 28km` sẽ thấy điểm Tích xanh `PRO` tại Cầu Giấy nổi bật).
+  1. Mở `/map` quanh **Khu CNC Hòa Lạc (`21.0124, 105.5253`)**: Chọn lọc vật liệu `plastic` / `metal` $\rightarrow$ Thấy **Vựa phế liệu EcoGreen Hòa Lạc** (`22222222-...`), **EcoPro Thạch Thất** (`22222223-...`) và các vựa `recycler_hl1..4` sắp xếp chuẩn theo khoảng cách GPS chính xác (`PostGIS ST_DWithin` / Haversine trực tiếp, không làm mờ vòng `~500m`). Khi mở rộng bán kính `> 28km` hoặc tìm tại khu vực Hà Nội sẽ thấy **Trạm Tái Chế Xanh Cầu Giấy** đạt **`4.87★` (`54` đánh giá)** gắn huy hiệu **Đối tác Pro**, cùng **Vựa Phế Liệu Sạch Đống Đa** (`4.71★ / 7`) và **Điểm Thu Mua Tái Chế Bách Khoa** (`4.63★ / 8`). Đối tác nhóm `Individual` hiển thị huy hiệu **Thu mua lưu động**.
   2. Vào `/user/handover` (`U-06`): Kiểm tra 2 đơn sẵn có (`HND-DEMO-0001` `Pending`, `HND-DEMO-0002` `AwaitingConfirmation`) và tạo **1 đơn thu gom mới** gửi tới *EcoGreen Hòa Lạc* (chứng minh **hạn mức tối đa 3 đơn active**, đồng thời **che SĐT trước khi duyệt** theo `BR-HND-08`).
   3. Mở `/chat` (`U-08`): Gửi tin nhắn & xem lịch sử thương lượng real-time với `EcoGreen` (`HND-DEMO-0001`).
 
@@ -77,10 +77,9 @@ Set-Location "c:\Projects\EcoLink\intelligent-waste-sorting-trading"
 - **Thao tác trực tiếp:**
   1. Đăng nhập lại **`citizen`** $\rightarrow$ Mở `/user/receipt` cho đơn **`HND-DEMO-0002`** (**`RCP-DEMO-0002`**, `6.5 kg` kim loại): Bấm **Xác nhận Biên nhận** (`U-09`) $\rightarrow$ Điểm xanh tự động cộng vào ví (`UserPointWallet` & `UserEcoProfile`)!
   2. Đánh giá **`5★`** ngay cho đơn vừa hoàn tất (`U-10` — `BR-RVW-01`), và mở tab khiếu nại giới thiệu mẫu khiếu nại **`CMP-DEMO-0001`**.
-  3. Mở `/rewards` & `/ecofacts`:
-     - Bấm **Điểm danh hàng ngày** (`Streak` chuyển `3` $\rightarrow$ **`4` ngày**, nhận thưởng cộng dồn ICT).
-     - Tưới nước / Bón phân cho **Cây ảo Lv 2** (`3` túi phân có sẵn) $\rightarrow$ Mở khóa thêm thẻ kiến thức tại `/ecofacts` (`10` facts cấp `1..4`).
-     - Đổi **1 mã E-Voucher** từ `Gift` kho quà (hoặc kiểm tra voucher đã đổi **`ECOHL-GIFT10-8899`** ở `RDM-DEMO-0002`).
+  3. Mở mục **`Eco Fact`** (`/user/gamification`) $\rightarrow$ `/rewards` & `/ecofacts`:
+     - Trên mục **`Eco Fact`** (`/user/gamification`): Trình diễn giao diện đã tinh gọn tập trung vào thẻ **Cây ảo WebP** + bộ lọc động **Cấp 1..4** đồng bộ thiết kế trực tiếp với `/ecofacts` (tách riêng chức năng Điểm danh / Đổi quà sang `/rewards`).
+     - Tại `/rewards` & `/ecofacts`: Bấm **Điểm danh hàng ngày** (`Streak` chuyển `3` $\rightarrow$ **`4` ngày**, nhận thưởng cộng dồn ICT); tưới nước / bón phân cho **Cây ảo Lv 2** (`3` túi phân có sẵn) $\rightarrow$ Mở khóa thêm thẻ kiến thức tại `/ecofacts` (`10` facts cấp `1..4`); đổi **1 mã E-Voucher** từ `Gift` kho quà (hoặc kiểm tra voucher đã đổi **`ECOHL-GIFT10-8899`** ở `RDM-DEMO-0002`).
      - Mở `/leaderboard`: Xem Top BXH Hòa Lạc tháng hiện tại (`citizen_vip` Top #1).
 
 ### Chặng 5 (Phút 11–13): `Staff` — Chấm công, Duyệt KYB, Gán nhãn AI, Trọng tài Khiếu nại & Kiểm chứng RBAC `403`
@@ -88,7 +87,7 @@ Set-Location "c:\Projects\EcoLink\intelligent-waste-sorting-trading"
 - **Thao tác trực tiếp:**
   1. Đăng nhập **`staff`** (`NV-001` — đủ `7` quyền):
      - `/staff/checkin` (`S-11`): Bấm **Check-in Ca làm việc hôm nay** (kế thừa chuỗi `5` ngày công lịch sử).
-     - `/staff/applications` (`S-04`): Xem **`3` hồ sơ KYB đang chờ** (`applicant_hoalacxanh`, `applicant_minhkhai`, `applicant_anhtuan`) $\rightarrow$ Thẩm định & Phê duyệt 1 hồ sơ.
+     - `/staff/applications` (`S-04`): Xem **`3` hồ sơ KYB đang chờ** (`applicant_hoalacxanh`, `applicant_minhkhai`, `applicant_anhtuan`) — minh họa mô hình **KYB 2 phân nhóm theo Điều 3 Nghị định 39/2007/NĐ-CP** (cơ sở cố định `Facility`: GPKD + đủ `5/5` ảnh kho bãi mới cho gửi; cá nhân thu mua nhỏ lẻ `Individual`: miễn GPKD, xác minh qua CCCD 2 mặt lưu nội bộ) $\rightarrow$ Thẩm định & Phê duyệt 1 hồ sơ.
      - `/staff/ai-review` (`S-01`) & `/staff/dataset` (`S-02`/`S-03`): Duyệt **`2` phản hồi AI `Pending`**, gán nhãn từ **`3` ảnh `Unlabeled`**, và xem bộ dữ liệu chuẩn **`v2.0.0`** (Train/Val/Test `70/20/10` chống rò rỉ `BR-CLS-07`).
      - `/staff/complaints` (`S-05`): Mở Hồ sơ Trọng tài 360° cho khiếu nại **`CMP-DEMO-0001`** (`Open`, sai lệch cân `14kg` vs `11.5kg`).
   2. Đăng nhập **`staff_support`** (`NV-002` — chỉ `2` quyền):
@@ -112,4 +111,5 @@ Set-Location "c:\Projects\EcoLink\intelligent-waste-sorting-trading"
 - [x] **`BR-HND-07` & `BR-GAM-03` (Immutable Receipt & Atomic Wallet/Inventory):** Biên nhận sau khi Citizen xác nhận được khóa vĩnh viễn và cộng điểm nguyên tử; đổi quà trừ kho không thể âm.
 - [x] **`BR-PAY-04` (PRO Eligibility Gate):** Tự động khóa nút mua `PRO` khi `< 50` đánh giá (`recycler`) và mở khóa đầy đủ khi đạt chuẩn (`recycler_pro`: `52` lượt, `4.81★`).
 - [x] **`BR-CLS-07` (Sticky Stratified Split 70/20/10):** Phiên bản Dataset `v2.0.0` đóng băng split cố định từng `ImageSha256`, chống rò rỉ dữ liệu Train/Test giữa các phiên bản.
-- [x] **`BR-ADM-02`, `BR-ADM-05`, `BR-ADM-06` (Dynamic Fine-Grained RBAC, Append-Only Audit Log & PII Masking):** Đã kiểm chứng tự động qua `OnboardingTests` (`ONB09`), `GovernanceTests`, `AuditLogImmutabilityInterceptor` và xuất CSV báo cáo.
+- [x] **`BR-MTH-01` (2-Tier KYB Onboarding per NĐ 39/2007/NĐ-CP):** Phân tách `Facility` (GPKD + đủ `5/5` ảnh kho bãi) và `Individual` (miễn GPKD, bắt buộc CCCD 2 mặt lưu nội bộ, gắn nhãn *"Thu mua lưu động"* trên `/map`).
+- [x] **`BR-ADM-02`, `BR-ADM-05`, `BR-ADM-06` (Dynamic Fine-Grained RBAC, Append-Only Audit Log & PII Masking):** Đã kiểm chứng tự động qua `OnboardingTests`, `GovernanceTests`, `AuditLogImmutabilityInterceptor` và xuất CSV báo cáo (`1,135 / 1,135` Unit Tests Passed).

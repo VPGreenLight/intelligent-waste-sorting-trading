@@ -4,13 +4,13 @@
 
 | Code Module | `GeoMatchingService & NearbyRecyclerFilterValidator (U-05)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **20** | | |
+| **Number of TCs** | **21** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 20 | 0 | 0 |
-| *Round 2* | 0 | 0 | 20 |
-| *Round 3* | 0 | 0 | 20 |
+| *Round 1* | 21 | 0 | 0 |
+| *Round 2* | 0 | 0 | 21 |
+| *Round 3* | 0 | 0 | 21 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **10** | **6** | **4** |
+| **Count** | **10** | **7** | **4** |
 
 ---
 
@@ -42,4 +42,5 @@
 | **UTC018** | Tọa độ vĩ độ/kinh độ vượt miền hợp lệ WGS84 (`Lat = 95.0, Lng = 190.0`) | `Lat=95.0`;<br>`Lng=190.0`;<br>`RadiusKm=10.0` | `Return: ValidationResult { IsValid = false, Errors chứa thông báo giới hạn [-90, 90] và [-180, 180] }`<br>`Exception: N/A`<br>`Log Message: N/A` | Boundary | Passed | 2026-11-02 | Giang Nguyễn Đức | Pending | Pending | N/A | Kiểm tra biên tọa độ địa lý `Lat [-90, 90]`, `Lng [-180, 180]` |
 | **UTC019** | Bán kính tìm kiếm tại đúng 2 giá trị biên `RadiusKm = 0.5` và `RadiusKm = 50.0` | `Lat=10.7769`;<br>`Lng=106.7009`;<br>`RadiusKm=0.5` (và `50.0`) | `Return: ValidationResult { IsValid = true, Errors.Count = 0 }`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-11-02 | Giang Nguyễn Đức | Pending | Pending | N/A | Chấp nhận giá trị biên hợp lệ của bán kính tìm kiếm `[0.5, 50.0] km` |
 | **UTC020** | Truyền mã danh mục không thuộc 5 loại tái chế (`Category = "trash"` hoặc `RadiusKm = 100.0`) | `Lat=10.7769`;<br>`Lng=106.7009`;<br>`Category="trash"`;<br>`RadiusKm=100.0` | `Return: ValidationResult { IsValid = false, Errors.Count = 2 (ngoài khoảng bán kính [0.5, 50] và danh mục không hỗ trợ) }`<br>`Exception: N/A`<br>`Log Message: N/A` | Abnormal | Passed | 2026-11-02 | Giang Nguyễn Đức | Pending | Pending | N/A | Chặn tìm kiếm cơ sở thu mua đối với rác không tái chế `"trash"` và bán kính vượt biên |
+| **UTC021** | Cơ sở có 2 dòng giá `Active` (`plastic` nhưng danh mục `WasteCategory.Status = "Inactive"`, và `paper` `Active`) | `FindNearestPartnersAsync(..., "plastic")` & `GetRecyclerPublicDetailAsync(recyclerUser.Id)` | `filteredPlastic` trả về rỗng `[]`; `detail.Materials` chỉ trả `["paper"]`; bản ghi `RecyclerPrice(plastic)` trong DB vẫn giữ nguyên `Status = Active` | Abnormal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Ẩn danh mục `Inactive` khỏi bản đồ nhưng bảo toàn bảng giá lịch sử (`BR-SRT-04`) |
 

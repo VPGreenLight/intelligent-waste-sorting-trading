@@ -4,13 +4,13 @@
 
 | Code Module | `RecyclerOnboardingService & CloudflareR2StorageService` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **20** | | |
+| **Number of TCs** | **22** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 20 | 0 | 0 |
-| *Round 2* | 0 | 0 | 20 |
-| *Round 3* | 0 | 0 | 20 |
+| *Round 1* | 22 | 0 | 0 |
+| *Round 2* | 0 | 0 | 22 |
+| *Round 3* | 0 | 0 | 22 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **7** | **9** | **4** |
+| **Count** | **9** | **9** | **4** |
 
 ---
 
@@ -42,4 +42,7 @@
 | **UTC018** | Hồ sơ của `targetUserId` đang ở trạng thái `Pending`; Staff từ chối nhưng bỏ trống lý do | `staffUserId="33333333-..."`;<br>`targetUserId="11111111-..."`;<br>`IsApproved=false`;<br>`RejectionReason="   "` | `Return: null`<br>`Exception: BusinessRuleException ("BR-MTH-02", "MSG-MTH-05")`<br>`Log Message: "Bắt buộc phải nhập lý do từ chối khi không phê duyệt hồ sơ (BR-MTH-02)."` | Abnormal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Thực thi quy tắc bắt buộc có lý do khi Reject (`BR-MTH-02`) |
 | **UTC019** | Hồ sơ của `targetUserId` đã ở trạng thái `Verified` trước đó | `staffUserId="33333333-..."`;<br>`targetUserId="22222222-..."`;<br>`IsApproved=true` | `Return: null`<br>`Exception: BusinessRuleException ("BR-MTH-01", "MSG-GEN-01")`<br>`Log Message: "Chỉ có thể thẩm định hồ sơ đang ở trạng thái 'Pending' (Trạng thái hiện tại: 'Verified')."` | Abnormal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chặn thẩm định lại hồ sơ đã hoàn tất |
 | **UTC020** | `targetUserId` không có hồ sơ trong bảng `recycler_profiles` | `staffUserId="33333333-..."`;<br>`targetUserId="99999999-..."`;<br>`IsApproved=true` | `Return: null`<br>`Exception: NotFoundException`<br>`Log Message: "Không tìm thấy hồ sơ đăng ký Recycler cần thẩm định."` | Abnormal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kiểm tra tồn tại của hồ sơ cần duyệt |
+| **`2-Tier KYB Onboarding (Individual vs Facility – NĐ 39/2007/NĐ-CP)`** | | | | | | | | | | | |
+| **UTC021** | User `citizen` (`individual_collector_21`) đăng ký thu mua nhỏ lẻ lưu động | `RecyclerType="Individual"`; `LegalPermitUrl=""`; `IdentityCardFrontUrl="https://.../cccd-front.jpg"`; `IdentityCardBackUrl="https://.../cccd-back.jpg"` | `Return: RecyclerApplicationDetailDto { RecyclerType = "Individual", LegalPermitUrl = null, IdentityCardFrontUrl != null, IdentityCardBackUrl != null, BusinessPhotoUrls = [] }` | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Miễn GPKD theo Điều 3 NĐ 39/2007/NĐ-CP và lưu CCCD 2 mặt nội bộ |
+| **UTC022** | User `citizen` (`facility_five_22`) đăng ký cơ sở cố định tải đủ 5 ảnh kho bãi | `RecyclerType="Facility"`; `LegalPermitUrl="https://.../permit.jpg"`; `BusinessPhotoUrls=[warehouse-1..5.jpg]` | `Return: { RecyclerType = "Facility", BusinessPhotoUrl = warehouse-1, BusinessPhotoUrls = [5 URLs] }`; `GetApplicationByUserIdAsync` trả về đủ `5` URL | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Lưu và trả đủ `5/5` ảnh kho bãi cho `Facility` |
 

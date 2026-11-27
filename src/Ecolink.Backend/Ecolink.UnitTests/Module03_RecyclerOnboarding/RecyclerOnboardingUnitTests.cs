@@ -574,4 +574,71 @@ public class RecyclerOnboardingUnitTests
         (await db.RecyclerProfiles.FirstAsync(r => r.UserId == applicant.Id))
             .VerificationStatus.Should().Be(VerificationStatus.Verified);
     }
+
+    [Fact]
+    public async Task UTC021_SubmitUpgradeApplicationAsync_Individual_SavesCccdAndClearsPermit()
+    {
+        var (sut, db, _) = CreateOnboardingSut();
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "individual_collector_21",
+            Email = "collector21@ecolink.vn",
+            FullName = "Đỗ Anh Tuấn",
+            Role = UserRole.Citizen,
+            Status = UserStatus.Active
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var req = ValidUpgradeRequest();
+        req.RecyclerType = "Individual";
+        req.LegalPermitUrl = "";
+        req.BusinessPhotoUrl = "";
+        req.IdentityCardFrontUrl = "https://cdn.ecolink.test/recycler-kyb/cccd-front.jpg";
+        req.IdentityCardBackUrl = "https://cdn.ecolink.test/recycler-kyb/cccd-back.jpg";
+
+        var dto = await sut.SubmitUpgradeApplicationAsync(user.Id, req);
+
+        dto.RecyclerType.Should().Be("Individual");
+        dto.LegalPermitUrl.Should().BeNull();
+        dto.IdentityCardFrontUrl.Should().Be("https://cdn.ecolink.test/recycler-kyb/cccd-front.jpg");
+        dto.IdentityCardBackUrl.Should().Be("https://cdn.ecolink.test/recycler-kyb/cccd-back.jpg");
+        dto.BusinessPhotoUrls.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task UTC022_SubmitUpgradeApplicationAsync_FacilityWithFivePhotos_StoresAndReturnsAllFiveUrls()
+    {
+        var (sut, db, _) = CreateOnboardingSut();
+        var user = new User
+        {
+            Id = Guid.NewGuid(),
+            Username = "facility_five_22",
+            Email = "facility22@ecolink.vn",
+            FullName = "Lê Văn Kho",
+            Role = UserRole.Citizen,
+            Status = UserStatus.Active
+        };
+        db.Users.Add(user);
+        await db.SaveChangesAsync();
+
+        var fivePhotos = Enumerable.Range(1, 5)
+            .Select(i => $"https://cdn.ecolink.test/recycler-kyb/warehouse-{i}.jpg")
+            .ToList();
+
+        var req = ValidUpgradeRequest();
+        req.RecyclerType = "Facility";
+        req.BusinessPhotoUrl = fivePhotos[0];
+        req.BusinessPhotoUrls = fivePhotos;
+
+        var dto = await sut.SubmitUpgradeApplicationAsync(user.Id, req);
+
+        dto.RecyclerType.Should().Be("Facility");
+        dto.BusinessPhotoUrl.Should().Be(fivePhotos[0]);
+        dto.BusinessPhotoUrls.Should().Equal(fivePhotos);
+
+        var staffView = await sut.GetApplicationByUserIdAsync(user.Id);
+        staffView.BusinessPhotoUrls.Should().Equal(fivePhotos);
+    }
 }

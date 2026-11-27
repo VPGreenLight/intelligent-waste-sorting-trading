@@ -804,6 +804,8 @@ public class RecyclerManagementService : IRecyclerManagementService
         Description = p.Description,
         LegalPermitUrl = p.LegalPermitUrl,
         BusinessPhotoUrl = p.BusinessPhotoUrl,
+        RecyclerType = p.RecyclerType.ToString(),
+        BusinessPhotoUrls = RecyclerKybPhotoHelper.ParsePhotoUrls(p.BusinessPhotoUrlsJson, p.BusinessPhotoUrl),
         VerificationStatus = p.VerificationStatus.ToString(),
         ActiveStatus = p.ActiveStatus.ToString(),
         RejectionReason = p.RejectionReason,

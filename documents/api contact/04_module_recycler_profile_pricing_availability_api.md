@@ -139,8 +139,10 @@
 | `operatingHours` | `string` | Chuỗi tóm tắt khung giờ mở cửa hoạt động. |
 | `contactPhone` | `string` | Số điện thoại liên hệ thu mua. |
 | `description` | `string?` | Mô tả giới thiệu cơ sở và năng lực thu mua. |
-| `legalPermitUrl` | `string?` | URL giấy phép kinh doanh trên Cloudflare R2. |
-| `businessPhotoUrl` | `string?` | URL ảnh chụp mặt tiền kho bãi trên Cloudflare R2. |
+| `recyclerType` | `string` | Phân loại đối tác: `"Facility"` (cơ sở cố định) hoặc `"Individual"` (thu mua nhỏ lẻ / lưu động). |
+| `legalPermitUrl` | `string?` | URL giấy phép kinh doanh trên Cloudflare R2 (`null` nếu `Individual`). |
+| `businessPhotoUrl` | `string?` | URL ảnh chụp đại diện mặt tiền kho bãi trên Cloudflare R2. |
+| `businessPhotoUrls` | `string[]` | Danh sách URL ảnh thực tế kho bãi (`Facility` gồm 5 ảnh; `Individual` là mảng rỗng; không trả ảnh CCCD ở endpoint hồ sơ công khai này). |
 | `verificationStatus` | `string` | Trạng thái thẩm định: `"Pending"`, `"Verified"`, `"Rejected"`. |
 | `activeStatus` | `string` | Trạng thái hoạt động: `"Online"` hoặc `"Offline"`. |
 | `rejectionReason` | `string?` | Lý do từ chối của Staff (nếu `verificationStatus == "Rejected"`). |
@@ -163,8 +165,12 @@
     "operatingHours": "T2-T7: 07:30 - 18:00",
     "contactPhone": "0902222222",
     "description": "Chuyên thu mua nhựa tái chế, bìa carton, giấy báo và kim loại giá cao tận nơi.",
+    "recyclerType": "Facility",
     "legalPermitUrl": "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/legal-permits/demo_permit.pdf",
     "businessPhotoUrl": "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/demo_facility.jpg",
+    "businessPhotoUrls": [
+      "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/demo_facility.jpg"
+    ],
     "verificationStatus": "Verified",
     "activeStatus": "Online",
     "rejectionReason": null,

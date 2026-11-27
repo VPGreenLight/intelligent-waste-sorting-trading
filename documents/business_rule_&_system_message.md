@@ -66,7 +66,7 @@
 
 | BR-ID | Nội dung quy tắc | Áp dụng cho | Lý do | Được thực thi bởi |
 | ----- | ----- | ----- | ----- | ----- |
-| BR-MTH-01 | Recycler phải được Staff phê duyệt trước khi xuất hiện trong tìm kiếm hoặc nhận yêu cầu bàn giao. | Đăng ký Recycler | Đảm bảo tính hợp pháp và an toàn của đối tác. | Hệ thống tự động thực hiện mỗi khi tìm kiếm |
+| BR-MTH-01 | Recycler phải được Staff phê duyệt trước khi xuất hiện trong tìm kiếm hoặc nhận yêu cầu bàn giao. Hồ sơ phân làm 2 nhóm: Cơ sở cố định (`Facility`) bắt buộc nộp Giấy phép kinh doanh kèm đủ 5 ảnh kho bãi; Cá nhân thu mua lưu động (`Individual`, theo Điều 3 Nghị định 39/2007/NĐ-CP) được miễn giấy phép kinh doanh nhưng bắt buộc nộp ảnh CCCD 2 mặt để xác minh danh tính. | Đăng ký Recycler | Đảm bảo tính hợp pháp và an toàn của đối tác. | Hệ thống tự động thực hiện mỗi khi tìm kiếm |
 | BR-MTH-02 | Khi từ chối xác minh phải ghi rõ lý do, Recycler có thể nộp lại hồ sơ đã chỉnh sửa. | Xác minh Recycler | Đảm bảo minh bạch và có đường khắc phục. | Hệ thống tự động thực hiện mỗi khi Staff ra quyết định |
 | BR-MTH-03 | Hồ sơ Recycler chỉ được công khai khi có ít nhất một loại rác chấp nhận, điều kiện thu gom và vị trí hợp lệ. | Công khai hồ sơ Recycler | Ngăn các hồ sơ không sử dụng được. | Hệ thống tự động thực hiện mỗi khi công khai |
 | BR-MTH-04 | Kết quả tìm kiếm chỉ gồm Recycler đã duyệt, đang hoạt động, trong bán kính tìm kiếm và nhận đúng loại rác, mặc định sắp theo khoảng cách. | Tìm kiếm Recycler (PostGIS) | Đảm bảo kết quả phù hợp và có thể hành động được. | Hệ thống tự động thực hiện mỗi khi tìm kiếm |

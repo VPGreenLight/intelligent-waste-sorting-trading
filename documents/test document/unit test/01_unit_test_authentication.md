@@ -4,13 +4,13 @@
 
 | Code Module | `AuthService` (Authentication & Account Management) | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **22** | | |
+| **Number of TCs** | **24** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 22 | 0 | 0 |
-| *Round 2* | 0 | 0 | 22 |
-| *Round 3* | 0 | 0 | 22 |
+| *Round 1* | 24 | 0 | 0 |
+| *Round 2* | 0 | 0 | 24 |
+| *Round 3* | 0 | 0 | 24 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **9** | **10** | **3** |
+| **Count** | **11** | **10** | **3** |
 
 ---
 
@@ -46,4 +46,7 @@
 | **UTC020** | User `"citizen@ecolink.vn"` vừa tạo `PasswordResetToken` cách đây 20 giây (`< 1 phút`) | `email="citizen@ecolink.vn"`;<br>`clientIp="127.0.0.1"` | `Return: Task.CompletedTask`<br>`Exception: N/A`<br>`Log Message: "Email citizen@ecolink.vn bị rate limit yêu cầu quên mật khẩu trong 1 phút"` | Abnormal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Chặn gửi mail liên tục theo `BR-AUTH-09` (Rate Limit 60s) |
 | **UTC021** | Có `PasswordResetToken` hợp lệ (`UsedAt == null`, `ExpiresAt > UtcNow`) | `Email="citizen@ecolink.vn"`;<br>`Token="valid_reset_token"`;<br>`NewPassword="NewPass@2026"` | `Return: Task.CompletedTask`<br>`Exception: N/A`<br>`Log Message: "Người dùng citizen (citizen@ecolink.vn) đã đặt lại mật khẩu mới thành công"` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Cập nhật `PasswordHash`, thu hồi toàn bộ `RefreshTokens` |
 | **UTC022** | Gọi `ResetPasswordAsync` với mật khẩu ngắn hơn 6 ký tự | `Email="citizen@ecolink.vn"`;<br>`Token="valid_reset_token"`;<br>`NewPassword="12345"` (5 ký tự) | `Return: null`<br>`Exception: BusinessRuleException ("BR-AUTH-06", "MSG-AUTH-01")`<br>`Log Message: "Mật khẩu mới tối thiểu phải có 6 ký tự."` | Abnormal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Kiểm tra độ dài mật khẩu mới (`BR-AUTH-06`) |
+| **`Permissions & Demo Seeding`** | | | | | | | | | | | |
+| **UTC023** | Có `StaffProfile` `"NV-023"` gán quyền `ai.review` + `VERIFY_RECYCLER`, sau đó đổi `StaffProfile.Status = "SUSPENDED"` | `LoginAsync("scoped23@ecolink.vn")` & `GetUserByIdAsync(scopedStaffId)` & `LoginAsync("citizen")` | `scopedLogin.User.Permissions = ["REVIEW_AI", "VERIFY_RECYCLER"]`; khi `SUSPENDED` & `citizen` thì `Permissions` rỗng `[]` | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Nạp chuẩn hóa 7 quyền RBAC động (`BR-ADM-02`) |
+| **UTC024** | Database khởi tạo kèm `EnsureDemoUsersAsync` cho tài khoản `recycler` (`22222222-...`) | `LoginAsync("recycler", "recycler123")` & truy vấn `RecyclerProfiles` | `Success = true`; `FacilityName = "Vựa phế liệu EcoGreen Hòa Lạc"`, `Lat = 21.0138`, `Lng = 105.5256`, `VerificationStatus = Verified`, `ActiveStatus = Online` | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khớp tọa độ chuẩn Khu CNC Hòa Lạc (`DemoDataSeeder`) |
 

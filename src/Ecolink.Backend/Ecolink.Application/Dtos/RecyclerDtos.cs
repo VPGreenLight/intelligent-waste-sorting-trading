@@ -37,6 +37,8 @@ public class RecyclerProfileDto
     public string? Description { get; set; }
     public string? LegalPermitUrl { get; set; }
     public string? BusinessPhotoUrl { get; set; }
+    public string RecyclerType { get; set; } = "Facility";
+    public List<string> BusinessPhotoUrls { get; set; } = new();
     public string VerificationStatus { get; set; } = string.Empty;
     public string ActiveStatus { get; set; } = string.Empty;
     public string? RejectionReason { get; set; }

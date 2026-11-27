@@ -4,13 +4,13 @@
 
 | Code Module | `HandoverRequestService (U-06, U-07, R-03, R-04, JOB-03)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **24** | | |
+| **Number of TCs** | **25** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 24 | 0 | 0 |
-| *Round 2* | 0 | 0 | 24 |
-| *Round 3* | 0 | 0 | 24 |
+| *Round 1* | 25 | 0 | 0 |
+| *Round 2* | 0 | 0 | 25 |
+| *Round 3* | 0 | 0 | 25 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **8** | **11** | **5** |
+| **Count** | **8** | **12** | **5** |
 
 ---
 
@@ -46,4 +46,5 @@
 | **`ExpirePendingAsync` & Bảo vệ quyền riêng tư (`JOB-03` & `BR-HND-08`)** | | | | | | | | | | | |
 | **UTC023** | Trong database có 3 đơn `Pending` tạo cách đây `25h` và 2 đơn `Pending` mới tạo cách đây `2h` | `timeout=TimeSpan.FromHours(24)` | `Return: int (count = 3)`<br>`Database: 3 đơn quá hạn chuyển sang Status = "Expired"`<br>`Exception: N/A`<br>`Log Message: "JOB-03: đã chuyển 3 yêu cầu sang Expired."` | Normal | Passed | 2026-11-04 | Giang Nguyễn Đức | Pending | Pending | N/A | Tự động hủy các yêu cầu `Pending` quá 24h bằng truy vấn nguyên tử `ExecuteUpdateAsync` (`JOB-03`) |
 | **UTC024** | Đơn `requestId` đang ở trạng thái `Pending` (`IsContactRevealed = false`); Recycler xem chi tiết đơn | `recyclerId="22222222-..."`;<br>`requestId=pendingRequestId` | `Return: HandoverRequestDto { PickupAddress = null, Requester.Phone = null, Requester.Address = null, IsContactRevealed = false }`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-11-04 | Giang Nguyễn Đức | Pending | Pending | N/A | Thực thi `BR-HND-08`: che giấu SĐT và địa chỉ người dân khi chưa Accept, tuyệt đối không trả toạ độ GPS |
+| **UTC025** | Đã tạo 1 đơn `existingOrder` (`plastic` `3kg`), sau đó Admin đổi danh mục `plastic` sang `Status = "Inactive"` | `CreateAsync(plastic)` mới; `UpdateAsync(existingOrder, 4.5kg)`; `AcceptAsync(existingOrder)`; `CreateAsync(metal)` | Tạo đơn MỚI với `plastic` ném `BusinessRuleException ("BR-SRT-04", "MSG-SRT-04")`; đơn cũ `existingOrder` vẫn cập nhật/chấp nhận thành công; tạo đơn với `metal` (`Active`) thành công | Abnormal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Bảo toàn đơn cũ (grandfathered) khi danh mục ngừng sử dụng (`BR-SRT-04`) |
 

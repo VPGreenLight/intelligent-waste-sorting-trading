@@ -26,6 +26,10 @@ public class RecyclerProfile : BaseAuditableEntity
     public string? Description { get; set; }
     public string? LegalPermitUrl { get; set; }
     public string? BusinessPhotoUrl { get; set; }
+    public RecyclerType RecyclerType { get; set; } = RecyclerType.Facility;
+    public string? IdentityCardFrontUrl { get; set; }
+    public string? IdentityCardBackUrl { get; set; }
+    public string? BusinessPhotoUrlsJson { get; set; }
 
     public VerificationStatus VerificationStatus { get; set; } = VerificationStatus.Pending;
     public RecyclerActiveStatus ActiveStatus { get; set; } = RecyclerActiveStatus.Offline;

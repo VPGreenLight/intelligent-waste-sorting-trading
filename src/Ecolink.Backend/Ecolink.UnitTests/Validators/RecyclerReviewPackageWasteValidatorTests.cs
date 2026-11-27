@@ -80,6 +80,43 @@ public class RecyclerReviewPackageWasteValidatorTests
         Has(_apply, m, nameof(m.BusinessPhotoUrl)).Should().Be(expectError);
     }
 
+    [Fact]
+    public void ApplyUpgrade_Individual_RequiresBothCccdSides_AndAllowsEmptyPermit()
+    {
+        var valid = Apply();
+        valid.RecyclerType = "Individual";
+        valid.LegalPermitUrl = "";
+        valid.BusinessPhotoUrl = "";
+        valid.IdentityCardFrontUrl = "https://x/cccd-front.jpg";
+        valid.IdentityCardBackUrl = "https://x/cccd-back.jpg";
+        IsValid(_apply, valid).Should().BeTrue();
+
+        var missingBack = Apply();
+        missingBack.RecyclerType = "Individual";
+        missingBack.LegalPermitUrl = "";
+        missingBack.BusinessPhotoUrl = "";
+        missingBack.IdentityCardFrontUrl = "https://x/cccd-front.jpg";
+        missingBack.IdentityCardBackUrl = "";
+        Has(_apply, missingBack, nameof(missingBack.IdentityCardBackUrl)).Should().BeTrue();
+        Has(_apply, missingBack, nameof(missingBack.LegalPermitUrl)).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData(0, true)]
+    [InlineData(1, true)]
+    [InlineData(4, true)]
+    [InlineData(5, false)]
+    [InlineData(6, true)]
+    public void ApplyUpgrade_Facility_WhenPhotoListProvided_RequiresExactFivePhotos(int photoCount, bool expectError)
+    {
+        var m = Apply();
+        m.RecyclerType = "Facility";
+        m.BusinessPhotoUrls = Enumerable.Range(1, photoCount)
+            .Select(i => $"https://x/warehouse-{i}.jpg")
+            .ToList();
+        Has(_apply, m, nameof(m.BusinessPhotoUrls)).Should().Be(expectError);
+    }
+
     [Theory]
     [InlineData(true, null, true)]
     [InlineData(true, "", true)]

@@ -13,8 +13,12 @@ public class ApplyRecyclerUpgradeRequest
     public string ContactPhone { get; set; } = string.Empty;
     public string? OperatingHours { get; set; } = "08:00 - 18:00";
     public string? Description { get; set; }
+    public string RecyclerType { get; set; } = "Facility";
     public string LegalPermitUrl { get; set; } = string.Empty;
     public string BusinessPhotoUrl { get; set; } = string.Empty;
+    public string? IdentityCardFrontUrl { get; set; }
+    public string? IdentityCardBackUrl { get; set; }
+    public List<string>? BusinessPhotoUrls { get; set; }
 }
 
 /// <summary>
@@ -60,6 +64,10 @@ public class RecyclerApplicationDetailDto
     public string? Description { get; set; }
     public string? LegalPermitUrl { get; set; }
     public string? BusinessPhotoUrl { get; set; }
+    public string RecyclerType { get; set; } = "Facility";
+    public string? IdentityCardFrontUrl { get; set; }
+    public string? IdentityCardBackUrl { get; set; }
+    public List<string> BusinessPhotoUrls { get; set; } = new();
 
     public string VerificationStatus { get; set; } = string.Empty;
     public string ActiveStatus { get; set; } = string.Empty;

@@ -1,16 +1,16 @@
 # REPORT 5.1 – UNIT TEST SPECIFICATION (TÀI LIỆU ĐẶC TẢ KIỂM THỬ ĐƠN VỊ)
 
 - **Dự án:** Hệ thống Phân loại Rác Thông minh & Giao dịch Phế liệu (**EcoLink**)
-- **Phiên bản:** 2.2
-- **Ngày cập nhật:** 2026-11-23
+- **Phiên bản:** 2.3
+- **Ngày cập nhật:** 2026-11-27
 - **Nhóm thực hiện:** Hoàng Thắng Nguyễn, Nguyen Thanh Luan (K18 HL), Giang Nguyễn Đức
-- **Phạm vi kiểm thử (`14` Core Service Modules + `Module 15` PureLogic & Validators — Tổng `19` tệp kiểm thử trong `Ecolink.UnitTests.csproj`):**
-  1. **Module 1:** Authentication & Account Management (`AuthService`) — **22 TCs** (`9 Normal, 10 Abnormal, 3 Boundary`)
-  2. **Module 2:** AI Waste Classification, Rule Engine & Platform Policy (`AiVisionHttpClient`, `WasteRuleEngineService`, `PlatformPolicyService`, `AiFeedbackService.GetMyScanHistoryAsync`, `RecyclerManagementService` Categories CRUD, `WasteCatalogValidators`, `classify_waste_image` YOLO26 Two-Stage & 10 Categories) — **32 TCs** (`20 Normal, 7 Abnormal, 5 Boundary`)
-  3. **Module 3:** Recycler Onboarding & Verification (`RecyclerOnboardingService`, `CloudflareR2StorageService`) — **20 TCs** (`7 Normal, 9 Abnormal, 4 Boundary`)
+- **Phạm vi kiểm thử (`14` Core Service Modules + `Module 15` PureLogic, DemoDataSeeder & Validators — Tổng `20` tệp kiểm thử trong `Ecolink.UnitTests.csproj`):**
+  1. **Module 1:** Authentication & Account Management (`AuthService`) — **24 TCs** (`11 Normal, 10 Abnormal, 3 Boundary`)
+  2. **Module 2:** AI Waste Classification, Rule Engine & Platform Policy (`AiVisionHttpClient`, `WasteRuleEngineService`, `PlatformPolicyService`, `AiFeedbackService.GetMyScanHistoryAsync`, `RecyclerManagementService` Categories CRUD, `WasteCatalogValidators`, `classify_waste_image` YOLO26 Two-Stage & 10 Categories) — **34 TCs** (`21 Normal, 8 Abnormal, 5 Boundary`)
+  3. **Module 3:** Recycler Onboarding & Verification (`RecyclerOnboardingService`, `CloudflareR2StorageService`) — **22 TCs** (`9 Normal, 9 Abnormal, 4 Boundary`)
   4. **Module 4:** Recycler Profile, Pricing & Availability (`RecyclerManagementService` – `R-01` & `R-02`) — **20 TCs** (`10 Normal, 7 Abnormal, 3 Boundary`)
-  5. **Module 5:** Location-Based Recycler Discovery (`GeoMatchingService` & `NearbyRecyclerFilterValidator` – `U-05`) — **20 TCs** (`10 Normal, 6 Abnormal, 4 Boundary`)
-  6. **Module 6:** Handover Request Management (`HandoverRequestService` – `U-06`, `U-07`, `R-03`, `R-04`, `JOB-03`) — **24 TCs** (`8 Normal, 11 Abnormal, 5 Boundary`)
+  5. **Module 5:** Location-Based Recycler Discovery (`GeoMatchingService` & `NearbyRecyclerFilterValidator` – `U-05`) — **21 TCs** (`10 Normal, 7 Abnormal, 4 Boundary`)
+  6. **Module 6:** Handover Request Management (`HandoverRequestService` – `U-06`, `U-07`, `R-03`, `R-04`, `JOB-03`) — **25 TCs** (`8 Normal, 12 Abnormal, 5 Boundary`)
   7. **Module 7:** Handover Completion & Transaction Receipt (`HandoverReceiptService` – `R-06`, `U-09`, `U-12`, `JOB-01`, TradeOrder Sync) — **25 TCs** (`11 Normal, 8 Abnormal, 6 Boundary`)
   8. **Module 8:** In-App Real-Time Negotiation Chatbox & Trade Order (`NegotiationChatService`, `TradeTransactionService` & `NegotiationChatValidators` – `U-08` & `R-05`) — **27 TCs** (`14 Normal, 8 Abnormal, 5 Boundary`)
   9. **Module 9:** Account, Staff, Notifications & System Governance / Analytics (`AdminAnalyticsService`, `AccountGovernanceService`, `StaffManagementService`, `StaffAttendanceService`, `NotificationService`, `InMemoryChannelEventBus`, `AuditLogService` & `GovernanceValidators` – `A-01..A-04`, `S-06`, `S-07`, `S-11`, `SU-04`) — **30 TCs** (`15 Normal, 10 Abnormal, 5 Boundary`)
@@ -18,12 +18,12 @@
   11. **Module 11:** AI Misclassification Feedback & Dataset Curation (`AiFeedbackService`, `AiDatasetCurationService`, `AiDatasetExportBuilder`, `AiCurationValidators` – `U-04`, `S-01`, `S-02`, `S-03`) — **22 TCs** (`10 Normal, 8 Abnormal, 4 Boundary`)
   12. **Module 12:** Rating, Review & Complaint Resolution (`ReviewService`, `ComplaintService`, `HandoverReceiptService.DisputeAsync`, `ReviewAndComplaintValidators` – `U-10`, `U-11`, `S-05`) — **22 TCs** (`10 Normal, 8 Abnormal, 4 Boundary`)
   13. **Module 13:** Gamification & Rewards (`LeaderboardService`, `CheckinService`, `PointsService`, `GiftService`, `VirtualTreeService`, `EcoFactService`, `GamificationConfigService`, `GamificationService`, `ComplaintService` clawback & `Validators` – `U-13..U-15`, `S-09..S-10`, `A-07..A-08`) — **25 TCs** (`12 Normal, 8 Abnormal, 5 Boundary`)
-  14. **Module 14:** Blog & Content Management (`BlogPostService` & `BlogValidators` – `G-01`, `S-08`, `A-09`) — **20 TCs** (`9 Normal, 7 Abnormal, 4 Boundary`)
-  15. **Module 15:** Pure Logic & FluentValidation Validators (`PureLogicTests` [7 classes], `AuthValidatorTests`, `GovernanceChatValidatorTests`, `AiBlogGamificationValidatorTests`, `RecyclerReviewPackageWasteValidatorTests` — 54 Validators) — **270 Methods / 782 Executed Cases** (`111 [Fact]` + `159 [Theory]` với `671 [InlineData]`; `184 Normal, 312 Abnormal, 286 Boundary` executed cases)
-- **Tổng hợp Quy mô Kiểm thử (`Ecolink.UnitTests.csproj` — `19` tệp kiểm thử):**
-  - **14 Module Service Files:** **`336` Test Cases (`[Fact]`)** (`157 Normal`, `117 Abnormal`, `62 Boundary`) — `336 / 336 Passed`
-  - **Module 15 (PureLogic & Validators — 5 tệp):** **`270` Test Methods (`111 [Fact]` + `159 [Theory]`, `671 [InlineData]`) = `782` Executed Cases** (`184 Normal`, `312 Abnormal`, `286 Boundary` cases / `85 Normal`, `84 Abnormal`, `101 Boundary` methods) — `782 / 782 Passed`
-  - **Tổng cộng toàn bộ Suite:** **`606` Test Methods / `1,118` Executed Test Cases (`1,118 / 1,118 Passed` — `100%` Pass Rate; `Failed: 0`, `Skipped: 0`)** (`341 Normal`, `429 Abnormal`, `348 Boundary` theo `1,118` executed cases)
+  14. **Module 14:** Blog & Content Management (`BlogPostService` & `BlogValidators` – `G-01`, `S-08`, `A-09`) — **21 TCs** (`10 Normal, 7 Abnormal, 4 Boundary`)
+  15. **Module 15:** Pure Logic, DemoDataSeeder & FluentValidation Validators (`PureLogicTests` [7 classes], `DemoDataSeederUnitTests`, `AuthValidatorTests`, `GovernanceChatValidatorTests`, `AiBlogGamificationValidatorTests`, `RecyclerReviewPackageWasteValidatorTests` — 54 Validators) — **274 Methods / 790 Executed Cases** (`114 [Fact]` + `160 [Theory]` với `676 [InlineData]`; `186 Normal, 313 Abnormal, 291 Boundary` executed cases)
+- **Tổng hợp Quy mô Kiểm thử (`Ecolink.UnitTests.csproj` — `20` tệp kiểm thử):**
+  - **14 Module Service Files:** **`345` Test Cases (`[Fact]`)** (`163 Normal`, `120 Abnormal`, `62 Boundary`) — `345 / 345 Passed`
+  - **Module 15 (PureLogic, DemoDataSeeder & Validators — 6 tệp):** **`274` Test Methods (`114 [Fact]` + `160 [Theory]`, `676 [InlineData]`) = `790` Executed Cases** (`186 Normal`, `313 Abnormal`, `291 Boundary` cases / `87 Normal`, `85 Abnormal`, `102 Boundary` methods) — `790 / 790 Passed`
+  - **Tổng cộng toàn bộ Suite:** **`619` Test Methods / `1,135` Executed Test Cases (`1,135 / 1,135 Passed` — `100%` Pass Rate; `Failed: 0`, `Skipped: 0`)** (`349 Normal`, `433 Abnormal`, `353 Boundary` theo `1,135` executed cases)
 
 ---
 
@@ -33,13 +33,13 @@
 
 | Code Module | `AuthService` (Authentication & Account Management) | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **22** | | |
+| **Number of TCs** | **24** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 22 | 0 | 0 |
-| *Round 2* | 0 | 0 | 22 |
-| *Round 3* | 0 | 0 | 22 |
+| *Round 1* | 24 | 0 | 0 |
+| *Round 2* | 0 | 0 | 24 |
+| *Round 3* | 0 | 0 | 24 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **9** | **10** | **3** |
+| **Count** | **11** | **10** | **3** |
 
 ---
 
@@ -75,6 +75,8 @@
 | **UTC020** | User `"citizen@ecolink.vn"` vừa tạo `PasswordResetToken` cách đây 20 giây (`< 1 phút`) | `email="citizen@ecolink.vn"`;<br>`clientIp="127.0.0.1"` | `Return: Task.CompletedTask`<br>`Exception: N/A`<br>`Log Message: "Email citizen@ecolink.vn bị rate limit yêu cầu quên mật khẩu trong 1 phút"` | Abnormal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Chặn gửi mail spam theo `BR-AUTH-09` (Rate Limit 60s) |
 | **UTC021** | Có `PasswordResetToken` hợp lệ (`UsedAt == null`, `ExpiresAt > UtcNow`) | `Email="citizen@ecolink.vn"`;<br>`Token="valid_reset_token"`;<br>`NewPassword="NewPass@2026"` | `Return: Task.CompletedTask`<br>`Exception: N/A`<br>`Log Message: "Người dùng citizen (citizen@ecolink.vn) đã đặt lại mật khẩu mới thành công"` | Normal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Cập nhật `PasswordHash`, thu hồi toàn bộ `RefreshTokens` |
 | **UTC022** | Gọi `ResetPasswordAsync` với mật khẩu ngắn hơn 6 ký tự | `Email="citizen@ecolink.vn"`;<br>`Token="valid_reset_token"`;<br>`NewPassword="12345"` (5 ký tự) | `Return: null`<br>`Exception: BusinessRuleException ("BR-AUTH-06", "MSG-AUTH-01")`<br>`Log Message: "Mật khẩu mới tối thiểu phải có 6 ký tự."` | Abnormal | Passed | 2026-10-29 | Nguyen Thanh Luan | Pending | Pending | N/A | Kiểm tra độ dài mật khẩu mới (`BR-AUTH-06`) |
+| **UTC023** | Có `StaffProfile` `"NV-023"` gán 2 quyền, sau đó đổi `SUSPENDED` | `LoginAsync` & `GetUserByIdAsync` | Trả đúng `["REVIEW_AI", "VERIFY_RECYCLER"]`; khi `SUSPENDED` hoặc `Citizen` trả `[]` | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Nạp quyền RBAC động (`BR-ADM-02`) |
+| **UTC024** | DB seed `EnsureDemoUsersAsync` cho `recycler` (`22222222-...`) | `LoginAsync("recycler", "recycler123")` | `FacilityName="Vựa phế liệu EcoGreen Hòa Lạc"`, `Lat=21.0138`, `Lng=105.5256`, `Verified + Online` | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khớp tọa độ Demo Hòa Lạc |
 
 ---
 
@@ -84,13 +86,13 @@
 
 | Code Module | `AI Waste Classification, Rule Engine & Platform Policy (YOLO26 Two-Stage, 10 Categories)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **32** | | |
+| **Number of TCs** | **34** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 32 | 0 | 0 |
-| *Round 2* | 0 | 0 | 32 |
-| *Round 3* | 0 | 0 | 32 |
+| *Round 1* | 34 | 0 | 0 |
+| *Round 2* | 0 | 0 | 34 |
+| *Round 3* | 0 | 0 | 34 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **20** | **7** | **5** |
+| **Count** | **21** | **8** | **5** |
 
 ---
 
@@ -125,6 +127,8 @@
 | **UTC030** | InMemory DB sạch với `PlatformPolicyService` & `AuditLogService` | Seed 5 mục, lọc `PRIVACY`, CRUD `TERM-04`, trùng mã, ẩn/xóa mục `ACTIVE` cuối, xóa `DRAFT` | Lọc `"PRIV-01"`, tự sinh `"TERM-04"`, trùng mã ném `ConflictException("BR-POL-02")`, mục cuối ném `BusinessRuleException("BR-POL-03")`, ghi `AuditLog` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | CRUD Chính sách nền tảng (`BR-POL-02/03`) |
 | **UTC031** | Mock `IAiVisionClient` trả `yolo26_detect` & `AiFeedbackService` | `ClassifyWasteImageAsync(stream, "pet.png")` & `RecordScanHistoryAsync(..., ModelUsed = null)` | `ModelUsed = "yolo26_detect"`, HTTP body chứa `"yolo26_detect"`, DB lưu `ModelUsed = "yolo26_detect"` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Mô hình mặc định YOLO26 Two-Stage |
 | **UTC032** | `AiCategoryNormalizer`, `WasteRuleEngineService` & `RecyclerManagementService` | `NormalizeCode` 3 màu thủy tinh + 4 mã mới, `GetSortingGuideAsync("battery")`, `GetWasteCategoriesAsync()`, `GetAllWasteCategoriesAsync(true, true)` | 3 màu thủy tinh $\rightarrow$ `"glass"`, `"battery"` có `HazardWarning`, `5` loại thu mua vs `10` tổng danh mục (`5` không giao dịch) | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Hợp đồng 10 danh mục YOLO26 |
+| **UTC033** | `WasteCategory` `"inactive_plastic"` (`Inactive`) & `SortingRule` (`DRAFT`) | `PublishSortingRuleAsync(adminId, rule.Id)` | Ném `BusinessRuleException ("BR-SRT-04", "MSG-SRT-04")` | Abnormal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chặn phát hành rule cho danh mục ngừng dùng |
+| **UTC034** | Danh mục `"plastic"` `Active`; mock `IAiVisionClient` | `ToggleWasteCategoryStatusAsync` `"Inactive"` rồi `"Active"` | Xóa cache khi `Inactive`, khôi phục khi `Active`, gọi `SyncCategoryRuleStatusAsync` 2 chiều | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Đồng bộ trạng thái danh mục sang AI Service |
 
 ---
 
@@ -134,13 +138,13 @@
 
 | Code Module | `RecyclerOnboardingService & CloudflareR2StorageService` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **20** | | |
+| **Number of TCs** | **22** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 20 | 0 | 0 |
-| *Round 2* | 0 | 0 | 20 |
-| *Round 3* | 0 | 0 | 20 |
+| *Round 1* | 22 | 0 | 0 |
+| *Round 2* | 0 | 0 | 22 |
+| *Round 3* | 0 | 0 | 22 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **7** | **9** | **4** |
+| **Count** | **9** | **9** | **4** |
 
 ---
 
@@ -172,6 +176,8 @@
 | **UTC018** | Hồ sơ của `targetUserId` đang ở trạng thái `Pending`; Staff từ chối nhưng bỏ trống lý do | `staffUserId="33333333-..."`;<br>`targetUserId="11111111-..."`;<br>`IsApproved=false`;<br>`RejectionReason="   "` | `Return: null`<br>`Exception: BusinessRuleException ("BR-MTH-02", "MSG-MTH-05")`<br>`Log Message: "Bắt buộc phải nhập lý do từ chối khi không phê duyệt hồ sơ (BR-MTH-02)."` | Abnormal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Thực thi quy tắc bắt buộc có lý do khi Reject (`BR-MTH-02`) |
 | **UTC019** | Hồ sơ của `targetUserId` đã ở trạng thái `Verified` trước đó | `staffUserId="33333333-..."`;<br>`targetUserId="22222222-..."`;<br>`IsApproved=true` | `Return: null`<br>`Exception: BusinessRuleException ("BR-MTH-01", "MSG-GEN-01")`<br>`Log Message: "Chỉ có thể thẩm định hồ sơ đang ở trạng thái 'Pending' (Trạng thái hiện tại: 'Verified')."` | Abnormal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chặn thẩm định lại hồ sơ đã hoàn tất |
 | **UTC020** | `targetUserId` không có hồ sơ trong bảng `recycler_profiles` | `staffUserId="33333333-..."`;<br>`targetUserId="99999999-..."`;<br>`IsApproved=true` | `Return: null`<br>`Exception: NotFoundException`<br>`Log Message: "Không tìm thấy hồ sơ đăng ký Recycler cần thẩm định."` | Abnormal | Passed | 2026-10-29 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Kiểm tra tồn tại của hồ sơ cần duyệt |
+| **UTC021** | User `citizen` đăng ký thu mua nhỏ lẻ lưu động (`Individual`) | `RecyclerType="Individual"`, `LegalPermitUrl=""`, `IdentityCardFrontUrl` & `BackUrl` | `RecyclerType="Individual"`, `LegalPermitUrl=null`, lưu đủ 2 mặt CCCD, `BusinessPhotoUrls=[]` | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | KYB nhóm `Individual` miễn GPKD (NĐ 39/2007) |
+| **UTC022** | User `citizen` đăng ký cơ sở cố định tải đủ 5 ảnh kho bãi | `RecyclerType="Facility"`, `BusinessPhotoUrls=[5 URLs]` | Lưu & trả đủ `5` URL kho bãi cho cả `Submit` và `GetApplicationByUserIdAsync` | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | KYB nhóm `Facility` đủ `5/5` ảnh kho bãi |
 
 ---
 
@@ -228,13 +234,13 @@
 
 | Code Module | `GeoMatchingService & NearbyRecyclerFilterValidator (U-05)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **20** | | |
+| **Number of TCs** | **21** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 20 | 0 | 0 |
-| *Round 2* | 0 | 0 | 20 |
-| *Round 3* | 0 | 0 | 20 |
+| *Round 1* | 21 | 0 | 0 |
+| *Round 2* | 0 | 0 | 21 |
+| *Round 3* | 0 | 0 | 21 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **10** | **6** | **4** |
+| **Count** | **10** | **7** | **4** |
 
 ---
 
@@ -266,6 +272,7 @@
 | **UTC018** | Tọa độ vĩ độ/kinh độ vượt miền hợp lệ WGS84 (`Lat = 95.0, Lng = 190.0`) | `Lat=95.0`;<br>`Lng=190.0`;<br>`RadiusKm=10.0` | `Return: ValidationResult { IsValid = false, Errors chứa thông báo giới hạn [-90, 90] và [-180, 180] }`<br>`Exception: N/A`<br>`Log Message: N/A` | Boundary | Passed | 2026-11-02 | Giang Nguyễn Đức | Pending | Pending | N/A | Kiểm tra biên tọa độ địa lý `Lat [-90, 90]`, `Lng [-180, 180]` |
 | **UTC019** | Bán kính tìm kiếm tại đúng 2 giá trị biên `RadiusKm = 0.5` và `RadiusKm = 50.0` | `Lat=10.7769`;<br>`Lng=106.7009`;<br>`RadiusKm=0.5` (và `50.0`) | `Return: ValidationResult { IsValid = true, Errors.Count = 0 }`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-11-02 | Giang Nguyễn Đức | Pending | Pending | N/A | Chấp nhận giá trị biên hợp lệ của bán kính tìm kiếm `[0.5, 50.0] km` |
 | **UTC020** | Truyền mã danh mục không thuộc 5 loại tái chế (`Category = "trash"` hoặc `RadiusKm = 100.0`) | `Lat=10.7769`;<br>`Lng=106.7009`;<br>`Category="trash"`;<br>`RadiusKm=100.0` | `Return: ValidationResult { IsValid = false, Errors.Count = 2 (ngoài khoảng bán kính [0.5, 50] và danh mục không hỗ trợ) }`<br>`Exception: N/A`<br>`Log Message: N/A` | Abnormal | Passed | 2026-11-02 | Giang Nguyễn Đức | Pending | Pending | N/A | Chặn tìm kiếm cơ sở thu mua đối với rác không tái chế `"trash"` và bán kính vượt biên |
+| **UTC021** | Cơ sở có giá `plastic` (`WasteCategory.Status="Inactive"`) & `paper` (`Active`) | `FindNearestPartnersAsync("plastic")` & `GetRecyclerPublicDetailAsync` | Loại khỏi kết quả `plastic`, `detail.Materials` chỉ trả `["paper"]`, giữ nguyên bảng giá DB | Abnormal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Bảo toàn giá cũ khi ngừng dùng danh mục (`BR-SRT-04`) |
 
 ---
 
@@ -275,13 +282,13 @@
 
 | Code Module | `HandoverRequestService (U-06, U-07, R-03, R-04, JOB-03)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **24** | | |
+| **Number of TCs** | **25** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 24 | 0 | 0 |
-| *Round 2* | 0 | 0 | 24 |
-| *Round 3* | 0 | 0 | 24 |
+| *Round 1* | 25 | 0 | 0 |
+| *Round 2* | 0 | 0 | 25 |
+| *Round 3* | 0 | 0 | 25 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **8** | **11** | **5** |
+| **Count** | **8** | **12** | **5** |
 
 ---
 
@@ -317,6 +324,7 @@
 | **`ExpirePendingAsync` & Bảo vệ quyền riêng tư (`JOB-03` & `BR-HND-08`)** | | | | | | | | | | | |
 | **UTC023** | Trong database có 3 đơn `Pending` tạo cách đây `25h` và 2 đơn `Pending` mới tạo cách đây `2h` | `timeout=TimeSpan.FromHours(24)` | `Return: int (count = 3)`<br>`Database: 3 đơn quá hạn chuyển sang Status = "Expired"`<br>`Exception: N/A`<br>`Log Message: "JOB-03: đã chuyển 3 yêu cầu sang Expired."` | Normal | Passed | 2026-11-04 | Giang Nguyễn Đức | Pending | Pending | N/A | Tự động hủy các yêu cầu `Pending` quá 24h bằng truy vấn nguyên tử `ExecuteUpdateAsync` (`JOB-03`) |
 | **UTC024** | Đơn `requestId` đang ở trạng thái `Pending` (`IsContactRevealed = false`); Recycler xem chi tiết đơn | `recyclerId="22222222-..."`;<br>`requestId=pendingRequestId` | `Return: HandoverRequestDto { PickupAddress = null, Requester.Phone = null, Requester.Address = null, IsContactRevealed = false }`<br>`Exception: N/A`<br>`Log Message: N/A` | Normal | Passed | 2026-11-04 | Giang Nguyễn Đức | Pending | Pending | N/A | Thực thi `BR-HND-08`: che giấu SĐT và địa chỉ người dân khi chưa Accept, tuyệt đối không trả toạ độ GPS |
+| **UTC025** | Đã tạo `existingOrder` (`plastic`), sau đó `plastic` chuyển `Inactive` | `CreateAsync(plastic)` mới; `UpdateAsync`/`AcceptAsync(existingOrder)`; `CreateAsync(metal)` | Tạo đơn mới `plastic` ném `BR-SRT-04`; đơn cũ vẫn cập nhật/chấp nhận thành công; đơn `metal` thành công | Abnormal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Bảo toàn đơn cũ khi ngừng dùng danh mục (`BR-SRT-04`) |
 
 ---
 
@@ -668,15 +676,15 @@
 
 | Code Module | `BlogPostService`, `SaveBlogPostRequestValidator`, `RejectBlogPostRequestValidator`, `ReviewBlogPostRequestValidator` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **20** | | |
+| **Number of TCs** | **21** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 20 | 0 | 0 |
-| *Round 2* | 0 | 0 | 20 |
-| *Round 3* | 0 | 0 | 20 |
+| *Round 1* | 21 | 0 | 0 |
+| *Round 2* | 0 | 0 | 21 |
+| *Round 3* | 0 | 0 | 21 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **9** | **7** | **4** |
+| **Count** | **10** | **7** | **4** |
 
-### 14.2. Chi tiết Các Ca Kiểm thử (`UTC001` – `UTC020`)
+### 14.2. Chi tiết Các Ca Kiểm thử (`UTC001` – `UTC021`)
 *(Chi tiết đầy đủ xem tại: [`14_unit_test_blog_and_content_management.md`](./14_unit_test_blog_and_content_management.md) / [`BlogContentUnitTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module14_BlogContent/BlogContentUnitTests.cs))*
 
 | Test Case ID | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Round 2 | Round 3 | Defect IDs | Note |
@@ -701,27 +709,28 @@
 | **UTC018** | `1` Draft, `1` tag `"nhua"`, `1` tag `"nhua-pet"` | `ListPublishedAsync(tag="nhua")` | Chỉ trả về đúng bài mang nguyên thẻ `"nhua"` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Lọc nguyên thẻ |
 | **UTC019** | `1` Draft + `1` Approved | `ListMineAsync("Published", page=-1, size=9999)` | Kẹp `Page=1, PageSize=50`, lọc đúng bài `Approved` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Biên phân trang |
 | **UTC020** | Nháp vs Approved + 3 Validators | `GetPublishedBySlug` & Check biên `9/10`, `6` tags, `2001` | Nháp ném `NotFoundException`; Validator chặn đúng các biên | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | `G-01` & Validators |
+| **UTC021** | DB sạch chưa có bài Blog | `SeedDefaultBlogPostsCoreAsync()` gọi 2 lần | Tạo đúng `6` bài (4 `Approved`, 1 `Pending_Approval`, 1 `Draft`), ảnh `/assets/insights/*`, idempotent | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Seed Blog chuẩn Demo |
 
 ---
 
-## PHẦN 15: MODULE PURE LOGIC & FLUENTVALIDATION VALIDATORS (`PureLogicTests` & `4 Validator Suites` – `M-01`..`M-15`)
+## PHẦN 15: MODULE PURE LOGIC, SEEDER & FLUENTVALIDATION VALIDATORS (`PureLogicTests`, `DemoDataSeederUnitTests` & `4 Validator Suites` – `M-01`..`M-15`)
 
 ### 15.1. Bảng Tổng hợp Kiểm thử (Summary Table)
 
-| Code Module | `PureLogicTests (7 Classes) & 4 FluentValidation Suites — 54 Validators (270 Methods / 782 Executed Cases)` | | |
+| Code Module | `PureLogicTests (7 Classes), DemoDataSeeder & 4 FluentValidation Suites — 54 Validators (274 Methods / 790 Executed Cases)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs (Executed Cases)** | **782** *(270 Methods: 111 `[Fact]` + 159 `[Theory]` với 671 `[InlineData]`)* | | |
+| **Number of TCs (Executed Cases)** | **790** *(274 Methods: 114 `[Fact]` + 160 `[Theory]` với 676 `[InlineData]`)* | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1 (Executed Cases)* | 782 | 0 | 0 |
-| *Round 1 (Test Methods)* | 270 | 0 | 0 |
-| *Round 2* | 0 | 0 | 782 |
-| *Round 3* | 0 | 0 | 782 |
+| *Round 1 (Executed Cases)* | 790 | 0 | 0 |
+| *Round 1 (Test Methods)* | 274 | 0 | 0 |
+| *Round 2* | 0 | 0 | 790 |
+| *Round 3* | 0 | 0 | 790 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count (Executed Cases)** | **184** | **312** | **286** |
-| **Count (Test Methods)** | **85** | **84** | **101** |
+| **Count (Executed Cases)** | **186** | **313** | **291** |
+| **Count (Test Methods)** | **87** | **85** | **102** |
 
-### 15.2. Phân rã Theo Tệp Kiểm thử & Test Class (`270` Methods / `782` Executed Cases)
-*(Danh sách chi tiết toàn bộ `270` Test Methods / `782` Executed Cases `UTC001` $\rightarrow$ `UTC270` xem tại: [`15_unit_test_validators_and_pure_logic.md`](./15_unit_test_validators_and_pure_logic.md))*
+### 15.2. Phân rã Theo Tệp Kiểm thử & Test Class (`274` Methods / `790` Executed Cases)
+*(Danh sách chi tiết toàn bộ `274` Test Methods / `790` Executed Cases `UTC001` $\rightarrow$ `UTC274` xem tại: [`15_unit_test_validators_and_pure_logic.md`](./15_unit_test_validators_and_pure_logic.md))*
 
 | # | Tệp mã kiểm thử / Test Class | Phạm vi nghiệp vụ | Methods | `[Fact]` | `[Theory]` | `[InlineData]` | Executed Cases | Normal / Abnormal / Boundary (Cases) | Defect IDs |
 | :---: | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
@@ -736,8 +745,9 @@
 | **2** | [`Validators/AuthValidatorTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Validators/AuthValidatorTests.cs) | `M-01, M-03` (`8` Auth Validators) | **27** | **7** | **20** | **78** | **85** | `11 / 38 / 36` | N/A |
 | **3** | [`Validators/GovernanceChatValidatorTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Validators/GovernanceChatValidatorTests.cs) | `M-08, M-09` (`11` Governance & Chat Validators) | **32** | **9** | **23** | **83** | **92** | `9 / 23 / 60` | INC-2026-VAL-14 |
 | **4** | [`Validators/AiBlogGamificationValidatorTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Validators/AiBlogGamificationValidatorTests.cs) | `M-10, M-11, M-14` (`15` AI Curation, Blog & Gamification Validators) | **60** | **23** | **37** | **145** | **168** | `9 / 72 / 87` | INC-2026-VAL-14 |
-| **5** | [`Validators/RecyclerReviewPackageWasteValidatorTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Validators/RecyclerReviewPackageWasteValidatorTests.cs) | `M-02, M-03, M-04, M-05, M-10, M-12` (`20` Recycler, Review/Complaint, Package & Waste Validators) | **75** | **24** | **51** | **211** | **235** | `63 / 86 / 86` | INC-2026-VAL-14 |
-| **TỔNG** | **5 Tệp / 11 Test Classes** | **PureLogic & 54 FluentValidation Validators** | **270** | **111** | **159** | **671** | **782** | **`184 / 312 / 286`** | **TST-13, VAL-14** |
+| **5** | [`Validators/RecyclerReviewPackageWasteValidatorTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Validators/RecyclerReviewPackageWasteValidatorTests.cs) | `M-02, M-03, M-04, M-05, M-10, M-12` (`20` Recycler, Review/Complaint, Package & Waste Validators) | **77** | **25** | **52** | **216** | **241** | `63 / 87 / 91` | INC-2026-VAL-14 |
+| **6** | [`Seed/DemoDataSeederUnitTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Seed/DemoDataSeederUnitTests.cs) | `M-01..M-15` (`DemoDataSeeder` Council Seed & Idempotency) | **2** | **2** | **0** | **0** | **2** | `2 / 0 / 0` | N/A |
+| **TỔNG** | **6 Tệp / 12 Test Classes** | **PureLogic, DemoDataSeeder & 54 FluentValidation Validators** | **274** | **114** | **160** | **676** | **790** | **`186 / 313 / 291`** | **TST-13, VAL-14** |
 
 ### 15.3. Các Ca Kiểm thử Trọng tâm & Khóa Hồi quy Sự cố (`INC-2026-TST-13`, `INC-2026-VAL-14`)
 
@@ -749,5 +759,9 @@
 | **UTC121** | `GovernanceChatValidatorTests.UpdatePermissions_Null_ReturnsValidationError_NotException` (`[Fact]`) | `UpdateStaffPermissionsRequest { Permissions = null! }` | Không ném `ArgumentNullException`; trả `IsValid = false` nhờ `CascadeMode.Stop` & `perms != null` | Abnormal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-VAL-14 | Khóa hồi quy null-safety `UpdateStaffPermissionsValidator` |
 | **UTC124** | `GovernanceChatValidatorTests.Chat_MessageType_Matrix` (`[Theory × 11]`) | `MessageType = "Text"/"Image"/"Proposal"/""/null` | Khớp 11 tổ hợp; `MessageType = null` trả `IsValid = false` không ném `NullReferenceException` | Abnormal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-VAL-14 | Khóa hồi quy `SendChatMessageRequestValidator` |
 | **UTC153** | `AiBlogGamificationValidatorTests.BatchAssign_NullItemIds_ReturnsValidationError_NotException` (`[Fact]`) | `BatchAssignLabelsRequest { ItemIds = null!, GroundTruthLabel = "paper" }` | Không ném `NullReferenceException`; trả `IsValid = false` nhờ `CascadeMode.Stop` & `ids != null` | Abnormal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-VAL-14 | Khóa hồi quy `BatchAssignLabelsRequestValidator` |
-| **UTC224** | `RecyclerReviewPackageWasteValidatorTests.Schedule_NullDays_ReturnsValidationError_NotException` (`[Fact]`) | `UpdateScheduleRequest { Days = null! }` | Không ném `NullReferenceException`; trả `IsValid = false` nhờ `CascadeMode.Stop` & `d != null` | Abnormal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-VAL-14 | Khóa hồi quy `UpdateScheduleRequestValidator` |
-| **UTC265** | `RecyclerReviewPackageWasteValidatorTests.ToggleWasteCategory_Status` (`[Theory × 6]`) | `Status = "Active"/"inactive"/" Active "/"Deleted"/""/null` | `"Active"`/`"inactive"`/`" Active "` $\rightarrow$ `true`; `null` $\rightarrow$ `false` không ném `NullReferenceException` | Abnormal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-VAL-14 | Khóa hồi quy `ToggleWasteCategoryStatusValidator` |
+| **UTC202** | `RecyclerReviewPackageWasteValidatorTests.ApplyUpgrade_Individual_RequiresBothCccdSides_AndAllowsEmptyPermit` (`[Fact]`) | `RecyclerType="Individual"`, `LegalPermitUrl=""`, test có đủ 2 mặt CCCD vs thiếu mặt sau | Có đủ 2 mặt CCCD $\rightarrow$ `IsValid=true`; thiếu mặt sau $\rightarrow$ lỗi `IdentityCardBackUrl` (không lỗi `LegalPermitUrl`) | Abnormal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Miễn GPKD cho `Individual` (NĐ 39/2007) |
+| **UTC203** | `RecyclerReviewPackageWasteValidatorTests.ApplyUpgrade_Facility_WhenPhotoListProvided_RequiresExactFivePhotos` (`[Theory × 5]`) | `RecyclerType="Facility"`, `BusinessPhotoUrls` có `0 / 1 / 4 / 5 / 6` ảnh | `0, 1, 4, 6` ảnh $\rightarrow$ báo lỗi `BusinessPhotoUrls`; chỉ đúng `5` ảnh $\rightarrow$ hợp lệ | Boundary | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Ràng buộc đủ `5/5` ảnh kho bãi `Facility` |
+| **UTC226** | `RecyclerReviewPackageWasteValidatorTests.Schedule_NullDays_ReturnsValidationError_NotException` (`[Fact]`) | `UpdateScheduleRequest { Days = null! }` | Không ném `NullReferenceException`; trả `IsValid = false` nhờ `CascadeMode.Stop` & `d != null` | Abnormal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-VAL-14 | Khóa hồi quy `UpdateScheduleRequestValidator` |
+| **UTC267** | `RecyclerReviewPackageWasteValidatorTests.ToggleWasteCategory_Status` (`[Theory × 6]`) | `Status = "Active"/"inactive"/" Active "/"Deleted"/""/null` | `"Active"`/`"inactive"`/`" Active "` $\rightarrow$ `true`; `null` $\rightarrow$ `false` không ném `NullReferenceException` | Abnormal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | INC-2026-VAL-14 | Khóa hồi quy `ToggleWasteCategoryStatusValidator` |
+| **UTC273** | `DemoDataSeederUnitTests.UTC_SEED_01_SeedAsync_PopulatesAllCoreDemoEntitiesAndPreservesCouncilInvariants` (`[Fact]`) | DB sạch gọi `DemoDataSeeder.SeedAsync(resetExisting: true)` | Kiểm chứng đủ `HandoverRequests=164`, `TransactionReviews=155`, `PRO` `52/54` đánh giá & `PointsAwarded=0` | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Bảo toàn bất biến Seed Hội đồng |
+| **UTC274** | `DemoDataSeederUnitTests.UTC_SEED_02_SeedAsync_CalledTwiceWithoutReset_IsIdempotent` (`[Fact]`) | Gọi `SeedAsync(resetExisting: false)` 2 lần liên tiếp | Lần 2 trả về `report` khớp 100% lần 1, không nhân bản bản ghi | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Lũy đẳng `DemoDataSeeder` |

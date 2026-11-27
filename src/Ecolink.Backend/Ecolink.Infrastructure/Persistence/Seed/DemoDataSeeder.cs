@@ -83,6 +83,8 @@ public sealed class DemoDataSeeder
     private static readonly Guid RecyclerHl2Id = Guid.Parse("99999992-9999-9999-9999-999999999992");
     private static readonly Guid RecyclerHl3Id = Guid.Parse("99999993-9999-9999-9999-999999999993");
     private static readonly Guid RecyclerHl4Id = Guid.Parse("99999994-9999-9999-9999-999999999994");
+    private static readonly Guid RecyclerHnDdId = Guid.Parse("99999995-9999-9999-9999-999999999995");
+    private static readonly Guid RecyclerHnHbtId = Guid.Parse("99999996-9999-9999-9999-999999999996");
 
     private const string DemoWastePhotoJson = "[\"https://images.unsplash.com/photo-1532996122724-e3c354a0b15b?auto=format&fit=crop&w=900&q=80\"]";
     private const string DemoScalePhotoJson = "[\"https://images.unsplash.com/photo-1604187351574-c75ca79f5807?auto=format&fit=crop&w=900&q=80\"]";
@@ -1413,12 +1415,304 @@ public sealed class DemoDataSeeder
             reviewTimestamps[rvwId] = completedAt.AddHours(1);
         }
 
-        // Cập nhật bộ đếm đánh giá của recycler (5 visible: 5+5+5+5+4 = 24/5? Wait 2 completed + 2 visible = 4 visible: 5,5,5,5 + 1 reported still counts until hidden = 4.80)
-        var recProfile = await _db.RecyclerProfiles.FirstOrDefaultAsync(r => r.UserId == RecyclerId, ct);
-        if (recProfile != null)
+        // D2. Bổ sung 25 giao dịch Completed + 25 đánh giá thực tế cho 4 cơ sở Hòa Lạc còn lại (hl1..hl4)
+        // và 15 giao dịch Completed + 15 đánh giá thực tế cho 2 cơ sở nội thành Hà Nội (hndd, hnhbt)
+        var hlReviewers = new[] { CitizenVipId }
+            .Concat(extraCitizens.Select(u => u.Id))
+            .ToArray();
+
+        var facilityReviewSpecs = new (
+            string Key,
+            string Tag,
+            Guid RecyclerUserId,
+            string Address,
+            decimal Lat,
+            decimal Lng,
+            (WasteCategory Cat, decimal Kg, decimal Price, int Stars, int DaysAgo, string Comment)[] Reviews
+        )[]
         {
-            recProfile.TotalReviews = 5;
-            recProfile.AverageRating = 4.80m;
+            (
+                "hl1",
+                "HL1",
+                RecyclerHl1Id,
+                "Thôn 3, Xã Tân Xã, Huyện Thạch Thất, Hà Nội",
+                21.0182m,
+                105.5345m,
+                new[]
+                {
+                    (plastic, 7.5m, 7_200m, 5, 2, "Thu gom ngay cổng KTX Tân Xã rất đúng giờ, cân điện tử rõ ràng."),
+                    (metal, 4.2m, 26_000m, 5, 4, "Giá thu mua vỏ lon nhôm cho sinh viên FPT rất ổn, thanh toán tại chỗ."),
+                    (cardboard, 12.0m, 4_100m, 5, 6, "Chuyển trọ nhiều thùng carton, trạm qua lấy tận nơi cực nhanh."),
+                    (paper, 9.5m, 4_800m, 5, 8, "Giáo trình và đề cương cũ bán gọn nhẹ, anh thu gom rất nhiệt tình."),
+                    (plastic, 6.0m, 7_200m, 5, 11, "Nhắn thương lượng trên app phản hồi nhanh, hỗ trợ bốc xếp lên xe."),
+                    (metal, 5.5m, 26_000m, 5, 13, "Đã bán nhiều lần cho trạm Tân Xã, chưa bao giờ bị ép giá."),
+                    (cardboard, 8.0m, 4_100m, 4, 16, "Giá tốt và lịch sự, chỉ hẹn trễ hơn dự kiến khoảng 15 phút."),
+                    (paper, 11.0m, 4_800m, 4, 19, "Thu gom sạch sẽ, đường ngõ Tân Xã hơi đông nhưng vẫn vào tận nơi.")
+                }
+            ),
+            (
+                "hl2",
+                "HL2",
+                RecyclerHl2Id,
+                "Km28 Quốc lộ 21A, Xã Thạch Hòa, Huyện Thạch Thất, Hà Nội",
+                20.9986m,
+                105.5184m,
+                new[]
+                {
+                    (plastic, 10.0m, 7_000m, 5, 3, "Điểm cân ngay ngã tư Hòa Lạc dễ tìm, nhìn trực tiếp màn hình cân điện tử."),
+                    (metal, 6.8m, 25_500m, 5, 5, "Thu mua lon nhôm và sắt vụn giá minh bạch, chuyển khoản ngay."),
+                    (glass, 14.0m, 2_400m, 5, 7, "Rất ưng vì nhận cả chai lọ thủy tinh khu nhà trọ Thạch Hòa."),
+                    (cardboard, 15.0m, 3_900m, 5, 10, "Nhân viên vui vẻ, thu gom tận sảnh tòa nhà nhanh gọn."),
+                    (plastic, 8.5m, 7_000m, 5, 12, "Biên nhận rõ ràng từng ký, đối chiếu trên app rất tiện."),
+                    (glass, 9.0m, 2_400m, 4, 15, "Hỗ trợ tốt, cần nhắn xác nhận giờ qua lấy sớm hơn một chút."),
+                    (cardboard, 10.5m, 3_900m, 4, 18, "Cân chuẩn và nhiệt tình, cuối tuần hơi đông khách mang tới bán.")
+                }
+            ),
+            (
+                "hl3",
+                "HL3",
+                RecyclerHl3Id,
+                "Tỉnh lộ 420, Xã Bình Yên, Huyện Thạch Thất, Hà Nội",
+                21.0345m,
+                105.5468m,
+                new[]
+                {
+                    (metal, 9.0m, 27_000m, 5, 3, "Giá kim loại ở Bình Yên cao, phân loại đồng nhôm rõ từng loại."),
+                    (paper, 14.0m, 4_900m, 5, 6, "Thu gom hồ sơ văn phòng số lượng lớn rất chuyên nghiệp."),
+                    (cardboard, 16.0m, 4_200m, 5, 9, "Xe ba gác vào tận xóm lấy carton giúp hộ gia đình, rất tiện."),
+                    (plastic, 7.0m, 6_800m, 4, 14, "Thu mua nhiệt tình, có nhắc chuẩn bị phân loại kỹ trước khi cân."),
+                    (glass, 10.0m, 2_200m, 4, 20, "Cân chính xác, đường Tỉnh lộ 420 buổi chiều hơi nhiều xe tải.")
+                }
+            ),
+            (
+                "hl4",
+                "HL4",
+                RecyclerHl4Id,
+                "Khu Công nghiệp Phú Cát - Nam Hòa Lạc, Quốc Oai, Hà Nội",
+                20.9765m,
+                105.5192m,
+                new[]
+                {
+                    (cardboard, 22.0m, 4_300m, 5, 4, "Giá bìa carton kiện phẳng tốt nhất khu Nam Hòa Lạc - Phú Cát."),
+                    (plastic, 12.5m, 7_100m, 5, 7, "Hỗ trợ thu gom định kỳ cho văn phòng trong KCN Phú Cát rất chuẩn."),
+                    (metal, 8.0m, 26_500m, 5, 11, "Cân điện tử chuẩn xác, trả tiền mặt hoặc chuyển khoản đều nhanh."),
+                    (paper, 13.0m, 4_700m, 4, 15, "Làm việc rõ ràng, có biên nhận đầy đủ sau khi hoàn tất."),
+                    (cardboard, 11.0m, 4_300m, 3, 22, "Giá thu mua ổn nhưng xe ghé muộn hơn lịch hẹn 30 phút do kẹt cổng KCN.")
+                }
+            ),
+            (
+                "hndd",
+                "HN2",
+                RecyclerHnDdId,
+                "142 Tây Sơn, Phường Quang Trung, Quận Đống Đa, Hà Nội",
+                21.0085m,
+                105.8248m,
+                new[]
+                {
+                    (plastic, 8.0m, 7_100m, 5, 2, "Thu gom tận ngõ khu Tây Sơn rất gọn, cân điện tử rõ từng lạng."),
+                    (paper, 12.5m, 4_700m, 5, 5, "Sách báo cũ và giấy văn phòng thu mua đúng giá niêm yết trên app."),
+                    (cardboard, 14.0m, 4_000m, 5, 8, "Nhân viên Đống Đa qua đúng hẹn, hỗ trợ chuyển khoản tức thì."),
+                    (glass, 11.0m, 2_300m, 5, 11, "Rất tiện vì nhận cả chai lọ thủy tinh sạch khu chung cư Quang Trung."),
+                    (plastic, 6.5m, 7_100m, 5, 14, "Phản hồi thương lượng nhanh, nhiệt tình và giữ vệ sinh chung."),
+                    (cardboard, 10.0m, 4_000m, 4, 17, "Giá tốt và lịch sự, khung giờ chiều khu Tây Sơn hơi đông xe một chút."),
+                    (paper, 9.0m, 4_700m, 4, 21, "Bàn giao nhanh gọn, mong cơ sở mở rộng thêm ca thu gom tối.")
+                }
+            ),
+            (
+                "hnhbt",
+                "HN3",
+                RecyclerHnHbtId,
+                "55 Trần Đại Nghĩa, Phường Bách Khoa, Quận Hai Bà Trưng, Hà Nội",
+                21.0028m,
+                105.8442m,
+                new[]
+                {
+                    (paper, 13.0m, 5_000m, 5, 2, "Giá thu mua giấy photo, giáo trình khu Bách Khoa cao và cực kỳ minh bạch."),
+                    (metal, 5.5m, 26_000m, 5, 4, "Vỏ lon nhôm cân chuẩn xác ngay tại điểm Trần Đại Nghĩa, rất hài lòng."),
+                    (cardboard, 15.0m, 4_100m, 5, 7, "Đặt lịch cho phòng trọ Hai Bà Trưng mà nhân viên qua rất đúng giờ."),
+                    (plastic, 7.5m, 6_900m, 5, 10, "Chai nhựa sạch được cân tách riêng từng loại, biên nhận đầy đủ trên app."),
+                    (paper, 11.0m, 5_000m, 5, 13, "Sinh viên bán sách vở cuối kỳ rất tiện, thái độ phục vụ thân thiện."),
+                    (cardboard, 9.5m, 4_100m, 4, 16, "Thu mua nhanh, có nhắc khách gập phẳng thùng carton trước khi tới lấy."),
+                    (plastic, 6.0m, 6_900m, 4, 19, "Cân chuẩn và rõ ràng, ngõ Trần Đại Nghĩa giờ tan tầm hơi khó đỗ xe."),
+                    (metal, 4.0m, 26_000m, 4, 23, "Dịch vụ ổn định, trả tiền nhanh ngay sau khi xác nhận biên nhận.")
+                }
+            )
+        };
+
+        foreach (var fac in facilityReviewSpecs)
+        {
+            for (var i = 0; i < fac.Reviews.Length; i++)
+            {
+                var item = fac.Reviews[i];
+                var seq = i + 1;
+                var reqId = DeterministicGuid($"hnd_rec_{fac.Key}_{seq}");
+                var rcpId = DeterministicGuid($"rcp_rec_{fac.Key}_{seq}");
+                var rvwId = DeterministicGuid($"rvw_rec_{fac.Key}_{seq}");
+                var reviewerId = hlReviewers[(i + fac.Tag[2]) % hlReviewers.Length];
+                var createdAt = utcNow.AddDays(-item.DaysAgo - 1);
+                var completedAt = utcNow.AddDays(-item.DaysAgo).AddMinutes(seq);
+
+                AddSyncedHandover(
+                    reqId,
+                    $"HND-{fac.Tag}-{seq:D4}",
+                    reviewerId,
+                    fac.RecyclerUserId,
+                    HandoverStatus.Completed,
+                    OrderStatus.Completed,
+                    fac.Address,
+                    fac.Lat,
+                    fac.Lng,
+                    createdAt,
+                    completedAt.AddHours(-2),
+                    completedAt.AddHours(-1),
+                    completedAt,
+                    item.Cat,
+                    item.Kg,
+                    item.Kg,
+                    item.Price);
+
+                receipts.Add(new HandoverReceipt
+                {
+                    Id = rcpId,
+                    RequestId = reqId,
+                    ReceiptCode = $"RCP-{fac.Tag}-{seq:D4}",
+                    UserId = reviewerId,
+                    RecyclerId = fac.RecyclerUserId,
+                    TotalWeightKg = item.Kg,
+                    TotalAmountCash = item.Kg * item.Price,
+                    PointsAwarded = 0,
+                    ScaleProofPhotoUrl = DemoScalePhotoJson,
+                    CreatedAt = completedAt.AddMinutes(-10),
+                    ConfirmedByUserAt = completedAt
+                });
+
+                reviews.Add(new TransactionReview
+                {
+                    Id = rvwId,
+                    RequestId = reqId,
+                    ReviewerId = reviewerId,
+                    RecyclerId = fac.RecyclerUserId,
+                    RatingStars = item.Stars,
+                    Comment = item.Comment,
+                    Status = ReviewStatus.Visible,
+                    CreatedAt = completedAt.AddHours(1),
+                    CreatedBy = reviewerId.ToString()
+                });
+                reviewTimestamps[rvwId] = completedAt.AddHours(1);
+            }
+        }
+
+        // D3. 54 giao dịch Completed + 54 đánh giá hợp lệ (4.87 sao) cho recycler_hn (Trạm Tái Chế Xanh Cầu Giấy - đạt chuẩn PRO BR-PAY-04)
+        var hnCats = new[] { plastic, paper, metal, cardboard };
+        var hnComments5 = new[]
+        {
+            "Trạm Xuân Thủy phục vụ chuyên nghiệp, cân điện tử công khai từng ký rất yên tâm.",
+            "Đối tác Pro khu Cầu Giấy thu mua đúng hẹn, nhân viên mặc đồng phục gọn gàng.",
+            "Giá thu mua nhựa PET và vỏ lon nhôm minh bạch, chuyển khoản ngay sau khi cân.",
+            "Đặt lịch thu gom tại Dịch Vọng Hậu buổi sáng là buổi trưa xe tới lấy ngay.",
+            "Biên nhận bàn giao cập nhật trên app tức thì, rất uy tín tại khu vực Cầu Giấy.",
+            "Hỗ trợ thu gom số lượng lớn cho văn phòng quanh Xuân Thủy - Mỹ Đình cực kỳ nhanh."
+        };
+        var hnComments4 = new[]
+        {
+            "Thu gom nhanh và lịch sự, trừ 1 điểm nhỏ do đường Xuân Thủy giờ cao điểm hơi ùn.",
+            "Cân chuẩn xác và giá ổn, thời gian xác nhận tin nhắn thương lượng hơi chậm 10 phút.",
+            "Nhân viên nhiệt tình, mong trạm bổ sung thêm khung giờ thu gom cuối tuần."
+        };
+
+        for (var idx = 1; idx <= 54; idx++)
+        {
+            var reqId = DeterministicGuid($"hnd_rec_hn1_{idx}");
+            var rcpId = DeterministicGuid($"rcp_rec_hn1_{idx}");
+            var rvwId = DeterministicGuid($"rvw_rec_hn1_{idx}");
+            var reviewerId = hlReviewers[(idx - 1) % hlReviewers.Length];
+            var cat = hnCats[(idx - 1) % hnCats.Length];
+            var daysAgo = 3 + ((idx - 1) % 75);
+            var createdAt = utcNow.AddDays(-daysAgo - 1);
+            var completedAt = utcNow.AddDays(-daysAgo).AddMinutes(idx);
+            var kg = 5.5m + (idx % 11);
+            var price = cat.Code switch
+            {
+                "metal" => 25_500m,
+                "plastic" => 6_900m,
+                "paper" => 4_700m,
+                _ => 3_900m
+            };
+
+            AddSyncedHandover(
+                reqId,
+                $"HND-HN1-{idx:D4}",
+                reviewerId,
+                RecyclerHnId,
+                HandoverStatus.Completed,
+                OrderStatus.Completed,
+                "68 Xuân Thủy, Dịch Vọng Hậu, Cầu Giấy, Hà Nội",
+                21.0368m,
+                105.7825m,
+                createdAt,
+                completedAt.AddHours(-2),
+                completedAt.AddHours(-1),
+                completedAt,
+                cat,
+                kg,
+                kg,
+                price);
+
+            receipts.Add(new HandoverReceipt
+            {
+                Id = rcpId,
+                RequestId = reqId,
+                ReceiptCode = $"RCP-HN1-{idx:D4}",
+                UserId = reviewerId,
+                RecyclerId = RecyclerHnId,
+                TotalWeightKg = kg,
+                TotalAmountCash = kg * price,
+                PointsAwarded = 0,
+                ScaleProofPhotoUrl = DemoScalePhotoJson,
+                CreatedAt = completedAt.AddMinutes(-10),
+                ConfirmedByUserAt = completedAt
+            });
+
+            var stars = idx <= 47 ? 5 : 4; // 47x5 + 7x4 = 263/54 = 4.8704 -> 4.87 sao
+            var comment = stars == 5
+                ? hnComments5[(idx - 1) % hnComments5.Length]
+                : hnComments4[(idx - 1) % hnComments4.Length];
+
+            reviews.Add(new TransactionReview
+            {
+                Id = rvwId,
+                RequestId = reqId,
+                ReviewerId = reviewerId,
+                RecyclerId = RecyclerHnId,
+                RatingStars = stars,
+                Comment = comment,
+                Status = ReviewStatus.Visible,
+                CreatedAt = completedAt.AddHours(1),
+                CreatedBy = reviewerId.ToString()
+            });
+            reviewTimestamps[rvwId] = completedAt.AddHours(1);
+        }
+
+        // Đồng bộ TotalReviews & AverageRating cho tất cả cơ sở thu mua dựa trên TransactionReviews hợp lệ
+        var activeReviewsByRecycler = reviews
+            .Where(r => r.Status == ReviewStatus.Visible || r.Status == ReviewStatus.Reported)
+            .GroupBy(r => r.RecyclerId)
+            .ToDictionary(
+                g => g.Key,
+                g => (
+                    Total: g.Count(),
+                    Avg: Math.Round((decimal)g.Average(r => r.RatingStars), 2, MidpointRounding.AwayFromZero)
+                ));
+
+        var allRecProfiles = await _db.RecyclerProfiles.ToListAsync(ct);
+        foreach (var rp in allRecProfiles)
+        {
+            if (activeReviewsByRecycler.TryGetValue(rp.UserId, out var stats))
+            {
+                rp.TotalReviews = stats.Total;
+                rp.AverageRating = stats.Avg;
+                rp.UpdatedAt = utcNow;
+            }
         }
 
         // E. 3 Phiếu Khiếu nại (Open, Investigating, Resolved) gắn với 3 RequestId riêng biệt (tuân thủ partial unique index)
@@ -2217,10 +2511,10 @@ public sealed class DemoDataSeeder
                 DO $$
                 BEGIN
                     IF EXISTS (SELECT 1 FROM pg_class WHERE relkind = 'S' AND relname = 'seq_handover_request_code') THEN
-                        PERFORM setval('seq_handover_request_code', 200, false);
+                        PERFORM setval('seq_handover_request_code', 300, false);
                     END IF;
                     IF EXISTS (SELECT 1 FROM pg_class WHERE relkind = 'S' AND relname = 'seq_handover_receipt_code') THEN
-                        PERFORM setval('seq_handover_receipt_code', 200, false);
+                        PERFORM setval('seq_handover_receipt_code', 300, false);
                     END IF;
                 END $$;", ct);
         }

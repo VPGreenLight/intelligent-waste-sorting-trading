@@ -137,10 +137,17 @@ public class AuthService : IAuthService
             IsGoogleAuth = false
         };
 
+        var recyclerType = RecyclerKybPhotoHelper.ParseRecyclerType(request.RecyclerType);
+        var isIndividual = recyclerType == RecyclerType.Individual;
+        var (primaryPhoto, photosJson) = isIndividual
+            ? (null, null)
+            : RecyclerKybPhotoHelper.NormalizeFacilityPhotos(request.BusinessPhotoUrls, request.BusinessPhotoUrl);
+
         var recyclerProfile = new RecyclerProfile
         {
             UserId = user.Id,
             User = user,
+            RecyclerType = recyclerType,
             FacilityName = request.FacilityName.Trim(),
             RepresentativeName = request.RepresentativeName.Trim(),
             BusinessAddress = request.BusinessAddress.Trim(),
@@ -150,8 +157,11 @@ public class AuthService : IAuthService
             OperatingHours = request.OperatingHours ?? "08:00 - 18:00",
             ContactPhone = request.ContactPhone ?? request.PhoneNumber ?? string.Empty,
             Description = request.Description,
-            LegalPermitUrl = request.LegalPermitUrl,
-            BusinessPhotoUrl = request.BusinessPhotoUrl,
+            LegalPermitUrl = isIndividual || string.IsNullOrWhiteSpace(request.LegalPermitUrl) ? null : request.LegalPermitUrl.Trim(),
+            BusinessPhotoUrl = primaryPhoto,
+            BusinessPhotoUrlsJson = photosJson,
+            IdentityCardFrontUrl = isIndividual && !string.IsNullOrWhiteSpace(request.IdentityCardFrontUrl) ? request.IdentityCardFrontUrl.Trim() : null,
+            IdentityCardBackUrl = isIndividual && !string.IsNullOrWhiteSpace(request.IdentityCardBackUrl) ? request.IdentityCardBackUrl.Trim() : null,
             VerificationStatus = VerificationStatus.Pending,
             ActiveStatus = RecyclerActiveStatus.Offline
         };

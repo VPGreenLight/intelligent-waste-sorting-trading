@@ -3,7 +3,7 @@
 // Platform: PostgreSQL 16+ with PostGIS Extension
 // Designed for: dbdiagram.io & Clean Architecture / DDD
 // Capstone Project: SEP490 - Intelligent Waste Sorting & Trading Platform
-// Total Tables: 33 | Enums: 17 | Table Groups: 7
+// Total Tables: 33 | Enums: 18 | Table Groups: 7
 // ============================================================================
 
 // ============================================================================
@@ -33,6 +33,11 @@ Enum verification_status {
 Enum active_status {
   Online [note: "Đang mở cửa nhận thu gom trên bản đồ GPS"]
   Offline [note: "Tạm dừng hoạt động / Nghỉ"]
+}
+
+Enum recycler_type {
+  Facility [note: "Cơ sở thu mua cố định / Vựa lớn (bắt buộc GPKD + 5 ảnh kho bãi)"]
+  Individual [note: "Cá nhân thu mua nhỏ lẻ / lưu động (CCCD 2 mặt, miễn GPKD theo Điều 3 NĐ 39/2007/NĐ-CP)"]
 }
 
 Enum category_status {
@@ -193,8 +198,12 @@ Table RecyclerProfile {
   operating_hours varchar(100) [note: "Giờ mở cửa thu gom (Ví dụ: 08:00 - 18:00)"]
   contact_phone varchar(20) [not null, note: "Hotline thu gom"]
   description text [note: "Giới thiệu năng lực phương tiện và trang thiết bị"]
-  legal_permit_url text [note: "Giấy phép kinh doanh/môi trường nộp cho Staff thẩm định (UC G-03, S-04)"]
-  business_photo_url text [note: "Ảnh chụp mặt tiền cơ sở thu mua"]
+  recycler_type recycler_type [not null, default: 'Facility', note: "Phân loại đối tác thu mua (Facility / Individual)"]
+  legal_permit_url text [note: "Giấy phép kinh doanh/môi trường (Bắt buộc với Facility; miễn với Individual theo Điều 3 NĐ 39/2007/NĐ-CP)"]
+  business_photo_url text [note: "Ảnh đại diện mặt tiền kho bãi (ảnh đầu tiên trong 5 ảnh của Facility)"]
+  business_photo_urls_json text [note: "Danh sách JSON đủ 5 URL ảnh thực tế kho bãi của Facility (U-17, S-04)"]
+  identity_card_front_url text [note: "URL ảnh CCCD mặt trước phục vụ Staff hậu kiểm Individual (PII nội bộ)"]
+  identity_card_back_url text [note: "URL ảnh CCCD mặt sau phục vụ Staff hậu kiểm Individual (PII nội bộ)"]
   verification_status verification_status [not null, default: 'Pending', note: "Trạng thái duyệt hồ sơ của Staff"]
   active_status active_status [not null, default: 'Offline', note: "Bật/Tắt hiển thị trên bản đồ GPS (UC R-02)"]
   rejection_reason text [note: "Lý do Staff từ chối duyệt cơ sở (BR-MTH-02, MSG-MTH-05)"]

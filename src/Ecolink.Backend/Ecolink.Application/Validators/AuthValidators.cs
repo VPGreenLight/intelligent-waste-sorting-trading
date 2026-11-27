@@ -82,6 +82,27 @@ public class RegisterRecyclerRequestDtoValidator : AbstractValidator<RegisterRec
 
         RuleFor(x => x.Longitude)
             .InclusiveBetween(-180.0, 180.0).WithMessage("Kinh độ (Longitude) phải nằm trong khoảng -180 đến 180 độ.");
+
+        RuleFor(x => x.RecyclerType)
+            .Must(t => string.IsNullOrWhiteSpace(t) ||
+                       t.Equals("Facility", StringComparison.OrdinalIgnoreCase) ||
+                       t.Equals("Individual", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Loại hình đối tác chỉ hỗ trợ 'Facility' hoặc 'Individual'.");
+
+        RuleFor(x => x.IdentityCardFrontUrl)
+            .NotEmpty()
+            .When(x => string.Equals(x.RecyclerType, "Individual", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Người thu mua nhỏ lẻ bắt buộc đính kèm ảnh mặt trước CCCD.");
+
+        RuleFor(x => x.IdentityCardBackUrl)
+            .NotEmpty()
+            .When(x => string.Equals(x.RecyclerType, "Individual", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Người thu mua nhỏ lẻ bắt buộc đính kèm ảnh mặt sau CCCD.");
+
+        RuleFor(x => x.BusinessPhotoUrls)
+            .Must(list => list != null && list.Count == 5 && list.All(u => !string.IsNullOrWhiteSpace(u)))
+            .When(x => !string.Equals(x.RecyclerType, "Individual", StringComparison.OrdinalIgnoreCase) && x.BusinessPhotoUrls != null)
+            .WithMessage("Cơ sở thu mua cố định bắt buộc đính kèm đúng đủ 5 ảnh thực tế mặt tiền / kho bãi (5/5 ảnh).");
     }
 }
 

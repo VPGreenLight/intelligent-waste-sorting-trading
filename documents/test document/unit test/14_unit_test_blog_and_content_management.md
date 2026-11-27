@@ -6,8 +6,8 @@
 * **Dịch vụ & Validator kiểm thử:** `BlogPostService`, `SaveBlogPostRequestValidator`, `RejectBlogPostRequestValidator`, `ReviewBlogPostRequestValidator`
 * **Use Cases bao phủ:** `G-01` (Browse Public Eco Blogs), `S-08` (Create Blog Post), `A-09` (Approve / Reject Blog Post)
 * **Tệp mã kiểm thử tự động:** [`BlogContentUnitTests.cs`](../../../src/Ecolink.Backend/Ecolink.UnitTests/Module14_BlogContent/BlogContentUnitTests.cs)
-* **Ngày thực thi gần nhất:** `2026-11-19`
-* **Kết quả thực thi:** **`20 / 20 Passed` (`100%` Pass Rate — `9 Normal`, `7 Abnormal`, `4 Boundary`)**
+* **Ngày thực thi gần nhất:** `2026-11-27`
+* **Kết quả thực thi:** **`21 / 21 Passed` (`100%` Pass Rate — `10 Normal`, `7 Abnormal`, `4 Boundary`)**
 
 ---
 
@@ -15,17 +15,17 @@
 
 | Code Module | `BlogPostService`, `SaveBlogPostRequestValidator`, `RejectBlogPostRequestValidator`, `ReviewBlogPostRequestValidator` (`M-14`) | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **20** | | |
+| **Number of TCs** | **21** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 20 | 0 | 0 |
-| *Round 2* | 0 | 0 | 20 |
-| *Round 3* | 0 | 0 | 20 |
+| *Round 1* | 21 | 0 | 0 |
+| *Round 2* | 0 | 0 | 21 |
+| *Round 3* | 0 | 0 | 21 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **9** | **7** | **4** |
+| **Count** | **10** | **7** | **4** |
 
 ---
 
-## 2. CHI TIẾT 20 UNIT TEST CASES (`UTC001` – `UTC020`)
+## 2. CHI TIẾT 21 UNIT TEST CASES (`UTC001` – `UTC021`)
 
 | Test Case ID | Tên Method Kiểm thử (`BlogContentUnitTests`) | Pre-conditions | Input parameters | Expected Results | Type | Round 1 | Test date | Tester | Note |
 | :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :--- | :--- |
@@ -49,3 +49,4 @@
 | **UTC018** | `UTC018_ListPublishedAsync_ShouldMatchWholeTagOnlyAndExcludeDraftOrFuturePosts` | Có `1` Draft, `1` Approved thẻ `"nhua"`, `1` Approved thẻ `"nhua-pet"` | `ListPublishedAsync(null, "nhua", 1, 10)` | Chỉ trả về duy nhất bài mang thẻ chính xác `"nhua"`, không khớp tiền tố `"nhua-pet"` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Biên lọc nguyên thẻ JSON |
 | **UTC019** | `UTC019_ListMineAsync_ShouldFilterByStatusSearchAndClampPageBounds` | Staff có `1` bài Draft & `1` bài Approved | `ListMineAsync(staff.Id, "Published", "carton", -1, 9999)` | Kẹp `Page=1`, `PageSize=50`, lọc đúng bài `Approved` | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | Biên phân trang `[1..50]` |
 | **UTC020** | `UTC020_GetPublishedBySlugAndValidators_ShouldEnforceTitleTagsFeedbackAndNotFoundBounds` | Bài nháp vs bài đã duyệt; 3 Blog Validators | Truy cập slug bài nháp (`404`); check biên tiêu đề `9/10`, `6` tags, `Feedback 0/2001` | Ném `NotFoundException` cho bài chưa duyệt; Validators chặn đúng các biên | Boundary | Passed | 2026-11-19 | Hoàng Thắng Nguyễn | `G-01` & FluentValidation |
+| **UTC021** | `UTC021_SeedDefaultBlogPostsCoreAsync_ShouldSeedIdempotentlyWithValidSlugsCoversAndWorkflowStates` | DB sạch (`ListPublishedAsync == 0`) | Gọi `SeedDefaultBlogPostsCoreAsync()` 2 lần liên tiếp | Tạo đúng `6` bài (4 `Approved`, 1 `Pending_Approval`, 1 `Draft`) với ảnh `/assets/insights/*`, slug hợp lệ & idempotent tuyệt đối | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Seed mặc định chuẩn Demo |

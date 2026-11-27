@@ -32,6 +32,15 @@ public class RecyclerProfileConfiguration : IEntityTypeConfiguration<RecyclerPro
         builder.Property(r => r.Description).HasColumnName("description");
         builder.Property(r => r.LegalPermitUrl).HasColumnName("legal_permit_url");
         builder.Property(r => r.BusinessPhotoUrl).HasColumnName("business_photo_url");
+        builder.Property(r => r.RecyclerType)
+            .HasColumnName("recycler_type")
+            .HasConversion<string>()
+            .HasMaxLength(20)
+            .HasDefaultValue(Ecolink.Domain.Enums.RecyclerType.Facility)
+            .IsRequired();
+        builder.Property(r => r.IdentityCardFrontUrl).HasColumnName("identity_card_front_url");
+        builder.Property(r => r.IdentityCardBackUrl).HasColumnName("identity_card_back_url");
+        builder.Property(r => r.BusinessPhotoUrlsJson).HasColumnName("business_photo_urls_json");
 
         builder.Property(r => r.VerificationStatus).HasColumnName("verification_status").HasConversion<string>().HasMaxLength(20).IsRequired();
         builder.Property(r => r.ActiveStatus).HasColumnName("active_status").HasConversion<string>().HasMaxLength(20).IsRequired();

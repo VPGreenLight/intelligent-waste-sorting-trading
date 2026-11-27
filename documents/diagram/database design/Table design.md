@@ -17,6 +17,7 @@ CREATE TYPE user_role AS ENUM ('User', 'Recycler', 'Staff', 'Admin');
 CREATE TYPE user_status AS ENUM ('Active', 'Locked', 'Suspended', 'Pending_Verification');
 CREATE TYPE verification_status AS ENUM ('Pending', 'Verified', 'Rejected');
 CREATE TYPE active_status AS ENUM ('Online', 'Offline');
+CREATE TYPE recycler_type AS ENUM ('Facility', 'Individual');
 
 -- 2. Phân loại và dữ liệu AI
 CREATE TYPE category_status AS ENUM ('Active', 'Inactive');
@@ -86,8 +87,12 @@ Lưu trữ thông tin xác thực dùng chung cho toàn bộ các tác nhân tro
 | `operating_hours` | VARCHAR(100) | NULL | Khung giờ mở cửa (Ví dụ: "07:30 - 18:00") |
 | `contact_phone` | VARCHAR(20) | NOT NULL | Số điện thoại liên hệ giao dịch |
 | `description` | TEXT | NULL | Giới thiệu năng lực thu gom, phương tiện vận chuyển |
-| `legal_permit_url` | TEXT | NULL | Giấy phép kinh doanh/môi trường để Staff thẩm định (UC G-03, S-04) |
-| `business_photo_url` | TEXT | NULL | Hình ảnh mặt tiền cơ sở thu mua |
+| `recycler_type` | recycler_type | NOT NULL, DEFAULT 'Facility' | Loại hình thu mua: `Facility` (Cơ sở cố định/Vựa lớn) hoặc `Individual` (Cá nhân thu mua nhỏ lẻ/lưu động theo Điều 3 NĐ 39/2007/NĐ-CP) |
+| `legal_permit_url` | TEXT | NULL | Giấy phép đăng ký kinh doanh/môi trường (Bắt buộc với `Facility`; miễn với `Individual` theo Điều 3 NĐ 39/2007/NĐ-CP) |
+| `business_photo_url` | TEXT | NULL | Ảnh đại diện mặt tiền kho bãi (lấy ảnh đầu tiên từ danh sách 5 ảnh của `Facility`) |
+| `business_photo_urls_json` | TEXT | NULL | Danh sách JSON đủ 5 URL ảnh thực tế mặt tiền/kho bãi bắt buộc đối với `Facility` (`U-17`, `S-04`) |
+| `identity_card_front_url` | TEXT | NULL | URL ảnh CCCD mặt trước phục vụ Staff hậu kiểm đối với `Individual` (bảo mật PII nội bộ) |
+| `identity_card_back_url` | TEXT | NULL | URL ảnh CCCD mặt sau phục vụ Staff hậu kiểm đối với `Individual` (bảo mật PII nội bộ) |
 | `verification_status`| verification_status| NOT NULL, DEFAULT 'Pending' | Trạng thái thẩm định của Staff (Pending, Verified, Rejected) |
 | `active_status` | active_status | NOT NULL, DEFAULT 'Offline' | Trạng thái Bật/Tắt hoạt động trên bản đồ thu gom (UC R-02) |
 | `rejection_reason` | TEXT | NULL | Lý do Staff từ chối hồ sơ (BR-MTH-02, MSG-MTH-05) |

@@ -14,7 +14,7 @@
 
 | STT | Inventory ID | Phương thức | Endpoint URI | Quyền truy cập | Use Case | Chức năng nghiệp vụ | Mã thông báo chính |
 |:---:|:---:|:---:|:---|:---:|:---:|:---|:---|
-| 1 | `015` | `POST` | `/api/v1/recycler-applications/upload-document` | Public (`[AllowAnonymous]`) | `U-17` | Tải tệp Giấy phép kinh doanh hoặc Ảnh mặt tiền kho bãi lên **Cloudflare R2 Object Storage** (hỗ trợ cả form đăng ký công khai `/join-recycler` lẫn người dân nâng cấp). | `MSG-GEN-01` |
+| 1 | `015` | `POST` | `/api/v1/recycler-applications/upload-document` | Public (`[AllowAnonymous]`) | `U-17` | Tải tệp Giấy phép kinh doanh, 5 ảnh mặt tiền kho bãi hoặc ảnh CCCD 2 mặt lên **Cloudflare R2 Object Storage** (hỗ trợ cả form đăng ký công khai `/join-recycler` lẫn người dân nâng cấp). | `MSG-GEN-01` |
 | 2 | `016` | `POST` | `/api/v1/recycler-applications` | `[Authorize]` (`Citizen`) | `U-17` | Nộp mới hoặc nộp lại hồ sơ đăng ký nâng cấp từ `Citizen` lên `Recycler` kèm tọa độ GPS PostGIS (`SRID 4326`). | `MSG-MTH-03`, `MSG-MTH-04`, `MSG-GEN-01`, `MSG-AUTH-04` |
 | 3 | `017` | `GET` | `/api/v1/recycler-applications/me` | `[Authorize]` (`Citizen`/`Recycler`) | `U-17` | Xem trạng thái hồ sơ đăng ký nâng cấp của chính mình (`Pending`, `Verified`, `Rejected` kèm lý do). | `MSG-GEN-01`, `MSG-NOT-FOUND` |
 | 4 | `018` | `GET` | `/api/v1/recycler-applications` | `[Authorize(Roles = "Staff,Admin")]` | `S-04` | Lấy danh sách phân trang các hồ sơ đăng ký `Recycler` (lọc theo `status`, `keyword`, sắp xếp ưu tiên đơn nộp trước FIFO). | `200 OK` |
@@ -25,10 +25,13 @@
 
 ## 2. LUỒNG NGHIỆP VỤ TỔNG THỂ (`U-17` $\rightarrow$ `S-04`)
 
-1. **Bước 1 (`U-17` – Upload chứng từ):** Người dùng đã đăng nhập với vai trò `Citizen` gọi `POST /upload-document` 2 lần để tải lên:
-   * Giấy phép kinh doanh / CCCD hộ kinh doanh (`documentType = "permit"`) $\rightarrow$ nhận về `legalPermitUrl`.
-   * Ảnh chụp thực tế mặt tiền cơ sở / kho bãi (`documentType = "facility-photo"`) $\rightarrow$ nhận về `businessPhotoUrl`.
-2. **Bước 2 (`U-17` – Nộp đơn nâng cấp):** Gọi `POST /api/v1/recycler-applications` kèm tọa độ GPS (`latitude`, `longitude`) và 2 URL chứng từ ở Bước 1. Hệ thống lưu bản ghi `RecyclerProfile` với `VerificationStatus = Pending`, `ActiveStatus = Hidden` (`BR-MTH-01`: chưa xuất hiện trên bản đồ tìm kiếm).
+1. **Bước 1 (`U-17` – Chọn loại hình & Upload chứng từ KYB):** Người dùng đã đăng nhập với vai trò `Citizen` chọn loại hình `recyclerType` (`"Facility"` hoặc `"Individual"`) và gọi `POST /upload-document` để tải chứng từ tương ứng:
+   * **Cơ sở thu mua cố định / Vựa lớn (`recyclerType = "Facility"` — mặc định):**
+     * Giấy phép kinh doanh / Chứng từ pháp lý (`documentType = "permit"`) $\rightarrow$ nhận về `legalPermitUrl`.
+     * Đúng **5/5 ảnh thực tế mặt tiền / kho bãi** (`documentType = "facility-photo"`) $\rightarrow$ tập hợp vào mảng `businessPhotoUrls` (`5` phần tử), trong đó `businessPhotoUrl` lưu ảnh đại diện đầu tiên.
+   * **Cá nhân thu mua nhỏ lẻ / lưu động (`recyclerType = "Individual"` — miễn GPKD theo Điều 3 Nghị định 39/2007/NĐ-CP):**
+     * Miễn `legalPermitUrl` và ảnh kho bãi; bắt buộc tải đủ CCCD mặt trước (`documentType = "cccd-front"` $\rightarrow$ `identityCardFrontUrl`) và CCCD mặt sau (`documentType = "cccd-back"` $\rightarrow$ `identityCardBackUrl`).
+2. **Bước 2 (`U-17` – Nộp đơn nâng cấp):** Gọi `POST /api/v1/recycler-applications` kèm tọa độ GPS (`latitude`, `longitude`), `recyclerType` và các URL chứng từ ở Bước 1. Hệ thống lưu bản ghi `RecyclerProfile` với `VerificationStatus = Pending`, `ActiveStatus = Hidden` (`BR-MTH-01`: chưa xuất hiện trên bản đồ tìm kiếm). Ảnh CCCD chỉ lưu nội bộ phục vụ `Staff` hậu kiểm, tuyệt đối không trả ra API bản đồ công khai.
 3. **Bước 3 (`S-04` – Staff thẩm định):** Nhân viên vận hành (`Staff` / `Admin`) gọi `GET /api/v1/recycler-applications?status=Pending` để xem hàng đợi và gọi `PUT /{userId}/verification`:
    * **Nếu Phê duyệt (`isApproved = true`):** Hệ thống chuyển `VerificationStatus = Verified`, `ActiveStatus = Available`, nâng cấp **`User.Role = Recycler`**, và gửi email chúc mừng (`MSG-MTH-04`).
    * **Nếu Từ chối (`isApproved = false`):** Bắt buộc nhập `rejectionReason` ($\ge 10$ ký tự, `BR-MTH-02`), hệ thống chuyển `VerificationStatus = Rejected`, giữ nguyên `User.Role = Citizen`, và gửi email thông báo lý do từ chối để người dùng sửa và nộp lại (`MSG-MTH-05`).
@@ -49,7 +52,7 @@
 | Tên tham số | Vị trí | Kiểu dữ liệu | Bắt buộc | Ràng buộc / Giá trị hợp lệ | Mô tả |
 |:---|:---:|:---:|:---:|:---|:---|
 | `file` | Form-Data | `IFormFile` | **Có** | Định dạng: `.jpg`, `.jpeg`, `.png`, `.webp`, `.pdf`<br>Dung lượng: `> 0 bytes` và `<= 5 MB` (`5,242,880 bytes`) | Tệp tin hình ảnh hoặc tài liệu PDF cần tải lên. |
-| `documentType` | Form-Data | `string?` | Không | `"permit"` *(mặc định)* hoặc `"facility-photo"` | Phân loại thư mục lưu trữ trên R2:<br>• `"permit"` $\rightarrow$ `recycler-kyb/legal-permits/`<br>• `"facility-photo"` $\rightarrow$ `recycler-kyb/facility-photos/` |
+| `documentType` | Form-Data | `string?` | Không | `"permit"` *(mặc định)*, `"facility-photo"`, `"cccd-front"`, `"cccd-back"` | Phân loại thư mục lưu trữ trên R2:<br>• `"permit"` $\rightarrow$ `recycler-kyb/legal-permits/`<br>• `"facility-photo"` $\rightarrow$ `recycler-kyb/facility-photos/`<br>• `"cccd-front"` / `"cccd-back"` $\rightarrow$ `recycler-kyb/identity-cards/` |
 
 #### b. Response Parameters (`ApiResponse<RecyclerDocumentUploadResponseDto>`)
 
@@ -109,10 +112,14 @@
 | `contactPhone` | Body | `string` | **Có** | Regex `^(0|\+84)[0-9]{8,10}$` | Số điện thoại liên hệ thu mua của cơ sở. |
 | `operatingHours` | Body | `string?` | Không | Mặc định `"08:00 - 18:00"` | Khung giờ mở cửa hoạt động trong ngày. |
 | `description` | Body | `string?` | Không | Tùy chọn | Mô tả giới thiệu về cơ sở, năng lực thu gom, loại phế liệu nhận mua. |
-| `legalPermitUrl` | Body | `string` | **Có** | URL hợp lệ (`http://` hoặc `https://`) | URL ảnh/PDF giấy phép đăng ký kinh doanh (từ API `upload-document`). |
-| `businessPhotoUrl` | Body | `string` | **Có** | URL hợp lệ (`http://` hoặc `https://`) | URL ảnh chụp thực tế mặt tiền cơ sở/kho bãi (từ API `upload-document`). |
+| `recyclerType` | Body | `string` | Không | `"Facility"` *(mặc định)* hoặc `"Individual"` | Phân loại đối tác: cơ sở cố định (`Facility`) hay thu mua nhỏ lẻ lưu động (`Individual` theo Điều 3 NĐ 39/2007/NĐ-CP). |
+| `legalPermitUrl` | Body | `string?` | **Bắt buộc nếu `Facility`** | URL hợp lệ (`http://` hoặc `https://`) khi `Facility`; bỏ trống nếu `Individual` | URL ảnh/PDF giấy phép đăng ký kinh doanh (từ API `upload-document`). |
+| `businessPhotoUrl` | Body | `string?` | **Bắt buộc nếu `Facility`** *(nếu không truyền `businessPhotoUrls`)* | URL hợp lệ (`http://` hoặc `https://`) | URL ảnh đại diện mặt tiền cơ sở/kho bãi (tự lấy phần tử đầu của `businessPhotoUrls` nếu truyền đủ 5 ảnh). |
+| `businessPhotoUrls` | Body | `string[]?` | **Bắt buộc đủ 5 ảnh khi `Facility`** *(trên UI 5/5)* | Nếu truyền khi `Facility`: **đúng 5 URL** hợp lệ (`http://`/`https://`) | Danh sách đúng 5 URL ảnh thực tế mặt tiền & kho bãi của cơ sở cố định. |
+| `identityCardFrontUrl` | Body | `string?` | **Bắt buộc nếu `Individual`** | URL hợp lệ (`http://` hoặc `https://`) khi `Individual` | URL ảnh CCCD mặt trước của cá nhân thu mua nhỏ lẻ (lưu nội bộ cho Staff thẩm định). |
+| `identityCardBackUrl` | Body | `string?` | **Bắt buộc nếu `Individual`** | URL hợp lệ (`http://` hoặc `https://`) khi `Individual` | URL ảnh CCCD mặt sau của cá nhân thu mua nhỏ lẻ (lưu nội bộ cho Staff thẩm định). |
 
-##### Ví dụ Request Body:
+##### Ví dụ Request Body (`Facility` — Cơ sở cố định):
 ```json
 {
   "facilityName": "Vựa Phế Liệu Xanh Thủ Đức",
@@ -123,8 +130,16 @@
   "contactPhone": "0909123456",
   "operatingHours": "07:30 - 18:30",
   "description": "Chuyên thu mua nhựa PET, bìa carton, giấy báo và vỏ lon nhôm số lượng lớn tận nơi.",
+  "recyclerType": "Facility",
   "legalPermitUrl": "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/legal-permits/20261030_8f9a1b2c.pdf",
-  "businessPhotoUrl": "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_9d8e7f6a.jpg"
+  "businessPhotoUrl": "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_photo1.jpg",
+  "businessPhotoUrls": [
+    "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_photo1.jpg",
+    "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_photo2.jpg",
+    "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_photo3.jpg",
+    "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_photo4.jpg",
+    "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_photo5.jpg"
+  ]
 }
 ```
 
@@ -145,8 +160,12 @@
 | `operatingHours` | `string` | Giờ mở cửa hoạt động. |
 | `contactPhone` | `string` | Số điện thoại liên hệ của cơ sở. |
 | `description` | `string?` | Mô tả cơ sở. |
-| `legalPermitUrl` | `string?` | Đường dẫn chứng từ pháp lý trên Cloudflare R2. |
-| `businessPhotoUrl` | `string?` | Đường dẫn ảnh mặt tiền kho bãi trên Cloudflare R2. |
+| `recyclerType` | `string` | Phân loại đối tác: `"Facility"` hoặc `"Individual"`. |
+| `legalPermitUrl` | `string?` | Đường dẫn chứng từ pháp lý trên Cloudflare R2 (`null` nếu `Individual`). |
+| `businessPhotoUrl` | `string?` | Đường dẫn ảnh đại diện mặt tiền kho bãi trên Cloudflare R2. |
+| `businessPhotoUrls` | `string[]` | Danh sách 5 URL ảnh thực tế kho bãi (`Facility`) hoặc mảng rỗng (`Individual`). |
+| `identityCardFrontUrl` | `string?` | Đường dẫn ảnh CCCD mặt trước trên R2 (chỉ trả về cho chính chủ đơn & Staff/Admin). |
+| `identityCardBackUrl` | `string?` | Đường dẫn ảnh CCCD mặt sau trên R2 (chỉ trả về cho chính chủ đơn & Staff/Admin). |
 | `verificationStatus` | `string` | Trạng thái thẩm định: `"Pending"`, `"Verified"`, hoặc `"Rejected"`. |
 | `activeStatus` | `string` | Trạng thái hiển thị trên bản đồ: `"Hidden"`, `"Available"`, `"Busy"`, `"TemporarilyClosed"`. |
 | `rejectionReason` | `string?` | Lý do từ chối của Staff (nếu `verificationStatus == "Rejected"`). |
@@ -174,8 +193,18 @@
     "operatingHours": "07:30 - 18:30",
     "contactPhone": "0909123456",
     "description": "Chuyên thu mua nhựa PET, bìa carton, giấy báo và vỏ lon nhôm số lượng lớn tận nơi.",
+    "recyclerType": "Facility",
     "legalPermitUrl": "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/legal-permits/20261030_8f9a1b2c.pdf",
-    "businessPhotoUrl": "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_9d8e7f6a.jpg",
+    "businessPhotoUrl": "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_photo1.jpg",
+    "businessPhotoUrls": [
+      "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_photo1.jpg",
+      "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_photo2.jpg",
+      "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_photo3.jpg",
+      "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_photo4.jpg",
+      "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_photo5.jpg"
+    ],
+    "identityCardFrontUrl": null,
+    "identityCardBackUrl": null,
     "verificationStatus": "Pending",
     "activeStatus": "Hidden",
     "rejectionReason": null,
@@ -266,8 +295,14 @@ Authorization: Bearer <staff_or_admin_jwt_token>
         "operatingHours": "07:30 - 18:30",
         "contactPhone": "0909123456",
         "description": "Chuyên thu mua nhựa PET, bìa carton...",
+        "recyclerType": "Facility",
         "legalPermitUrl": "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/legal-permits/20261030_8f9a1b2c.pdf",
         "businessPhotoUrl": "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_9d8e7f6a.jpg",
+        "businessPhotoUrls": [
+          "https://pub-f15071b71f995ac69532cf5541f31737.r2.dev/recycler-kyb/facility-photos/20261030_9d8e7f6a.jpg"
+        ],
+        "identityCardFrontUrl": null,
+        "identityCardBackUrl": null,
         "verificationStatus": "Pending",
         "activeStatus": "Hidden",
         "rejectionReason": null,
@@ -300,7 +335,7 @@ Authorization: Bearer <staff_or_admin_jwt_token>
 
 ### 3.5. [Staff/Admin] Xem Chi tiết Một Hồ sơ theo `userId` (`GET /api/v1/recycler-applications/{userId:guid}`)
 
-* **Mô tả:** Cho phép `Staff` / `Admin` xem toàn bộ thông tin chi tiết, chứng từ pháp lý (`legalPermitUrl`), ảnh mặt tiền (`businessPhotoUrl`) và tọa độ GPS của một hồ sơ cụ thể để đối chiếu trước khi ra quyết định thẩm định.
+* **Mô tả:** Cho phép `Staff` / `Admin` xem toàn bộ thông tin chi tiết, phân loại đối tác (`recyclerType`), chứng từ pháp lý (`legalPermitUrl` với `Facility`), ảnh CCCD 2 mặt (`identityCardFrontUrl`, `identityCardBackUrl` với `Individual`), bộ 5 ảnh kho bãi (`businessPhotoUrls`) và tọa độ GPS của một hồ sơ cụ thể để đối chiếu trước khi ra quyết định thẩm định.
 * **Phân quyền:** `[Authorize(Roles = "Staff,Admin")]`
 
 #### a. Request Parameters

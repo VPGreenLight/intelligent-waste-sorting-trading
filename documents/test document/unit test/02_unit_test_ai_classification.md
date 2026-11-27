@@ -4,13 +4,13 @@
 
 | Code Module | `AI Waste Classification, Rule Engine & Platform Policy (YOLO26 Two-Stage, 10 Categories)` | | |
 | :--- | :---: | :---: | :---: |
-| **Number of TCs** | **32** | | |
+| **Number of TCs** | **34** | | |
 | **Testing Round** | **Passed** | **Failed** | **Pending** |
-| *Round 1* | 32 | 0 | 0 |
-| *Round 2* | 0 | 0 | 32 |
-| *Round 3* | 0 | 0 | 32 |
+| *Round 1* | 34 | 0 | 0 |
+| *Round 2* | 0 | 0 | 34 |
+| *Round 3* | 0 | 0 | 34 |
 | **Testing Type** | **Normal** | **Abnormal** | **Boundary** |
-| **Count** | **20** | **7** | **5** |
+| **Count** | **21** | **8** | **5** |
 
 ---
 
@@ -55,4 +55,6 @@
 | **UTC030** | InMemory DB sạch với `PlatformPolicyService` & `AuditLogService` (`adminId`) | `GetPublicPoliciesAsync("PRIVACY")`, `CreatePolicyAsync("TERMS", ...)`, `CreatePolicyAsync(Code="TERM-04")` trùng mã, `UpdatePolicyAsync(..., Status="DRAFT")`, ẩn/xóa mục `ACTIVE` cuối cùng, `DeletePolicyAsync(DRAFT)` | Tự seed `5` mục mặc định; lọc `PRIVACY` trả `"PRIV-01"`; tạo mới tự sinh `"TERM-04"`; trùng mã ném `ConflictException("BR-POL-02")`; ẩn/xóa mục `ACTIVE` cuối cùng ném `BusinessRuleException("BR-POL-03")`; xóa `DRAFT` thành công & ghi `AuditLog` `CREATE/DELETE_PLATFORM_POLICY` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Quản trị CRUD chính sách nền tảng & bảo vệ tối thiểu 1 mục `ACTIVE` |
 | **UTC031** | Mock `IAiVisionClient` trả `pipeline="yolo26_unified_two_stage"`, `model_used="yolo26_detect"`; `AiFeedbackService` sẵn sàng | `ClassifyWasteImageAsync(stream, "pet.png")` (model mặc định) & `RecordScanHistoryAsync(..., ModelUsed = null)` | `res.Success = true`, `res.ModelUsed = "yolo26_detect"`, HTTP body chứa `"yolo26_detect"`; bản ghi `AiScanHistories` lưu `ModelUsed = "yolo26_detect"` | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Khẳng định mô hình mặc định YOLO26 Two-Stage & fallback lưu lịch sử quét |
 | **UTC032** | `AiCategoryNormalizer`, `WasteRuleEngineService` & `RecyclerManagementService` trên InMemory DB | `NormalizeCode("white-glass"/"green-glass"/"brown-glass"/"battery"/"biological"/"clothes"/"shoes")`, `GetSortingGuideAsync("battery")`, `GetWasteCategoriesAsync()`, `GetAllWasteCategoriesAsync(true, true)` | 3 màu thủy tinh chuẩn hóa về `"glass"`, giữ nguyên `4` mã mới; `"battery"` có `HazardWarning` khác rỗng; `GetWasteCategoriesAsync()` chỉ trả `5` loại thu mua (`plastic, paper, glass, metal, cardboard`); `GetAllWasteCategoriesAsync()` trả đủ `10` danh mục gồm `5` loại không giao dịch (`battery, biological, clothes, shoes, trash`) | Normal | Passed | 2026-11-23 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Đồng bộ hợp đồng 10 danh mục YOLO26 & tách 5 nhóm thu mua vs 5 nhóm không tái chế |
+| **UTC033** | Có `WasteCategory` mã `"inactive_plastic"` mang `Status = "Inactive"` và `SortingRule` đang `Status = "DRAFT"` | `PublishSortingRuleAsync(adminId, rule.Id)` | Ném `BusinessRuleException` với `RuleCode = "BR-SRT-04"` và `MessageCode = "MSG-SRT-04"` | Abnormal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Chặn phát hành quy tắc cho danh mục đang ngừng sử dụng (`BR-SRT-04`) |
+| **UTC034** | Danh mục `"plastic"` đang `Active`; mock `IAiVisionClient.SyncCategoryRuleStatusAsync` | `ToggleWasteCategoryStatusAsync(adminId, plasticCat.Id, "Inactive")` rồi `"Active"` | Khi `Inactive`: `GetSortingGuideAsync("plastic") == null` & gọi sync `isActive = false`; khi `Active` lại: khôi phục hướng dẫn & sync `isActive = true` | Normal | Passed | 2026-11-27 | Hoàng Thắng Nguyễn | Pending | Pending | N/A | Đồng bộ trạng thái danh mục hai chiều với AI Service |
 

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Ecolink.Application.Common;
 using Ecolink.Application.Dtos;
 using Ecolink.Application.Events;
@@ -84,6 +85,20 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
         }
 
         var locationPoint = new Point(request.Longitude, request.Latitude) { SRID = 4326 };
+        var recyclerType = RecyclerKybPhotoHelper.ParseRecyclerType(request.RecyclerType);
+        var isIndividual = recyclerType == RecyclerType.Individual;
+        var (primaryPhoto, photosJson) = isIndividual
+            ? (null, null)
+            : RecyclerKybPhotoHelper.NormalizeFacilityPhotos(request.BusinessPhotoUrls, request.BusinessPhotoUrl);
+        var legalPermitUrl = isIndividual || string.IsNullOrWhiteSpace(request.LegalPermitUrl)
+            ? null
+            : request.LegalPermitUrl.Trim();
+        var idFrontUrl = isIndividual && !string.IsNullOrWhiteSpace(request.IdentityCardFrontUrl)
+            ? request.IdentityCardFrontUrl.Trim()
+            : null;
+        var idBackUrl = isIndividual && !string.IsNullOrWhiteSpace(request.IdentityCardBackUrl)
+            ? request.IdentityCardBackUrl.Trim()
+            : null;
 
         if (existingProfile == null)
         {
@@ -92,6 +107,7 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
             {
                 UserId = user.Id,
                 User = user,
+                RecyclerType = recyclerType,
                 FacilityName = request.FacilityName.Trim(),
                 RepresentativeName = request.RepresentativeName.Trim(),
                 BusinessAddress = request.BusinessAddress.Trim(),
@@ -101,8 +117,11 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                 OperatingHours = string.IsNullOrWhiteSpace(request.OperatingHours) ? "08:00 - 18:00" : request.OperatingHours.Trim(),
                 ContactPhone = request.ContactPhone.Trim(),
                 Description = request.Description?.Trim(),
-                LegalPermitUrl = request.LegalPermitUrl.Trim(),
-                BusinessPhotoUrl = request.BusinessPhotoUrl.Trim(),
+                LegalPermitUrl = legalPermitUrl,
+                BusinessPhotoUrl = primaryPhoto,
+                BusinessPhotoUrlsJson = photosJson,
+                IdentityCardFrontUrl = idFrontUrl,
+                IdentityCardBackUrl = idBackUrl,
                 VerificationStatus = VerificationStatus.Pending,
                 ActiveStatus = RecyclerActiveStatus.Offline,
                 RejectionReason = null,
@@ -113,6 +132,7 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
         else
         {
             // Nộp lại sau khi bị Rejected (Tuân thủ BR-MTH-02)
+            existingProfile.RecyclerType = recyclerType;
             existingProfile.FacilityName = request.FacilityName.Trim();
             existingProfile.RepresentativeName = request.RepresentativeName.Trim();
             existingProfile.BusinessAddress = request.BusinessAddress.Trim();
@@ -122,8 +142,11 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
             existingProfile.OperatingHours = string.IsNullOrWhiteSpace(request.OperatingHours) ? "08:00 - 18:00" : request.OperatingHours.Trim();
             existingProfile.ContactPhone = request.ContactPhone.Trim();
             existingProfile.Description = request.Description?.Trim();
-            existingProfile.LegalPermitUrl = request.LegalPermitUrl.Trim();
-            existingProfile.BusinessPhotoUrl = request.BusinessPhotoUrl.Trim();
+            existingProfile.LegalPermitUrl = legalPermitUrl;
+            existingProfile.BusinessPhotoUrl = primaryPhoto;
+            existingProfile.BusinessPhotoUrlsJson = photosJson;
+            existingProfile.IdentityCardFrontUrl = idFrontUrl;
+            existingProfile.IdentityCardBackUrl = idBackUrl;
             existingProfile.VerificationStatus = VerificationStatus.Pending;
             existingProfile.RejectionReason = null;
             existingProfile.UpdatedAt = DateTime.UtcNow;
@@ -389,6 +412,7 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                 Guid UserId,
                 string Username,
                 string Email,
+                RecyclerType Type,
                 string FacilityName,
                 string RepresentativeName,
                 string Address,
@@ -396,14 +420,17 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                 decimal Lng,
                 string Phone,
                 string Description,
-                string PermitUrl,
-                string PhotoUrl
+                string? PermitUrl,
+                string[] PhotoUrls,
+                string? IdFrontUrl,
+                string? IdBackUrl
             )[]
             {
                 (
                     Guid.Parse("99999999-3333-4444-8888-333333333333"),
                     "applicant_hoalacxanh",
                     "hoalacxanh@thugom.vn",
+                    RecyclerType.Facility,
                     "Vựa Phế Liệu Hòa Lạc Xanh",
                     "Lê Văn Hòa",
                     "Thôn 2, Xã Thạch Hòa (Cạnh Khu CNC Hòa Lạc), Huyện Thạch Thất, Hà Nội",
@@ -412,12 +439,22 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                     "0962889911",
                     "Thu mua: Nhựa, Giấy và bìa carton, Kim loại, Thủy tinh",
                     "https://mock-r2.ecolink.vn/recycler-kyb/legal-permits/giay-dkkd-hoa-lac-xanh.pdf",
-                    "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/kho-bai-hoa-lac-xanh.jpg"
+                    new[]
+                    {
+                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/hoa-lac-xanh-1-mat-tien.jpg",
+                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/hoa-lac-xanh-2-khu-can.jpg",
+                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/hoa-lac-xanh-3-kho-nhua.jpg",
+                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/hoa-lac-xanh-4-kho-giay.jpg",
+                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/hoa-lac-xanh-5-san-boc-xep.jpg"
+                    },
+                    null,
+                    null
                 ),
                 (
                     Guid.Parse("99999999-1111-4444-8888-111111111111"),
                     "applicant_minhkhai",
                     "minhkhai@thugom.vn",
+                    RecyclerType.Facility,
                     "Vựa Minh Khai Hòa Lạc",
                     "Trần Minh Khai",
                     "Thôn 4, Xã Thạch Hòa, Huyện Thạch Thất, Hà Nội",
@@ -426,21 +463,33 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                     "0908112233",
                     "Thu mua: Kim loại, Nhựa, Giấy và bìa carton",
                     "https://mock-r2.ecolink.vn/recycler-kyb/legal-permits/giay-dkdn-minh-khai.pdf",
-                    "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/kho-bai-minh-khai.jpg"
+                    new[]
+                    {
+                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/minh-khai-1-mat-tien.jpg",
+                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/minh-khai-2-ban-can.jpg",
+                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/minh-khai-3-kho-kim-loai.jpg",
+                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/minh-khai-4-kho-carton.jpg",
+                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/minh-khai-5-cong-vao.jpg"
+                    },
+                    null,
+                    null
                 ),
                 (
                     Guid.Parse("99999999-2222-4444-8888-222222222222"),
                     "applicant_anhtuan",
                     "tuan.thugom@ecolink.vn",
-                    "Anh Tuấn - Thu gom Quốc Oai",
+                    RecyclerType.Individual,
+                    "Anh Tuấn - Thu gom lưu động Quốc Oai",
                     "Đỗ Anh Tuấn",
-                    "Khu Tân Phú, Xã Phú Cát, Huyện Quốc Oai, Hà Nội",
+                    "Khu vực Tân Phú - Xã Phú Cát, Huyện Quốc Oai, Hà Nội",
                     20.9964m,
                     105.5418m,
                     "0903445566",
                     "Thu mua: Nhựa, Giấy và bìa carton, Thủy tinh",
-                    "https://mock-r2.ecolink.vn/recycler-kyb/legal-permits/giay-dkkd-anh-tuan.pdf",
-                    "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/mat-tien-anh-tuan.jpg"
+                    null,
+                    Array.Empty<string>(),
+                    "https://mock-r2.ecolink.vn/recycler-kyb/identity-cards/cccd-front-anh-tuan.jpg",
+                    "https://mock-r2.ecolink.vn/recycler-kyb/identity-cards/cccd-back-anh-tuan.jpg"
                 )
             };
 
@@ -454,6 +503,10 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                     .AnyAsync(u => u.Id == s.UserId || u.Username == s.Username, ct);
 
                 if (exists) continue;
+
+                var (primaryPhoto, photosJson) = s.Type == RecyclerType.Facility
+                    ? RecyclerKybPhotoHelper.NormalizeFacilityPhotos(s.PhotoUrls, null)
+                    : (null, null);
 
                 hash ??= BCrypt.Net.BCrypt.HashPassword("citizen123");
                 var user = new User
@@ -469,6 +522,7 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                     RecyclerProfile = new RecyclerProfile
                     {
                         UserId = s.UserId,
+                        RecyclerType = s.Type,
                         FacilityName = s.FacilityName,
                         RepresentativeName = s.RepresentativeName,
                         BusinessAddress = s.Address,
@@ -479,7 +533,10 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                         ContactPhone = s.Phone,
                         Description = s.Description,
                         LegalPermitUrl = s.PermitUrl,
-                        BusinessPhotoUrl = s.PhotoUrl,
+                        BusinessPhotoUrl = primaryPhoto,
+                        BusinessPhotoUrlsJson = photosJson,
+                        IdentityCardFrontUrl = s.IdFrontUrl,
+                        IdentityCardBackUrl = s.IdBackUrl,
                         VerificationStatus = VerificationStatus.Pending,
                         ActiveStatus = RecyclerActiveStatus.Offline
                     }
@@ -552,8 +609,12 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
             OperatingHours = profile.OperatingHours,
             ContactPhone = profile.ContactPhone,
             Description = profile.Description,
+            RecyclerType = profile.RecyclerType.ToString(),
             LegalPermitUrl = profile.LegalPermitUrl,
             BusinessPhotoUrl = profile.BusinessPhotoUrl,
+            IdentityCardFrontUrl = profile.IdentityCardFrontUrl,
+            IdentityCardBackUrl = profile.IdentityCardBackUrl,
+            BusinessPhotoUrls = RecyclerKybPhotoHelper.ParsePhotoUrls(profile.BusinessPhotoUrlsJson, profile.BusinessPhotoUrl),
             VerificationStatus = profile.VerificationStatus.ToString(),
             ActiveStatus = profile.ActiveStatus.ToString(),
             RejectionReason = profile.RejectionReason,
@@ -561,4 +622,57 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
             ReviewedAt = profile.UpdatedAt,
             ReviewedBy = profile.UpdatedBy
         };
+}
+
+internal static class RecyclerKybPhotoHelper
+{
+    private static readonly JsonSerializerOptions JsonOpts = new(JsonSerializerDefaults.Web);
+
+    public static RecyclerType ParseRecyclerType(string? raw) =>
+        string.Equals(raw?.Trim(), nameof(RecyclerType.Individual), StringComparison.OrdinalIgnoreCase)
+            ? RecyclerType.Individual
+            : RecyclerType.Facility;
+
+    public static (string? PrimaryPhoto, string? PhotosJson) NormalizeFacilityPhotos(
+        IReadOnlyList<string>? photoUrls,
+        string? fallbackSingleUrl)
+    {
+        var list = (photoUrls ?? Array.Empty<string>())
+            .Where(u => !string.IsNullOrWhiteSpace(u))
+            .Select(u => u.Trim())
+            .ToList();
+
+        if (list.Count == 0 && !string.IsNullOrWhiteSpace(fallbackSingleUrl))
+        {
+            list.Add(fallbackSingleUrl.Trim());
+        }
+
+        return list.Count == 0
+            ? (null, null)
+            : (list[0], JsonSerializer.Serialize(list, JsonOpts));
+    }
+
+    public static List<string> ParsePhotoUrls(string? json, string? primaryUrl)
+    {
+        if (!string.IsNullOrWhiteSpace(json))
+        {
+            try
+            {
+                var parsed = JsonSerializer.Deserialize<List<string>>(json, JsonOpts);
+                var cleaned = parsed?.Where(u => !string.IsNullOrWhiteSpace(u)).Select(u => u.Trim()).ToList();
+                if (cleaned is { Count: > 0 })
+                {
+                    return cleaned;
+                }
+            }
+            catch
+            {
+                // Fallback sang primaryUrl nếu JSON cũ không hợp lệ
+            }
+        }
+
+        return string.IsNullOrWhiteSpace(primaryUrl)
+            ? new List<string>()
+            : new List<string> { primaryUrl.Trim() };
+    }
 }

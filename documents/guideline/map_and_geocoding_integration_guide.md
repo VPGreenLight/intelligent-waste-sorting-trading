@@ -54,8 +54,8 @@ Hệ thống bản đồ tra cứu của EcoLink gồm **3 lớp tách rời**, 
 │                          TRANG BẢN ĐỒ ECOLINK (/map)                           │
 ├────────────────────────┬───────────────────────────┬───────────────────────────┤
 │ 1. Map Renderer        │ 2. Map Tiles (Ảnh nền)    │ 3. Tìm kiếm Địa điểm      │
-│ Vẽ khung bản đồ, vòng  │ Tải các mảnh ảnh đường    │ • Khi đang gõ: Lọc tức thì│
-│ bán kính bảo mật & các │ phố, phường/xã theo mức   │   từ LOCATION_PRESETS     │
+│ Vẽ khung bản đồ, vùng  │ Tải các mảnh ảnh đường    │ • Khi đang gõ: Lọc tức thì│
+│ bán kính tìm kiếm &    │ phố, phường/xã theo mức   │   từ LOCATION_PRESETS     │
 │ ghim cơ sở thu gom.    │ phóng to (zoom/pan).      │ • Khi bấm Enter: Tìm địa  │
 │                        │                           │   danh rộng qua Nominatim │
 ├────────────────────────┼───────────────────────────┼───────────────────────────┤
@@ -67,7 +67,7 @@ Hệ thống bản đồ tra cứu của EcoLink gồm **3 lớp tách rời**, 
 └────────────────────────┴───────────────────────────┴───────────────────────────┘
                                        │
           ┌────────────────────────────┴────────────────────────────┐
-          ▼ (Khi bấm Enter tìm địa danh)                            ▼ (Tọa độ đã làm mờ lưới ~500m cho cả GPS & Click-to-Pin)
+          ▼ (Khi bấm Enter tìm địa danh)                            ▼ (Tọa độ GPS / Click-to-Pin thực tế, chỉ xử lý trên RAM theo BR-MTH-05)
 ┌───────────────────────────────────────────┐   ┌────────────────────────────────────────────────┐
 │ BACKEND PROXY: /api/v1/geocoding/search   │   │ BACKEND MATCHING: /api/v1/recyclers/nearby     │
 │ • Gắn User-Agent chuẩn + Giấu API Key     │   │ • Tính khoảng cách Haversine trên RAM          │
@@ -276,53 +276,21 @@ Khi đóng gói bằng Vite, icon PNG mặc định của Leaflet hay gặp lỗ
 
 ---
 
-## 7. THIẾT KẾ BẢO MẬT VỊ TRÍ NGƯỜI DÂN 4 LỚP (PRIVACY-BY-DESIGN THEO `BR-MTH-05`)
+## 7. THIẾT KẾ BẢO MẬT VỊ TRÍ NGƯỜI DÂN 3 LỚP (PRIVACY-BY-DESIGN THEO `BR-MTH-05` & `BR-HND-08`)
 
-Để đảm bảo người dùng yên tâm tra cứu mà không lo lộ địa chỉ nhà riêng:
+*(Cập nhật 27/11/2026: Hệ thống đã gỡ bỏ cơ chế làm mờ tọa độ lưới ở phía client để bảo đảm độ chính xác tuyệt đối khi tính khoảng cách PostGIS / Haversine cho người dân và vựa thu mua, đồng thời duy trì 3 lớp bảo vệ quyền riêng tư dưới đây).*
 
 ### Lớp 1: Mặc định Không tự xin quyền GPS (Zero-Permission Startup)
-* Khi mở trang `/map`, bản đồ khởi tạo ở tâm khu vực mặc định (ví dụ trung tâm Quận 1 hoặc khu vực người dùng chọn từ `LOCATION_PRESETS`), **không tự bật hộp thoại xin quyền GPS của trình duyệt**.
-* Ô tìm kiếm hướng dẫn rõ: *"Nhập Phường, Quận, Chợ hoặc Ngã tư gần bạn (không cần nhập số nhà)"*.
+* Khi mở trang `/map`, bản đồ khởi tạo ở tâm khu vực mặc định (ví dụ Khu CNC Hòa Lạc hoặc khu vực người dùng chọn từ `LOCATION_PRESETS`), **không tự bật hộp thoại xin quyền GPS của trình duyệt**.
+* Người dùng chủ động chọn khu vực từ `LOCATION_PRESETS`, bấm nút **Định vị GPS hiện tại**, hoặc chấm tâm tìm kiếm trực tiếp lên bản đồ (`Click-to-Pin` với tọa độ thực tế `resolveSearchCoordinates` giữ nguyên 5 chữ số thập phân).
 
-### Lớp 2: Chấm tâm tra cứu ảo trên bản đồ (`Click-to-Pin`) — Đồng bộ cơ chế làm mờ
-* Người dùng có thể bấm trực tiếp lên bản đồ (`map.on("click", ...)`) tại một ngã tư, chợ hoặc công viên gần khu vực sinh sống để đặt tâm quét bán kính.
-* **Quy tắc bảo mật nhất quán:** Ngay cả khi người dùng bấm chọn điểm trên bản đồ (`Click-to-Pin`) mà lỡ bấm sát vị trí nhà mình, nếu công tắc **🔒 Ẩn vị trí chính xác (~500m)** đang bật, tọa độ điểm click cũng **bắt buộc đi qua cùng hàm làm mờ lưới `~500m`** trước khi gửi lên Backend (không gửi tọa độ thô `e.latlng` nguyên vẹn).
+### Lớp 2: Tọa độ Tra cứu Xử lý Tạm trên RAM — Không lưu & Không lộ cho Recycler (`BR-MTH-05`)
+* Khi tra cứu (`/map`), tọa độ `(lat, lng)` của người dân chỉ được sử dụng tạm thời trên RAM để tính khoảng cách Haversine `distanceKm` và sắp xếp kết quả trả về.
+* Hệ thống **tuyệt đối không lưu tọa độ tìm kiếm của công dân vào bảng `users`** và **không hiển thị tọa độ cá nhân này cho phía cơ sở thu gom (`Recycler`)**.
 
-### Lớp 3: Thuật toán Làm mờ tọa độ sang ô lưới `0.005°` (~500m) cho cả GPS & Click-to-Pin
-Công tắc **🔒 Ẩn vị trí chính xác (~500m)** được bật mặc định (`privacyMode = true`). Mọi tọa độ đầu vào nhạy cảm (từ nút **GPS hiện tại** hoặc thao tác **Click-to-Pin**) đều được chuẩn hóa qua hàm `resolveSearchCoordinates` ngay trên trình duyệt **trước khi gọi API**:
-
-```ts
-/**
- * Chuẩn hóa tọa độ tra cứu theo chế độ bảo mật vị trí (BR-MTH-05).
- * Khi privacyMode = true, làm tròn tọa độ sang tâm ô lưới 0.005 độ (~550m tại Việt Nam)
- * áp dụng thống nhất cho cả định vị GPS lẫn thao tác Click-to-Pin trên bản đồ.
- */
-export function resolveSearchCoordinates(
-  rawLat: number,
-  rawLng: number,
-  privacyMode: boolean = true,
-  gridStepDeg: number = 0.005, // ~550m tại vĩ độ Việt Nam
-): { lat: number; lng: number } {
-  if (!privacyMode) {
-    return {
-      lat: Number(rawLat.toFixed(5)),
-      lng: Number(rawLng.toFixed(5)),
-    }
-  }
-
-  const fuzzedLat = Math.round(rawLat / gridStepDeg) * gridStepDeg
-  const fuzzedLng = Math.round(rawLng / gridStepDeg) * gridStepDeg
-  return {
-    lat: Number(fuzzedLat.toFixed(4)),
-    lng: Number(fuzzedLng.toFixed(4)),
-  }
-}
-```
-* **Phản hồi thị giác rõ ràng:** Khi `privacyMode = true`, thay vì cắm ghim nhọn chỉ đích danh một điểm, bản đồ hiển thị **vòng tròn vùng lân cận bán kính `~500m`** kèm nhãn trạng thái *"Đang làm mờ vị trí chính xác (~500m)"*.
-
-### Lớp 4: Tách bạch hoàn toàn bước Tra cứu và bước Đặt lịch hẹn (`BR-MTH-05`)
-* **Khi tra cứu (`/map`) & nhắn tin thương lượng (`/chat`):** Tọa độ đã làm mờ chỉ dùng tạm thời trên RAM để tính khoảng cách Haversine `distanceKm`, không ghi lưu vào bảng hồ sơ người dùng và không tiết lộ cho cơ sở thu gom (`Recycler`).
-* **Khi chốt bàn giao (`/user/handover`):** Chỉ khi người dân đồng ý mức giá, tự tay nhập điểm hẹn thu gom (có thể chọn đầu ngõ, sảnh chung cư hoặc điểm công cộng) và đối tác xác nhận đơn thì địa chỉ điểm hẹn đó mới được hiển thị cho bên thu gom.
+### Lớp 3: Tách bạch bước Tra cứu, Đặt lịch hẹn (`BR-HND-08`) & Bảo mật PII KYB
+* **Khi chốt bàn giao (`/user/handover`):** Địa chỉ thu gom và số điện thoại liên hệ của người dân trong yêu cầu bàn giao bị **che mờ** (`IsContactRevealed = false`) cho tới khi `Recycler` chính thức bấm **Chấp nhận (`Accepted`)** (`BR-HND-08`).
+* **Phía đối tác thu gom nhỏ lẻ (`Individual`):** Ảnh CCCD 2 mặt (`identityCardFrontUrl`, `identityCardBackUrl`) chỉ phục vụ `Staff` hậu kiểm nội bộ, **không bao giờ trả về qua API bản đồ công khai `/api/v1/recyclers/*`**. Chỉ hiển thị khu vực ghim hoạt động và huy hiệu *"Thu mua lưu động"*.
 
 ---
 

@@ -14,9 +14,9 @@ sequenceDiagram
     DB-->>-Svc: 5. Return Paged List of RecyclerProfiles
     Svc-->>-Ctrl: 6. Return PagedResult<RecyclerApplicationDetailDto>
     Ctrl-->>-UI: 7. 200 OK: ApiResponse<PagedResult>
-    UI-->>-Staff: 8. Hien thi danh sach ho so & anh Giay phep kinh doanh / Toa do GPS
+    UI-->>-Staff: 8. Hien thi danh sach ho so, loai hinh (Facility/Individual), chung tu (GPKD + 5 anh kho / CCCD 2 mat) & GPS
 
-    Staff->>+UI: 9. Kiem tra chung tu & Bam 'Phe duyet (Approve)' hoac 'Tu choi (Reject)'
+    Staff->>+UI: 9. Kiem tra chung tu theo phan nhom KYB & Bam 'Phe duyet (Approve)' hoac 'Tu choi (Reject)'
     UI->>+Ctrl: 10. PUT /api/v1/recycler-applications/{userId}/verification (VerifyRecyclerApplicationRequest)
     Ctrl->>+Svc: 11. VerifyApplicationAsync(staffUserId, targetUserId, request, ct)
     Svc->>+DB: 12. SELECT * FROM recycler_profiles JOIN users WHERE user_id = @targetUserId

@@ -13,6 +13,8 @@ public class CollectionPartnerDto
     public string OperatingHours { get; set; } = string.Empty;
     public string? Description { get; set; }
     public string? BusinessPhotoUrl { get; set; }
+    public string RecyclerType { get; set; } = "Facility";
+    public List<string> BusinessPhotoUrls { get; set; } = new();
     public bool HasVerifiedBadge { get; set; }
     public bool IsFeatured { get; set; }
     public decimal AverageRating { get; set; }

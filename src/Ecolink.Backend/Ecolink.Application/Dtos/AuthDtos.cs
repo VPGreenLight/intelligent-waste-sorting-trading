@@ -83,6 +83,10 @@ public class RegisterRecyclerRequestDto
     public string? Description { get; set; }
     public string? LegalPermitUrl { get; set; }
     public string? BusinessPhotoUrl { get; set; }
+    public string RecyclerType { get; set; } = "Facility";
+    public string? IdentityCardFrontUrl { get; set; }
+    public string? IdentityCardBackUrl { get; set; }
+    public List<string>? BusinessPhotoUrls { get; set; }
 }
 
 /// <summary>

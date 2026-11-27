@@ -34,11 +34,36 @@ public class ApplyRecyclerUpgradeValidator : AbstractValidator<ApplyRecyclerUpgr
             .NotEmpty().WithMessage("Số điện thoại liên hệ thu gom không được để trống.")
             .Matches(@"^(0|\+84)[0-9]{8,10}$").WithMessage("Số điện thoại liên hệ không đúng định dạng Việt Nam.");
 
+        RuleFor(x => x.RecyclerType)
+            .Must(t => string.IsNullOrWhiteSpace(t) ||
+                       t.Equals("Facility", StringComparison.OrdinalIgnoreCase) ||
+                       t.Equals("Individual", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Loại hình đối tác chỉ hỗ trợ 'Facility' (Cơ sở cố định) hoặc 'Individual' (Thu mua nhỏ lẻ).");
+
+        RuleFor(x => x.IdentityCardFrontUrl)
+            .NotEmpty()
+            .When(x => string.Equals(x.RecyclerType, "Individual", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Người thu mua nhỏ lẻ bắt buộc đính kèm ảnh mặt trước Căn cước công dân (CCCD).");
+
+        RuleFor(x => x.IdentityCardBackUrl)
+            .NotEmpty()
+            .When(x => string.Equals(x.RecyclerType, "Individual", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Người thu mua nhỏ lẻ bắt buộc đính kèm ảnh mặt sau Căn cước công dân (CCCD).");
+
         RuleFor(x => x.LegalPermitUrl)
-            .NotEmpty().WithMessage("Vui lòng đính kèm đường dẫn hình ảnh Giấy phép kinh doanh / Chứng từ pháp lý.");
+            .NotEmpty()
+            .When(x => !string.Equals(x.RecyclerType, "Individual", StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Vui lòng đính kèm đường dẫn hình ảnh Giấy phép kinh doanh / Chứng từ pháp lý.");
 
         RuleFor(x => x.BusinessPhotoUrl)
-            .NotEmpty().WithMessage("Vui lòng đính kèm đường dẫn hình ảnh chụp thực tế mặt tiền cơ sở / kho bãi.");
+            .NotEmpty()
+            .When(x => !string.Equals(x.RecyclerType, "Individual", StringComparison.OrdinalIgnoreCase) && x.BusinessPhotoUrls == null)
+            .WithMessage("Vui lòng đính kèm đường dẫn hình ảnh chụp thực tế mặt tiền cơ sở / kho bãi.");
+
+        RuleFor(x => x.BusinessPhotoUrls)
+            .Must(list => list != null && list.Count == 5 && list.All(u => !string.IsNullOrWhiteSpace(u)))
+            .When(x => !string.Equals(x.RecyclerType, "Individual", StringComparison.OrdinalIgnoreCase) && x.BusinessPhotoUrls != null)
+            .WithMessage("Cơ sở thu mua cố định bắt buộc đính kèm đúng đủ 5 ảnh thực tế mặt tiền / kho bãi (5/5 ảnh).");
     }
 }
 

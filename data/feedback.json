@@ -7,6 +7,376 @@
     "note": "Automated test: AI misclassified the item",
     "image_url": "https://example.com/test.jpg",
     "status": "pending_verification",
+    "created_at": "2026-11-27 00:09:08"
+  },
+  {
+    "id": 201,
+    "predicted_label": "unknown",
+    "user_reported_label": "paper",
+    "confidence_score": 0.0,
+    "note": "",
+    "image_url": "local://unlinked-feedback",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:09:06"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "cardboard",
+    "confidence_score": 0.5275,
+    "note": "Automated test: classify then feedback flow",
+    "image_url": "local://unlinked-feedback",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:09:05"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "metal",
+    "confidence_score": 0.7086,
+    "note": "Auto seed verified sample for metal",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/e0a2c5b30873453bbbb504f34ac85c2f.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:44"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "metal",
+    "confidence_score": 0.8363,
+    "note": "Auto seed verified sample for metal",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/4f101fc842c74f0980c54b5e44641f3e.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:42"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "metal",
+    "confidence_score": 0.3201,
+    "note": "Auto seed verified sample for metal",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/7951a7f3e1a346088f07088913e3f76a.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:41"
+  },
+  {
+    "id": 201,
+    "predicted_label": "plastic",
+    "user_reported_label": "metal",
+    "confidence_score": 0.2326,
+    "note": "Auto seed verified sample for metal",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/1b128666d56b4700a7c81da87f10ade5.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:40"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "paper",
+    "confidence_score": 0.251,
+    "note": "Auto seed verified sample for paper",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/c31d9a527b6544e68a075164d86dc9dd.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:39"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "paper",
+    "confidence_score": 0.2295,
+    "note": "Auto seed verified sample for paper",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/ccde2db6c838426e9cdbac06e8c67e5a.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:37"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "paper",
+    "confidence_score": 0.8095,
+    "note": "Auto seed verified sample for paper",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/864e20fae14b4f3f9bfdb1a80d83b226.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:36"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "paper",
+    "confidence_score": 0.2317,
+    "note": "Auto seed verified sample for paper",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/4b41264edd374fce89333eb2b97b827e.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:35"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.2132,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/bd2bf68290b341b48a2a41df21edd47f.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:34"
+  },
+  {
+    "id": 201,
+    "predicted_label": "plastic",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.2362,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/e155429cab294edb8d6c20e4363ff62d.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:32"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.4326,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/0144a29f508b4c0688ea36f1a8914b40.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:31"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.6832,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/9dc2de030c384e94a99d4a3b422ed73b.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:30"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "paper",
+    "confidence_score": 0.5877,
+    "note": "Túi giấy kraft bị nhầm thành carton",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/6429d8f1b17244ddab886454c954b5a4.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:28"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "glass",
+    "confidence_score": 0.2206,
+    "note": "Auto seed verified sample for glass",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/ac0f5c246d83416f88e02f0aed1af3f5.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:26"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.2655,
+    "note": "Chai nhựa bị lóa sáng nên nhận diện sai",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/6fd6f1e6006f44de825db73174263815.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:24"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "metal",
+    "confidence_score": 0.2303,
+    "note": "Báo cáo riêng của Citizen A",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/4c706f83908341d9b6cbb5368806eb24.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:20"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "cardboard",
+    "confidence_score": 0.4456,
+    "note": "",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/2915a83b7baa45a2acc431986402995e.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:19"
+  },
+  {
+    "id": 201,
+    "predicted_label": "plastic",
+    "user_reported_label": "cardboard",
+    "confidence_score": 0.2834,
+    "note": "",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/22b9e0b1c7fa47ab8d9baf4f68fdfda9.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:17"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "cardboard",
+    "confidence_score": 0.4405,
+    "note": "",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/c7d568dc15ef4047b290b896a45883d0.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:16"
+  },
+  {
+    "id": 201,
+    "predicted_label": "paper",
+    "user_reported_label": "paper",
+    "confidence_score": 0.3652,
+    "note": "Báo cáo lần 1",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/b91a57e52f7641cba2d75ddd04101d09.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:15"
+  },
+  {
+    "id": 201,
+    "predicted_label": "glass",
+    "user_reported_label": "metal",
+    "confidence_score": 0.2331,
+    "note": "Lon thiếc cần vẽ bbox",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/3caf4a1df8d144fba3f085a72a34ed02.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:13"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.6344,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/41f862806ffd4cbabf8797976c47509f.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:11"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.6808,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/647e4fe845224e4c84d598e7cc41841a.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:10"
+  },
+  {
+    "id": 201,
+    "predicted_label": "battery",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.5638,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/b33289c8a7404d898faa61772c6954e7.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:09"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.1947,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/5c2c9e4bbe6440cc965ba53c70393fb6.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:07"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.2696,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/bd58602ce1024d208edb145092dfd3ff.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:06"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.7086,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/e3c4bc4483194ad39b081814091743f6.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:05"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.3406,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/a2bc48389fd645729e12f58e543ba867.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:03"
+  },
+  {
+    "id": 201,
+    "predicted_label": "paper",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.2737,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/6f5a6a94f4594d979d990caf3b18320d.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:02"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.269,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/a81e74005b784cecbbb9e748dba151a9.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:07:01"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.294,
+    "note": "Auto seed verified sample for plastic",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/ed12f62bb1484e9e8e74401e8dd23240.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:06:59"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "paper",
+    "confidence_score": 0.3216,
+    "note": "Auto seed verified sample for paper",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/0f766376caf04caaa14d94f096ed5534.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:06:58"
+  },
+  {
+    "id": 201,
+    "predicted_label": "battery",
+    "user_reported_label": "plastic",
+    "confidence_score": 0.6528,
+    "note": "Thử gửi ảnh mờ",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/897a80b31aa244219145fd2b9c127e73.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:06:56"
+  },
+  {
+    "id": 201,
+    "predicted_label": "cardboard",
+    "user_reported_label": "metal",
+    "confidence_score": 0.311,
+    "note": "Auto seed verified sample for metal",
+    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/cc8e725b9f3846db987a513d487ed393.png",
+    "status": "pending_verification",
+    "created_at": "2026-11-27 00:06:54"
+  },
+  {
+    "id": 201,
+    "predicted_label": "plastic",
+    "user_reported_label": "glass",
+    "confidence_score": 0.72,
+    "note": "Automated test: AI misclassified the item",
+    "image_url": "https://example.com/test.jpg",
+    "status": "pending_verification",
     "created_at": "2026-11-25 11:32:48"
   },
   {
@@ -1628,375 +1998,5 @@
     "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/1b3779ab7f9a4882a6a12ca63f03d44f.png",
     "status": "pending_verification",
     "created_at": "2026-11-24 19:17:52"
-  },
-  {
-    "id": 186,
-    "predicted_label": "cardboard",
-    "user_reported_label": "metal",
-    "confidence_score": 0.2303,
-    "note": "Báo cáo riêng của Citizen A",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/7d1d533f3b26495eb086d2948cbc40a8.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:48"
-  },
-  {
-    "id": 185,
-    "predicted_label": "cardboard",
-    "user_reported_label": "cardboard",
-    "confidence_score": 0.4456,
-    "note": "",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/87fb649a6da2462682789e77f1036169.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:46"
-  },
-  {
-    "id": 184,
-    "predicted_label": "plastic",
-    "user_reported_label": "cardboard",
-    "confidence_score": 0.2834,
-    "note": "",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/bab14dea4e014a0d8e66e78a8be67dfc.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:45"
-  },
-  {
-    "id": 183,
-    "predicted_label": "cardboard",
-    "user_reported_label": "cardboard",
-    "confidence_score": 0.4405,
-    "note": "",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/5e7bba9b61b14a2f82672be2e52748d0.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:44"
-  },
-  {
-    "id": 182,
-    "predicted_label": "paper",
-    "user_reported_label": "paper",
-    "confidence_score": 0.3652,
-    "note": "Báo cáo lần 1",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/d37e710342da4558a054ef9d30e20a89.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:42"
-  },
-  {
-    "id": 181,
-    "predicted_label": "glass",
-    "user_reported_label": "metal",
-    "confidence_score": 0.2331,
-    "note": "Lon thiếc cần vẽ bbox",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/2fefdf723b1f474aa53c7456ed0b96bf.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:41"
-  },
-  {
-    "id": 180,
-    "predicted_label": "cardboard",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.6344,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/58374a520c70409c915271672cfa2338.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:39"
-  },
-  {
-    "id": 179,
-    "predicted_label": "cardboard",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.6808,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/b212ee2728a447c6aefaec09151ec25f.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:38"
-  },
-  {
-    "id": 178,
-    "predicted_label": "battery",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.5638,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/07c8f54dd06148758ab04cd522fa8291.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:36"
-  },
-  {
-    "id": 177,
-    "predicted_label": "cardboard",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.1947,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/cf9da79bb92f4e08869a0e6970e79dae.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:35"
-  },
-  {
-    "id": 176,
-    "predicted_label": "cardboard",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.2696,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/42edbf87a065416e8a520b2c9af04078.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:34"
-  },
-  {
-    "id": 175,
-    "predicted_label": "cardboard",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.7086,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/f39617ce3225443ea560af246211b901.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:32"
-  },
-  {
-    "id": 174,
-    "predicted_label": "cardboard",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.3406,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/ff2f68586af64632b4185c035e552b59.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:30"
-  },
-  {
-    "id": 173,
-    "predicted_label": "paper",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.2737,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/ce60f6b805164724a68395edb43f86d5.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:28"
-  },
-  {
-    "id": 172,
-    "predicted_label": "cardboard",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.269,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/02b3a833122e45249053f1e0f7017e2a.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:27"
-  },
-  {
-    "id": 171,
-    "predicted_label": "cardboard",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.294,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/035a9e37334e4d29bb4dc2e5beb1808c.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:26"
-  },
-  {
-    "id": 170,
-    "predicted_label": "cardboard",
-    "user_reported_label": "paper",
-    "confidence_score": 0.3216,
-    "note": "Auto seed verified sample for paper",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/151fffb490f6460eb5566a3be326e892.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:24"
-  },
-  {
-    "id": 169,
-    "predicted_label": "battery",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.6528,
-    "note": "Thử gửi ảnh mờ",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/85862330747b4baeb71204713c302c3a.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:23"
-  },
-  {
-    "id": 168,
-    "predicted_label": "cardboard",
-    "user_reported_label": "metal",
-    "confidence_score": 0.311,
-    "note": "Auto seed verified sample for metal",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/e02e7ae7c42d42d197800e4217a99298.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:17:21"
-  },
-  {
-    "id": 167,
-    "predicted_label": "plastic",
-    "user_reported_label": "glass",
-    "confidence_score": 0.72,
-    "note": "Automated test: AI misclassified the item",
-    "image_url": "https://example.com/test.jpg",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:16:12"
-  },
-  {
-    "id": 166,
-    "predicted_label": "unknown",
-    "user_reported_label": "paper",
-    "confidence_score": 0.0,
-    "note": "",
-    "image_url": "local://unlinked-feedback",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:16:11"
-  },
-  {
-    "id": 165,
-    "predicted_label": "cardboard",
-    "user_reported_label": "cardboard",
-    "confidence_score": 0.5275,
-    "note": "Automated test: classify then feedback flow",
-    "image_url": "local://unlinked-feedback",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:16:09"
-  },
-  {
-    "id": 164,
-    "predicted_label": "cardboard",
-    "user_reported_label": "metal",
-    "confidence_score": 0.7086,
-    "note": "Auto seed verified sample for metal",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/43b4b3fa14dd4748af38104e022179d1.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:53"
-  },
-  {
-    "id": 163,
-    "predicted_label": "cardboard",
-    "user_reported_label": "metal",
-    "confidence_score": 0.8363,
-    "note": "Auto seed verified sample for metal",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/44b1009e25214defbdcda188549d4106.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:52"
-  },
-  {
-    "id": 162,
-    "predicted_label": "cardboard",
-    "user_reported_label": "metal",
-    "confidence_score": 0.3201,
-    "note": "Auto seed verified sample for metal",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/d16fecc5a82e41568e075229146932e9.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:51"
-  },
-  {
-    "id": 161,
-    "predicted_label": "plastic",
-    "user_reported_label": "metal",
-    "confidence_score": 0.2326,
-    "note": "Auto seed verified sample for metal",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/52f4569f892f45769d14d0f22e6f2131.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:49"
-  },
-  {
-    "id": 160,
-    "predicted_label": "cardboard",
-    "user_reported_label": "paper",
-    "confidence_score": 0.251,
-    "note": "Auto seed verified sample for paper",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/7ae50c0f499445b8a92b0e00fcd19c6f.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:48"
-  },
-  {
-    "id": 159,
-    "predicted_label": "cardboard",
-    "user_reported_label": "paper",
-    "confidence_score": 0.2295,
-    "note": "Auto seed verified sample for paper",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/257cc5962b1f4781838d332e63c16773.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:46"
-  },
-  {
-    "id": 158,
-    "predicted_label": "cardboard",
-    "user_reported_label": "paper",
-    "confidence_score": 0.8095,
-    "note": "Auto seed verified sample for paper",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/9a3a35baa8f348d4af3c2c4d2571dff7.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:45"
-  },
-  {
-    "id": 157,
-    "predicted_label": "cardboard",
-    "user_reported_label": "paper",
-    "confidence_score": 0.2317,
-    "note": "Auto seed verified sample for paper",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/e393d722796b416db3054a4102a2c878.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:44"
-  },
-  {
-    "id": 156,
-    "predicted_label": "cardboard",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.2132,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/df138cc49ef0429eb9e590f40f2f6c87.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:43"
-  },
-  {
-    "id": 155,
-    "predicted_label": "plastic",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.2362,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/0f1c1fd84204466e82cad0e930738cdd.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:41"
-  },
-  {
-    "id": 154,
-    "predicted_label": "cardboard",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.4326,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/21719bf7562546dfa2158dae6b4c6978.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:40"
-  },
-  {
-    "id": 153,
-    "predicted_label": "cardboard",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.6832,
-    "note": "Auto seed verified sample for plastic",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/c1e9aa01a11548e89cc3f9873b4755db.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:39"
-  },
-  {
-    "id": 152,
-    "predicted_label": "cardboard",
-    "user_reported_label": "paper",
-    "confidence_score": 0.5877,
-    "note": "Túi giấy kraft bị nhầm thành carton",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/066205d146724605bee9bc9b605a4ebe.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:37"
-  },
-  {
-    "id": 151,
-    "predicted_label": "cardboard",
-    "user_reported_label": "glass",
-    "confidence_score": 0.2206,
-    "note": "Auto seed verified sample for glass",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/17e23db92a5e4e40857485b85454eec7.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:35"
-  },
-  {
-    "id": 150,
-    "predicted_label": "cardboard",
-    "user_reported_label": "plastic",
-    "confidence_score": 0.2655,
-    "note": "Chai nhựa bị lóa sáng nên nhận diện sai",
-    "image_url": "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/ai-scans/2026/11/2026/11/b45e2e96d52949be9b7827247cedc816.png",
-    "status": "pending_verification",
-    "created_at": "2026-11-24 19:09:32"
   }
 ]

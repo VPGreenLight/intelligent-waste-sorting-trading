@@ -42,7 +42,7 @@ public class RecyclerApplicationsController : ControllerBase
     /// Cho phép cả đối tác đang điền form đăng ký công khai (/join-recycler) lẫn người dân nâng cấp tài khoản.
     /// </summary>
     /// <param name="file">Tệp hình ảnh (.jpg, .png, .webp) hoặc .pdf (tối đa 10 MB)</param>
-    /// <param name="documentType">Loại tài liệu: permit (Giấy phép pháp lý) hoặc facility-photo (Ảnh mặt tiền kho bãi)</param>
+    /// <param name="documentType">Loại tài liệu: permit, facility-photo, cccd-front hoặc cccd-back</param>
     /// <param name="ct">CancellationToken</param>
     [HttpPost("upload-document")]
     [AllowAnonymous]
@@ -59,9 +59,24 @@ public class RecyclerApplicationsController : ControllerBase
             return BadRequest(ApiResponse<object>.Fail("Vui lòng chọn tệp chứng từ hoặc ảnh cơ sở để tải lên.", "MSG-GEN-01"));
         }
 
-        var folderPrefix = string.Equals(documentType, "facility-photo", StringComparison.OrdinalIgnoreCase)
-            ? "recycler-kyb/facility-photos"
-            : "recycler-kyb/legal-permits";
+        var normalizedType = (documentType ?? "permit").Trim().ToLowerInvariant();
+        if (normalizedType is "facility-photo" or "cccd-front" or "cccd-back")
+        {
+            var ext = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (ext is not (".jpg" or ".jpeg" or ".png" or ".webp"))
+            {
+                return BadRequest(ApiResponse<object>.Fail(
+                    "Ảnh kho bãi và ảnh Căn cước công dân chỉ hỗ trợ định dạng JPG, PNG hoặc WEBP.",
+                    "MSG-GEN-01"));
+            }
+        }
+
+        var folderPrefix = normalizedType switch
+        {
+            "facility-photo" => "recycler-kyb/facility-photos",
+            "cccd-front" or "cccd-back" => "recycler-kyb/identity-cards",
+            _ => "recycler-kyb/legal-permits"
+        };
 
         using var stream = file.OpenReadStream();
         var result = await _fileStorageService.UploadRecyclerDocumentAsync(

@@ -84,7 +84,13 @@
 | `contactPhone` | `string` | Số điện thoại liên hệ của cơ sở. |
 | `operatingHours` | `string` | Chuỗi tóm tắt giờ mở cửa (VD: `"07:30 - 18:30"` hoặc `"T2-T6: 08:00 - 17:30"`). |
 | `description` | `string?` | Giới thiệu năng lực thu gom của cơ sở. |
-| `businessPhotoUrl` | `string?` | Ảnh mặt tiền kho bãi / cơ sở. |
+| `recyclerType` | `string` | Phân loại đối tác: `"Facility"` (cơ sở cố định) hoặc `"Individual"` (hiển thị huy hiệu *"Thu mua lưu động"* trên `/map`). Ảnh CCCD được giữ kín nội bộ, tuyệt đối không trả ra API bản đồ công khai. |
+| `businessPhotoUrl` | `string?` | Ảnh đại diện mặt tiền kho bãi / cơ sở. |
+| `businessPhotoUrls` | `string[]` | Danh sách URL ảnh kho bãi (tối đa 5 ảnh với `Facility`, mảng rỗng với `Individual`). |
+| `hasVerifiedBadge` | `bool` | Cờ hiển thị huy hiệu Tích xanh `PRO` khi đang kích hoạt gói `PRO`. |
+| `isFeatured` | `bool` | Cờ ưu tiên ghim nổi bật trên bản đồ (`PRO`). |
+| `averageRating` | `decimal` | Điểm đánh giá sao trung bình (`0.0` – `5.0`). |
+| `totalReviews` | `int` | Tổng số đánh giá hợp lệ. |
 | `materials` | `AcceptedMaterialDto[]` | Danh sách các loại phế liệu cơ sở đang nhận thu mua (`PriceStatus.Active`). |
 
 ##### Ví dụ 1 – Response Tìm thấy Cơ sở Thu gom (`200 OK` – `MSG-GEN-01`):
@@ -109,7 +115,13 @@
         "contactPhone": "0988776655",
         "operatingHours": "07:30 - 18:30",
         "description": null,
+        "recyclerType": "Facility",
         "businessPhotoUrl": null,
+        "businessPhotoUrls": [],
+        "hasVerifiedBadge": false,
+        "isFeatured": false,
+        "averageRating": 4.8,
+        "totalReviews": 5,
         "materials": [
           {
             "categoryCode": "cardboard",

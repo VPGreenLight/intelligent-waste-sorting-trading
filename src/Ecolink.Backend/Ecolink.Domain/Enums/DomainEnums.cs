@@ -26,6 +26,12 @@ public enum VerificationStatus
     Rejected = 3    // Bị từ chối kèm lý do (BR-MTH-02, MSG-MTH-05)
 }
 
+public enum RecyclerType
+{
+    Facility = 1,   // Cơ sở / Vựa thu mua cố định (cần GPKD + đủ 5 ảnh kho bãi)
+    Individual = 2  // Cá nhân thu mua nhỏ lẻ / lưu động (miễn ĐKKD theo Điều 3 NĐ 39/2007/NĐ-CP, cần CCCD 2 mặt)
+}
+
 public enum RecyclerActiveStatus
 {
     Offline = 1,    // Tạm nghỉ / Ẩn khỏi bản đồ GPS

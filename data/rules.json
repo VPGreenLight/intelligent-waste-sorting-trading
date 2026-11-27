@@ -311,6 +311,16 @@
       "handling_action": "Bàn giao cho đối tác thu mua EcoLink.",
       "hazard_warning": "",
       "is_active": false
+    },
+    "qa_cat_35bb61": {
+      "display_name": "qa_cat_35bb61",
+      "bin_color_name": "Cam",
+      "instructions": [
+        "Phân loại đúng quy chuẩn EcoLink."
+      ],
+      "handling_action": "Bàn giao cho đối tác thu mua EcoLink.",
+      "hazard_warning": "",
+      "is_active": false
     }
   },
   "confidence_threshold": 0.6

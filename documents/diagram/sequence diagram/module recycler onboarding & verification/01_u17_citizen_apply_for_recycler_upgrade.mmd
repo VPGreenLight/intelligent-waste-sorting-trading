@@ -8,8 +8,8 @@ sequenceDiagram
     participant DB as PostgreSQL + PostGIS (ApplicationDbContext)
 
     Note over Citizen,UI: Tien dieu kien: Nguoi dung da dang ky tai khoan (Role = Citizen) & Dang nhap JWT
-    Citizen->>+UI: 1. Chon file Giay phep kinh doanh (permit) & Anh chup co so (facility) (<= 5MB)
-    UI->>+Ctrl: 2. POST /api/v1/recycler-applications/upload-document (multipart/form-data)
+    Citizen->>+UI: 1. Chon loai hinh (Facility: GPKD + 5/5 anh kho bai | Individual: CCCD 2 mat, mien GPKD theo NĐ 39/2007)
+    UI->>+Ctrl: 2. POST /api/v1/recycler-applications/upload-document (permit | facility-photo | cccd-front | cccd-back)
     Ctrl->>+R2: 3. UploadFileAsync(stream, fileName, contentType, size, folder)
     
     alt File > 5MB hoac sai dinh dang (.jpg, .png, .webp, .pdf)
@@ -33,7 +33,7 @@ sequenceDiagram
         Ctrl-->>UI: 13a. 400 Bad Request: Ho so dang cho duyet hoac da duoc duyet
     else Nop moi lan dau (existingProfile == null) hoac Nop lai sau khi bi Rejected (BR-MTH-02)
         Note over Svc: 1. Khoi tao Point(Longitude, Latitude) { SRID = 4326 }<br/>2. Dat VerificationStatus = Pending, ActiveStatus = Offline<br/>3. Xoa RejectionReason cu = null (neu Re-apply)
-        Svc->>+DB: 12b. INSERT / UPDATE INTO recycler_profiles (geom, legal_permit_url, business_photo_url)
+        Svc->>+DB: 12b. INSERT / UPDATE INTO recycler_profiles (recycler_type, geom, legal_permit_url, business_photo_urls_json, identity_card_front_url, identity_card_back_url)
         DB-->>-Svc: 13b. 1 row affected
         Svc-->>-Ctrl: 14b. Return RecyclerApplicationDetailDto (VerificationStatus = "Pending")
         Ctrl-->>-UI: 15b. 201 Created: ApiResponse<RecyclerApplicationDetailDto> (MSG-MTH-03)

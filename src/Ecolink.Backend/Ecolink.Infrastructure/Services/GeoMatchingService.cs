@@ -471,6 +471,8 @@ public class GeoMatchingService : IGeoMatchingService
             OperatingHours = profile.OperatingHours,
             Description = profile.Description,
             BusinessPhotoUrl = profile.BusinessPhotoUrl,
+            RecyclerType = profile.RecyclerType.ToString(),
+            BusinessPhotoUrls = RecyclerKybPhotoHelper.ParsePhotoUrls(profile.BusinessPhotoUrlsJson, profile.BusinessPhotoUrl),
             HasVerifiedBadge = false,
             IsFeatured = false,
             AverageRating = profile.AverageRating,
