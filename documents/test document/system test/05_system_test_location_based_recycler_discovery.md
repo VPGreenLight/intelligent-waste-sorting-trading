@@ -1,0 +1,32 @@
+# REPORT 5.3 – SYSTEM TEST: MODULE 05: LOCATION-BASED RECYCLER DISCOVERY, EXACT MAP PINNING & PRO PRIORITY (U-05)
+
+## 1. Workflow Summary Header (Theo mẫu Sheet `M05_Discovery` – `SEP490_G141`)
+
+| Workflow | `Module 05: Location-Based Recycler Discovery, Exact Map Pinning & PRO Priority (U-05)` | | | |
+| :--- | :--- | :---: | :---: | :---: |
+| **Test requirement** | Kiểm thử End-to-End bản đồ tìm kiếm cơ sở thu gom (/map & /partners) sử dụng tọa độ GPS / Click-to-Pin thực tế (không làm mờ ~500m), tìm kiếm LOCATION_PRESETS + Nominatim, lọc theo loại phế liệu & bán kính [0.5, 50] km, ưu tiên ghim PRO (Trạm Tái Chế Xanh Cầu Giấy 4.87★ / 54 đánh giá), hiển thị nhãn 'Thu mua lưu động' và gợi ý dự phòng 3 tầng. | | | |
+| **Number of TCs** | **10** | | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
+| *Round 1* | 10 | 0 | 0 | 0 |
+| *Round 2* | 10 | 0 | 0 | 0 |
+| *Round 3* | 0 | 0 | 10 | 0 |
+
+---
+
+## 2. System Test Case Specification (`STC-DSC-001` $\rightarrow$ `STC-DSC-010`)
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Scenario 5.1: Định vị GPS, Click-to-Pin Chính xác & Tìm Địa danh trên /map** | | | | | | | | | |
+| **STC-DSC-001** | Mở /map không tự xin quyền GPS và khởi tạo tâm mặc định Khu CNC Hòa Lạc | 1. Mở trang /map bằng trình duyệt.<br>2. Quan sát hộp thoại xin quyền vị trí và tâm bản đồ ban đầu. | - Trình duyệt KHÔNG tự bật popup xin quyền GPS.<br>- Hiển thị danh sách cơ sở tại Hòa Lạc (Vựa EcoGreen Hòa Lạc, EcoPro Thạch Thất, v.v.). | Hệ thống đã seed dữ liệu Hòa Lạc & Hà Nội. | Passed | Passed | Pending | N/A | Zero-Permission Startup |
+| **STC-DSC-002** | Chấm điểm trực tiếp trên bản đồ (Click-to-Pin) sử dụng tọa độ thực tế chính xác (không làm mờ ~500m) | 1. Bấm chọn một vị trí cụ thể trên bản đồ (VD: ĐH FPT Hòa Lạc 21.0124, 105.5253).<br>2. Kiểm tra ghim vị trí của tôi và request /api/v1/recyclers/nearby. | - Bản đồ cắm ghim chính xác tại tọa độ vừa click, KHÔNG vẽ vòng làm mờ 500m.<br>- Request gửi tọa độ thực tế và tính lại khoảng cách distanceKm chính xác từng điểm thu mua. | Đã gỡ bỏ chế độ privacy blur 500m. | Passed | Passed | Pending | N/A | Exact Click-to-Pin |
+| **STC-DSC-003** | Gợi ý địa danh tức thời từ LOCATION_PRESETS khi gõ và gọi Backend Proxy Nominatim khi bấm Enter | 1. Gõ 'Cầu Giấy' hoặc 'Hòa Lạc' vào thanh tìm kiếm bản đồ.<br>2. Chọn preset hoặc gõ 'Chợ Nhổn' rồi nhấn Enter. | - Khi gõ: Lọc tức thì từ LOCATION_PRESETS (0 request mạng).<br>- Khi nhấn Enter: Gọi GET /api/v1/geocoding/search?q=..., di chuyển tâm bản đồ sang khu vực tìm được và hiển thị vựa quanh Cầu Giấy / Hà Nội. | Backend Proxy Geocoding hoạt động. | Passed | Passed | Pending | N/A | Presets + Proxy Enter Search |
+| **Scenario 5.2: Bộ lọc Rác, Sắp xếp Khoảng cách/Giá, Huy hiệu PRO & Nhãn Lưu động** | | | | | | | | | |
+| **STC-DSC-004** | Lọc điểm thu mua theo loại phế liệu ('Nhựa', 'Kim loại') và sắp xếp theo Khoảng cách / Giá cao nhất | 1. Chọn chip lọc 'Nhựa' trên /map.<br>2. Chuyển chế độ sắp xếp từ 'Gần nhất' sang 'Giá cao nhất'. | - Danh sách chỉ giữ lại các cơ sở có bảng giá Nhựa Active.<br>- Chế độ 'Gần nhất' sắp xếp DistanceKm tăng dần (cơ sở PRO ưu tiên hiển thị nổi bật); chế độ 'Giá cao nhất' sắp theo PricePerKg giảm dần. | Có nhiều hơn 2 cơ sở thu mua Nhựa. | Passed | Passed | Pending | N/A | BR-MTH-04 & Sort |
+| **STC-DSC-005** | Hiển thị Tích xanh PRO, sao đánh giá (4.87★ / 54) tại khu vực Hà Nội và trang /partners | 1. Mở rộng bán kính > 28km từ Hòa Lạc hoặc chọn preset 'Quận Cầu Giấy, Hà Nội'.<br>2. Mở song song trang /partners để đối chiếu. | - 'Trạm Tái Chế Xanh Cầu Giấy' hiển thị huy hiệu 'Đối tác Pro' + sao '4.87 (54)'.<br>- 'Vựa Phế Liệu Sạch Đống Đa' hiển thị 4.71 (7); 'Điểm Thu Mua Tái Chế Bách Khoa' hiển thị 4.63 (8). | DemoDataSeeder đã seed đánh giá Hà Nội. | Passed | Passed | Pending | N/A | PRO Priority & Reviews |
+| **STC-DSC-006** | Hiển thị huy hiệu 'Thu mua lưu động' cho đối tác Individual và ẩn hoàn toàn ảnh CCCD | 1. Tìm một đối tác Individual đã duyệt trên /map.<br>2. Nhấn vào thẻ để xem chi tiết hồ sơ công khai. | - Hiển thị nhãn 'Thu mua lưu động', tên khu vực, bảng giá và giờ hoạt động.<br>- Không hiển thị mục GPKD hay ảnh CCCD nhạy cảm. | Có ít nhất 1 đối tác Individual Verified + Online. | Passed | Passed | Pending | N/A | Individual Map Display |
+| **Scenario 5.3: Phương án Dự phòng 3 Tầng (0 Kết quả - MSG-MTH-01) & Bảo mật Vị trí (BR-MTH-05)** | | | | | | | | | |
+| **STC-DSC-007** | Hiển thị gợi ý dự phòng 3 tầng khi bán kính tìm kiếm không có cơ sở phù hợp (TotalFound = 0) | 1. Chấm tâm bản đồ tại một khu vực xa trung tâm (VD: vùng núi không có vựa) với bán kính 1 km.<br>2. Quan sát khung thông báo kết quả. | - Hiển thị thông báo MSG-MTH-01 kèm 3 gợi ý:<br>  (1) Nút mở rộng bán kính gợi ý (SuggestedExpandedRadiusKm = min(50, r*2.5)).<br>  (2) Hướng dẫn bỏ thùng rác công cộng từ Rule Engine.<br>  (3) Tùy chọn đăng bài gom chung cộng đồng. | Không có cơ sở Verified+Online trong bán kính 1km. | Passed | Passed | Pending | N/A | 3-Layer Fallback (MSG-MTH-01) |
+| **STC-DSC-008** | Bấm nút 'Mở rộng bán kính gợi ý' ngay từ hộp Fallback tải lại danh sách thành công | 1. Ở kết quả 0 cơ sở tại Hòa Lạc (khi chọn 0.5km), bấm nút gợi ý mở rộng bán kính trên banner. | - Slider bán kính tự tăng lên giá trị gợi ý và tải lại ngay danh sách cơ sở gần nhất. | Đang hiển thị Fallback Suggestion. | Passed | Passed | Pending | N/A | Fallback Quick Expand |
+| **STC-DSC-009** | Ẩn ngay cơ sở vừa tắt Offline hoặc bị Admin khóa khỏi bản đồ /map (BR-MTH-06) | 1. Recycler tắt trạng thái sang Offline ở tab 1.<br>2. Ở tab 2, Citizen tải lại hoặc lọc lại trên /map. | - Cơ sở vừa Offline biến mất ngay khỏi danh sách và marker bản đồ. | Có 2 phiên trình duyệt (Recycler & Citizen). | Passed | Passed | Pending | N/A | Real-time Discovery Sync |
+| **STC-DSC-010** | Xác nhận tọa độ tìm kiếm của Citizen không bị lưu xuống DB và không hiển thị cho Recycler (BR-MTH-05) | 1. Citizen tìm kiếm từ tọa độ GPS cá nhân trên /map.<br>2. Kiểm tra DB bảng users và mở giao diện của Recycler. | - Tọa độ tìm kiếm chỉ xử lý trên RAM để tính distanceKm, hoàn toàn không lưu trong bảng users hay lộ cho bất kỳ Recycler nào. | BR-MTH-05 đang hiệu lực. | Passed | Passed | Pending | N/A | BR-MTH-05 Location Privacy |

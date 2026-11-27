@@ -1,0 +1,33 @@
+# REPORT 5.3 – SYSTEM TEST: MODULE 10: SERVICE PACKAGES, PRO 4-CRITERIA GATE & VIETQR PAYMENT RECONCILIATION (U-16, R-07, A-10, A-11)
+
+## 1. Workflow Summary Header (Theo mẫu Sheet `M10_ServicePackages` – `SEP490_G141`)
+
+| Workflow | `Module 10: Service Packages, PRO 4-Criteria Gate & VietQR Payment Reconciliation (U-16, R-07, A-10, A-11)` | | | |
+| :--- | :--- | :---: | :---: | :---: |
+| **Test requirement** | Kiểm thử End-to-End phân hệ Gói dịch vụ & Thanh toán VietQR (/user/payout, /recycler/packages, /admin/packages, /admin/reconciliation): hiển thị 3 gói BASIC/PREMIUM/PRO, khóa mua gói PRO khi chưa đủ 50 đánh giá (BR-PAY-04), mở khóa với recycler_pro (52 đánh giá 4.81★), sinh QR VietQR động 15 phút, kích hoạt gói cấp Tích xanh & ưu tiên bản đồ, cấu hình giá Admin và đối soát sai lệch thanh toán. | | | |
+| **Number of TCs** | **10** | | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
+| *Round 1* | 10 | 0 | 0 | 0 |
+| *Round 2* | 10 | 0 | 0 | 0 |
+| *Round 3* | 0 | 0 | 10 | 0 |
+
+---
+
+## 2. System Test Case Specification (`STC-PAY-001` $\rightarrow$ `STC-PAY-010`)
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Scenario 10.1: Gói Dịch vụ Citizen (PREMIUM Tắt Quảng cáo - U-16) & Điều kiện Mở khóa PRO (BR-PAY-04)** | | | | | | | | | |
+| **STC-PAY-001** | Citizen xem bảng 3 gói dịch vụ (BASIC/PREMIUM/PRO) và thanh toán kích hoạt gói PREMIUM tắt quảng cáo | 1. Đăng nhập tài khoản citizen -> mở trang Gói dịch vụ & Tắt quảng cáo (/user/payout).<br>2. Chọn gói PREMIUM -> tạo mã VietQR động -> thực hiện thanh toán mô phỏng chính xác (Simulated Exact). | - Sinh mã QR động thời hạn 15 phút kèm mã giao dịch duy nhất.<br>- Sau webhook thanh toán, gói PREMIUM chuyển Active, cờ AdFree=true có hiệu lực ngay trên toàn bộ cổng Citizen. | Citizen đang ở gói BASIC. | Passed | Passed | Pending | N/A | U-16 PREMIUM Activation |
+| **STC-PAY-002** | Khóa nút mua gói PRO đối với cơ sở EcoGreen Hòa Lạc do mới có 5/50 đánh giá (BR-PAY-04) | 1. Đăng nhập tài khoản recycler (Vựa EcoGreen Hòa Lạc - 5 đánh giá).<br>2. Mở trang Gói dịch vụ. | - Thẻ kiểm tra 4 tiêu chí PRO hiển thị tick xanh 3 tiêu chí (KYB, cảnh cáo <= 5, chưa dùng PRO) và ĐỎ ở tiêu chí 'Số lượt đánh giá >= 50 (hiện tại: 5/50)'.<br>- Nút 'Mua gói PRO' bị khóa kèm giải thích rõ ràng (MSG-PAY-06). | recycler có TotalReviews = 5 (< 50). | Passed | Passed | Pending | N/A | BR-PAY-04 Gate Locked |
+| **STC-PAY-003** | Mở khóa đầy đủ 4 tiêu chí & Kích hoạt gói PRO (1.000.000đ) qua VietQR cho recycler_pro (52 đánh giá, 4.81★) | 1. Đăng nhập tài khoản recycler_pro -> mở trang Gói dịch vụ.<br>2. Xác nhận cả 4 tiêu chí PRO đều đạt Xanh -> bấm 'Nâng cấp PRO (1.000.000 đ)'.<br>3. Mở QR VietQR -> bấm 'Mô phỏng Thanh toán Thành công (Simulated Exact)'. | - Webhook xác thực chữ ký HMAC thành công, đơn hàng chuyển Paid.<br>- Tự động kích hoạt gói PRO cho recycler_pro, gắn Tích xanh và ưu tiên ghim nổi bật trên bản đồ /map. | recycler_pro có 52 đánh giá >= 50 và 4.81★ >= 4.0★. | Passed | Passed | Pending | N/A | R-07 Council Demo Core |
+| **Scenario 10.2: Vòng đời Đơn hàng VietQR, Cộng dồn Thời hạn & Bảo mật Webhook** | | | | | | | | | |
+| **STC-PAY-004** | Hủy đơn hàng đang chờ thanh toán (Pending -> Cancelled) và chặn hủy đơn đã Paid (409) | 1. Tạo một đơn VietQR mới (trạng thái Pending) -> bấm 'Hủy đơn hàng'.<br>2. Thử gọi hủy đối với đơn đã thanh toán thành công (Paid). | - Đơn Pending chuyển sang Cancelled.<br>- Đơn đã Paid không thể hủy (409 Conflict). | Có đơn Pending và đơn Paid. | Passed | Passed | Pending | N/A | Order Cancel Lifecycle |
+| **STC-PAY-005** | Mua gia hạn cùng gói PRO/PREMIUM đang Active tự động cộng dồn số ngày sử dụng (Duration Stacking) | 1. Trên tài khoản vừa kích hoạt PRO 30 ngày, thực hiện thanh toán thêm 1 gói PRO 30 ngày nữa. | - Ngày hết hạn được cộng nối tiếp thêm 30 ngày từ ExpiresAt hiện tại (thành 60 ngày), không bị mất thời gian còn dư. | Đang có gói Active chưa hết hạn. | Passed | Passed | Pending | N/A | Duration Stacking |
+| **STC-PAY-006** | Chống gọi lặp Webhook thanh toán (Idempotency - BR-PAY-02) và từ chối chữ ký Webhook giả mạo (MSG-PAY-05) | 1. Gửi lặp lại đúng payload webhook đã xử lý (cùng ReferenceCode).<br>2. Gửi payload webhook với chữ ký HMAC sai. | - Webhook lặp lại được nhận biết Idempotent, tuyệt đối không cộng thêm 30 ngày lần 2 (BR-PAY-02).<br>- Chữ ký sai trả về 401/400 (MSG-PAY-05) và ghi log cảnh báo. | Có đơn đã thanh toán qua webhook. | Passed | Passed | Pending | N/A | Webhook Security & Idempotency |
+| **Scenario 10.3: Admin Cấu hình Bảng giá Gói & Bảo toàn Snapshot Đơn cũ (Grandfathering - A-10)** | | | | | | | | | |
+| **STC-PAY-007** | Admin cập nhật giá gói PRO/PREMIUM và bảo toàn giá đơn hàng Pending/Active cũ (Grandfathering) | 1. Tạo sẵn 1 đơn hàng gói PRO ở giá 1.000.000đ.<br>2. Đăng nhập Admin -> mở /admin/packages -> sửa giá gói PRO thành 1.200.000đ.<br>3. Kiểm tra lại số tiền trên đơn hàng đã tạo trước đó và đơn hàng tạo mới. | - Đơn cũ giữ nguyên snapshot 1.000.000đ; đơn tạo mới áp dụng giá 1.200.000đ.<br>- Thay đổi ghi vào AuditLog. | Đang đăng nhập Admin. | Passed | Passed | Pending | N/A | A-10 Grandfathering |
+| **STC-PAY-008** | Chặn Admin đặt giá > 0 hoặc thời hạn hữu hạn cho gói BASIC mặc định (BR-PAY-05) | 1. Admin mở chỉnh sửa gói BASIC và thử sửa giá thành 50.000đ hoặc thời hạn 30 ngày. | - Hệ thống chặn lưu (BR-PAY-05): gói BASIC bắt buộc luôn miễn phí (0đ) và vĩnh viễn. | Đang ở /admin/packages. | Passed | Passed | Pending | N/A | BR-PAY-05 |
+| **Scenario 10.4: Admin Đối soát Sai lệch Thanh toán VietQR & Xuất Sổ cái (/admin/reconciliation - A-11)** | | | | | | | | | |
+| **STC-PAY-009** | Admin xem sổ cái đối soát lọc ra giao dịch bất thường Underpaid (ORD-SEED-PRO-ANOM) | 1. Đăng nhập admin -> mở /admin/reconciliation.<br>2. Lọc theo trạng thái bất thường (Underpaid / Overpaid / LateTransfer / Orphaned). | - Hiển thị chính xác đơn ORD-SEED-PRO-ANOM (chuyển thiếu 500.000đ / 1.000.000đ) và webhook mồ côi ECOLINK_UNKNOWN_999. | Dữ liệu seed có sẵn các case anomaly. | Passed | Passed | Pending | N/A | A-11 Anomaly Ledger |
+| **STC-PAY-010** | Admin xử lý ApproveAndActivate cho giao dịch bất thường kèm ghi chú >= 10 ký tự | 1. Mở chi tiết đơn bất thường ORD-SEED-PRO-ANOM.<br>2. Chọn hành động 'Phê duyệt & Kích hoạt (ApproveAndActivate)', nhập lý do xác nhận thu đủ tiền mặt bổ sung (>= 10 ký tự) và Lưu. | - Đơn chuyển Paid, kích hoạt gói cho đối tác, đóng trạng thái bất thường và ghi AuditLog. | Bản ghi bất thường chưa được giải quyết. | Passed | Passed | Pending | N/A | Approve Anomaly Flow |

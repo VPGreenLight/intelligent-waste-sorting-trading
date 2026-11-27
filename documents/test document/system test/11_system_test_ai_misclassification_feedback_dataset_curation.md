@@ -1,0 +1,32 @@
+# REPORT 5.3 – SYSTEM TEST: MODULE 11: AI MISCLASSIFICATION FEEDBACK, YOLO ANNOTATION & DATASET CURATION (U-04, S-01..S-03)
+
+## 1. Workflow Summary Header (Theo mẫu Sheet `M11_AiCuration` – `SEP490_G141`)
+
+| Workflow | `Module 11: AI Misclassification Feedback, YOLO Annotation & Dataset Curation (U-04, S-01..S-03)` | | | |
+| :--- | :--- | :---: | :---: | :---: |
+| **Test requirement** | Kiểm thử End-to-End vòng lặp Active Learning trên /scanner, /staff/ai-review và /staff/dataset: người dân gửi báo sai nhãn AI (U-04), tự động thu thập ảnh OOD < 60%, Staff (REVIEW_AI) duyệt 1 chạm hoặc bác bỏ (S-01), Staff (CURATE_DATASET) vẽ Bounding Box YOLO [0,1] và gán nhãn hàng loạt nguyên tử (S-02), đóng gói Dataset Sticky Stratified Split 70/20/10 chống rò rỉ Train/Test (BR-CLS-07), xuất .zip chuẩn YOLO và đồng bộ sang FastAPI (S-03). | | | |
+| **Number of TCs** | **10** | | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
+| *Round 1* | 10 | 0 | 0 | 0 |
+| *Round 2* | 10 | 0 | 0 | 0 |
+| *Round 3* | 0 | 0 | 10 | 0 |
+
+---
+
+## 2. System Test Case Specification (`STC-AIC-001` $\rightarrow$ `STC-AIC-010`)
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Scenario 11.1: Báo sai Kết quả AI & Tự động Thu thập Ca Độ tin cậy Thấp (/scanner - U-04)** | | | | | | | | | |
+| **STC-AIC-001** | Citizen gửi báo cáo nhận diện sai nhãn AI trên /scanner (U-04) | 1. Quét một ảnh rác trên /scanner.<br>2. Bấm nút 'Báo sai kết quả AI', chọn nhãn đúng thực tế (VD: 'glass') và nhập ghi chú mô tả.<br>3. Nhấn 'Gửi báo cáo'. | - Tạo phiếu phản hồi ở trạng thái Pending (MSG-CLS-06) và tự động đưa bản ghi ảnh + SHA-256 vào hàng đợi Staff AI Review (/staff/ai-review). | Có scanId hợp lệ từ lượt quét vừa thực hiện. | Passed | Passed | Pending | N/A | U-04 Happy Path |
+| **STC-AIC-002** | Chặn gửi báo cáo trùng lặp nhiều lần trên cùng một lượt quét scanId (409) hoặc trùng nhãn AI đã đoán | 1. Gửi báo sai lần 2 trên chính scanId của STC-AIC-001.<br>2. Trên lượt quét khác, thử chọn nhãn báo sai giống hệt nhãn AI vừa đoán. | - Trùng scanId trả lỗi 409 Conflict; chọn nhãn trùng với kết quả AI trả lỗi BR-CLS-02. | Lượt quét đã có feedback hoặc nhãn trùng. | Passed | Passed | Pending | N/A | BR-CLS-02 & Duplicate Guard |
+| **STC-AIC-003** | Tự động đẩy ảnh vào hàng đợi curation (LowConfidenceAuto) khi độ tin cậy AI < 60% | 1. Quét ảnh mờ tối tạo kết quả confidence < 0.60 (IsOutOfDistribution = true).<br>2. Mở màn hình Staff /staff/ai-review kiểm tra hàng đợi. | - Hệ thống tự động sinh bản ghi độ tin cậy thấp để Staff kiểm tra và bổ sung vào kho dữ liệu huấn luyện. | Lượt quét có Confidence < 0.60. | Passed | Passed | Pending | N/A | OOD Auto-Capture |
+| **STC-AIC-004** | Citizen xem lịch sử các phản hồi AI của riêng mình và cô lập dữ liệu cá nhân (BR-CLS-08) | 1. Citizen xem danh sách phản hồi đã gửi của mình.<br>2. Đăng nhập citizen_vip kiểm tra lại. | - Chỉ hiển thị danh sách phản hồi thuộc về người dùng đang đăng nhập, không rò rỉ dữ liệu quét của người khác (BR-CLS-08). | Có phản hồi của citizen. | Passed | Passed | Pending | N/A | BR-CLS-08 Isolation |
+| **Scenario 11.2: Staff Duyệt Phản hồi AI & Gán nhãn Bounding Box YOLO (/staff/ai-review - S-01, S-02)** | | | | | | | | | |
+| **STC-AIC-005** | Chặn tài khoản Staff thiếu quyền REVIEW_AI / CURATE_DATASET truy cập /staff/ai-review & /staff/dataset | 1. Đăng nhập tài khoản staff_support (chỉ có 2 quyền).<br>2. Kiểm tra Sidebar và thử vào thẳng /staff/ai-review hoặc /staff/dataset. | - 2 menu bị ẩn khỏi Sidebar; truy cập thẳng trả về 403 Forbidden (MSG-ADM-04). | staff_support không có 2 quyền AI. | Passed | Passed | Pending | N/A | Fine-Grained RBAC Guard |
+| **STC-AIC-006** | Staff duyệt 1 chạm (ApproveAndLabel) hoặc bác bỏ phản hồi AI kèm lý do (/staff/ai-review - S-01) | 1. Đăng nhập staff -> mở /staff/ai-review.<br>2. Chọn 1 phản hồi Pending -> bấm 'Duyệt & Chuyển kho nhãn' (ApproveAndLabel).<br>3. Chọn 1 phản hồi spam/ảnh hỏng -> bấm 'Bác bỏ' nhập lý do (BR-CLS-06). | - Phản hồi duyệt chuyển Reviewed và tự động đẩy mẫu sang kho /staff/dataset.<br>- Phản hồi bác bỏ chuyển Rejected và lưu AuditLog; thử duyệt lặp lại cùng phiếu trả 409 Conflict. | Có tối thiểu 2 feedback Pending. | Passed | Passed | Pending | N/A | S-01 Review Workflow |
+| **STC-AIC-007** | Staff gán nhãn Ground-Truth đơn lẻ kèm tọa độ Bounding Box YOLO [0, 1] và chặn tọa độ vượt biên | 1. Mở /staff/dataset -> chọn 1 ảnh Unlabeled.<br>2. Kéo/nhập Bounding Box (x, y, width, height trong [0..1]) và nhãn 'plastic', sau đó thử nhập x = 1.2. | - Nhập BBox ngoài (0, 1] bị chặn validation.<br>- BBox hợp lệ lưu thành công trạng thái VerifiedLabeled. | Có mẫu Unlabeled. | Passed | Passed | Pending | N/A | S-02 BBox Annotation |
+| **Scenario 11.3: Đóng gói Dataset Sticky Stratified Split 70/20/10, Xuất ZIP & Đồng bộ AI (/staff/dataset - S-03)** | | | | | | | | | |
+| **STC-AIC-008** | Đóng gói phiên bản Dataset mới với tỷ lệ Stratified Split 70/20/10 và kiểm tra tổng 100% | 1. Trên /staff/dataset, mở hộp 'Đóng gói phiên bản Dataset'.<br>2. Nhập mã phiên bản SemVer mới (VD: v2.1.0), giữ tỷ lệ Train 70% / Val 20% / Test 10%.<br>3. Nhấn 'Tạo phiên bản Dataset'. | - Tạo phiên bản thành công (201 MSG-CLS-08), phân bố số lượng ảnh các tập đúng tỷ lệ và đánh dấu trạng thái sẵn sàng xuất. | Có đủ dữ liệu VerifiedLabeled. | Passed | Passed | Pending | N/A | S-03 Create Version |
+| **STC-AIC-009** | Kiểm chứng bất biến Sticky Split chống rò rỉ dữ liệu Train/Test giữa hai phiên bản (BR-CLS-07) | 1. Đối chiếu các ImageSha256 đã nằm trong tập Test của v2.0.0 sang phiên bản mới v2.1.0 vừa tạo. | - 100% ảnh đã từng thuộc tập Train/Val/Test ở v2.0.0 giữ nguyên cố định split cũ ở v2.1.0, đảm bảo Zero Data Leakage (BR-CLS-07). | Đã tồn tại phiên bản trước đó. | Passed | Passed | Pending | N/A | BR-CLS-07 Zero Data Leakage |
+| **STC-AIC-010** | Hiển thị cảnh báo mất cân bằng lớp (> 2.50x) và xuất gói .zip chuẩn YOLO (images + labels .txt + data.yaml) | 1. Kiểm tra bảng phân bố lớp xem cảnh báo Class Imbalance (nếu chênh lệch > 2.50x).<br>2. Nhấn 'Tải xuống Dataset (.zip)' và mở kiểm tra cấu trúc tệp tải về. | - Tệp .zip giải nén ra chuẩn thư mục train/, val/, test/ kèm nhãn .txt 10 lớp YOLO26 và file data.yaml đầy đủ. | Phiên bản Dataset đã tạo xong. | Passed | Passed | Pending | N/A | YOLO Export ZIP |

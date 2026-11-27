@@ -1,0 +1,32 @@
+# REPORT 5.3 – SYSTEM TEST: MODULE 08: REAL-TIME SIGNALR NEGOTIATION CHATBOX & PROPOSAL LOCKING (U-08, R-05)
+
+## 1. Workflow Summary Header (Theo mẫu Sheet `M08_Negotiation` – `SEP490_G141`)
+
+| Workflow | `Module 08: Real-Time SignalR Negotiation Chatbox & Proposal Locking (U-08, R-05)` | | | |
+| :--- | :--- | :---: | :---: | :---: |
+| **Test requirement** | Kiểm thử End-to-End hộp thoại thương lượng thời gian thực qua SignalR (/hubs/negotiation-chat) trên trang /chat: gửi tin nhắn chữ/ảnh không cần tải lại trang, hội thoại hỏi thăm [INQUIRY] nâng cấp thành đơn chính thức, gửi Đề xuất giá/khung giờ (Proposal) & ghi đè đề xuất cũ (Superseded - BR-NEG-03), Chấp nhận đề xuất khóa điều khoản vào đơn (BR-NEG-06) và giữ kênh chat mở sau khi Completed (BR-NEG-02). | | | |
+| **Number of TCs** | **10** | | | |
+| **Testing Round** | **Passed** | **Failed** | **Pending** | **N/A** |
+| *Round 1* | 8 | 2 | 0 | 0 |
+| *Round 2* | 10 | 0 | 0 | 0 |
+| *Round 3* | 0 | 0 | 10 | 0 |
+
+---
+
+## 2. System Test Case Specification (`STC-NEG-001` $\rightarrow$ `STC-NEG-010`)
+
+| Test Case ID | Test Case Description | Test Case Procedure | Expected Results | Pre-conditions | Round 1 | Round 2 | Round 3 | Defect IDs | Note |
+| :--- | :--- | :--- | :--- | :--- | :---: | :---: | :---: | :---: | :--- |
+| **Scenario 8.1: Kết nối Real-Time SignalR, Khởi tạo Hội thoại Hỏi thăm & Tin nhắn Chữ/Ảnh (/chat)** | | | | | | | | | |
+| **STC-NEG-001** | Mở phòng chat đơn HND-DEMO-0001 và truyền nhận tin nhắn chữ tức thời qua SignalR | 1. Ở Tab A (citizen) & Tab B (recycler), mở cùng trang /chat và chọn hội thoại HND-DEMO-0001.<br>2. Tab A gõ 'Chiều nay 15h xe qua lấy được không ạ?' và gửi.<br>3. Quan sát Tab B mà không bấm F5. | - Tab B nhận được tin nhắn tức thời (< 1s) thông qua SignalR Hub /hubs/negotiation-chat.<br>- Danh sách hội thoại bên trái cập nhật LastMessagePreview và số tin chưa đọc (UnreadCount). | 2 người dùng là thành viên của cùng đơn HND-DEMO-0001. | Failed | Passed | Pending | **INC-2026-TRD-06** | SignalR Realtime Messaging \| Round 1 Failed (INC-2026-TRD-06): khóa khung chat với đơn hỏi thăm IsInquiryOnly -> đã mở khóa Round 2 Passed |
+| **STC-NEG-002** | Gửi hình ảnh phế liệu thực tế qua chat và xem ảnh thu nhỏ | 1. Ở Tab A, chọn nút đính kèm ảnh, tải ảnh chai nhựa lên R2 và gửi.<br>2. Kiểm tra Tab B. | - Tin nhắn loại IMAGE hiển thị tức thời trên cả 2 tab với đường dẫn Cloudflare R2/Local hợp lệ. | Đang ở phòng chat hoạt động. | Passed | Passed | Pending | N/A | Image Attachment Message |
+| **STC-NEG-003** | Đánh dấu đã đọc (Mark Read) và cập nhật lại UnreadCount về 0 | 1. Sau khi Tab A gửi tin mới, Tab B nhấp mở vào hội thoại đó. | - Gọi PUT .../read, huy hiệu đếm số tin chưa đọc của hội thoại ở Tab B chuyển về 0. | Có tin nhắn chưa đọc. | Passed | Passed | Pending | N/A | Unread Badge Sync |
+| **Scenario 8.2: Gửi Đề xuất Giá/Khung giờ, Phản đề xuất & Khóa Điều khoản (BR-NEG-02, BR-NEG-03)** | | | | | | | | | |
+| **STC-NEG-004** | Citizen gửi Đề xuất giá / khung giờ mới (Proposal) trong phòng chat | 1. Ở Tab A (citizen), nhấn 'Tạo đề xuất thương lượng', đề xuất đơn giá mới hoặc đổi khung giờ hẹn.<br>2. Nhấn Gửi đề xuất. | - Thẻ Proposal hiển thị nổi bật ở cả 2 tab với trạng thái Pending kèm nút 'Chấp nhận' / 'Từ chối' ở phía Tab B (recycler).<br>- Trạng thái đơn chuyển sang Negotiating. | Đơn đang Pending. | Passed | Passed | Pending | N/A | U-08 Send Proposal |
+| **STC-NEG-005** | Recycler gửi Phản đề xuất (Counter-Proposal) tự động chuyển đề xuất cũ sang Superseded (BR-NEG-03) | 1. Thay vì chấp nhận đề xuất ở STC-NEG-005, Tab B (recycler) gửi lại một Proposal khác.<br>2. Kiểm tra trạng thái 2 thẻ Proposal. | - Thẻ Proposal cũ tự động đổi thành 'Đã thay thế (Superseded)' và khóa nút bấm.<br>- Chỉ thẻ Proposal mới nhất còn hiệu lực phản hồi (BR-NEG-03). | Đang có Proposal Pending. | Passed | Passed | Pending | N/A | BR-NEG-03 Superseding |
+| **STC-NEG-006** | Chấp nhận Proposal cuối cùng -> Khóa cứng đơn giá & khung giờ hẹn vào Đơn bàn giao | 1. Tab A (citizen) bấm 'Chấp nhận đề xuất' trên thẻ Proposal mới nhất của Recycler.<br>2. Kiểm tra đơn bàn giao ở /user/handover và /recycler/requests. | - Thẻ Proposal chuyển Accepted.<br>- Đơn bàn giao khóa cứng đơn giá mới và ConfirmedTimeSlot mới theo đúng thỏa thuận trong chat. | Có Proposal mới nhất đang Pending. | Failed | Passed | Pending | **INC-2026-TRD-06** | Lock Agreed Terms \| Round 1 Failed (INC-2026-TRD-06): silent catch khi đồng bộ TradeOrder <-> HandoverRequest -> đã sửa Round 2 Passed |
+| **STC-NEG-007** | Chặn gửi Proposal mới sau khi đơn đã Accepted hoặc Completed, nhưng vẫn cho gửi tin nhắn văn bản (BR-NEG-02) | 1. Sau khi đơn đã Accepted / Completed, kiểm tra khung chat ở cả 2 bên.<br>2. Thử tìm nút tạo Proposal và thử gửi tin nhắn chữ 'Cảm ơn bác, đã nhận tiền rồi ạ'. | - Nút gửi/sửa Proposal bị khóa (BR-NEG-02).<br>- Kênh chat văn bản/ảnh vẫn mở bình thường để hai bên trao đổi thêm (BR-NEG-02). | Đơn đã Accepted hoặc Completed. | Passed | Passed | Pending | N/A | BR-NEG-02 Post-Acceptance Chat |
+| **Scenario 8.3: Kiểm soát Quyền Truy cập Phòng Chat (BR-NEG-01) & Hồ sơ Bất biến Khiếu nại** | | | | | | | | | |
+| **STC-NEG-008** | Chặn người dùng ngoài cuộc (citizen_vip / recycler_pro) xem hoặc gửi tin nhắn vào phòng chat (BR-NEG-01) | 1. Đăng nhập tài khoản citizen_vip.<br>2. Kiểm tra /chat xem có thấy hội thoại của citizen không, và thử gọi thẳng URL / API của phòng chat đó. | - Phòng chat của người khác hoàn toàn không hiển thị; truy cập trực tiếp trả về 403/404 (BR-NEG-01). | Người dùng không phải requester hoặc recycler của đơn. | Passed | Passed | Pending | N/A | BR-NEG-01 IDOR |
+| **STC-NEG-009** | Xác nhận không cung cấp tính năng xóa/sửa tin nhắn thương lượng (Chat Transcript Bất biến) | 1. Kiểm tra UI phòng chat của Citizen và Recycler trên từng bong bóng tin nhắn đã gửi. | - Không tồn tại nút Xóa hoặc Chỉnh sửa tin nhắn; toàn bộ lịch sử tin nhắn được lưu giữ làm bằng chứng đối soát tranh chấp (BR-NEG-01). | Phòng chat có lịch sử tin nhắn. | Passed | Passed | Pending | N/A | Immutable Transcript |
+| **STC-NEG-010** | Staff có quyền HANDLE_COMPLAINT xem được toàn bộ log chat khi đơn phát sinh Khiếu nại (BR-DSP-06) | 1. Khi đơn chuyển sang Disputed, đăng nhập staff -> mở /staff/complaints.<br>2. Mở hồ sơ trọng tài 360° của đơn đó và kiểm tra tab Lịch sử thương lượng. | - Staff xem được toàn bộ lịch sử tin nhắn và Proposal giữa Citizen và Recycler để làm căn cứ phân xử. | Đơn đang có khiếu nại mở. | Passed | Passed | Pending | N/A | BR-DSP-06 Audit Chat View |
