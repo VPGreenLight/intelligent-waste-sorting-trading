@@ -8,7 +8,7 @@ echo ===========================================================================
 echo   0. PostgreSQL ^& Redis (Docker) : localhost:5432 ^& localhost:6379
 echo   1. Python FastAPI AI Service   : http://localhost:8000
 echo   2. ASP.NET Core Web API        : http://localhost:5000
-echo   3. EcoLink Frontend Web [Vite] : http://localhost:5173
+echo   3. EcoLink Frontend Web [Vite] : https://localhost:5173
 echo ==============================================================================
 echo.
 
@@ -105,7 +105,7 @@ echo.
 echo ==============================================================================
 echo   DA KHOI CHAY TOAN BO DICH VU LOCAL [KHONG BAT TUNNEL]!
 echo ==============================================================================
-echo   - EcoLink Frontend Web : http://localhost:5173
+echo   - EcoLink Frontend Web : https://localhost:5173
 echo   - Swagger Backend API  : http://localhost:5000/swagger
 echo   - Swagger AI Vision    : http://localhost:8000/docs
 echo   - PostgreSQL Database  : localhost:5432 [Container: ecolink-db]

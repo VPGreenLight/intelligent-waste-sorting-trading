@@ -441,11 +441,11 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                     "https://mock-r2.ecolink.vn/recycler-kyb/legal-permits/giay-dkkd-hoa-lac-xanh.pdf",
                     new[]
                     {
-                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/hoa-lac-xanh-1-mat-tien.jpg",
-                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/hoa-lac-xanh-2-khu-can.jpg",
-                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/hoa-lac-xanh-3-kho-nhua.jpg",
-                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/hoa-lac-xanh-4-kho-giay.jpg",
-                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/hoa-lac-xanh-5-san-boc-xep.jpg"
+                        "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/3582058f36c34a8986665cd28a4082ca.jpg",
+                        "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/a3207a23f4064b5ab4330d3267e9ac26.jpg",
+                        "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/c8f90489777c4f238043d55eb87ecab8.jpg",
+                        "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/4a1593d2f098403490a42b5dd5175680.jpg",
+                        "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/cf72dfdc71ff4f2b90873b78898cd6fd.jpg"
                     },
                     null,
                     null
@@ -465,11 +465,11 @@ public class RecyclerOnboardingService : IRecyclerOnboardingService
                     "https://mock-r2.ecolink.vn/recycler-kyb/legal-permits/giay-dkdn-minh-khai.pdf",
                     new[]
                     {
-                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/minh-khai-1-mat-tien.jpg",
-                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/minh-khai-2-ban-can.jpg",
-                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/minh-khai-3-kho-kim-loai.jpg",
-                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/minh-khai-4-kho-carton.jpg",
-                        "https://mock-r2.ecolink.vn/recycler-kyb/facility-photos/minh-khai-5-cong-vao.jpg"
+                        "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/a3207a23f4064b5ab4330d3267e9ac26.jpg",
+                        "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/c8f90489777c4f238043d55eb87ecab8.jpg",
+                        "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/3582058f36c34a8986665cd28a4082ca.jpg",
+                        "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/4a1593d2f098403490a42b5dd5175680.jpg",
+                        "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/cf72dfdc71ff4f2b90873b78898cd6fd.jpg"
                     },
                     null,
                     null

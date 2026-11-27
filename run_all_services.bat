@@ -7,9 +7,9 @@ echo        ECOLINK PLATFORM - KHOI DONG TOAN BO DICH VU DEV + TUNNELS
 echo ==============================================================================
 echo   1. Python FastAPI AI Service   : http://localhost:8000
 echo   2. ASP.NET Core Web API        : http://localhost:5000
-echo   3. EcoLink Frontend Web [Vite] : http://localhost:5173
+echo   3. EcoLink Frontend Web [Vite] : https://localhost:5173
 echo   4. ngrok Backend + DB Tunnels  : http 5000 + tcp 5432 [Public API ^& DB]
-echo   5. Cloudflare Frontend Tunnel  : http://localhost:5173 - Public Web Tunnel
+echo   5. Cloudflare Frontend Tunnel  : https://localhost:5173 - Public Web Tunnel
 echo ==============================================================================
 echo.
 
@@ -160,7 +160,7 @@ if %ERRORLEVEL% equ 0 goto CF_RUNNING
 where cloudflared >nul 2>&1
 if %ERRORLEVEL% neq 0 goto CF_MISSING
 
-start "EcoLink Cloudflare Frontend Tunnel" cmd /k "title EcoLink Cloudflare Frontend Tunnel && cloudflared tunnel --url http://localhost:5173"
+start "EcoLink Cloudflare Frontend Tunnel" cmd /k "title EcoLink Cloudflare Frontend Tunnel && cloudflared tunnel --url https://localhost:5173 --no-tls-verify"
 echo   [+] Da khoi chay Cloudflare Frontend Tunnel [*.trycloudflare.com] trong cua so rieng!
 goto CF_AFTER
 
@@ -176,7 +176,7 @@ echo.
 echo ==============================================================================
 echo   DA KHOI CHAY THANH CONG CAC DICH VU TRONG CAC CUA SO RIENG!
 echo ==============================================================================
-echo   - EcoLink Frontend Web : http://localhost:5173 [kem link *.trycloudflare.com]
+echo   - EcoLink Frontend Web : https://localhost:5173 [kem link *.trycloudflare.com]
 echo   - Swagger Backend API  : http://localhost:5000/swagger [kem link *.ngrok-free.dev]
 echo   - PostgreSQL DB Tunnel : ngrok tcp 5432 [xem host:port tai http://localhost:4040]
 echo   - Swagger AI Vision    : http://localhost:8000/docs

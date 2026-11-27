@@ -992,6 +992,8 @@ public class AuthService : IAuthService
                         Location = new Point(105.5256, 21.0138) { SRID = 4326 },
                         OperatingHours = "07:30 - 18:30",
                         ContactPhone = "0988776655",
+                        BusinessPhotoUrl = "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/3582058f36c34a8986665cd28a4082ca.jpg",
+                        BusinessPhotoUrlsJson = "[\"https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/3582058f36c34a8986665cd28a4082ca.jpg\",\"https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/a3207a23f4064b5ab4330d3267e9ac26.jpg\",\"https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/c8f90489777c4f238043d55eb87ecab8.jpg\",\"https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/4a1593d2f098403490a42b5dd5175680.jpg\",\"https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/cf72dfdc71ff4f2b90873b78898cd6fd.jpg\"]",
                         VerificationStatus = VerificationStatus.Verified,
                         ActiveStatus = RecyclerActiveStatus.Online
                     }
@@ -1178,6 +1180,8 @@ public class AuthService : IAuthService
                         OperatingHours = "07:00 - 19:30",
                         ContactPhone = "0977889900",
                         Description = "Trung tâm thu mua chuẩn mực khu CNC Hòa Lạc, cân điện tử và hỗ trợ xe tải nhỏ.",
+                        BusinessPhotoUrl = "https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/3582058f36c34a8986665cd28a4082ca.jpg",
+                        BusinessPhotoUrlsJson = "[\"https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/3582058f36c34a8986665cd28a4082ca.jpg\",\"https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/a3207a23f4064b5ab4330d3267e9ac26.jpg\",\"https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/c8f90489777c4f238043d55eb87ecab8.jpg\",\"https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/4a1593d2f098403490a42b5dd5175680.jpg\",\"https://pub-71848fa50a564bf9b27f3607254f44a0.r2.dev/recycler-kyb/facility-photos/2026/11/cf72dfdc71ff4f2b90873b78898cd6fd.jpg\"]",
                         VerificationStatus = VerificationStatus.Verified,
                         ActiveStatus = RecyclerActiveStatus.Online
                     }
